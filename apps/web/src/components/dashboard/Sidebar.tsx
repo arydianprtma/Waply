@@ -16,22 +16,21 @@ import {
   Bot,
   CreditCard,
   Settings,
-  MessageSquare,
   Sparkles,
   LogOut,
   ShieldCheck,
   Code2,
+  Lock,
+  X,
 } from "lucide-react";
 import clsx from "clsx";
-import { createClient } from "@/lib/supabase/client";
 
-import { useState, useEffect } from "react";
 import { useUserSession } from "@/lib/use-user-session";
 import { performLogout } from "@/lib/auth-logout";
 import { SendoraLogo } from "@/components/brand/SendoraLogo";
-
 import { PlanFeatureAccess } from "@/lib/billing-types";
-import { Lock } from "lucide-react";
+import { useBillingPlan } from "@/lib/use-billing-plan";
+import { useMobileNav } from "@/lib/mobile-nav-context";
 
 interface NavItem {
   name: string;
@@ -47,14 +46,13 @@ interface NavSection {
   items: NavItem[];
 }
 
-import { useBillingPlan } from "@/lib/use-billing-plan";
-
 export function Sidebar() {
   const pathname = usePathname();
   const { user } = useUserSession();
+  const { isOpen, closeNav } = useMobileNav();
   const userRole = user?.role || (typeof document !== "undefined" ? document.cookie.match(/sendora_user_role=([^;]+)/)?.[1] : null);
 
-  const { planAccess, currentPlanName } = useBillingPlan();
+  const { planAccess } = useBillingPlan();
 
   const handleLogout = async () => {
     await performLogout("/login");
@@ -117,11 +115,20 @@ export function Sidebar() {
       : []),
   ];
 
-  return (
-    <aside className="w-64 bg-base-100 border-r border-base-200 flex flex-col h-screen sticky top-0 select-none">
+  const renderNavContent = (isMobile = false) => (
+    <div className="flex flex-col h-full justify-between select-none">
       {/* Brand Header */}
-      <div className="h-16 px-5 border-b border-slate-200 flex items-center justify-between">
+      <div className="h-16 px-5 border-b border-slate-200 flex items-center justify-between shrink-0">
         <SendoraLogo href="/dashboard" size="md" badge="v1.0" />
+        {isMobile && (
+          <button
+            onClick={closeNav}
+            className="btn btn-ghost btn-circle btn-sm text-slate-500 hover:bg-slate-100 lg:hidden"
+            aria-label="Tutup Menu"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
       </div>
 
       {/* Nav Items */}
@@ -144,6 +151,7 @@ export function Sidebar() {
                     <Link
                       href={item.href}
                       prefetch={true}
+                      onClick={isMobile ? closeNav : undefined}
                       className={clsx(
                         "flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm transition-all",
                         isActive
@@ -194,7 +202,7 @@ export function Sidebar() {
       </div>
 
       {/* Footer: Anti-Ban status & Quick Logout */}
-      <div className="p-3 border-t border-slate-200 space-y-2 bg-white">
+      <div className="p-3 border-t border-slate-200 space-y-2 bg-white shrink-0">
         <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs">
           <div className="flex items-center justify-between font-bold text-slate-900 mb-1">
             <span className="flex items-center gap-2">
@@ -212,11 +220,37 @@ export function Sidebar() {
 
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-rose-600 hover:bg-rose-50 text-xs font-bold transition-colors"
+          className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-rose-600 hover:bg-rose-50 text-xs font-bold transition-colors cursor-pointer"
         >
           <LogOut className="w-4 h-4" /> Keluar (Logout)
         </button>
       </div>
-    </aside>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Desktop Sidebar (Permanent on lg screens) */}
+      <aside className="hidden lg:flex flex-col w-64 bg-base-100 border-r border-base-200 h-screen sticky top-0 shrink-0">
+        {renderNavContent(false)}
+      </aside>
+
+      {/* Mobile / Tablet Off-Canvas Drawer Overlay */}
+      {isOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden animate-in fade-in duration-200">
+          {/* Backdrop with blur */}
+          <div
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity"
+            onClick={closeNav}
+            aria-hidden="true"
+          />
+
+          {/* Drawer Panel */}
+          <div className="fixed top-0 left-0 bottom-0 w-[280px] sm:w-80 bg-base-100 shadow-2xl z-50 border-r border-base-200 animate-in slide-in-from-left duration-300 flex flex-col">
+            {renderNavContent(true)}
+          </div>
+        </div>
+      )}
+    </>
   );
 }

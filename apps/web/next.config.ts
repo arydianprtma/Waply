@@ -1,9 +1,19 @@
 import type { NextConfig } from "next";
 
-const allowedDevOrigins = (process.env.ALLOWED_DEV_ORIGINS || "")
+const customOrigins = (process.env.ALLOWED_DEV_ORIGINS || "")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
+
+const appUrlHost = process.env.NEXT_PUBLIC_APP_URL
+  ? (() => {
+      try {
+        return new URL(process.env.NEXT_PUBLIC_APP_URL).host;
+      } catch {
+        return "";
+      }
+    })()
+  : "";
 
 const nextConfig: NextConfig = {
   experimental: {
@@ -12,10 +22,12 @@ const nextConfig: NextConfig = {
     },
   },
   allowedDevOrigins: [
-    ...allowedDevOrigins,
+    ...customOrigins,
+    ...(appUrlHost ? [appUrlHost] : []),
     "localhost:3001",
     "localhost:3000",
     "127.0.0.1:3001",
+    "127.0.0.1:3000",
   ],
   async headers() {
     return [

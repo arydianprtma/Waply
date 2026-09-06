@@ -249,11 +249,11 @@ export default function AdminOverviewPage() {
           </p>
         </div>
 
-        {/* Filter Rentang Waktu (Poin 5) */}
-        <div className="flex items-center gap-2 bg-white p-1 rounded-2xl border border-slate-200 shadow-xs">
+        {/* Filter Rentang Waktu */}
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 bg-white p-1 rounded-2xl border border-slate-200 shadow-xs max-w-full overflow-x-auto">
           <div className="flex items-center gap-1 px-2 text-xs font-bold text-slate-400">
-            <Calendar className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">Rentang:</span>
+            <Calendar className="w-3.5 h-3.5 shrink-0" />
+            <span className="hidden sm:inline">Rentang:</span>
           </div>
           {(
             [

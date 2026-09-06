@@ -19,10 +19,12 @@ import {
   CheckCircle,
   Pin,
   CheckCheck,
+  Menu,
 } from "lucide-react";
 
 import { useUserSession } from "@/lib/use-user-session";
 import { performLogout } from "@/lib/auth-logout";
+import { useMobileNav } from "@/lib/mobile-nav-context";
 
 interface AnnouncementItem {
   id: string;
@@ -158,11 +160,23 @@ export function Navbar() {
     }
   };
 
+  const { toggleNav } = useMobileNav();
+
   return (
-    <header className="navbar bg-white border-b border-slate-200 px-6 h-16 shrink-0 sticky top-0 z-40 shadow-xs">
-      {/* Left side: Search & Status */}
-      <div className="flex-1 flex items-center gap-4">
-        <div className="form-control hidden md:block w-72">
+    <header className="navbar bg-white border-b border-slate-200 px-3 sm:px-6 h-16 shrink-0 sticky top-0 z-40 shadow-xs">
+      {/* Left side: Mobile Menu Button + Search & Status */}
+      <div className="flex-1 flex items-center gap-2 sm:gap-4 min-w-0">
+        {/* Mobile Hamburger Menu Button (Visible on mobile/tablet < 1024px) */}
+        <button
+          onClick={toggleNav}
+          className="btn btn-ghost btn-circle btn-sm lg:hidden text-slate-700 hover:bg-slate-100 flex-shrink-0"
+          aria-label="Buka Menu Navigasi"
+          title="Buka Menu"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+
+        <div className="form-control hidden md:block w-56 lg:w-72">
           <div className="relative">
             <input
               type="text"
@@ -173,9 +187,9 @@ export function Navbar() {
           </div>
         </div>
 
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          Gateway Online
+        <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 truncate">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0"></span>
+          <span className="truncate">Gateway Online</span>
         </div>
       </div>
 
