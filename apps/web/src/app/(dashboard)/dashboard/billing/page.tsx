@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, Suspense } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   CreditCard,
@@ -113,7 +113,28 @@ function BillingContent() {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"subscription" | "invoices">("subscription");
-  const [selectedPeriodTab, setSelectedPeriodTab] = useState<"month" | "day" | "year" | "all">("month");
+  const [selectedPeriodTab, setSelectedPeriodTab] = useState<"day" | "month" | "year" | "all">("month");
+
+  const periodTabsList: { id: "day" | "month" | "year" | "all"; label: string; badge?: string }[] = [
+    { id: "day", label: "Harian" },
+    { id: "month", label: "Bulanan" },
+    { id: "year", label: "Tahunan", badge: "-20%" },
+    { id: "all", label: "Semua" },
+  ];
+  const periodTabsRef = useRef<(HTMLButtonElement | null)[]>([]);
+  const [periodIndicator, setPeriodIndicator] = useState({ left: 0, width: 0, opacity: 0 });
+
+  useEffect(() => {
+    const activeIndex = periodTabsList.findIndex((t) => t.id === selectedPeriodTab);
+    const activeEl = periodTabsRef.current[activeIndex];
+    if (activeEl) {
+      setPeriodIndicator({
+        left: activeEl.offsetLeft,
+        width: activeEl.offsetWidth,
+        opacity: 1,
+      });
+    }
+  }, [selectedPeriodTab]);
 
   // Load Snap.js script
   useEffect(() => {
@@ -325,48 +346,48 @@ function BillingContent() {
                 <p className="text-xs text-base-content/60">Pilih siklus tagihan harian, bulanan, atau tahunan sesuai kebutuhan.</p>
               </div>
 
-              {/* Period Tabs */}
-              <div className="inline-flex p-1 rounded-xl bg-base-200/80 border border-base-300 gap-1">
-                <button
-                  onClick={() => setSelectedPeriodTab("day")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                    selectedPeriodTab === "day"
-                      ? "bg-primary text-primary-content shadow-sm"
-                      : "text-base-content/70 hover:text-base-content hover:bg-base-100"
-                  }`}
-                >
-                  Harian
-                </button>
-                <button
-                  onClick={() => setSelectedPeriodTab("month")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                    selectedPeriodTab === "month"
-                      ? "bg-primary text-primary-content shadow-sm"
-                      : "text-base-content/70 hover:text-base-content hover:bg-base-100"
-                  }`}
-                >
-                  Bulanan
-                </button>
-                <button
-                  onClick={() => setSelectedPeriodTab("year")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                    selectedPeriodTab === "year"
-                      ? "bg-primary text-primary-content shadow-sm"
-                      : "text-base-content/70 hover:text-base-content hover:bg-base-100"
-                  }`}
-                >
-                  Tahunan <span className={`text-[10px] ml-1 font-semibold ${selectedPeriodTab === "year" ? "text-primary-content/90" : "text-emerald-600"}`}>(-20%)</span>
-                </button>
-                <button
-                  onClick={() => setSelectedPeriodTab("all")}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                    selectedPeriodTab === "all"
-                      ? "bg-base-100 text-base-content shadow-sm"
-                      : "text-base-content/60 hover:text-base-content"
-                  }`}
-                >
-                  Semua
-                </button>
+              {/* Period Tabs with 3D Smooth Sliding Indicator */}
+              <div className="relative inline-flex p-1.5 rounded-2xl bg-base-200/80 border border-base-300 shadow-inner">
+                {/* Animated Sliding 3D Pill */}
+                <div
+                  className="absolute top-1.5 bottom-1.5 rounded-xl bg-gradient-to-b from-emerald-500 to-emerald-600 shadow-md shadow-emerald-500/30 border-t border-white/25 pointer-events-none transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
+                  style={{
+                    left: `${periodIndicator.left}px`,
+                    width: `${periodIndicator.width}px`,
+                    opacity: periodIndicator.opacity,
+                  }}
+                />
+
+                {periodTabsList.map((tab, idx) => {
+                  const isActive = selectedPeriodTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      ref={(el) => {
+                        periodTabsRef.current[idx] = el;
+                      }}
+                      onClick={() => setSelectedPeriodTab(tab.id)}
+                      className={`relative z-10 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors duration-200 flex items-center gap-1 select-none ${
+                        isActive
+                          ? "text-white"
+                          : "text-base-content/70 hover:text-base-content"
+                      }`}
+                    >
+                      <span>{tab.label}</span>
+                      {tab.badge && (
+                        <span
+                          className={`text-[10px] ml-0.5 font-bold px-1.5 py-0.2 rounded-full transition-colors duration-200 ${
+                            isActive
+                              ? "bg-emerald-300 text-emerald-950 shadow-2xs"
+                              : "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
+                          }`}
+                        >
+                          {tab.badge}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 

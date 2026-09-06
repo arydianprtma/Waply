@@ -1,18 +1,51 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { CheckCircle2, X, Zap, Calendar, Sparkles, Award } from "lucide-react";
+import { CheckCircle2, X, Zap, Calendar, Award } from "lucide-react";
 import { Plan, getPlanDetailedFeatureList } from "@/lib/billing-types";
 
 interface LandingPricingProps {
   plans: Plan[];
 }
 
-type PeriodTab = "month" | "day" | "year" | "all";
+type PeriodTab = "day" | "month" | "year" | "all";
 
 export default function LandingPricing({ plans }: LandingPricingProps) {
   const [activeTab, setActiveTab] = useState<PeriodTab>("month");
+
+  const tabs: { id: PeriodTab; label: string; icon?: React.ElementType; badge?: string }[] = [
+    { id: "day", label: "Harian", icon: Zap },
+    { id: "month", label: "Bulanan", icon: Calendar },
+    { id: "year", label: "Tahunan", icon: Award, badge: "Hemat 20%" },
+    { id: "all", label: "Semua" },
+  ];
+
+  const tabsRef = useRef<(HTMLButtonElement | null)[]>([]);
+  const [indicatorStyle, setIndicatorStyle] = useState<{ left: number; width: number; opacity: number }>({
+    left: 0,
+    width: 0,
+    opacity: 0,
+  });
+
+  const updateIndicator = () => {
+    const activeIndex = tabs.findIndex((t) => t.id === activeTab);
+    const activeEl = tabsRef.current[activeIndex];
+    if (activeEl) {
+      setIndicatorStyle({
+        left: activeEl.offsetLeft,
+        width: activeEl.offsetWidth,
+        opacity: 1,
+      });
+    }
+  };
+
+  useEffect(() => {
+    updateIndicator();
+    // Handle resize
+    window.addEventListener("resize", updateIndicator);
+    return () => window.removeEventListener("resize", updateIndicator);
+  }, [activeTab]);
 
   const filteredPlans = plans.filter((p) => {
     if (p.isActive === false) return false;
@@ -24,58 +57,51 @@ export default function LandingPricing({ plans }: LandingPricingProps) {
 
   return (
     <div className="space-y-10">
-      {/* Category Tabs */}
+      {/* Category Tabs with 3D Smooth Sliding Indicator */}
       <div className="flex justify-center">
-        <div className="inline-flex p-1.5 rounded-2xl bg-base-200/80 border border-base-300 shadow-inner gap-1">
-          <button
-            onClick={() => setActiveTab("day")}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 ${
-              activeTab === "day"
-                ? "bg-primary text-primary-content shadow-md shadow-primary/25 scale-[1.02]"
-                : "text-base-content/70 hover:text-base-content hover:bg-base-100"
-            }`}
-          >
-            <Zap className="w-3.5 h-3.5" />
-            Harian
-          </button>
+        <div className="relative inline-flex p-1.5 rounded-2xl bg-slate-100/90 border border-slate-200/90 shadow-inner backdrop-blur-xs max-w-full overflow-x-auto">
+          {/* Animated Sliding 3D Pill */}
+          <div
+            className="absolute top-1.5 bottom-1.5 rounded-xl bg-gradient-to-b from-emerald-500 to-emerald-600 shadow-md shadow-emerald-500/30 border-t border-white/25 pointer-events-none transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
+            style={{
+              left: `${indicatorStyle.left}px`,
+              width: `${indicatorStyle.width}px`,
+              opacity: indicatorStyle.opacity,
+            }}
+          />
 
-          <button
-            onClick={() => setActiveTab("month")}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 ${
-              activeTab === "month"
-                ? "bg-primary text-primary-content shadow-md shadow-primary/25 scale-[1.02]"
-                : "text-base-content/70 hover:text-base-content hover:bg-base-100"
-            }`}
-          >
-            <Calendar className="w-3.5 h-3.5" />
-            Bulanan
-          </button>
-
-          <button
-            onClick={() => setActiveTab("year")}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 ${
-              activeTab === "year"
-                ? "bg-primary text-primary-content shadow-md shadow-primary/25 scale-[1.02]"
-                : "text-base-content/70 hover:text-base-content hover:bg-base-100"
-            }`}
-          >
-            <Award className="w-3.5 h-3.5" />
-            Tahunan
-            <span className={`badge badge-xs font-black ml-1 ${activeTab === "year" ? "bg-emerald-300 text-emerald-950" : "badge-success text-white"}`}>
-              Hemat 20%
-            </span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("all")}
-            className={`px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
-              activeTab === "all"
-                ? "bg-base-100 text-base-content shadow-sm"
-                : "text-base-content/60 hover:text-base-content"
-            }`}
-          >
-            Semua
-          </button>
+          {tabs.map((tab, idx) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                ref={(el) => {
+                  tabsRef.current[idx] = el;
+                }}
+                onClick={() => setActiveTab(tab.id)}
+                className={`relative z-10 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors duration-200 flex items-center gap-1.5 select-none shrink-0 ${
+                  isActive
+                    ? "text-white"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                {Icon && <Icon className={`w-3.5 h-3.5 transition-transform duration-200 ${isActive ? "scale-110" : ""}`} />}
+                <span>{tab.label}</span>
+                {tab.badge && (
+                  <span
+                    className={`inline-flex items-center px-1.5 py-0.2 rounded-full text-[10px] font-black tracking-wide ml-0.5 transition-colors duration-200 ${
+                      isActive
+                        ? "bg-emerald-300 text-emerald-950 shadow-2xs"
+                        : "bg-emerald-100 text-emerald-700 border border-emerald-200"
+                    }`}
+                  >
+                    {tab.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -84,7 +110,7 @@ export default function LandingPricing({ plans }: LandingPricingProps) {
         className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-${Math.min(
           4,
           Math.max(1, filteredPlans.length)
-        )} gap-6 items-stretch`}
+        )} gap-6 items-stretch animate-in fade-in duration-300`}
       >
         {filteredPlans.map((plan) => {
           const isFree = plan.price === 0;
@@ -103,10 +129,10 @@ export default function LandingPricing({ plans }: LandingPricingProps) {
           return (
             <div
               key={plan.id}
-              className={`card bg-base-100 p-6 rounded-3xl flex flex-col justify-between transition-all duration-200 ${
+              className={`card bg-white p-6 rounded-3xl flex flex-col justify-between transition-all duration-300 ${
                 plan.isPopular
                   ? "border-2 border-primary shadow-xl relative ring-2 ring-primary/20 scale-[1.02]"
-                  : "border border-base-300 hover:shadow-lg"
+                  : "border border-slate-200 hover:shadow-lg"
               }`}
             >
               {plan.isPopular && (
@@ -130,7 +156,7 @@ export default function LandingPricing({ plans }: LandingPricingProps) {
                 <div className="mt-4 min-h-[58px] flex flex-col justify-end">
                   {plan.originalPrice && plan.originalPrice > plan.price ? (
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs text-base-content/45 line-through font-semibold">
+                      <span className="text-xs text-slate-400 line-through font-semibold">
                         Rp{plan.originalPrice.toLocaleString("id-ID")}
                       </span>
                       <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black bg-rose-500 text-white shadow-xs tracking-wider shrink-0">
@@ -141,7 +167,7 @@ export default function LandingPricing({ plans }: LandingPricingProps) {
 
                   <div className="flex items-baseline gap-1">
                     <span className="text-3xl font-black text-slate-900">{priceFormatted}</span>
-                    <span className="text-xs text-base-content/60 font-medium">{periodLabel}</span>
+                    <span className="text-xs text-slate-500 font-medium">{periodLabel}</span>
                   </div>
                 </div>
 
@@ -173,7 +199,7 @@ export default function LandingPricing({ plans }: LandingPricingProps) {
                   plan.isPopular
                     ? "btn-primary shadow-lg shadow-primary/25 text-white"
                     : isFree
-                    ? "btn-outline border-base-300"
+                    ? "btn-outline border-slate-300 text-slate-800 hover:bg-slate-100"
                     : "btn-primary"
                 }`}
               >
