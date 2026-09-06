@@ -2,24 +2,165 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 15, 23, 42;
-  --background-start-rgb: 248, 250, 252;
-  --background-end-rgb: 255, 255, 255;
+@layer base {
+  :root {
+    --foreground-rgb: 15, 23, 42;
+    --background-start-rgb: 248, 250, 252;
+    --background-end-rgb: 255, 255, 255;
+  }
+
+  body {
+    color: #0f172a;
+    background-color: #f8fafc;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.01em;
+  }
+
+  [data-theme="sendoraDark"] body,
+  .dark body {
+    color: #f8fafc;
+    background-color: #0f172a;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: inherit;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
 }
 
-body {
-  color: #0f172a;
-  background-color: #f8fafc;
-  min-height: 100vh;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  letter-spacing: -0.01em;
+/* ==========================================================================
+   Sendora Dark Mode Theme Overrides
+   Ensures all cards, tables, panels, text, and inputs look premium in Dark Mode
+   ========================================================================== */
+
+[data-theme="sendoraDark"],
+.dark {
+  color-scheme: dark;
 }
 
-h1, h2, h3, h4, h5, h6 {
-  color: #0f172a;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+/* Card & Panel Backgrounds */
+[data-theme="sendoraDark"] .bg-white,
+.dark .bg-white {
+  background-color: #1e293b !important;
+  color: #f8fafc;
 }
 
+[data-theme="sendoraDark"] .bg-slate-50,
+[data-theme="sendoraDark"] .bg-slate-50\/50,
+[data-theme="sendoraDark"] .bg-slate-50\/70,
+.dark .bg-slate-50,
+.dark .bg-slate-50\/50,
+.dark .bg-slate-50\/70 {
+  background-color: #0f172a !important;
+}
+
+[data-theme="sendoraDark"] .bg-slate-100,
+[data-theme="sendoraDark"] .bg-slate-100\/90,
+.dark .bg-slate-100,
+.dark .bg-slate-100\/90 {
+  background-color: #334155 !important;
+  color: #f8fafc;
+}
+
+/* Hover States */
+[data-theme="sendoraDark"] .hover\:bg-slate-50:hover,
+[data-theme="sendoraDark"] .hover\:bg-slate-100:hover,
+.dark .hover\:bg-slate-50:hover,
+.dark .hover\:bg-slate-100:hover {
+  background-color: #334155 !important;
+}
+
+/* Text Colors */
+[data-theme="sendoraDark"] .text-slate-900,
+[data-theme="sendoraDark"] .text-slate-950,
+[data-theme="sendoraDark"] .text-slate-800,
+.dark .text-slate-900,
+.dark .text-slate-950,
+.dark .text-slate-800 {
+  color: #f8fafc !important;
+}
+
+[data-theme="sendoraDark"] .text-slate-700,
+[data-theme="sendoraDark"] .text-slate-600,
+.dark .text-slate-700,
+.dark .text-slate-600 {
+  color: #cbd5e1 !important;
+}
+
+[data-theme="sendoraDark"] .text-slate-500,
+[data-theme="sendoraDark"] .text-slate-400,
+.dark .text-slate-500,
+.dark .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+/* Borders */
+[data-theme="sendoraDark"] .border-slate-200,
+[data-theme="sendoraDark"] .border-slate-200\/70,
+[data-theme="sendoraDark"] .border-slate-200\/80,
+[data-theme="sendoraDark"] .border-slate-200\/90,
+[data-theme="sendoraDark"] .border-slate-300,
+[data-theme="sendoraDark"] .border-slate-100,
+[data-theme="sendoraDark"] .border-slate-100\/60,
+.dark .border-slate-200,
+.dark .border-slate-200\/70,
+.dark .border-slate-200\/80,
+.dark .border-slate-200\/90,
+.dark .border-slate-300,
+.dark .border-slate-100,
+.dark .border-slate-100\/60 {
+  border-color: #334155 !important;
+}
+
+[data-theme="sendoraDark"] .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+[data-theme="sendoraDark"] .divide-slate-200 > :not([hidden]) ~ :not([hidden]),
+.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+.dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #334155 !important;
+}
+
+/* Form Inputs, Selects, Textareas */
+[data-theme="sendoraDark"] input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+[data-theme="sendoraDark"] select,
+[data-theme="sendoraDark"] textarea,
+.dark input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+.dark select,
+.dark textarea {
+  background-color: #0f172a;
+  border-color: #334155;
+  color: #f8fafc;
+}
+
+[data-theme="sendoraDark"] select option,
+.dark select option {
+  background-color: #1e293b;
+  color: #f8fafc;
+}
+
+[data-theme="sendoraDark"] input::placeholder,
+[data-theme="sendoraDark"] textarea::placeholder,
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #64748b;
+}
+
+/* Tables in Dark Mode */
+[data-theme="sendoraDark"] table th,
+.dark table th {
+  background-color: #0f172a !important;
+  color: #94a3b8 !important;
+  border-color: #334155 !important;
+}
+
+[data-theme="sendoraDark"] table td,
+.dark table td {
+  border-color: #334155 !important;
+}
+
+[data-theme="sendoraDark"] table tr:hover td,
+.dark table tr:hover td {
+  background-color: #1e293b !important;
+}
