@@ -4,13 +4,15 @@ import path from "path";
 
 const GATEWAY_URL = process.env.GATEWAY_INTERNAL_URL || "http://localhost:3002";
 
+import { fetchGateway, getGatewayUrl } from "@/lib/gateway-client";
+
 export async function GET() {
   const startTime = Date.now();
   let gatewayStatus = "unreachable";
   let connectedDevicesCount = 0;
 
   try {
-    const gwRes = await fetch(`${GATEWAY_URL}/api/sessions`, {
+    const gwRes = await fetchGateway("/api/sessions", {
       cache: "no-store",
       signal: AbortSignal.timeout(2000),
     });

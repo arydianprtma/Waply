@@ -16,37 +16,45 @@ export async function GET() {
   }
 }
 
+import { planSchema, validateSchema } from "@/lib/validation-schemas";
+
 export async function POST(req: NextRequest) {
   try {
     await requireAdminUser();
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
 
-    const { id, name, price, period, maxDevices, monthlyMessages, features, access, isPopular, isActive } = body;
-
-    if (!id || !name) {
+    const validation = validateSchema(planSchema, body);
+    if (!validation.success) {
       return NextResponse.json(
-        { success: false, error: "ID dan Nama Paket wajib diisi" },
+        { success: false, error: validation.message, details: validation.errors },
         { status: 400 }
       );
     }
 
+    const { id, name, price, period, maxDevices, monthlyMessages, features, access, isPopular, isActive } = validation.data;
+
     const planData: Plan = {
-      id: id.trim().toUpperCase().replace(/\s+/g, "_"),
-      name: name.trim(),
-      price: Number(price) || 0,
+      id,
+      name,
+      price,
       period: period || "month",
-      maxDevices: Number(maxDevices) || 1,
-      monthlyMessages: Number(monthlyMessages) || 1000,
+      maxDevices: maxDevices || 1,
+      monthlyMessages: monthlyMessages || 1000,
       features: Array.isArray(features) ? features : (typeof features === "string" ? features.split("\n").filter(Boolean) : []),
-      access: access || {
-        broadcast: true,
-        autoReply: true,
-        apiAccess: true,
-        webhooks: true,
+      access: {
+        devices: true,
         warmupHealth: true,
+        broadcast: true,
+        contacts: true,
+        sendMessage: true,
+        messageLogs: true,
         templatesSpintax: true,
         blacklistDnd: true,
-        contactsUnlimited: true,
+        autoReply: true,
+        apiDocs: true,
+        apiKeys: true,
+        webhooks: true,
+        ...(access || {}),
       },
       isPopular: Boolean(isPopular),
       isActive: isActive !== false,

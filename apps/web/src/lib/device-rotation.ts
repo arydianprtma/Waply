@@ -27,6 +27,8 @@ function saveRotationState(state: RotationState) {
   } catch {}
 }
 
+import { fetchGateway } from "./gateway-client";
+
 export interface ConnectedDevice {
   id: string;
   name?: string;
@@ -39,7 +41,7 @@ export interface ConnectedDevice {
  */
 export async function getActiveDevices(): Promise<ConnectedDevice[]> {
   try {
-    const res = await fetch(`${GATEWAY_URL}/api/sessions`, { cache: "no-store" });
+    const res = await fetchGateway("/api/sessions", { cache: "no-store" });
     const json = await res.json();
     if (json.success && Array.isArray(json.data)) {
       return json.data.filter((d: any) => d.status === "connected" || d.status === "CONNECTED");

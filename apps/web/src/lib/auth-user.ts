@@ -132,11 +132,26 @@ export async function getSessionUser(): Promise<SessionUser> {
 
 export const getAuthUser = getSessionUser;
 
-export async function requireAdminUser(): Promise<SessionUser> {
+/**
+ * Require an authenticated and ACTIVE user. Throws error if user is SUSPENDED or BANNED.
+ */
+export async function requireActiveUser(): Promise<SessionUser> {
   const user = await getSessionUser();
+  if (user.status === "BANNED") {
+    throw new Error(`403 Forbidden: Akun Anda telah dinonaktifkan (Banned)${user.banReason ? `: ${user.banReason}` : ""}`);
+  }
+  if (user.status === "SUSPENDED") {
+    throw new Error(`403 Forbidden: Akun Anda sedang ditangguhkan (Suspended)${user.banReason ? `: ${user.banReason}` : ""}`);
+  }
+  return user;
+}
+
+export async function requireAdminUser(): Promise<SessionUser> {
+  const user = await requireActiveUser();
   if (user.role !== "admin") {
     throw new Error("403 Forbidden: Akses khusus Super Admin");
   }
   return user;
 }
+
 

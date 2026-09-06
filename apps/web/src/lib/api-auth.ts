@@ -183,6 +183,9 @@ export async function deleteApiKey(id: string, userId: string) {
   }
 }
 
+import { checkAccountStatus } from "./security";
+import { getUserById } from "./admin-users";
+
 /**
  * Validate an API Key against the database or local fallback
  */
@@ -217,6 +220,19 @@ export async function validateApiKey(rawKey: string): Promise<ApiAuthResult> {
       };
     }
 
+    // Check user status
+    const managedUser = getUserById(localKey.userId);
+    if (managedUser) {
+      const statusCheck = checkAccountStatus(managedUser.status, managedUser.banReason);
+      if (!statusCheck.allowed) {
+        return {
+          authenticated: false,
+          error: statusCheck.reason || "Akun dinonaktifkan",
+          status: statusCheck.statusCode || 403,
+        };
+      }
+    }
+
     localKey.lastUsedAt = new Date().toISOString();
     saveLocalKeys(localKeys);
 
@@ -224,9 +240,9 @@ export async function validateApiKey(rawKey: string): Promise<ApiAuthResult> {
       authenticated: true,
       user: {
         id: localKey.userId,
-        email: "demo@sendora.id",
-        name: "Sendora User",
-        role: "admin",
+        email: managedUser?.email || "demo@sendora.id",
+        name: managedUser?.name || "Sendora User",
+        role: managedUser?.role || "admin",
       },
       apiKeyId: localKey.id,
     };
@@ -254,6 +270,19 @@ export async function validateApiKey(rawKey: string): Promise<ApiAuthResult> {
           error: "API Key has been revoked",
           status: 403,
         };
+      }
+
+      // Check user status in admin-users store
+      const managedUser = getUserById(apiKey.user.id);
+      if (managedUser) {
+        const statusCheck = checkAccountStatus(managedUser.status, managedUser.banReason);
+        if (!statusCheck.allowed) {
+          return {
+            authenticated: false,
+            error: statusCheck.reason || "Akun dinonaktifkan",
+            status: statusCheck.statusCode || 403,
+          };
+        }
       }
 
       prisma.apiKey
@@ -293,6 +322,18 @@ export async function validateApiKey(rawKey: string): Promise<ApiAuthResult> {
     };
   }
 
+  const fallbackUser = getUserById(localKey.userId);
+  if (fallbackUser) {
+    const statusCheck = checkAccountStatus(fallbackUser.status, fallbackUser.banReason);
+    if (!statusCheck.allowed) {
+      return {
+        authenticated: false,
+        error: statusCheck.reason || "Akun dinonaktifkan",
+        status: statusCheck.statusCode || 403,
+      };
+    }
+  }
+
   localKey.lastUsedAt = new Date().toISOString();
   saveLocalKeys(localKeys);
 
@@ -300,9 +341,9 @@ export async function validateApiKey(rawKey: string): Promise<ApiAuthResult> {
     authenticated: true,
     user: {
       id: localKey.userId,
-      email: "demo@sendora.id",
-      name: "Sendora User",
-      role: "admin",
+      email: fallbackUser?.email || "demo@sendora.id",
+      name: fallbackUser?.name || "Sendora User",
+      role: fallbackUser?.role || "admin",
     },
     apiKeyId: localKey.id,
   };

@@ -3,6 +3,7 @@ import path from "path";
 import { parseSpintax } from "./spintax";
 import { normalizePhoneNumber } from "./contacts";
 import { getNextRotatedDevice } from "./device-rotation";
+import { fetchGateway } from "./gateway-client";
 
 export type BroadcastStatus = "DRAFT" | "RUNNING" | "PAUSED" | "COMPLETED" | "CANCELLED";
 
@@ -251,7 +252,7 @@ export async function startBroadcastCampaign(userId: string, campaignId: string)
   let deviceId = campaign.deviceId;
   if (!deviceId) {
     try {
-      const gwRes = await fetch(`${GATEWAY_URL}/api/sessions`);
+      const gwRes = await fetchGateway("/api/sessions");
       const gwJson = await gwRes.json();
       if (gwJson.success && Array.isArray(gwJson.data)) {
         const connected = gwJson.data.find((d: any) => d.status === "CONNECTED");
@@ -313,7 +314,7 @@ export async function startBroadcastCampaign(userId: string, campaignId: string)
 
         // Send via Gateway
         try {
-          const res = await fetch(`${GATEWAY_URL}/api/sessions/${sendDeviceId}/send`, {
+          const res = await fetchGateway(`/api/sessions/${sendDeviceId}/send`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

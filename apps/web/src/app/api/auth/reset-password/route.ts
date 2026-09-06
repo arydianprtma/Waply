@@ -6,8 +6,16 @@ import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { saveSettings } from "@/lib/settings";
 
+import { passwordResetRateLimiter, checkRateLimitResponse } from "@/lib/rate-limiter";
+
 export async function POST(req: NextRequest) {
   try {
+    // Rate limit check
+    const rateLimitRes = checkRateLimitResponse(req, passwordResetRateLimiter);
+    if (rateLimitRes) {
+      return rateLimitRes;
+    }
+
     const body = await req.json().catch(() => ({}));
     const cleanEmail = (body.email || "").trim().toLowerCase();
     const token = (body.token || "").trim();

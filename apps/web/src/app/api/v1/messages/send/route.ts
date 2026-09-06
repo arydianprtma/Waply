@@ -1,31 +1,16 @@
 import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
-import { z } from "zod";
 import { prisma } from "@sendora/database";
 import { authenticateApiRequest } from "@/lib/api-auth";
 import { parseSpintax } from "@/lib/spintax";
 import { getNextRotatedDevice } from "@/lib/device-rotation";
+import { apiMessageRateLimiter, checkRateLimitResponse } from "@/lib/rate-limiter";
+import { sendMessageSchema, validateSchema } from "@/lib/validation-schemas";
+import { sanitizePhoneNumber, isValidPhoneNumber } from "@/lib/sanitizer";
 
 const GATEWAY_URL = process.env.GATEWAY_INTERNAL_URL || "http://localhost:3002";
-
-const sendSchema = z.object({
-  deviceId: z.string().optional(),
-  recipient: z.string().optional(),
-  to: z.string().optional(),
-  message: z.string().min(1, "Message content is required"),
-  variables: z.record(z.union([z.string(), z.number()])).optional(),
-});
-
-function normalizePhoneNumber(phone: string): string {
-  let cleaned = phone.replace(/\D/g, "");
-  if (cleaned.startsWith("0")) {
-    cleaned = "62" + cleaned.slice(1);
-  } else if (cleaned.startsWith("8")) {
-    cleaned = "62" + cleaned;
-  }
-  return cleaned;
-}
+const GATEWAY_SECRET = process.env.GATEWAY_SECRET || "sendora_internal_gateway_token_key";
 
 function isBlacklistedLocally(userId: string, phoneNumber: string): boolean {
   try {
@@ -40,7 +25,13 @@ function isBlacklistedLocally(userId: string, phoneNumber: string): boolean {
 
 export async function POST(request: Request) {
   try {
-    // 1. Authenticate API Key
+    // 1. Rate Limiting Check
+    const rateLimitRes = checkRateLimitResponse(request, apiMessageRateLimiter);
+    if (rateLimitRes) {
+      return rateLimitRes;
+    }
+
+    // 2. Authenticate API Key
     const auth = await authenticateApiRequest(request);
     if (!auth.authenticated || !auth.user) {
       return NextResponse.json(
@@ -51,34 +42,41 @@ export async function POST(request: Request) {
 
     const userId = auth.user.id;
 
-    // 2. Validate Request Body
+    // 3. Validate & Sanitize Request Body
     const body = await request.json().catch(() => ({}));
-    const parseResult = sendSchema.safeParse(body);
+    const validation = validateSchema(sendMessageSchema, body);
 
-    if (!parseResult.success) {
+    if (!validation.success) {
       return NextResponse.json(
         {
           success: false,
-          error: "Validation failed",
-          details: parseResult.error.format(),
+          error: validation.message,
+          details: validation.errors,
         },
         { status: 400 }
       );
     }
 
-    const { deviceId, recipient: rawRecipient, to, message, variables } = parseResult.data;
+    const { deviceId, recipient: rawRecipient, to, message, variables } = validation.data;
     const targetRecipient = rawRecipient || to;
 
     if (!targetRecipient) {
       return NextResponse.json(
-        { success: false, error: "Recipient phone number ('to' or 'recipient') is required" },
+        { success: false, error: "Nomor WhatsApp penerima ('to' atau 'recipient') wajib diisi" },
         { status: 400 }
       );
     }
 
-    const recipient = normalizePhoneNumber(targetRecipient);
+    const recipient = sanitizePhoneNumber(targetRecipient);
 
-    // 3. Blacklist Check (DB + local fallback)
+    if (!isValidPhoneNumber(recipient)) {
+      return NextResponse.json(
+        { success: false, error: `Format nomor WhatsApp '${targetRecipient}' tidak valid. Gunakan format internasional (contoh: 6281234567890).` },
+        { status: 400 }
+      );
+    }
+
+    // 4. Blacklist Check (DB + local fallback)
     let isBlocked = isBlacklistedLocally(userId, recipient);
     if (!isBlocked) {
       try {
@@ -93,13 +91,13 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          error: `Recipient ${recipient} is in the Blacklist / Do-Not-Disturb list. Message cancelled.`,
+          error: `Nomor penerima ${recipient} terdaftar di Blacklist / Do-Not-Disturb. Pesan dibatalkan.`,
         },
         { status: 400 }
       );
     }
 
-    // 4. Find Device (Support Auto-Rotation Round-Robin & Fallback)
+    // 5. Find Device (Support Auto-Rotation Round-Robin & Fallback)
     const selectedDevice = await getNextRotatedDevice(deviceId);
     let targetDeviceId = selectedDevice?.id;
 
@@ -107,16 +105,16 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          error: "No connected WhatsApp device found. Please connect a device in WhatsApp Devices dashboard.",
+          error: "Tidak ada perangkat WhatsApp yang terhubung. Silakan scan QR device di dashboard.",
         },
         { status: 404 }
       );
     }
 
-    // 5. Parse Spintax & Dynamic Variables
+    // 6. Parse Spintax & Dynamic Variables
     const finalContent = parseSpintax(message, variables || {});
 
-    // 6. Send to Gateway
+    // 7. Send to Gateway with internal secret token
     let gatewayRes;
     let providerMessageId: string | null = null;
     let status: "SENT" | "FAILED" = "SENT";
@@ -125,7 +123,10 @@ export async function POST(request: Request) {
     try {
       const response = await fetch(`${GATEWAY_URL}/api/sessions/${targetDeviceId}/send`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-gateway-secret": GATEWAY_SECRET,
+        },
         body: JSON.stringify({
           to: recipient,
           message: finalContent,
@@ -145,7 +146,7 @@ export async function POST(request: Request) {
       failReason = `Gateway connection error: ${err.message}`;
     }
 
-    // 7. Save Message to Database (with local fallback)
+    // 8. Save Message to Database (with local fallback)
     const msgId = `msg_${Date.now()}`;
     const sentAt = status === "SENT" ? new Date().toISOString() : null;
 

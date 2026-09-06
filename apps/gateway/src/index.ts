@@ -27,9 +27,11 @@ app.get("/health", (req, res) => {
   });
 });
 
-// Mount Routes
-app.use("/api/sessions", sessionRouter);
-app.use("/api/sessions", messageRouter);
+import { gatewayAuthMiddleware } from "./middleware/auth.js";
+
+// Mount Routes with security middleware
+app.use("/api/sessions", gatewayAuthMiddleware, sessionRouter);
+app.use("/api/sessions", gatewayAuthMiddleware, messageRouter);
 
 // Start Server and restore saved sessions
 app.listen(PORT, async () => {

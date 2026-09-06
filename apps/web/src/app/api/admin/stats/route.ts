@@ -3,9 +3,9 @@ import fs from "fs";
 import path from "path";
 import { getSessionUser } from "@/lib/auth-user";
 import { getAdminUserStats, getAllManagedUsers } from "@/lib/admin-users";
+import { fetchGateway } from "@/lib/gateway-client";
 
 const DATA_DIR = path.resolve(process.cwd(), ".sendora-data");
-const GATEWAY_URL = process.env.GATEWAY_INTERNAL_URL || "http://localhost:3002";
 
 function readJson<T>(file: string, fallback: T): T {
   try {
@@ -49,7 +49,7 @@ export async function GET(request: Request) {
   let gatewayDevices: any[] = [];
   try {
     const start = Date.now();
-    const gwRes = await fetch(`${GATEWAY_URL}/api/sessions`, {
+    const gwRes = await fetchGateway("/api/sessions", {
       cache: "no-store",
       signal: AbortSignal.timeout(2000),
     });

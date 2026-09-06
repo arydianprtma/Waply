@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { getSessionUser } from "@/lib/auth-user";
+import { requireActiveUser } from "@/lib/auth-user";
 import { getLocalContacts, createContact } from "@/lib/contacts";
+import { sanitizePhoneNumber, sanitizeText } from "@/lib/sanitizer";
 
 export async function GET(request: Request) {
   try {
-    const user = await getSessionUser();
+    const user = await requireActiveUser();
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search")?.toLowerCase() || "";
     const groupId = searchParams.get("groupId") || "";
@@ -26,13 +27,14 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ success: true, data: contacts });
   } catch (error: any) {
-    return NextResponse.json({ success: true, data: [] });
+    const status = error.message?.includes("403") ? 403 : 500;
+    return NextResponse.json({ success: false, error: error.message }, { status });
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const user = await getSessionUser();
+    const user = await requireActiveUser();
     const body = await request.json().catch(() => ({}));
 
     if (!body.phoneNumber) {
@@ -42,12 +44,20 @@ export async function POST(request: Request) {
       );
     }
 
+    const cleanPhone = sanitizePhoneNumber(body.phoneNumber);
+    if (!cleanPhone || cleanPhone.length < 9) {
+      return NextResponse.json(
+        { success: false, error: "Format nomor WhatsApp tidak valid" },
+        { status: 400 }
+      );
+    }
+
     const result = createContact(user.id, {
-      name: body.name || "",
-      phoneNumber: body.phoneNumber,
+      name: sanitizeText(body.name || "Kontak", 100),
+      phoneNumber: cleanPhone,
       groupId: body.groupId || null,
       customVariables: body.customVariables || {},
-      notes: body.notes || null,
+      notes: body.notes ? sanitizeText(body.notes, 500) : null,
     });
 
     if (!result.success) {
@@ -56,9 +66,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, data: result.contact });
   } catch (error: any) {
+    const status = error.message?.includes("403") ? 403 : 500;
     return NextResponse.json(
       { success: false, error: error.message || "Failed to create contact" },
-      { status: 500 }
+      { status }
     );
   }
 }

@@ -37,8 +37,8 @@ apps/gateway/.sendora-data/
 # WhatsApp session data (Never commit credentials!)
 apps/gateway/sessions/
 apps/gateway/auth_info_baileys/
-sessions/
-auth_info_baileys/
+/sessions/
+/auth_info_baileys/
 *.session
 
 # Logs

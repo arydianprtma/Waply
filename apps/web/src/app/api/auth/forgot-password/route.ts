@@ -3,17 +3,28 @@ import { getUserByEmail } from "@/lib/admin-users";
 import { createPasswordResetToken } from "@/lib/password-reset";
 import { sendEmailResetPassword } from "@/lib/email-service";
 
+import { passwordResetRateLimiter, checkRateLimitResponse } from "@/lib/rate-limiter";
+import { forgotPasswordSchema, validateSchema } from "@/lib/validation-schemas";
+
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json().catch(() => ({}));
-    const cleanEmail = (body.email || "").trim().toLowerCase();
+    // Rate limit check
+    const rateLimitRes = checkRateLimitResponse(req, passwordResetRateLimiter);
+    if (rateLimitRes) {
+      return rateLimitRes;
+    }
 
-    if (!cleanEmail || !cleanEmail.includes("@")) {
+    const body = await req.json().catch(() => ({}));
+    const validation = validateSchema(forgotPasswordSchema, body);
+
+    if (!validation.success) {
       return NextResponse.json(
-        { success: false, error: "Silakan masukkan alamat email yang valid." },
+        { success: false, error: validation.message, details: validation.errors },
         { status: 400 }
       );
     }
+
+    const cleanEmail = validation.data.email;
 
     // Find user in database / managed registry
     const dbUser = getUserByEmail(cleanEmail);
