@@ -453,6 +453,7 @@ export default function AdminOverviewPage() {
                       fontSize: "12px",
                       boxShadow: "0 10px 25px -5px rgba(0,0,0,0.3)",
                     }}
+                    itemStyle={{ color: "#f8fafc", fontWeight: "600" }}
                     labelStyle={{ fontWeight: "bold", color: "#e2e8f0" }}
                   />
                   <Area
@@ -515,10 +516,19 @@ export default function AdminOverviewPage() {
                   <Tooltip
                     contentStyle={{
                       backgroundColor: "#0f172a",
-                      color: "#fff",
-                      borderRadius: "12px",
-                      fontSize: "11px",
+                      color: "#ffffff",
+                      borderRadius: "14px",
+                      border: "1px solid #1e293b",
+                      fontSize: "12px",
+                      boxShadow: "0 10px 25px -5px rgba(0,0,0,0.4)",
+                      padding: "8px 12px",
                     }}
+                    itemStyle={{ color: "#ffffff", fontWeight: "bold" }}
+                    labelStyle={{ color: "#94a3b8", fontWeight: "bold" }}
+                    formatter={(value: any, name: any) => [
+                      `${value} User (${Math.round((Number(value) / (stats?.overview?.totalUsers || 1)) * 100)}%)`,
+                      `Paket ${name}`,
+                    ]}
                   />
                 </PieChart>
               </ResponsiveContainer>
