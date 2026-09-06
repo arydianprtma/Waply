@@ -3,12 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { SendoraLogo } from "@/components/brand/SendoraLogo";
-import { Menu, X, ArrowRight, ShieldCheck, Zap, BookOpen, CreditCard, HelpCircle, Moon, Sun } from "lucide-react";
-import { useTheme } from "@/components/theme-provider";
+import { Menu, X, ArrowRight, ShieldCheck, Zap, BookOpen, CreditCard, HelpCircle } from "lucide-react";
 
 export function LandingNavbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { isDark, toggleTheme } = useTheme();
 
   const navLinks = [
     { name: "Fitur", href: "/#features", icon: Zap },
@@ -20,7 +18,7 @@ export function LandingNavbar() {
 
   return (
     <>
-      <header className="navbar bg-base-100/90 backdrop-blur-md sticky top-0 z-50 border-b border-base-200 px-4 md:px-12 transition-all">
+      <header className="navbar bg-white/90 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200 px-4 md:px-12 transition-all">
         {/* Brand Logo */}
         <div className="navbar-start">
           <SendoraLogo href="/" size="md" />
@@ -33,7 +31,7 @@ export function LandingNavbar() {
               <li key={link.name}>
                 <Link
                   href={link.href}
-                  className="hover:text-primary hover:bg-base-200/60 rounded-xl transition-colors font-semibold text-base-content/80 hover:text-base-content"
+                  className="hover:text-primary hover:bg-slate-100 rounded-xl transition-colors font-semibold text-slate-700"
                 >
                   {link.name}
                 </Link>
@@ -42,22 +40,12 @@ export function LandingNavbar() {
           </ul>
         </div>
 
-        {/* Desktop Auth Buttons & Theme Toggle & Mobile Hamburger Button */}
+        {/* Desktop Auth Buttons & Mobile Hamburger Button */}
         <div className="navbar-end gap-2">
-          {/* Theme Toggle Button */}
-          <button
-            onClick={toggleTheme}
-            className="btn btn-ghost btn-circle btn-sm text-base-content/70 hover:text-base-content"
-            title="Ganti Tema"
-            aria-label="Ganti Tema"
-          >
-            {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
-          </button>
-
           <div className="hidden sm:flex items-center gap-2">
             <Link
               href="/login"
-              className="btn btn-ghost btn-sm font-bold text-base-content/80 hover:text-base-content rounded-xl"
+              className="btn btn-ghost btn-sm font-bold text-slate-700 hover:text-slate-900 rounded-xl"
             >
               Masuk
             </Link>
@@ -73,7 +61,7 @@ export function LandingNavbar() {
           {/* Hamburger Button (Visible on mobile/tablet) */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="btn btn-ghost btn-circle btn-sm lg:hidden text-base-content"
+            className="btn btn-ghost btn-circle btn-sm lg:hidden text-slate-700"
             aria-label="Toggle mobile menu"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -91,10 +79,10 @@ export function LandingNavbar() {
           />
 
           {/* Drawer Content Panel */}
-          <div className="fixed top-0 right-0 bottom-0 w-4/5 max-w-sm bg-base-100 p-6 shadow-2xl flex flex-col justify-between z-50 border-l border-base-200 animate-in slide-in-from-right duration-300">
+          <div className="fixed top-0 right-0 bottom-0 w-4/5 max-w-sm bg-white p-6 shadow-2xl flex flex-col justify-between z-50 border-l border-slate-200 animate-in slide-in-from-right duration-300">
             <div>
               {/* Drawer Header */}
-              <div className="flex items-center justify-between pb-5 border-b border-base-200">
+              <div className="flex items-center justify-between pb-5 border-b border-slate-200">
                 <SendoraLogo href="/" size="sm" />
                 <button
                   onClick={() => setMobileMenuOpen(false)}
@@ -129,14 +117,7 @@ export function LandingNavbar() {
             </div>
 
             {/* Drawer Bottom Actions */}
-            <div className="pt-6 border-t border-base-200 space-y-3">
-              <button
-                onClick={toggleTheme}
-                className="btn btn-outline w-full rounded-2xl font-bold flex items-center justify-center gap-2"
-              >
-                {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
-                <span>{isDark ? "Tema Terang (Light Mode)" : "Tema Gelap (Dark Mode)"}</span>
-              </button>
+            <div className="pt-6 border-t border-slate-200 space-y-3">
               <Link
                 href="/register"
                 onClick={() => setMobileMenuOpen(false)}
@@ -148,7 +129,7 @@ export function LandingNavbar() {
               <Link
                 href="/login"
                 onClick={() => setMobileMenuOpen(false)}
-                className="btn btn-ghost border border-base-300 w-full rounded-2xl font-bold text-base-content"
+                className="btn btn-outline w-full rounded-2xl font-bold text-slate-700"
               >
                 Masuk ke Akun
               </Link>
