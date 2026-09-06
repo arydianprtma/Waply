@@ -4,6 +4,7 @@ import { Navbar } from "@/components/dashboard/Navbar";
 import { ForbiddenBanner } from "@/components/dashboard/ForbiddenBanner";
 import { AccountStatusBanner } from "@/components/dashboard/AccountStatusBanner";
 import { MaintenanceBanner } from "@/components/dashboard/MaintenanceBanner";
+import { AnnouncementPopupModal } from "@/components/dashboard/AnnouncementPopupModal";
 
 import { MobileNavProvider } from "@/lib/mobile-nav-context";
 
@@ -27,6 +28,7 @@ export default function DashboardLayout({
             <Suspense fallback={null}>
               <ForbiddenBanner />
             </Suspense>
+            <AnnouncementPopupModal />
             {children}
           </main>
         </div>

@@ -41,6 +41,10 @@ export async function POST(req: NextRequest) {
         targetAudience: body.targetAudience,
         isPinned: body.isPinned,
         isActive: body.isActive,
+        isPopup: body.isPopup,
+        popupActionText: body.popupActionText,
+        popupActionUrl: body.popupActionUrl,
+        popupImage: body.popupImage,
       });
 
       if (!updated) {
@@ -61,6 +65,10 @@ export async function POST(req: NextRequest) {
         targetAudience: body.targetAudience || "ALL",
         isPinned: body.isPinned ?? false,
         isActive: body.isActive ?? true,
+        isPopup: body.isPopup ?? false,
+        popupActionText: body.popupActionText || "",
+        popupActionUrl: body.popupActionUrl || "",
+        popupImage: body.popupImage || "",
       });
 
       return NextResponse.json({ success: true, data: created });

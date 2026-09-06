@@ -30,6 +30,10 @@ interface AnnouncementItem {
   targetAudience: "ALL" | "FREE" | "PAID";
   isPinned: boolean;
   isActive: boolean;
+  isPopup?: boolean;
+  popupActionText?: string;
+  popupActionUrl?: string;
+  popupImage?: string;
   createdAt: string;
   updatedAt: string;
   readBy?: string[];
@@ -55,6 +59,10 @@ export default function AdminAnnouncementsPage() {
   const [formTarget, setFormTarget] = useState<"ALL" | "FREE" | "PAID">("ALL");
   const [formPinned, setFormPinned] = useState(false);
   const [formActive, setFormActive] = useState(true);
+  const [formIsPopup, setFormIsPopup] = useState(false);
+  const [formPopupActionText, setFormPopupActionText] = useState("");
+  const [formPopupActionUrl, setFormPopupActionUrl] = useState("");
+  const [formPopupImage, setFormPopupImage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [successToast, setSuccessToast] = useState<string | null>(null);
 
@@ -84,6 +92,10 @@ export default function AdminAnnouncementsPage() {
     setFormTarget("ALL");
     setFormPinned(false);
     setFormActive(true);
+    setFormIsPopup(false);
+    setFormPopupActionText("");
+    setFormPopupActionUrl("");
+    setFormPopupImage("");
     setShowModal(true);
   };
 
@@ -95,6 +107,10 @@ export default function AdminAnnouncementsPage() {
     setFormTarget(item.targetAudience);
     setFormPinned(item.isPinned);
     setFormActive(item.isActive);
+    setFormIsPopup(item.isPopup ?? false);
+    setFormPopupActionText(item.popupActionText || "");
+    setFormPopupActionUrl(item.popupActionUrl || "");
+    setFormPopupImage(item.popupImage || "");
     setShowModal(true);
   };
 
@@ -109,6 +125,10 @@ export default function AdminAnnouncementsPage() {
         targetAudience: formTarget,
         isPinned: formPinned,
         isActive: formActive,
+        isPopup: formIsPopup,
+        popupActionText: formPopupActionText,
+        popupActionUrl: formPopupActionUrl,
+        popupImage: formPopupImage,
       };
 
       if (editingId) {
@@ -348,6 +368,12 @@ export default function AdminAnnouncementsPage() {
                       </span>
                     )}
 
+                    {item.isPopup && (
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-100 text-purple-800 border border-purple-200 flex items-center gap-1">
+                        <Sparkles className="w-3 h-3 text-purple-600" /> Pop-up Modal
+                      </span>
+                    )}
+
                     <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600">
                       Audiens: {item.targetAudience === "ALL" ? "Semua User" : item.targetAudience === "FREE" ? "Free User" : "Pro User"}
                     </span>
@@ -518,6 +544,70 @@ export default function AdminAnnouncementsPage() {
                       </span>
                     </div>
                   </label>
+
+                  <div className="pt-2 border-t border-slate-200/70">
+                    <label className="label cursor-pointer justify-start gap-3 p-0 select-none">
+                      <input
+                        type="checkbox"
+                        className="checkbox checkbox-secondary checkbox-sm rounded-md"
+                        checked={formIsPopup}
+                        onChange={(e) => setFormIsPopup(e.target.checked)}
+                      />
+                      <div>
+                        <span className="label-text font-bold text-xs text-slate-900 flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+                          Tampilkan sebagai Pop-up Modal di Dashboard Pengguna
+                        </span>
+                        <span className="text-[11px] text-slate-500">
+                          Muncul otomatis sebagai jendela promo/pengumuman saat pengguna membuka dashboard
+                        </span>
+                      </div>
+                    </label>
+
+                    {formIsPopup && (
+                      <div className="mt-3.5 pl-7 space-y-3 animate-in fade-in slide-in-from-top-1 duration-150">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="form-control">
+                            <label className="label py-0.5">
+                              <span className="label-text font-bold text-[11px] text-slate-700">Teks Tombol CTA</span>
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="Contoh: Beli Paket Sekarang / Lihat Promo"
+                              className="input input-bordered input-xs font-semibold rounded-lg text-xs"
+                              value={formPopupActionText}
+                              onChange={(e) => setFormPopupActionText(e.target.value)}
+                            />
+                          </div>
+                          <div className="form-control">
+                            <label className="label py-0.5">
+                              <span className="label-text font-bold text-[11px] text-slate-700">Link Tujuan CTA (URL)</span>
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="Contoh: /dashboard/billing atau https://..."
+                              className="input input-bordered input-xs font-semibold rounded-lg text-xs"
+                              value={formPopupActionUrl}
+                              onChange={(e) => setFormPopupActionUrl(e.target.value)}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="form-control">
+                          <label className="label py-0.5">
+                            <span className="label-text font-bold text-[11px] text-slate-700">URL Gambar Banner Promo (Opsional)</span>
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Contoh: https://example.com/promo-banner.png atau /images/promo.png"
+                            className="input input-bordered input-xs font-semibold rounded-lg text-xs"
+                            value={formPopupImage}
+                            onChange={(e) => setFormPopupImage(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex gap-2 justify-end pt-3">

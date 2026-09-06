@@ -9,6 +9,10 @@ export interface Announcement {
   targetAudience: "ALL" | "FREE" | "PAID";
   isPinned: boolean;
   isActive: boolean;
+  isPopup?: boolean;
+  popupActionText?: string;
+  popupActionUrl?: string;
+  popupImage?: string;
   createdAt: string;
   updatedAt: string;
   readBy?: string[]; // Array of user IDs who have marked this read
