@@ -56,8 +56,8 @@ export default function LandingPricing({ plans }: LandingPricingProps) {
   return (
     <div className="space-y-10">
       {/* Category Tabs with Ultra Liquid Glass 3D Fluid Morph Animation */}
-      <div className="flex justify-center">
-        <div className="relative inline-flex p-1.5 rounded-2xl bg-slate-200/50 dark:bg-slate-800/40 border border-white/80 dark:border-white/10 shadow-[inset_0_2px_4px_rgba(0,0,0,0.06),0_10px_25px_-5px_rgba(0,0,0,0.04)] backdrop-blur-md max-w-full overflow-x-auto">
+      <div className="flex justify-center w-full px-2">
+        <div className="relative inline-flex p-1.5 rounded-2xl bg-slate-200/50 dark:bg-slate-800/40 border border-white/80 dark:border-white/10 shadow-[inset_0_2px_4px_rgba(0,0,0,0.06),0_10px_25px_-5px_rgba(0,0,0,0.04)] backdrop-blur-md">
           {/* Liquid Glass Fluid Pill */}
           <div
             className="absolute top-1.5 bottom-1.5 rounded-xl bg-gradient-to-b from-emerald-500/95 via-emerald-600 to-teal-700 shadow-[inset_0_1.5px_1px_rgba(255,255,255,0.7),inset_0_-1.5px_2px_rgba(0,0,0,0.25),0_8px_24px_-4px_rgba(16,185,129,0.55)] border-t border-white/40 pointer-events-none transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] overflow-hidden"
@@ -115,12 +115,7 @@ export default function LandingPricing({ plans }: LandingPricingProps) {
       </div>
 
       {/* Grid of Plans */}
-      <div
-        className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-${Math.min(
-          4,
-          Math.max(1, filteredPlans.length)
-        )} gap-6 items-stretch animate-in fade-in duration-300`}
-      >
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch w-full animate-in fade-in duration-300">
         {filteredPlans.map((plan) => {
           const isFree = plan.price === 0;
           const priceFormatted = isFree ? "Rp0" : `Rp${plan.price.toLocaleString("id-ID")}`;
