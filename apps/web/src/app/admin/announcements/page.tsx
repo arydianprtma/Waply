@@ -682,24 +682,24 @@ export default function AdminAnnouncementsPage() {
                           {formPopupImage && (
                             <div className="mt-2 p-2.5 rounded-xl border border-slate-200 bg-white space-y-1.5">
                               <div className="flex items-center justify-between text-[11px] font-bold text-slate-600">
-                                <span>Preview Banner:</span>
+                                <span>Preview Banner (Rasio 16:9):</span>
                                 {imageError ? (
                                   <span className="text-rose-500 flex items-center gap-1 font-bold">
                                     <AlertCircle className="w-3 h-3" /> Gagal Memuat
                                   </span>
                                 ) : (
                                   <span className="text-emerald-600 flex items-center gap-1 font-bold">
-                                    <Check className="w-3 h-3" /> Gambar Valid
+                                    <Check className="w-3 h-3" /> Gambar Valid (16:9)
                                   </span>
                                 )}
                               </div>
 
-                              <div className="relative max-h-36 overflow-hidden rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center">
+                              <div className="relative w-full aspect-[16/9] overflow-hidden rounded-xl bg-slate-900 border border-slate-200 flex items-center justify-center">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                   src={formPopupImage}
                                   alt="Preview Banner"
-                                  className={`w-full max-h-36 object-contain rounded-lg ${imageError ? "hidden" : "block"}`}
+                                  className={`w-full h-full object-cover rounded-xl ${imageError ? "hidden" : "block"}`}
                                   onLoad={() => setImageError(false)}
                                   onError={() => setImageError(true)}
                                 />
@@ -707,7 +707,7 @@ export default function AdminAnnouncementsPage() {
                                   <div className="p-3 text-center text-rose-600 text-xs font-medium space-y-1">
                                     <p className="font-bold">⚠️ URL ini bukan file gambar langsung</p>
                                     <p className="text-[10px] text-slate-500">
-                                      URL halaman web (seperti <code>id.pngtree.com/so/promo</code>) tidak bisa dijadikan banner. Silakan klik tombol <b>"Upload File Gambar"</b> di atas atau gunakan link yang berakhiran <code>.png</code> / <code>.jpg</code> / <code>.webp</code>.
+                                      URL halaman web tidak bisa dijadikan banner. Silakan klik tombol <b>"Upload File Gambar"</b> di atas atau gunakan link yang berakhiran <code>.png</code> / <code>.jpg</code> / <code>.webp</code>.
                                     </p>
                                   </div>
                                 )}

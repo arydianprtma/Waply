@@ -157,7 +157,7 @@ export function AnnouncementPopupModal() {
 
       {/* Modal Card */}
       <div
-        className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl border border-slate-200/80 dark:border-slate-800/80 overflow-hidden z-10 animate-in zoom-in-95 duration-200 my-auto text-slate-800 dark:text-slate-100"
+        className="relative w-full max-w-lg md:max-w-xl bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl border border-slate-200/80 dark:border-slate-800/80 overflow-hidden z-10 animate-in zoom-in-95 duration-200 my-auto text-slate-800 dark:text-slate-100"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Ambient Top Glow */}
@@ -169,19 +169,19 @@ export function AnnouncementPopupModal() {
         <button
           onClick={handleClose}
           aria-label="Tutup"
-          className="absolute top-4 right-4 z-30 w-9 h-9 rounded-full bg-slate-900/60 hover:bg-slate-900/90 text-white backdrop-blur-md flex items-center justify-center transition-all shadow-md"
+          className="absolute top-4 right-4 z-30 w-9 h-9 rounded-full bg-slate-950/70 hover:bg-slate-950 text-white backdrop-blur-md flex items-center justify-center transition-all shadow-lg border border-white/10"
         >
           <X className="w-4 h-4" />
         </button>
 
-        {/* Optional Promo Banner Image */}
+        {/* 16:9 Aspect Ratio Promo Banner Image */}
         {popup.popupImage && (
-          <div className="relative w-full max-h-64 overflow-hidden bg-slate-100 dark:bg-slate-950/80 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-center">
+          <div className="relative w-full aspect-[16/9] overflow-hidden bg-slate-100 dark:bg-slate-950 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={popup.popupImage}
               alt={popup.title}
-              className="w-full max-h-64 object-cover object-center"
+              className="w-full h-full object-cover object-center"
               onError={(e) => {
                 // If image fails to load, hide image container
                 const parent = (e.target as HTMLElement).parentElement;
