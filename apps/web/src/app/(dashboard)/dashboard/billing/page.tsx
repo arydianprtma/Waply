@@ -346,17 +346,22 @@ function BillingContent() {
                 <p className="text-xs text-base-content/60">Pilih siklus tagihan harian, bulanan, atau tahunan sesuai kebutuhan.</p>
               </div>
 
-              {/* Period Tabs with 3D Smooth Sliding Indicator */}
-              <div className="relative inline-flex p-1.5 rounded-2xl bg-base-200/80 border border-base-300 shadow-inner">
-                {/* Animated Sliding 3D Pill */}
+              {/* Period Tabs with Liquid Glass 3D Fluid Morph Animation */}
+              <div className="relative inline-flex p-1.5 rounded-2xl bg-base-200/80 border border-white/60 dark:border-white/10 shadow-[inset_0_2px_4px_rgba(0,0,0,0.06),0_10px_25px_-5px_rgba(0,0,0,0.04)] backdrop-blur-md">
+                {/* Liquid Glass Fluid Pill */}
                 <div
-                  className="absolute top-1.5 bottom-1.5 rounded-xl bg-gradient-to-b from-emerald-500 to-emerald-600 shadow-md shadow-emerald-500/30 border-t border-white/25 pointer-events-none transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
+                  className="absolute top-1.5 bottom-1.5 rounded-xl bg-gradient-to-b from-emerald-500/95 via-emerald-600 to-teal-700 shadow-[inset_0_1.5px_1px_rgba(255,255,255,0.7),inset_0_-1.5px_2px_rgba(0,0,0,0.25),0_8px_24px_-4px_rgba(16,185,129,0.55)] border-t border-white/40 pointer-events-none transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] overflow-hidden"
                   style={{
                     left: `${periodIndicator.left}px`,
                     width: `${periodIndicator.width}px`,
                     opacity: periodIndicator.opacity,
                   }}
-                />
+                >
+                  {/* Top Gloss Specular Reflex Overlay */}
+                  <div className="absolute inset-x-0 top-0 h-[48%] bg-gradient-to-b from-white/35 via-white/15 to-transparent rounded-t-xl pointer-events-none" />
+                  {/* Ambient Radial Bloom */}
+                  <div className="absolute -bottom-2 inset-x-0 h-4 bg-teal-300/40 blur-sm pointer-events-none" />
+                </div>
 
                 {periodTabsList.map((tab, idx) => {
                   const isActive = selectedPeriodTab === tab.id;
@@ -367,18 +372,18 @@ function BillingContent() {
                         periodTabsRef.current[idx] = el;
                       }}
                       onClick={() => setSelectedPeriodTab(tab.id)}
-                      className={`relative z-10 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors duration-200 flex items-center gap-1 select-none ${
+                      className={`relative z-10 px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all duration-300 flex items-center gap-1 select-none active:scale-95 cursor-pointer ${
                         isActive
-                          ? "text-white"
-                          : "text-base-content/70 hover:text-base-content"
+                          ? "text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]"
+                          : "text-base-content/70 hover:text-base-content hover:bg-white/20"
                       }`}
                     >
                       <span>{tab.label}</span>
                       {tab.badge && (
                         <span
-                          className={`text-[10px] ml-0.5 font-bold px-1.5 py-0.2 rounded-full transition-colors duration-200 ${
+                          className={`text-[10px] ml-0.5 font-black px-1.5 py-0.2 rounded-full transition-all duration-300 ${
                             isActive
-                              ? "bg-emerald-300 text-emerald-950 shadow-2xs"
+                              ? "bg-white/25 text-white border border-white/40 shadow-xs backdrop-blur-xs scale-105"
                               : "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
                           }`}
                         >

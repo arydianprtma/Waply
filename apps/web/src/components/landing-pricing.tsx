@@ -42,7 +42,6 @@ export default function LandingPricing({ plans }: LandingPricingProps) {
 
   useEffect(() => {
     updateIndicator();
-    // Handle resize
     window.addEventListener("resize", updateIndicator);
     return () => window.removeEventListener("resize", updateIndicator);
   }, [activeTab]);
@@ -50,25 +49,29 @@ export default function LandingPricing({ plans }: LandingPricingProps) {
   const filteredPlans = plans.filter((p) => {
     if (p.isActive === false) return false;
     if (activeTab === "all") return true;
-    // FREE plan can be shown in all tabs or when tab matches
     if (p.id === "FREE") return true;
     return (p.period || "month") === activeTab;
   });
 
   return (
     <div className="space-y-10">
-      {/* Category Tabs with 3D Smooth Sliding Indicator */}
+      {/* Category Tabs with Ultra Liquid Glass 3D Fluid Morph Animation */}
       <div className="flex justify-center">
-        <div className="relative inline-flex p-1.5 rounded-2xl bg-slate-100/90 border border-slate-200/90 shadow-inner backdrop-blur-xs max-w-full overflow-x-auto">
-          {/* Animated Sliding 3D Pill */}
+        <div className="relative inline-flex p-1.5 rounded-2xl bg-slate-200/50 dark:bg-slate-800/40 border border-white/80 dark:border-white/10 shadow-[inset_0_2px_4px_rgba(0,0,0,0.06),0_10px_25px_-5px_rgba(0,0,0,0.04)] backdrop-blur-md max-w-full overflow-x-auto">
+          {/* Liquid Glass Fluid Pill */}
           <div
-            className="absolute top-1.5 bottom-1.5 rounded-xl bg-gradient-to-b from-emerald-500 to-emerald-600 shadow-md shadow-emerald-500/30 border-t border-white/25 pointer-events-none transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
+            className="absolute top-1.5 bottom-1.5 rounded-xl bg-gradient-to-b from-emerald-500/95 via-emerald-600 to-teal-700 shadow-[inset_0_1.5px_1px_rgba(255,255,255,0.7),inset_0_-1.5px_2px_rgba(0,0,0,0.25),0_8px_24px_-4px_rgba(16,185,129,0.55)] border-t border-white/40 pointer-events-none transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] overflow-hidden"
             style={{
               left: `${indicatorStyle.left}px`,
               width: `${indicatorStyle.width}px`,
               opacity: indicatorStyle.opacity,
             }}
-          />
+          >
+            {/* Top Gloss Specular Reflex Overlay (Liquid Glass Glare) */}
+            <div className="absolute inset-x-0 top-0 h-[48%] bg-gradient-to-b from-white/35 via-white/15 to-transparent rounded-t-xl pointer-events-none" />
+            {/* Ambient Radial Bloom */}
+            <div className="absolute -bottom-2 inset-x-0 h-4 bg-teal-300/40 blur-sm pointer-events-none" />
+          </div>
 
           {tabs.map((tab, idx) => {
             const Icon = tab.icon;
@@ -80,19 +83,25 @@ export default function LandingPricing({ plans }: LandingPricingProps) {
                   tabsRef.current[idx] = el;
                 }}
                 onClick={() => setActiveTab(tab.id)}
-                className={`relative z-10 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors duration-200 flex items-center gap-1.5 select-none shrink-0 ${
+                className={`relative z-10 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all duration-300 flex items-center gap-1.5 select-none shrink-0 cursor-pointer active:scale-95 ${
                   isActive
-                    ? "text-white"
-                    : "text-slate-600 hover:text-slate-900"
+                    ? "text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]"
+                    : "text-slate-600 hover:text-slate-950 hover:bg-white/40"
                 }`}
               >
-                {Icon && <Icon className={`w-3.5 h-3.5 transition-transform duration-200 ${isActive ? "scale-110" : ""}`} />}
+                {Icon && (
+                  <Icon
+                    className={`w-3.5 h-3.5 transition-transform duration-300 ${
+                      isActive ? "scale-115 -rotate-3 text-emerald-100" : "text-slate-500 group-hover:scale-105"
+                    }`}
+                  />
+                )}
                 <span>{tab.label}</span>
                 {tab.badge && (
                   <span
-                    className={`inline-flex items-center px-1.5 py-0.2 rounded-full text-[10px] font-black tracking-wide ml-0.5 transition-colors duration-200 ${
+                    className={`inline-flex items-center px-1.5 py-0.2 rounded-full text-[10px] font-black tracking-wide ml-0.5 transition-all duration-300 ${
                       isActive
-                        ? "bg-emerald-300 text-emerald-950 shadow-2xs"
+                        ? "bg-white/25 text-white border border-white/40 shadow-xs backdrop-blur-xs scale-105"
                         : "bg-emerald-100 text-emerald-700 border border-emerald-200"
                     }`}
                   >
