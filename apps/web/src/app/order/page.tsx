@@ -1,0 +1,2133 @@
+"use client";
+
+import React, { useState, useEffect, Suspense, useCallback } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import {
+  Zap,
+  CheckCircle2,
+  ShieldCheck,
+  Smartphone,
+  MessageSquare,
+  Sparkles,
+  Lock,
+  Tag,
+  ArrowRight,
+  Radio,
+  ChevronRight,
+  Bot,
+  ScrollText,
+  Clock,
+  Layers,
+  AlertCircle,
+  CreditCard,
+  Building2,
+  User,
+  Mail,
+  Phone,
+  RefreshCw,
+  HelpCircle,
+  Server,
+  QrCode,
+  Copy,
+  Check,
+  Download,
+  ExternalLink,
+  ChevronDown,
+  X,
+  Eye,
+  EyeOff,
+  UserCheck,
+  UserPlus,
+  KeyRound,
+  LogOut,
+  Loader2,
+} from "lucide-react";
+import {
+  type Plan,
+  type PlanId,
+  DEFAULT_PLANS,
+  getPlanDetailedFeatureList,
+} from "@/lib/billing-types";
+import { ModalPortal } from "@/components/ui/ModalPortal";
+import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
+
+type PaymentMethodOption = "qris" | "bca_va" | "mandiri_va" | "bri_va" | "bni_va" | "gopay" | "snap";
+
+interface PaymentChargeData {
+  orderId: string;
+  grossAmount: number;
+  paymentType: string;
+  bank?: string;
+  qrCodeUrl?: string | null;
+  qrString?: string | null;
+  vaNumber?: string | null;
+  billerCode?: string | null;
+  billKey?: string | null;
+  deeplinkUrl?: string | null;
+  expiryTime?: string;
+  transactionStatus?: string;
+}
+
+function formatIDR(n: number) {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+  }).format(n);
+}
+
+function OrderContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Selected plan from URL or default
+  const rawPlanParam = searchParams.get("plan") || "STARTER";
+  const initialPlanId = rawPlanParam.toUpperCase().replace(/\s+/g, "_");
+
+  const [selectedPlanId, setSelectedPlanId] = useState<string>(
+    DEFAULT_PLANS[initialPlanId] ? initialPlanId : "STARTER"
+  );
+  const [durationMonths, setDurationMonths] = useState<1 | 3 | 12>(1);
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethodOption>("qris");
+
+  // User Auth & Session State
+  const [isLoadingUser, setIsLoadingUser] = useState<boolean>(true);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [loggedInUser, setLoggedInUser] = useState<{ id?: string; name?: string; email?: string; role?: string } | null>(null);
+
+  // Customer Form
+  const [customerName, setCustomerName] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerPassword, setCustomerPassword] = useState("");
+  const [customerConfirmPassword, setCustomerConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Voucher Promo
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedVoucher, setAppliedVoucher] = useState<{
+    code: string;
+    name: string;
+    discountType: string;
+    discountValue: number;
+    discountAmount: number;
+    finalAmount: number;
+    message?: string;
+  } | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
+
+  // Order & Modal State
+  const [loading, setLoading] = useState(false);
+  const [plans, setPlans] = useState<Record<string, Plan>>(DEFAULT_PLANS);
+  const [activeTab, setActiveTab] = useState<"NEW" | "RENEW" | "ADDON_DEVICE" | "ADDON_QUOTA" | "INVOICES">("NEW");
+  
+  // Custom Payment Modal State
+  const [customModalOpen, setCustomModalOpen] = useState(false);
+  const [chargeData, setChargeData] = useState<PaymentChargeData | null>(null);
+  const [copiedVa, setCopiedVa] = useState(false);
+  const [copiedAmount, setCopiedAmount] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [pollingActive, setPollingActive] = useState(false);
+  const [activeInstructionTab, setActiveInstructionTab] = useState<"mbanking" | "ibanking" | "atm" | null>("mbanking");
+  const [timeRemaining, setTimeRemaining] = useState<string>("23:59:59");
+  const [originUrl, setOriginUrl] = useState<string>("http://localhost:3001");
+  const [syncChecking, setSyncChecking] = useState(false);
+  const [syncNotice, setSyncNotice] = useState<{ type: "info" | "warning" | "error"; title: string; message: string } | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setOriginUrl(window.location.origin);
+    }
+  }, []);
+
+  // Format VA string into 4-digit readable chunks
+  const formatVaNumber = (va: string) => {
+    return va.replace(/(\d{4})(?=\d)/g, "$1 ").trim();
+  };
+
+  // Live countdown timer when modal is open
+  useEffect(() => {
+    if (!customModalOpen || paymentSuccess) return;
+
+    // Start 24 hours countdown or simulate remaining time
+    let totalSeconds = 24 * 3600 - 1;
+    const interval = setInterval(() => {
+      if (totalSeconds <= 0) {
+        clearInterval(interval);
+        return;
+      }
+      totalSeconds -= 1;
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+      setTimeRemaining(
+        `${hours.toString().padStart(2, "0")}:${minutes
+          .toString()
+          .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
+      );
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [customModalOpen, paymentSuccess]);
+
+  // Load plans and user profile with dedicated loading state
+  useEffect(() => {
+    fetch("/api/billing/plans")
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success && json.data) {
+          setPlans((prev) => ({ ...prev, ...json.data }));
+        }
+      })
+      .catch(() => {});
+
+    setIsLoadingUser(true);
+    Promise.allSettled([
+      fetch("/api/auth/me").then((r) => r.json()),
+      fetch("/api/settings").then((r) => r.json()),
+    ])
+      .then(([meRes, settingsRes]) => {
+        if (meRes.status === "fulfilled" && meRes.value?.success && meRes.value?.user) {
+          const u = meRes.value.user;
+          if (u.email && u.email !== "guest@sendora.id" && u.id && u.id !== "usr_default_guest") {
+            setIsLoggedIn(true);
+            setLoggedInUser(u);
+            if (u.name && u.name !== "Sendora User") setCustomerName(u.name);
+            setCustomerEmail(u.email);
+          }
+        }
+
+        if (settingsRes.status === "fulfilled" && settingsRes.value?.success && settingsRes.value?.data?.profile) {
+          const p = settingsRes.value.data.profile;
+          if (p.name) setCustomerName((prev) => prev || p.name);
+          if (p.email && p.email !== "guest@sendora.id") {
+            setCustomerEmail((prev) => prev || p.email);
+          }
+          if (p.phone || p.whatsapp) {
+            setCustomerPhone((prev) => prev || p.phone || p.whatsapp);
+          }
+        }
+      })
+      .finally(() => {
+        setIsLoadingUser(false);
+      });
+
+    // Load Midtrans Snap.js script in case fallback is chosen
+    if (typeof window !== "undefined" && !window.snap) {
+      const script = document.createElement("script");
+      script.src = "https://app.sandbox.midtrans.com/snap/snap.js";
+      script.setAttribute("data-client-key", process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || "");
+      document.head.appendChild(script);
+    }
+  }, []);
+
+  const handleSwitchAccount = () => {
+    setIsLoggedIn(false);
+    setLoggedInUser(null);
+    setCustomerName("");
+    setCustomerEmail("");
+    setCustomerPhone("");
+    setCustomerPassword("");
+    setCustomerConfirmPassword("");
+  };
+
+  useEffect(() => {
+    if (rawPlanParam) {
+      const clean = rawPlanParam.toUpperCase().replace(/\s+/g, "_");
+      if (plans[clean] || DEFAULT_PLANS[clean]) {
+        setSelectedPlanId(clean);
+      }
+    }
+  }, [rawPlanParam, plans]);
+
+  // Current active plan
+  const currentPlan = plans[selectedPlanId] || DEFAULT_PLANS[selectedPlanId] || DEFAULT_PLANS.STARTER;
+  const monthlyPrice = currentPlan.price;
+
+  // Price calculations
+  let basePrice = monthlyPrice * durationMonths;
+  let durationDiscount = 0;
+
+  if (durationMonths === 3) {
+    durationDiscount = Math.round(basePrice * 0.05); // 5% discount
+  } else if (durationMonths === 12) {
+    const yearlyKey = `YEARLY_${selectedPlanId}`;
+    if (plans[yearlyKey] || DEFAULT_PLANS[yearlyKey]) {
+      const yPlan = plans[yearlyKey] || DEFAULT_PLANS[yearlyKey];
+      basePrice = yPlan.price;
+      durationDiscount = (monthlyPrice * 12) - yPlan.price;
+    } else {
+      durationDiscount = Math.round(basePrice * 0.20); // 20% discount
+    }
+  }
+
+  const subtotalAfterDuration = basePrice - (durationMonths === 12 && plans[`YEARLY_${selectedPlanId}`] ? 0 : durationDiscount);
+
+  // Dynamic Voucher discount calculation
+  let couponDiscount = 0;
+  if (appliedVoucher) {
+    if (appliedVoucher.discountType === "PERCENTAGE") {
+      couponDiscount = Math.round((subtotalAfterDuration * appliedVoucher.discountValue) / 100);
+    } else {
+      couponDiscount = Math.min(appliedVoucher.discountValue, subtotalAfterDuration);
+    }
+  }
+
+  const finalTotal = Math.max(1000, subtotalAfterDuration - couponDiscount);
+
+  // Dynamic Apply Voucher Handler
+  const handleApplyCoupon = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const clean = couponInput.trim().toUpperCase();
+    if (!clean) return;
+
+    setValidatingCoupon(true);
+    setCouponError(null);
+    try {
+      const res = await fetch("/api/vouchers/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: clean,
+          planId: selectedPlanId,
+          durationMonths,
+          orderAmount: subtotalAfterDuration,
+        }),
+      });
+      const json = await res.json();
+      if (json.success && json.data) {
+        setAppliedVoucher(json.data);
+        setCouponError(null);
+      } else {
+        setAppliedVoucher(null);
+        setCouponError(json.error || "Kode voucher tidak valid atau tidak memenuhi syarat.");
+      }
+    } catch (err: any) {
+      setCouponError(err.message || "Gagal memvalidasi voucher");
+    } finally {
+      setValidatingCoupon(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedVoucher(null);
+    setCouponInput("");
+    setCouponError(null);
+  };
+
+  // Poll transaction status when custom modal is open
+  useEffect(() => {
+    if (!customModalOpen || !chargeData?.orderId || paymentSuccess) return;
+
+    setPollingActive(true);
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch("/api/billing/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderId: chargeData.orderId }),
+        });
+        const json = await res.json();
+        if (json.success && json.data?.status === "PAID") {
+          setPaymentSuccess(true);
+          setPollingActive(false);
+          clearInterval(interval);
+        }
+      } catch {}
+    }, 3500);
+
+    return () => clearInterval(interval);
+  }, [customModalOpen, chargeData, paymentSuccess]);
+
+  // Main Checkout Handler
+  const handleCheckout = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError(null);
+
+    const cleanEmail = customerEmail.trim().toLowerCase();
+    const cleanName = customerName.trim() || cleanEmail.split("@")[0] || "Sendora User";
+    const cleanPhone = customerPhone.trim();
+
+    if (!cleanEmail) {
+      setFormError("Silakan masukkan alamat email Anda untuk menerima tagihan dan bukti pembayaran.");
+      return;
+    }
+
+    // If user is not logged in, require creating password
+    if (!isLoggedIn) {
+      if (!customerName.trim()) {
+        setFormError("Silakan masukkan Nama Lengkap Anda.");
+        return;
+      }
+      if (!customerPassword || customerPassword.length < 6) {
+        setFormError("Silakan buat password baru minimal 6 karakter untuk akun Sendora Anda.");
+        return;
+      }
+      if (customerConfirmPassword && customerPassword !== customerConfirmPassword) {
+        setFormError("Konfirmasi password tidak sesuai dengan password yang dimasukkan.");
+        return;
+      }
+    }
+
+    setLoading(true);
+
+    // Auto-register session for guest/new user
+    if (!isLoggedIn) {
+      try {
+        const maxAge = 60 * 60 * 24 * 7;
+        document.cookie = `sendora_demo_auth=true; path=/; max-age=${maxAge}; SameSite=Lax`;
+        document.cookie = `sendora_user_email=${encodeURIComponent(cleanEmail)}; path=/; max-age=${maxAge}; SameSite=Lax`;
+        document.cookie = `sendora_user_name=${encodeURIComponent(cleanName)}; path=/; max-age=${maxAge}; SameSite=Lax`;
+        document.cookie = `sendora_user_role=user; path=/; max-age=${maxAge}; SameSite=Lax`;
+
+        if (isSupabaseConfigured() && customerPassword) {
+          const supabase = createClient();
+          supabase.auth.signUp({
+            email: cleanEmail,
+            password: customerPassword,
+            options: {
+              data: {
+                name: cleanName,
+                phone: cleanPhone || undefined,
+              },
+            },
+          }).catch(() => {});
+        }
+      } catch {}
+    }
+
+    // If Snap fallback chosen
+    if (selectedMethod === "snap") {
+      try {
+        const res = await fetch("/api/billing/create-transaction", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            planId: selectedPlanId,
+            durationMonths,
+            customerName: cleanName,
+            customerEmail: cleanEmail,
+            customerPhone: cleanPhone,
+            couponCode: appliedVoucher?.code || undefined,
+          }),
+        });
+
+        const json = await res.json();
+        if (!json.success) {
+          setFormError(json.error || "Gagal membuat transaksi. Silakan coba lagi.");
+          return;
+        }
+
+        const { snapToken, orderId } = json.data;
+        if (window.snap) {
+          window.snap.pay(snapToken, {
+            onSuccess: async () => {
+              await fetch("/api/billing/sync", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ orderId }),
+              });
+              router.push("/dashboard/billing?payment=finish");
+            },
+            onPending: () => {
+              router.push("/dashboard/billing?payment=pending");
+            },
+            onClose: () => {
+              setLoading(false);
+            },
+          });
+        }
+      } catch (err: any) {
+        setFormError(err.message || "Gagal memproses checkout. Silakan periksa koneksi Anda.");
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    // Direct Midtrans Core API Charge (Sendora Custom UI)
+    try {
+      let paymentType = "qris";
+      let bank: string | undefined = undefined;
+
+      if (selectedMethod === "qris") {
+        paymentType = "qris";
+      } else if (selectedMethod === "bca_va") {
+        paymentType = "bank_transfer";
+        bank = "bca";
+      } else if (selectedMethod === "mandiri_va") {
+        paymentType = "bank_transfer";
+        bank = "mandiri";
+      } else if (selectedMethod === "bri_va") {
+        paymentType = "bank_transfer";
+        bank = "bri";
+      } else if (selectedMethod === "bni_va") {
+        paymentType = "bank_transfer";
+        bank = "bni";
+      } else if (selectedMethod === "gopay") {
+        paymentType = "gopay";
+      }
+
+      const res = await fetch("/api/billing/charge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          planId: selectedPlanId,
+          durationMonths,
+          paymentType,
+          bank,
+          customerName: cleanName,
+          customerEmail: cleanEmail,
+          customerPhone: cleanPhone,
+          couponCode: appliedVoucher?.code || undefined,
+        }),
+      });
+
+      const json = await res.json();
+      if (!json.success) {
+        setFormError(json.error || "Gagal memproses pembayaran. Silakan coba beberapa saat lagi.");
+        return;
+      }
+
+      setChargeData(json.data);
+      setPaymentSuccess(false);
+      setSyncNotice(null);
+      setCustomModalOpen(true);
+    } catch (err: any) {
+      setFormError(err.message || "Terjadi kesalahan saat memproses order. Silakan coba lagi.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const copyToClipboard = (text: string, type: "va" | "amount") => {
+    navigator.clipboard.writeText(text);
+    if (type === "va") {
+      setCopiedVa(true);
+      setTimeout(() => setCopiedVa(false), 2000);
+    } else {
+      setCopiedAmount(true);
+      setTimeout(() => setCopiedAmount(false), 2000);
+    }
+  };
+
+  const detailedFeatures = getPlanDetailedFeatureList(currentPlan);
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900 pb-16">
+      {/* Top Navigation Bar */}
+      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-xs">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 text-white flex items-center justify-center font-black shadow-md shadow-emerald-500/20 group-hover:scale-105 transition-transform">
+              S
+            </div>
+            <div>
+              <span className="font-extrabold text-lg tracking-tight text-slate-900">Sendora</span>
+              <span className="text-[10px] ml-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">
+                Gateway & API
+              </span>
+            </div>
+          </Link>
+
+          <div className="flex items-center gap-4 text-xs font-semibold">
+            <Link href="/" className="text-slate-600 hover:text-slate-900 hidden sm:inline">
+              Kembali ke Beranda
+            </Link>
+            <Link
+              href="/dashboard"
+              className="btn btn-primary btn-sm rounded-xl text-white shadow-sm shadow-primary/25"
+            >
+              Dashboard
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Container */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
+        {/* Breadcrumb & Title */}
+        <div>
+          <div className="flex items-center gap-2 text-xs font-medium text-slate-400 mb-2">
+            <Link href="/" className="hover:text-slate-600">Beranda</Link>
+            <ChevronRight className="w-3.5 h-3.5" />
+            <Link href="/#pricing" className="hover:text-slate-600">Paket</Link>
+            <ChevronRight className="w-3.5 h-3.5" />
+            <span className="text-slate-900 font-bold">Order & Aktivasi</span>
+          </div>
+
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+                Aktivasi Langganan Paket Sendora
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                Lengkapi formulir pesanan di bawah ini untuk aktivasi cloud WhatsApp Gateway & akses API instan.
+              </p>
+            </div>
+
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-800 rounded-2xl border border-emerald-200 text-xs font-bold self-start md:self-auto">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              Gateway Server: Online & Siap Digunakan
+            </div>
+          </div>
+        </div>
+
+        {/* 2-Column Grid: Form & Options on Left, Sidebar & Summary on Right */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Left Column (8 cols): Order Form */}
+          <div className="lg:col-span-8 space-y-6">
+            <form onSubmit={handleCheckout} className="space-y-6">
+              {/* SECTION 1: Informasi Pelanggan & Akun */}
+              <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {isLoggedIn ? (
+                      <UserCheck className="w-4 h-4 text-emerald-600" />
+                    ) : (
+                      <UserPlus className="w-4 h-4 text-primary" />
+                    )}
+                    <h2 className="font-extrabold text-sm text-slate-900">
+                      1. Informasi Kostumer / Akun
+                    </h2>
+                  </div>
+                  <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1.5">
+                    <Zap className="w-3 h-3 text-amber-500" />
+                    Aktivasi Otomatis
+                  </span>
+                </div>
+
+                <div className="p-6 space-y-5">
+                  {/* STATE 1: Loading Session */}
+                  {isLoadingUser ? (
+                    <div className="py-8 px-4 text-center space-y-3 bg-slate-50/60 rounded-2xl border border-slate-200/70 animate-pulse">
+                      <div className="inline-flex items-center justify-center w-11 h-11 rounded-2xl bg-emerald-100/80 text-emerald-700 shadow-xs">
+                        <RefreshCw className="w-5 h-5 animate-spin text-emerald-600" />
+                      </div>
+                      <div className="space-y-1">
+                        <h3 className="text-sm font-extrabold text-slate-800 flex items-center justify-center gap-2">
+                          Mencari Data User...
+                        </h3>
+                        <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                          Memeriksa sesi login dan data akun Anda untuk aktivasi instan
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-md mx-auto pt-2">
+                        <div className="h-9 bg-slate-200/70 rounded-xl" />
+                        <div className="h-9 bg-slate-200/70 rounded-xl" />
+                      </div>
+                    </div>
+                  ) : isLoggedIn ? (
+                    /* STATE 2: Logged In User */
+                    <div className="space-y-4">
+                      {/* Connected Account Card */}
+                      <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-50/90 via-teal-50/80 to-emerald-50/50 border border-emerald-200/90 text-emerald-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
+                            {(customerName || customerEmail || "U")[0].toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-black text-slate-900">
+                                {customerName || "Sendora User"}
+                              </span>
+                              <span className="text-[10px] bg-emerald-600 text-white font-black px-2 py-0.5 rounded-full shadow-2xs">
+                                Akun Terhubung
+                              </span>
+                            </div>
+                            <span className="text-xs text-slate-600 font-mono">
+                              {customerEmail}
+                            </span>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={handleSwitchAccount}
+                          className="self-start sm:self-auto text-[11px] font-bold text-emerald-700 hover:text-emerald-900 bg-white/80 hover:bg-white border border-emerald-200 px-3 py-1.5 rounded-xl transition-all shadow-2xs flex items-center gap-1.5"
+                        >
+                          <LogOut className="w-3 h-3" />
+                          Ganti / Daftar Akun Lain
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {/* Nama Lengkap */}
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                            <User className="w-3.5 h-3.5 text-slate-400" />
+                            Nama Lengkap <span className="text-rose-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="Contoh: Budi Pratama"
+                            value={customerName}
+                            onChange={(e) => setCustomerName(e.target.value)}
+                            className="input input-bordered input-sm w-full rounded-xl text-xs bg-slate-50/50"
+                          />
+                        </div>
+
+                        {/* Email */}
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
+                            <span className="flex items-center gap-1.5">
+                              <Mail className="w-3.5 h-3.5 text-slate-400" />
+                              Alamat Email <span className="text-rose-500">*</span>
+                            </span>
+                            <span className="text-[10px] text-emerald-600 font-bold">
+                              Terverifikasi
+                            </span>
+                          </label>
+                          <input
+                            type="email"
+                            required
+                            placeholder="contoh@bisnis.id"
+                            value={customerEmail}
+                            onChange={(e) => setCustomerEmail(e.target.value)}
+                            className="input input-bordered input-sm w-full rounded-xl text-xs bg-slate-50/50"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Optional WhatsApp / Phone Number */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
+                          <span className="flex items-center gap-1.5">
+                            <Phone className="w-3.5 h-3.5 text-slate-400" />
+                            Nomor WhatsApp / Telepon <span className="text-[10px] text-slate-400 font-normal">(Opsional)</span>
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-normal">
+                            Kontak bantuan & support
+                          </span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            placeholder="Contoh: 081234567890 (opsional)"
+                            value={customerPhone}
+                            onChange={(e) => setCustomerPhone(e.target.value)}
+                            className="input input-bordered input-sm w-full rounded-xl text-xs font-mono"
+                          />
+                        </div>
+                        <p className="text-[11px] text-slate-400">
+                          Rincian tagihan & kwitansi pembayaran akan otomatis dikirim ke email <strong>{customerEmail}</strong>.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    /* STATE 3: Guest / New User (Register + Checkout Sekaligus) */
+                    <div className="space-y-4">
+                      {/* Register Banner */}
+                      <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-50/80 via-indigo-50/50 to-slate-50 border border-blue-200/80 text-blue-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
+                            <UserPlus className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-black text-slate-900">
+                                1-Step Checkout & Buat Akun Sekaligus
+                              </span>
+                              <span className="text-[10px] bg-blue-600 text-white font-black px-2 py-0.5 rounded-full shadow-2xs">
+                                Akun Baru
+                              </span>
+                            </div>
+                            <span className="text-xs text-slate-600">
+                              Lengkapi formulir & buat password untuk aktivasi akun instan Anda.
+                            </span>
+                          </div>
+                        </div>
+
+                        <Link
+                          href={`/login?redirectTo=${encodeURIComponent("/order" + (selectedPlanId ? `?plan=${selectedPlanId}` : ""))}`}
+                          className="self-start sm:self-auto text-[11px] font-bold text-blue-700 hover:text-blue-900 bg-white border border-blue-200 px-3 py-1.5 rounded-xl transition-all shadow-2xs hover:shadow-xs flex items-center gap-1.5"
+                        >
+                          <UserCheck className="w-3 h-3" />
+                          Sudah Punya Akun? Masuk
+                        </Link>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {/* Nama Lengkap */}
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                            <User className="w-3.5 h-3.5 text-slate-400" />
+                            Nama Lengkap / Bisnis <span className="text-rose-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="Contoh: Budi Pratama"
+                            value={customerName}
+                            onChange={(e) => setCustomerName(e.target.value)}
+                            className="input input-bordered input-sm w-full rounded-xl text-xs"
+                          />
+                        </div>
+
+                        {/* Email */}
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
+                            <span className="flex items-center gap-1.5">
+                              <Mail className="w-3.5 h-3.5 text-slate-400" />
+                              Alamat Email <span className="text-rose-500">*</span>
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-normal">
+                              Username akun Anda
+                            </span>
+                          </label>
+                          <input
+                            type="email"
+                            required
+                            placeholder="nama@bisnis.id"
+                            value={customerEmail}
+                            onChange={(e) => setCustomerEmail(e.target.value)}
+                            className="input input-bordered input-sm w-full rounded-xl text-xs"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Password Creation Inputs */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                        {/* Buat Password */}
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
+                            <span className="flex items-center gap-1.5">
+                              <Lock className="w-3.5 h-3.5 text-slate-400" />
+                              Buat Password Baru <span className="text-rose-500">*</span>
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-normal">
+                              Min. 6 karakter
+                            </span>
+                          </label>
+                          <div className="relative">
+                            <input
+                              type={showPassword ? "text" : "password"}
+                              required
+                              minLength={6}
+                              placeholder="••••••••"
+                              value={customerPassword}
+                              onChange={(e) => setCustomerPassword(e.target.value)}
+                              className="input input-bordered input-sm w-full rounded-xl text-xs pr-9"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Konfirmasi Password */}
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
+                            <span className="flex items-center gap-1.5">
+                              <KeyRound className="w-3.5 h-3.5 text-slate-400" />
+                              Konfirmasi Password <span className="text-rose-500">*</span>
+                            </span>
+                            {customerPassword && customerConfirmPassword && (
+                              <span className={`text-[10px] font-bold ${customerPassword === customerConfirmPassword ? "text-emerald-600" : "text-rose-500"}`}>
+                                {customerPassword === customerConfirmPassword ? "Cocok" : "Tidak cocok"}
+                              </span>
+                            )}
+                          </label>
+                          <div className="relative">
+                            <input
+                              type={showConfirmPassword ? "text" : "password"}
+                              required
+                              minLength={6}
+                              placeholder="••••••••"
+                              value={customerConfirmPassword}
+                              onChange={(e) => setCustomerConfirmPassword(e.target.value)}
+                              className={`input input-bordered input-sm w-full rounded-xl text-xs pr-9 ${
+                                customerConfirmPassword && customerPassword !== customerConfirmPassword
+                                  ? "border-rose-400 focus:border-rose-500"
+                                  : ""
+                              }`}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                              className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                              {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Optional WhatsApp / Phone Number */}
+                      <div className="space-y-1.5 pt-1">
+                        <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
+                          <span className="flex items-center gap-1.5">
+                            <Phone className="w-3.5 h-3.5 text-slate-400" />
+                            Nomor WhatsApp / Telepon <span className="text-[10px] text-slate-400 font-normal">(Opsional)</span>
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-normal">
+                            Kontak bantuan & support
+                          </span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            placeholder="Contoh: 081234567890 (opsional)"
+                            value={customerPhone}
+                            onChange={(e) => setCustomerPhone(e.target.value)}
+                            className="input input-bordered input-sm w-full rounded-xl text-xs font-mono"
+                          />
+                        </div>
+                        <p className="text-[11px] text-slate-400">
+                          Setelah pembayaran, Anda dapat langsung login ke Dashboard menggunakan email & password di atas.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* SECTION 2: Pilihan Metode Pembayaran (Custom Sendora UI Options) */}
+              <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="w-4 h-4 text-emerald-600" />
+                    <h2 className="font-extrabold text-sm text-slate-900">
+                      2. Pilih Metode Pembayaran
+                    </h2>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                    Midtrans Powered
+                  </span>
+                </div>
+
+                <div className="p-6 space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* QRIS Option (Recommended) */}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedMethod("qris")}
+                      className={`p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between ${
+                        selectedMethod === "qris"
+                          ? "bg-emerald-50/50 border-emerald-500 ring-2 ring-emerald-500/20 shadow-sm"
+                          : "bg-white border-slate-200 hover:border-slate-300"
+                      }`}
+                    >
+                      <span className="absolute -top-2.5 right-3 px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-600 text-white shadow-xs">
+                        TERCEPAT & PRAKTIS
+                      </span>
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="font-black text-xs text-slate-900 flex items-center gap-1.5">
+                            <QrCode className="w-4 h-4 text-emerald-600" /> QRIS Nasional
+                          </span>
+                          <div className={`w-3.5 h-3.5 rounded-full border ${selectedMethod === "qris" ? "border-emerald-600 bg-emerald-600" : "border-slate-300"}`} />
+                        </div>
+                        <p className="text-[11px] text-slate-500">
+                          BCA Mobile, GoPay, OVO, Dana, ShopeePay, Mandiri Livin, BRImo, dll.
+                        </p>
+                      </div>
+                    </button>
+
+                    {/* BCA VA */}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedMethod("bca_va")}
+                      className={`p-4 rounded-2xl border text-left transition-all ${
+                        selectedMethod === "bca_va"
+                          ? "bg-emerald-50/50 border-emerald-500 ring-2 ring-emerald-500/20 shadow-sm"
+                          : "bg-white border-slate-200 hover:border-slate-300"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="font-black text-xs text-slate-900 flex items-center gap-1.5">
+                          <Building2 className="w-4 h-4 text-blue-600" /> BCA Virtual Account
+                        </span>
+                        <div className={`w-3.5 h-3.5 rounded-full border ${selectedMethod === "bca_va" ? "border-emerald-600 bg-emerald-600" : "border-slate-300"}`} />
+                      </div>
+                      <p className="text-[11px] text-slate-500">
+                        Transfer via BCA Mobile, myBCA, KlikBCA, atau ATM BCA.
+                      </p>
+                    </button>
+
+                    {/* Mandiri VA */}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedMethod("mandiri_va")}
+                      className={`p-4 rounded-2xl border text-left transition-all ${
+                        selectedMethod === "mandiri_va"
+                          ? "bg-emerald-50/50 border-emerald-500 ring-2 ring-emerald-500/20 shadow-sm"
+                          : "bg-white border-slate-200 hover:border-slate-300"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="font-black text-xs text-slate-900 flex items-center gap-1.5">
+                          <Building2 className="w-4 h-4 text-amber-600" /> Mandiri Bill / VA
+                        </span>
+                        <div className={`w-3.5 h-3.5 rounded-full border ${selectedMethod === "mandiri_va" ? "border-emerald-600 bg-emerald-600" : "border-slate-300"}`} />
+                      </div>
+                      <p className="text-[11px] text-slate-500">
+                        Transfer via Livin by Mandiri atau ATM Mandiri.
+                      </p>
+                    </button>
+
+                    {/* BRI VA */}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedMethod("bri_va")}
+                      className={`p-4 rounded-2xl border text-left transition-all ${
+                        selectedMethod === "bri_va"
+                          ? "bg-emerald-50/50 border-emerald-500 ring-2 ring-emerald-500/20 shadow-sm"
+                          : "bg-white border-slate-200 hover:border-slate-300"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="font-black text-xs text-slate-900 flex items-center gap-1.5">
+                          <Building2 className="w-4 h-4 text-sky-600" /> BRI (BRIVA)
+                        </span>
+                        <div className={`w-3.5 h-3.5 rounded-full border ${selectedMethod === "bri_va" ? "border-emerald-600 bg-emerald-600" : "border-slate-300"}`} />
+                      </div>
+                      <p className="text-[11px] text-slate-500">
+                        Transfer via BRImo, Internet Banking BRI, atau ATM BRI.
+                      </p>
+                    </button>
+
+                    {/* BNI VA */}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedMethod("bni_va")}
+                      className={`p-4 rounded-2xl border text-left transition-all ${
+                        selectedMethod === "bni_va"
+                          ? "bg-emerald-50/50 border-emerald-500 ring-2 ring-emerald-500/20 shadow-sm"
+                          : "bg-white border-slate-200 hover:border-slate-300"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="font-black text-xs text-slate-900 flex items-center gap-1.5">
+                          <Building2 className="w-4 h-4 text-orange-600" /> BNI Virtual Account
+                        </span>
+                        <div className={`w-3.5 h-3.5 rounded-full border ${selectedMethod === "bni_va" ? "border-emerald-600 bg-emerald-600" : "border-slate-300"}`} />
+                      </div>
+                      <p className="text-[11px] text-slate-500">
+                        Transfer via BNI Mobile Banking atau ATM BNI.
+                      </p>
+                    </button>
+
+                    {/* GoPay */}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedMethod("gopay")}
+                      className={`p-4 rounded-2xl border text-left transition-all ${
+                        selectedMethod === "gopay"
+                          ? "bg-emerald-50/50 border-emerald-500 ring-2 ring-emerald-500/20 shadow-sm"
+                          : "bg-white border-slate-200 hover:border-slate-300"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="font-black text-xs text-slate-900 flex items-center gap-1.5">
+                          <Smartphone className="w-4 h-4 text-emerald-600" /> GoPay Direct
+                        </span>
+                        <div className={`w-3.5 h-3.5 rounded-full border ${selectedMethod === "gopay" ? "border-emerald-600 bg-emerald-600" : "border-slate-300"}`} />
+                      </div>
+                      <p className="text-[11px] text-slate-500">
+                        Buka aplikasi GoPay langsung atau scan QR GoPay.
+                      </p>
+                    </button>
+                  </div>
+
+                  <div className="pt-2 flex items-center justify-between text-xs text-slate-400">
+                    <span>Ingin bayar dengan Kartu Kredit atau saluran lain?</span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedMethod("snap")}
+                      className={`font-bold hover:underline ${selectedMethod === "snap" ? "text-primary font-black" : "text-slate-600"}`}
+                    >
+                      {selectedMethod === "snap" ? "✓ Mode Snap Modal Aktif" : "Buka Midtrans Snap Klasik"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 3: Pemilihan Paket Layanan (Plan Tier Switcher) */}
+              <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Layers className="w-4 h-4 text-primary" />
+                    <h2 className="font-extrabold text-sm text-slate-900">
+                      3. Pilih Paket Layanan Sendora
+                    </h2>
+                  </div>
+                  <span className="text-[11px] text-primary font-bold">
+                    Cloud Hosted Ready
+                  </span>
+                </div>
+
+                <div className="p-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                    {[
+                      { id: "STARTER", name: "Starter", price: 49000, devices: 2, messages: "5.000" },
+                      { id: "BUSINESS", name: "Business", price: 149000, devices: 5, messages: "25.000", popular: true },
+                      { id: "PRO", name: "Pro", price: 299000, devices: 10, messages: "200.000" },
+                    ].map((p) => {
+                      const isSelected = selectedPlanId === p.id;
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => setSelectedPlanId(p.id)}
+                          className={`p-4 rounded-2xl border text-left transition-all relative ${
+                            isSelected
+                              ? "bg-emerald-50/40 border-emerald-500 shadow-md ring-2 ring-emerald-500/20"
+                              : "bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/50"
+                          }`}
+                        >
+                          {p.popular && (
+                            <span className="absolute -top-2.5 right-3 px-2 py-0.5 rounded-full text-[9px] font-black bg-primary text-white shadow-xs">
+                              POPULER
+                            </span>
+                          )}
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="font-black text-sm text-slate-900">{p.name}</span>
+                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                              isSelected ? "border-emerald-600 bg-emerald-600" : "border-slate-300"
+                            }`}>
+                              {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                            </div>
+                          </div>
+                          <div className="text-base font-black text-slate-900">
+                            {formatIDR(p.price)}
+                            <span className="text-[10px] text-slate-400 font-normal"> / bln</span>
+                          </div>
+                          <div className="text-[11px] text-slate-500 mt-2 space-y-0.5">
+                            <div>• {p.devices} Device WhatsApp</div>
+                            <div>• {p.messages} Pesan / bln</div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 4: Pilihan Durasi Berlangganan (Billing Cycle) */}
+              <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-emerald-600" />
+                    <h2 className="font-extrabold text-sm text-slate-900">
+                      4. Pilih Durasi Berlangganan
+                    </h2>
+                  </div>
+                  <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                    Hemat s/d 20%
+                  </span>
+                </div>
+
+                <div className="p-6 space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                    {/* 1 Bulan */}
+                    <button
+                      type="button"
+                      onClick={() => setDurationMonths(1)}
+                      className={`p-4 rounded-2xl border text-left transition-all ${
+                        durationMonths === 1
+                          ? "bg-emerald-50/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs"
+                          : "bg-white border-slate-200 hover:border-slate-300"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-bold text-xs text-slate-900">1 Bulan</span>
+                        <div className={`w-3.5 h-3.5 rounded-full border ${durationMonths === 1 ? "border-emerald-600 bg-emerald-600" : "border-slate-300"}`} />
+                      </div>
+                      <div className="text-sm font-black text-slate-900">
+                        {formatIDR(monthlyPrice)}
+                      </div>
+                      <span className="text-[10px] text-slate-400">Harga Standar</span>
+                    </button>
+
+                    {/* 3 Bulan */}
+                    <button
+                      type="button"
+                      onClick={() => setDurationMonths(3)}
+                      className={`p-4 rounded-2xl border text-left transition-all ${
+                        durationMonths === 3
+                          ? "bg-emerald-50/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs"
+                          : "bg-white border-slate-200 hover:border-slate-300"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-bold text-xs text-slate-900">3 Bulan</span>
+                        <div className={`w-3.5 h-3.5 rounded-full border ${durationMonths === 3 ? "border-emerald-600 bg-emerald-600" : "border-slate-300"}`} />
+                      </div>
+                      <div className="text-sm font-black text-slate-900">
+                        {formatIDR(Math.round(monthlyPrice * 3 * 0.95))}
+                      </div>
+                      <span className="text-[10px] font-bold text-emerald-600">Diskon 5% Hemat</span>
+                    </button>
+
+                    {/* 12 Bulan (1 Tahun) */}
+                    <button
+                      type="button"
+                      onClick={() => setDurationMonths(12)}
+                      className={`p-4 rounded-2xl border text-left transition-all relative ${
+                        durationMonths === 12
+                          ? "bg-emerald-50/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs"
+                          : "bg-white border-slate-200 hover:border-slate-300"
+                      }`}
+                    >
+                      <span className="absolute -top-2.5 right-3 px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-600 text-white shadow-xs">
+                        HEMAT 20%
+                      </span>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-bold text-xs text-slate-900">12 Bulan (1 Tahun)</span>
+                        <div className={`w-3.5 h-3.5 rounded-full border ${durationMonths === 12 ? "border-emerald-600 bg-emerald-600" : "border-slate-300"}`} />
+                      </div>
+                      <div className="text-sm font-black text-slate-900">
+                        {formatIDR(
+                          plans[`YEARLY_${selectedPlanId}`]?.price ||
+                          DEFAULT_PLANS[`YEARLY_${selectedPlanId}`]?.price ||
+                          Math.round(monthlyPrice * 12 * 0.8)
+                        )}
+                      </div>
+                      <span className="text-[10px] font-bold text-emerald-600">Paling Hemat</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 5: Fitur Layanan yang Didapatkan */}
+              <div className="bg-white rounded-3xl border border-slate-200 shadow-xs p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-amber-500" />
+                    <h3 className="font-extrabold text-sm text-slate-900">
+                      Fitur & Akses Paket {currentPlan.name}
+                    </h3>
+                  </div>
+                  <span className="text-xs text-slate-400 font-medium">Akses Penuh</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  {detailedFeatures.slice(0, 8).map((feat, idx) => (
+                    <div
+                      key={idx}
+                      className={`flex items-center gap-2.5 p-2.5 rounded-xl border ${
+                        feat.included
+                          ? "bg-slate-50/80 border-slate-200/80 text-slate-800"
+                          : "bg-slate-50/30 border-slate-100 text-slate-400 line-through opacity-60"
+                      }`}
+                    >
+                      {feat.included ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                      ) : (
+                        <span className="w-4 h-4 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center text-[10px] shrink-0 font-black">
+                          ✕
+                        </span>
+                      )}
+                      <span className="font-semibold truncate">{feat.label}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/70 text-[11px] text-slate-600 flex items-center gap-2 font-mono">
+                  <Server className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span className="truncate">
+                    REST API Base Endpoint: <strong>{originUrl}/api/v1/messages/send</strong>
+                  </span>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          {/* Right Column (4 cols): Sidebar Tabs + Order Summary */}
+          <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-24">
+            {/* Sidebar Navigation Tabs */}
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-xs p-3 space-y-1">
+              <button
+                type="button"
+                onClick={() => setActiveTab("NEW")}
+                className={`w-full px-4 py-2.5 rounded-2xl text-xs font-bold flex items-center justify-between transition-all ${
+                  activeTab === "NEW"
+                    ? "bg-slate-900 text-white shadow-xs"
+                    : "text-slate-600 hover:bg-slate-100"
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  Langganan Baru
+                </span>
+                <ChevronRight className="w-3.5 h-3.5 opacity-60" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab("RENEW");
+                  router.push("/dashboard/billing");
+                }}
+                className="w-full px-4 py-2.5 rounded-2xl text-xs font-bold text-slate-600 hover:bg-slate-100 flex items-center justify-between transition-all"
+              >
+                <span className="flex items-center gap-2">
+                  <RefreshCw className="w-3.5 h-3.5 text-sky-500" />
+                  Perpanjang Paket
+                </span>
+                <ChevronRight className="w-3.5 h-3.5 opacity-60" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab("ADDON_DEVICE");
+                  router.push("/dashboard/devices");
+                }}
+                className="w-full px-4 py-2.5 rounded-2xl text-xs font-bold text-slate-600 hover:bg-slate-100 flex items-center justify-between transition-all"
+              >
+                <span className="flex items-center gap-2">
+                  <Smartphone className="w-3.5 h-3.5 text-emerald-500" />
+                  Tambah Slot Device
+                </span>
+                <ChevronRight className="w-3.5 h-3.5 opacity-60" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab("INVOICES");
+                  router.push("/dashboard/billing");
+                }}
+                className="w-full px-4 py-2.5 rounded-2xl text-xs font-bold text-slate-600 hover:bg-slate-100 flex items-center justify-between transition-all"
+              >
+                <span className="flex items-center gap-2">
+                  <Clock className="w-3.5 h-3.5 text-indigo-500" />
+                  Riwayat Invoice / Tertunda
+                </span>
+                <ChevronRight className="w-3.5 h-3.5 opacity-60" />
+              </button>
+            </div>
+
+            {/* Order Summary Card */}
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-md p-6 space-y-5">
+              <div className="border-b border-slate-100 pb-3">
+                <h3 className="text-base font-extrabold text-slate-900">Ringkasan Pesanan</h3>
+                <p className="text-xs text-slate-400 mt-0.5">Rincian tagihan langganan Anda</p>
+              </div>
+
+              {/* Selected Plan Details */}
+              <div className="space-y-2 text-xs">
+                <div className="flex items-center justify-between font-bold text-slate-900">
+                  <span>Paket Layanan:</span>
+                  <span className="text-primary font-black">Sendora {currentPlan.name}</span>
+                </div>
+                <div className="flex items-center justify-between text-slate-600">
+                  <span>Durasi Langganan:</span>
+                  <span className="font-bold">
+                    {durationMonths === 12 ? "12 Bulan (1 Tahun)" : `${durationMonths} Bulan`}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-slate-600">
+                  <span>Metode Bayar:</span>
+                  <span className="font-bold text-slate-900 uppercase">{selectedMethod.replace("_", " ")}</span>
+                </div>
+                <div className="flex items-center justify-between text-slate-600">
+                  <span>Harga Normal ({durationMonths} bln):</span>
+                  <span>{formatIDR(monthlyPrice * durationMonths)}</span>
+                </div>
+
+                {durationDiscount > 0 && (
+                  <div className="flex items-center justify-between text-emerald-600 font-bold">
+                    <span>Diskon Durasi ({durationMonths === 12 ? "20%" : "5%"}):</span>
+                    <span>- {formatIDR(durationDiscount)}</span>
+                  </div>
+                )}
+
+                {couponDiscount > 0 && appliedVoucher && (
+                  <div className="flex items-center justify-between text-emerald-600 font-bold">
+                    <span>Diskon Voucher ({appliedVoucher.code}):</span>
+                    <span>- {formatIDR(couponDiscount)}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Dynamic Coupon Voucher Input */}
+              <div className="space-y-1.5 pt-2 border-t border-slate-100">
+                <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                  <Tag className="w-3.5 h-3.5 text-slate-400" />
+                  Punya Kode Kupon / Promo?
+                </label>
+
+                {!appliedVoucher ? (
+                  <form onSubmit={handleApplyCoupon} className="space-y-1.5">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Contoh: SENDORAHEMAT"
+                        value={couponInput}
+                        onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                        className="input input-bordered input-sm flex-1 rounded-xl text-xs uppercase font-mono font-bold"
+                      />
+                      <button
+                        type="submit"
+                        disabled={validatingCoupon || !couponInput.trim()}
+                        className="btn btn-sm btn-primary rounded-xl text-xs font-bold"
+                      >
+                        {validatingCoupon ? (
+                          <span className="loading loading-spinner loading-xs"></span>
+                        ) : (
+                          "Terapkan"
+                        )}
+                      </button>
+                    </div>
+                    {couponError && (
+                      <div className="text-[11px] text-rose-600 font-semibold mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                        <span>{couponError}</span>
+                      </div>
+                    )}
+                  </form>
+                ) : (
+                  <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-between text-xs">
+                    <div className="space-y-0.5">
+                      <div className="font-extrabold text-emerald-900 flex items-center gap-1.5 font-mono">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        {appliedVoucher.code}
+                      </div>
+                      <div className="text-[11px] text-emerald-700 font-medium">
+                        {appliedVoucher.name} • Hemat {formatIDR(couponDiscount)}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRemoveCoupon}
+                      className="btn btn-ghost btn-xs text-slate-400 hover:text-rose-600 font-bold"
+                      title="Hapus Voucher"
+                    >
+                      Hapus
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Total Calculation */}
+              <div className="p-4 bg-slate-900 rounded-2xl text-white space-y-1">
+                <span className="text-[11px] text-slate-400 uppercase tracking-wider font-bold">
+                  Total Tagihan Pembayaran
+                </span>
+                <div className="text-2xl font-black tracking-tight text-emerald-400">
+                  {formatIDR(finalTotal)}
+                </div>
+                <p className="text-[10px] text-slate-400">
+                  Termasuk PPN & biaya aktivasi otomatis 24/7
+                </p>
+              </div>
+
+              {/* Form Error Banner */}
+              {formError && (
+                <div className="p-3 bg-rose-50 rounded-2xl border border-rose-200 text-xs text-rose-700 flex items-start gap-2 animate-in fade-in">
+                  <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                  <div className="flex-1 font-semibold">{formError}</div>
+                  <button
+                    type="button"
+                    onClick={() => setFormError(null)}
+                    className="text-rose-400 hover:text-rose-600"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+
+              {/* Main Submit Button */}
+              <button
+                type="button"
+                onClick={handleCheckout}
+                disabled={loading}
+                className="btn btn-primary btn-block rounded-2xl text-white font-extrabold shadow-lg shadow-primary/25 gap-2 text-sm"
+              >
+                {loading ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    Menghubungi Server...
+                  </>
+                ) : (
+                  <>
+                    <Zap className="w-4 h-4" />
+                    Bayar Sekarang (Proses Otomatis)
+                  </>
+                )}
+              </button>
+
+              {/* Guarantees */}
+              <div className="space-y-2 pt-2 border-t border-slate-100 text-[11px] text-slate-500">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Enkripsi 256-Bit SSL Pembayaran Aman</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary shrink-0" />
+                  <span>Aktivasi Gateway Instan Tanpa Menunggu</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Server className="w-4 h-4 text-sky-600 shrink-0" />
+                  <span>Garansi Ketersediaan Server 99.9% Uptime</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* ========================================================================= */}
+      {/* SENDORA CUSTOM PAYMENT MODAL (DIRECT CORE API UI)                        */}
+      {/* ========================================================================= */}
+      {customModalOpen && chargeData && (
+        <ModalPortal>
+          <div className="fixed inset-0 z-[99999] bg-black/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+            <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150 my-auto relative z-10 max-h-[92vh] flex flex-col overflow-hidden">
+              
+              {/* Modal Top Bar */}
+              <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/80 shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <div className={`w-8 h-8 rounded-xl ${paymentSuccess ? "bg-emerald-600" : "bg-gradient-to-tr from-emerald-600 to-teal-500"} text-white flex items-center justify-center font-black text-sm shadow-xs`}>
+                    {paymentSuccess ? <Check className="w-4 h-4" /> : "S"}
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-sm text-slate-900 leading-tight">
+                      {paymentSuccess ? "Pembayaran Berhasil" : "Selesaikan Pembayaran"}
+                    </h3>
+                    <div className="flex items-center gap-2 text-[10px] text-slate-400 font-mono mt-0.5">
+                      <span>Order: {chargeData.orderId}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {!paymentSuccess ? (
+                    <div className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-50 border border-rose-200 text-rose-700 text-[11px] font-bold font-mono">
+                      <Clock className="w-3 h-3 text-rose-500 animate-pulse" />
+                      <span>{timeRemaining}</span>
+                    </div>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Terverifikasi
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setCustomModalOpen(false)}
+                    className="w-8 h-8 rounded-full border border-slate-200 hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Modal Body (Scrollable) */}
+              <div className="p-5 sm:p-6 overflow-y-auto space-y-5 flex-1">
+                
+                {/* REDESIGNED SUCCESS STATE */}
+                {paymentSuccess ? (
+                  <div className="py-2 text-center space-y-5">
+                    {/* Celebration Hero Badge */}
+                    <div className="relative inline-block mx-auto mt-2">
+                      <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-white flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/30 ring-8 ring-emerald-50">
+                        <CheckCircle2 className="w-11 h-11 animate-bounce" />
+                      </div>
+                      <span className="absolute -bottom-2 -right-2 px-2 py-0.5 rounded-full bg-slate-900 text-emerald-400 text-[9px] font-black uppercase tracking-wider shadow-sm border border-slate-700">
+                        LUNAS
+                      </span>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <h4 className="text-2xl font-black tracking-tight text-slate-900">
+                        Pembayaran Berhasil!
+                      </h4>
+                      <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
+                        Terima kasih! Paket <strong className="text-slate-900">Sendora {currentPlan.name}</strong> Anda telah aktif. Kuota pesan & akses API gateway langsung dapat digunakan sekarang.
+                      </p>
+                    </div>
+
+                    {/* Digital Receipt Card */}
+                    <div className="p-5 bg-slate-50/90 rounded-3xl border border-slate-200/90 text-xs space-y-3.5 text-left shadow-xs relative overflow-hidden">
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-200/80">
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                            Total Pembayaran
+                          </span>
+                          <div className="text-2xl font-black text-emerald-600 font-mono">
+                            {formatIDR(chargeData.grossAmount)}
+                          </div>
+                        </div>
+                        <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black">
+                          PAID
+                        </span>
+                      </div>
+
+                      <div className="space-y-2 text-slate-600 text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-400">ID Pesanan:</span>
+                          <span className="font-mono font-bold text-slate-800">{chargeData.orderId}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-400">Paket Layanan:</span>
+                          <strong className="text-primary font-bold">
+                            Sendora {currentPlan.name} ({durationMonths === 12 ? "1 Tahun" : `${durationMonths} Bulan`})
+                          </strong>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-400">Metode Pembayaran:</span>
+                          <span className="font-semibold text-slate-800">
+                            {chargeData.paymentType === "bank_transfer"
+                              ? `Virtual Account ${chargeData.bank?.toUpperCase() || ""}`
+                              : "QRIS / E-Wallet"}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-400">Waktu Aktivasi:</span>
+                          <span className="font-medium text-slate-700">
+                            {new Date().toLocaleString("id-ID", {
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })} WIB
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Email Notification Badge */}
+                      {customerEmail && (
+                        <div className="pt-2 border-t border-slate-200/80 flex items-center gap-2 text-[11px] text-emerald-800 bg-emerald-50/70 p-2.5 rounded-xl border border-emerald-200/60 font-medium">
+                          <Mail className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span>
+                            Rincian invoice & bukti bayar resmi dikirimkan ke Email: <strong>{customerEmail}</strong>
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Unlocked Benefits Quick Pills */}
+                    <div className="grid grid-cols-3 gap-2 text-[11px] font-bold">
+                      <div className="p-2 rounded-xl bg-slate-100/80 text-slate-700 border border-slate-200 flex flex-col items-center">
+                        <Smartphone className="w-3.5 h-3.5 text-emerald-600 mb-0.5" />
+                        <span>{currentPlan.maxDevices} Devices</span>
+                      </div>
+                      <div className="p-2 rounded-xl bg-slate-100/80 text-slate-700 border border-slate-200 flex flex-col items-center">
+                        <MessageSquare className="w-3.5 h-3.5 text-sky-600 mb-0.5" />
+                        <span>{currentPlan.monthlyMessages.toLocaleString("id-ID")} Pesan</span>
+                      </div>
+                      <div className="p-2 rounded-xl bg-slate-100/80 text-slate-700 border border-slate-200 flex flex-col items-center">
+                        <Server className="w-3.5 h-3.5 text-primary mb-0.5" />
+                        <span>REST API Siap</span>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="pt-2 flex flex-col gap-2.5">
+                      <Link
+                        href="/dashboard"
+                        className="btn btn-primary btn-block rounded-2xl text-white font-extrabold shadow-lg shadow-primary/25 gap-2 text-sm"
+                      >
+                        Buka Dashboard Gateway <ArrowRight className="w-4 h-4" />
+                      </Link>
+                      <Link
+                        href="/dashboard/billing"
+                        className="btn btn-ghost btn-sm text-xs font-bold text-slate-500 hover:text-slate-800"
+                      >
+                        Lihat Riwayat & Invoice di Dashboard
+                      </Link>
+                    </div>
+                  </div>
+                ) : (
+                  /* PENDING / INSTRUCTIONS STATE */
+                  <div className="space-y-5">
+                    
+                    {/* Expiry Mobile Banner */}
+                    <div className="sm:hidden flex items-center justify-between px-3 py-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold">
+                      <span className="flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 text-rose-500" /> Batas Waktu Bayar:
+                      </span>
+                      <span className="font-mono text-sm">{timeRemaining}</span>
+                    </div>
+
+                    {/* Total Amount Box */}
+                    <div className="p-4 bg-slate-900 rounded-2xl text-white relative overflow-hidden shadow-md">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
+                          Total Tagihan Pembayaran
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(chargeData.grossAmount.toString(), "amount")}
+                          className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-[11px] font-bold flex items-center gap-1.5 transition-colors"
+                        >
+                          {copiedAmount ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                          {copiedAmount ? "Nominal Tersalin" : "Salin Nominal"}
+                        </button>
+                      </div>
+                      <div className="text-2xl font-black text-emerald-400 tracking-tight font-mono">
+                        {formatIDR(chargeData.grossAmount)}
+                      </div>
+                      <p className="text-[10px] text-slate-400 mt-1">
+                        Transfer tepat sesuai nominal hingga digit terakhir untuk verifikasi instan.
+                      </p>
+                    </div>
+
+                    {/* 1. QRIS VIEW */}
+                    {chargeData.paymentType === "qris" && (
+                      <div className="space-y-4 text-center">
+                        <div className="p-5 bg-white border-2 border-slate-200 rounded-3xl inline-block shadow-md mx-auto relative group">
+                          {chargeData.qrCodeUrl ? (
+                            <img
+                              src={chargeData.qrCodeUrl}
+                              alt="QRIS Code Sendora"
+                              className="w-56 h-56 object-contain mx-auto rounded-xl"
+                            />
+                          ) : chargeData.qrString ? (
+                            <img
+                              src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(chargeData.qrString)}`}
+                              alt="QRIS Code Sendora"
+                              className="w-56 h-56 object-contain mx-auto rounded-xl"
+                            />
+                          ) : (
+                            <div className="w-56 h-56 flex flex-col items-center justify-center bg-slate-100 rounded-xl text-xs text-slate-400 font-medium gap-2">
+                              <RefreshCw className="w-6 h-6 animate-spin text-slate-400" />
+                              Memuat QRIS...
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <QrCode className="w-3.5 h-3.5" /> QRIS Nasional (Semua Bank & E-Wallet)
+                          </div>
+                          <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
+                            Buka BCA Mobile, Livin Mandiri, BRImo, BNI Mobile, GoPay, OVO, Dana, atau ShopeePay lalu scan QR di atas.
+                          </p>
+                        </div>
+
+                        {chargeData.qrCodeUrl && (
+                          <a
+                            href={chargeData.qrCodeUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            download="QRIS-Sendora.png"
+                            className="btn btn-outline btn-xs gap-1.5 rounded-xl text-slate-700 font-bold"
+                          >
+                            <Download className="w-3.5 h-3.5" /> Unduh Gambar QRIS
+                          </a>
+                        )}
+                      </div>
+                    )}
+
+                    {/* 2. VIRTUAL ACCOUNT VIEW (BCA, BRI, BNI, PERMATA) */}
+                    {chargeData.vaNumber && (
+                      <div className="space-y-3">
+                        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                          <div className="flex items-center justify-between text-xs">
+                            <div className="flex items-center gap-2">
+                              <Building2 className="w-4 h-4 text-slate-600" />
+                              <span className="font-extrabold text-slate-800">
+                                {chargeData.bank?.toUpperCase() === "BCA" && "BCA Virtual Account"}
+                                {chargeData.bank?.toUpperCase() === "BRI" && "BRI (BRIVA)"}
+                                {chargeData.bank?.toUpperCase() === "BNI" && "BNI Virtual Account"}
+                                {chargeData.bank?.toUpperCase() === "PERMATA" && "Permata Virtual Account"}
+                                {!["BCA", "BRI", "BNI", "PERMATA"].includes(chargeData.bank?.toUpperCase() || "") &&
+                                  `${chargeData.bank?.toUpperCase()} Virtual Account`}
+                              </span>
+                            </div>
+                            <span className="px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 font-extrabold text-[10px] uppercase font-mono">
+                              {chargeData.bank || "VA"}
+                            </span>
+                          </div>
+
+                          {/* VA Display Box */}
+                          <div className="p-3.5 bg-white rounded-xl border border-slate-200 space-y-1.5">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                              Nomor Virtual Account
+                            </span>
+                            <div className="text-xl sm:text-2xl font-black font-mono tracking-wider text-slate-900 select-all break-all leading-tight">
+                              {formatVaNumber(chargeData.vaNumber)}
+                            </div>
+                          </div>
+
+                          {/* Copy Button */}
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(chargeData.vaNumber!, "va")}
+                            className={`btn btn-sm btn-block rounded-xl font-extrabold gap-1.5 transition-all shadow-xs ${
+                              copiedVa
+                                ? "bg-emerald-600 text-white hover:bg-emerald-700 border-emerald-600"
+                                : "btn-primary text-white"
+                            }`}
+                          >
+                            {copiedVa ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                            {copiedVa ? "Nomor VA Berhasil Disalin!" : "Salin Nomor Virtual Account"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 3. MANDIRI BILL VIEW */}
+                    {chargeData.billerCode && chargeData.billKey && (
+                      <div className="space-y-3">
+                        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                          <div className="flex items-center justify-between text-xs">
+                            <div className="flex items-center gap-2">
+                              <Building2 className="w-4 h-4 text-amber-600" />
+                              <span className="font-extrabold text-slate-800">Mandiri Bill Payment</span>
+                            </div>
+                            <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-extrabold text-[10px] uppercase font-mono">
+                              MANDIRI
+                            </span>
+                          </div>
+
+                          {/* Biller Code */}
+                          <div className="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between">
+                            <div>
+                              <div className="text-[10px] text-slate-400 font-bold uppercase">Kode Perusahaan (Biller Code)</div>
+                              <div className="text-lg font-black font-mono text-slate-900">{chargeData.billerCode}</div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => copyToClipboard(chargeData.billerCode!, "va")}
+                              className="btn btn-xs btn-outline rounded-lg text-slate-600 font-bold gap-1"
+                            >
+                              <Copy className="w-3 h-3" /> Salin
+                            </button>
+                          </div>
+
+                          {/* Bill Key */}
+                          <div className="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between">
+                            <div>
+                              <div className="text-[10px] text-slate-400 font-bold uppercase">Nomor Pelanggan (Bill Key)</div>
+                              <div className="text-lg font-black font-mono text-slate-900 select-all">{chargeData.billKey}</div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => copyToClipboard(chargeData.billKey!, "va")}
+                              className="btn btn-xs btn-primary rounded-lg text-white font-bold gap-1"
+                            >
+                              <Copy className="w-3 h-3" /> Salin
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 4. GOPAY DEEPLINK VIEW */}
+                    {chargeData.deeplinkUrl && (
+                      <div className="pt-2 text-center space-y-3">
+                        <a
+                          href={chargeData.deeplinkUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="btn btn-primary btn-block rounded-2xl text-white font-extrabold shadow-md gap-2"
+                        >
+                          <Smartphone className="w-4 h-4" /> Buka Aplikasi GoPay Sekarang
+                        </a>
+                      </div>
+                    )}
+
+                    {/* COLLAPSIBLE PAYMENT INSTRUCTIONS ACCORDION */}
+                    <div className="rounded-2xl border border-slate-200 overflow-hidden bg-slate-50/50">
+                      <div className="px-4 py-3 bg-slate-100/80 border-b border-slate-200 flex items-center justify-between">
+                        <span className="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                          <HelpCircle className="w-3.5 h-3.5 text-primary" /> Panduan Cara Pembayaran
+                        </span>
+                        <div className="flex gap-1">
+                          <button
+                            type="button"
+                            onClick={() => setActiveInstructionTab("mbanking")}
+                            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                              activeInstructionTab === "mbanking"
+                                ? "bg-white text-slate-900 shadow-xs border border-slate-200"
+                                : "text-slate-500 hover:text-slate-800"
+                            }`}
+                          >
+                            m-Banking
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setActiveInstructionTab("ibanking")}
+                            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                              activeInstructionTab === "ibanking"
+                                ? "bg-white text-slate-900 shadow-xs border border-slate-200"
+                                : "text-slate-500 hover:text-slate-800"
+                            }`}
+                          >
+                            Internet
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setActiveInstructionTab("atm")}
+                            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                              activeInstructionTab === "atm"
+                                ? "bg-white text-slate-900 shadow-xs border border-slate-200"
+                                : "text-slate-500 hover:text-slate-800"
+                            }`}
+                          >
+                            ATM
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="p-4 text-xs text-slate-600 bg-white">
+                        {/* BCA Instructions */}
+                        {chargeData.bank?.toUpperCase() === "BCA" && (
+                          <>
+                            {activeInstructionTab === "mbanking" && (
+                              <ol className="list-decimal pl-4 space-y-1.5 text-[11px] leading-relaxed">
+                                <li>Buka aplikasi <strong>BCA Mobile</strong> & login m-BCA.</li>
+                                <li>Pilih menu <strong>m-Transfer</strong> &gt; <strong>BCA Virtual Account</strong>.</li>
+                                <li>Masukkan nomor Virtual Account di atas & klik <strong>Send</strong>.</li>
+                                <li>Periksa nama penerima <strong>SENDORA / MIDTRANS</strong> dan total nominal.</li>
+                                <li>Masukkan <strong>PIN m-BCA</strong> Anda. Transaksi selesai & gateway langsung aktif.</li>
+                              </ol>
+                            )}
+                            {activeInstructionTab === "ibanking" && (
+                              <ol className="list-decimal pl-4 space-y-1.5 text-[11px] leading-relaxed">
+                                <li>Login ke <strong>KlikBCA Individual</strong> (https://ibank.klikbca.com).</li>
+                                <li>Pilih menu <strong>Transfer Dana</strong> &gt; <strong>Transfer ke BCA Virtual Account</strong>.</li>
+                                <li>Masukkan nomor Virtual Account di atas lalu klik <strong>Lanjutkan</strong>.</li>
+                                <li>Masukkan respon <strong>KeyBCA APPLI 1</strong> lalu klik <strong>Kirim</strong>.</li>
+                              </ol>
+                            )}
+                            {activeInstructionTab === "atm" && (
+                              <ol className="list-decimal pl-4 space-y-1.5 text-[11px] leading-relaxed">
+                                <li>Masukkan <strong>Kartu ATM BCA</strong> & PIN Anda.</li>
+                                <li>Pilih menu <strong>Transaksi Lainnya</strong> &gt; <strong>Transfer</strong> &gt; <strong>Ke Rek BCA Virtual Account</strong>.</li>
+                                <li>Masukkan nomor Virtual Account di atas lalu tekan <strong>Benar</strong>.</li>
+                                <li>Konfirmasi jumlah dan rincian transaksi lalu selesaikan pembayaran.</li>
+                              </ol>
+                            )}
+                          </>
+                        )}
+
+                        {/* Mandiri Instructions */}
+                        {chargeData.bank?.toUpperCase() === "MANDIRI" && (
+                          <>
+                            {activeInstructionTab === "mbanking" && (
+                              <ol className="list-decimal pl-4 space-y-1.5 text-[11px] leading-relaxed">
+                                <li>Buka aplikasi <strong>Livin&apos; by Mandiri</strong> & login.</li>
+                                <li>Pilih menu <strong>Bayar</strong> &gt; cari <strong>Midtrans / Sendora</strong> (Kode: {chargeData.billerCode}).</li>
+                                <li>Masukkan <strong>Bill Key / Nomor Pembayaran</strong>: {chargeData.billKey}.</li>
+                                <li>Konfirmasi detail pembayaran lalu masukkan <strong>PIN Livin&apos;</strong> Anda.</li>
+                              </ol>
+                            )}
+                            {activeInstructionTab === "ibanking" && (
+                              <ol className="list-decimal pl-4 space-y-1.5 text-[11px] leading-relaxed">
+                                <li>Login ke <strong>Mandiri Online</strong>.</li>
+                                <li>Pilih menu <strong>Bayar</strong> &gt; <strong>Multi Payment</strong>.</li>
+                                <li>Pilih penyedia jasa <strong>Midtrans</strong> lalu masukkan Bill Key.</li>
+                                <li>Konfirmasi dengan Token Mandiri Anda.</li>
+                              </ol>
+                            )}
+                            {activeInstructionTab === "atm" && (
+                              <ol className="list-decimal pl-4 space-y-1.5 text-[11px] leading-relaxed">
+                                <li>Masukkan Kartu ATM Mandiri & PIN.</li>
+                                <li>Pilih <strong>Bayar/Beli</strong> &gt; <strong>Lainnya</strong> &gt; <strong>Multi Payment</strong>.</li>
+                                <li>Masukkan Kode Perusahaan ({chargeData.billerCode}) & Bill Key ({chargeData.billKey}).</li>
+                                <li>Konfirmasi pembayaran lalu tekan <strong>Ya</strong>.</li>
+                              </ol>
+                            )}
+                          </>
+                        )}
+
+                        {/* BRI Instructions */}
+                        {chargeData.bank?.toUpperCase() === "BRI" && (
+                          <>
+                            {activeInstructionTab === "mbanking" && (
+                              <ol className="list-decimal pl-4 space-y-1.5 text-[11px] leading-relaxed">
+                                <li>Buka aplikasi <strong>BRImo</strong> & login.</li>
+                                <li>Pilih menu <strong>Tagihan / Pembayaran</strong> &gt; <strong>BRIVA</strong>.</li>
+                                <li>Masukkan nomor BRIVA di atas lalu klik <strong>Lanjutkan</strong>.</li>
+                                <li>Periksa data transaksi dan masukkan <strong>PIN BRImo</strong> Anda.</li>
+                              </ol>
+                            )}
+                            {activeInstructionTab === "ibanking" && (
+                              <ol className="list-decimal pl-4 space-y-1.5 text-[11px] leading-relaxed">
+                                <li>Login ke <strong>Internet Banking BRI</strong>.</li>
+                                <li>Pilih menu <strong>Pembayaran</strong> &gt; <strong>BRIVA</strong>.</li>
+                                <li>Masukkan nomor BRIVA dan konfirmasi dengan token m-Token.</li>
+                              </ol>
+                            )}
+                            {activeInstructionTab === "atm" && (
+                              <ol className="list-decimal pl-4 space-y-1.5 text-[11px] leading-relaxed">
+                                <li>Masukkan Kartu ATM BRI & PIN.</li>
+                                <li>Pilih <strong>Transaksi Lain</strong> &gt; <strong>Pembayaran</strong> &gt; <strong>Lainnya</strong> &gt; <strong>BRIVA</strong>.</li>
+                                <li>Masukkan nomor BRIVA di atas lalu tekan <strong>Ya</strong> untuk konfirmasi.</li>
+                              </ol>
+                            )}
+                          </>
+                        )}
+
+                        {/* BNI Instructions */}
+                        {chargeData.bank?.toUpperCase() === "BNI" && (
+                          <>
+                            {activeInstructionTab === "mbanking" && (
+                              <ol className="list-decimal pl-4 space-y-1.5 text-[11px] leading-relaxed">
+                                <li>Buka aplikasi <strong>BNI Mobile Banking</strong> & login.</li>
+                                <li>Pilih menu <strong>Pembayaran</strong> &gt; <strong>Virtual Account Billing</strong>.</li>
+                                <li>Pilih Tab <strong>Input Baru</strong> lalu masukkan nomor Virtual Account.</li>
+                                <li>Konfirmasi transaksi dan masukkan <strong>Password Transaksi</strong>.</li>
+                              </ol>
+                            )}
+                            {activeInstructionTab === "ibanking" && (
+                              <ol className="list-decimal pl-4 space-y-1.5 text-[11px] leading-relaxed">
+                                <li>Login ke <strong>BNI Internet Banking</strong>.</li>
+                                <li>Pilih <strong>Transaksi</strong> &gt; <strong>Virtual Account Billing</strong>.</li>
+                                <li>Masukkan nomor Virtual Account dan otorisasi dengan token BNI.</li>
+                              </ol>
+                            )}
+                            {activeInstructionTab === "atm" && (
+                              <ol className="list-decimal pl-4 space-y-1.5 text-[11px] leading-relaxed">
+                                <li>Masukkan Kartu ATM BNI & PIN.</li>
+                                <li>Pilih <strong>Menu Lain</strong> &gt; <strong>Pembayaran</strong> &gt; <strong>Menu Berikutnya</strong> &gt; <strong>Virtual Account Billing</strong>.</li>
+                                <li>Masukkan nomor Virtual Account di atas lalu selesaikan transaksi.</li>
+                              </ol>
+                            )}
+                          </>
+                        )}
+
+                        {/* QRIS Instructions */}
+                        {chargeData.paymentType === "qris" && (
+                          <ol className="list-decimal pl-4 space-y-1.5 text-[11px] leading-relaxed">
+                            <li>Buka aplikasi mobile banking atau e-wallet pilihan Anda (BCA Mobile, Livin&apos;, BRImo, GoPay, OVO, Dana, dll).</li>
+                            <li>Pilih menu <strong>Scan QRIS / Bayar</strong>.</li>
+                            <li>Arahkan kamera ke QR Code di atas (atau unggah dari galeri jika diunduh).</li>
+                            <li>Periksa nominal tagihan & nama merchant <strong>Sendora Gateway</strong>.</li>
+                            <li>Konfirmasi dan masukkan PIN transaksi Anda. Verifikasi akan terdeteksi otomatis dalam 1-3 detik.</li>
+                          </ol>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Status Indicator Bar */}
+                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
+                        <span className="font-bold text-slate-700">Menunggu Pembayaran...</span>
+                      </div>
+                      <span className="text-[11px] text-slate-400 font-mono">
+                        Sinkronisasi Otomatis Tiap 3 Detik
+                      </span>
+                    </div>
+
+                    {/* In-Modal Feedback Notice */}
+                    {syncNotice && (
+                      <div
+                        className={`p-4 rounded-2xl border text-xs space-y-1.5 animate-in fade-in zoom-in-95 duration-150 ${
+                          syncNotice.type === "warning"
+                            ? "bg-amber-50/90 border-amber-200 text-amber-900"
+                            : syncNotice.type === "error"
+                            ? "bg-rose-50/90 border-rose-200 text-rose-900"
+                            : "bg-sky-50/90 border-sky-200 text-sky-900"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between font-extrabold">
+                          <div className="flex items-center gap-1.5">
+                            <Clock className="w-4 h-4 text-amber-600 animate-pulse shrink-0" />
+                            <span>{syncNotice.title}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setSyncNotice(null)}
+                            className="text-slate-400 hover:text-slate-600 p-0.5 rounded-md hover:bg-black/5"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <p className="text-[11px] leading-relaxed opacity-90">
+                          {syncNotice.message}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Manual Action Buttons */}
+                    <div className="flex items-center justify-between pt-1 gap-2">
+                      <button
+                        type="button"
+                        disabled={syncChecking}
+                        onClick={async () => {
+                          setSyncChecking(true);
+                          setSyncNotice(null);
+                          try {
+                            const res = await fetch("/api/billing/sync", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ orderId: chargeData.orderId }),
+                            });
+                            const json = await res.json();
+                            if (json.success && json.data?.status === "PAID") {
+                              setPaymentSuccess(true);
+                            } else {
+                              const currentStatus = json.data?.transactionStatus || json.data?.status || "PENDING";
+                              setSyncNotice({
+                                type: "warning",
+                                title: `Status: ${currentStatus.toUpperCase()}`,
+                                message: "Pembayaran belum terverifikasi oleh gateway. Jika Anda baru saja menyelesaikan transfer, mohon tunggu 5-15 detik agar sistem perbankan mengirim webhook konfirmasi ke gateway. Halaman akan otomatis beralih setelah lunas.",
+                              });
+                            }
+                          } catch {
+                            setSyncNotice({
+                              type: "error",
+                              title: "Gagal Menghubungi Server",
+                              message: "Koneksi terputus saat memeriksa status. Sistem tetap akan mencoba sinkronisasi otomatis di latar belakang.",
+                            });
+                          } finally {
+                            setSyncChecking(false);
+                          }
+                        }}
+                        className="btn btn-outline btn-sm rounded-xl text-xs font-bold gap-1.5 flex-1 shadow-xs"
+                      >
+                        {syncChecking ? (
+                          <>
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            Memeriksa...
+                          </>
+                        ) : (
+                          <>
+                            <RefreshCw className="w-3.5 h-3.5" />
+                            Saya Sudah Bayar
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setCustomModalOpen(false)}
+                        className="btn btn-ghost btn-sm text-xs text-slate-400 hover:text-slate-700 font-semibold"
+                      >
+                        Tutup / Bayar Nanti
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
+    </div>
+  );
+}
+
+export default function OrderPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-400 text-xs font-bold gap-2">
+          <RefreshCw className="w-5 h-5 animate-spin text-primary" />
+          Memuat halaman order...
+        </div>
+      }
+    >
+      <OrderContent />
+    </Suspense>
+  );
+}
+

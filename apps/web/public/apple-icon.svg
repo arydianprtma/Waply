@@ -1,0 +1,63 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#047857" />
+      <stop offset="40%" stop-color="#059669" />
+      <stop offset="80%" stop-color="#10B981" />
+      <stop offset="100%" stop-color="#34D399" />
+    </linearGradient>
+
+    <!-- S Ribbon Gradient -->
+    <linearGradient id="sRibbon" x1="10%" y1="90%" x2="80%" y2="20%">
+      <stop offset="0%" stop-color="#022C22" />
+      <stop offset="35%" stop-color="#065F46" />
+      <stop offset="70%" stop-color="#10B981" />
+      <stop offset="100%" stop-color="#6EE7B7" />
+    </linearGradient>
+
+    <!-- Paper Plane Wing Top -->
+    <linearGradient id="planeTop" x1="20%" y1="70%" x2="95%" y2="10%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="60%" stop-color="#F0FDF4" />
+      <stop offset="100%" stop-color="#D1FAE5" />
+    </linearGradient>
+
+    <!-- Paper Plane Shadow Underwing -->
+    <linearGradient id="planeUnder" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#047857" />
+      <stop offset="100%" stop-color="#064E3B" />
+    </linearGradient>
+  </defs>
+
+  <!-- Squircle App Background -->
+  <rect width="512" height="512" rx="124" fill="url(#bgGrad)" />
+  <rect x="12" y="12" width="488" height="488" rx="112" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-opacity="0.25" />
+
+  <!-- WhatsApp Chat Bubble Contour (Subtle Backdrop Glow) -->
+  <path d="M260,120 C350,120 420,180 420,260 C420,300 400,336 368,360 L388,424 C390,432 382,440 374,436 L298,404 C286,408 273,410 260,410 C170,410 100,350 100,260 C100,170 170,120 260,120 Z" fill="none" stroke="#A7F3D0" stroke-width="16" stroke-opacity="0.3" />
+
+  <!-- Sweeping Dynamic Letter 'S' Ribbon -->
+  <!-- Lower loop of S -->
+  <path d="M140,360 C110,340 100,290 130,250 C160,210 240,210 260,250 C276,280 256,330 220,350 C190,366 160,366 140,360 Z" fill="url(#sRibbon)" />
+  
+  <!-- Spine and Upper arc of S -->
+  <path d="M120,310 C104,250 134,180 200,150 C260,120 316,144 300,200 C284,250 186,240 166,290 C154,320 162,340 180,350 C146,346 128,330 120,310 Z" fill="url(#sRibbon)" />
+
+  <!-- Upper S to Plane Launch Vector -->
+  <path d="M170,180 C196,140 250,130 290,160 C320,180 318,220 294,240 C260,270 208,280 178,306 C170,276 182,230 220,210 C250,190 264,174 250,160 C236,146 200,152 170,180 Z" fill="#6EE7B7" />
+
+  <!-- Fast Forward 3D Origami Send Plane (Taking Off Northeast) -->
+  <!-- Plane Body Shadow Wing -->
+  <path d="M210,210 L430,70 L300,190 Z" fill="url(#planeUnder)" />
+
+  <!-- Plane Main High-Gloss Wing -->
+  <path d="M210,210 L430,70 L340,220 L300,190 Z" fill="url(#planeTop)" />
+
+  <!-- Plane Right Wing Fold Accent -->
+  <path d="M300,190 L430,70 L370,160 Z" fill="#6EE7B7" />
+
+  <!-- Signal Pulse Dots -->
+  <circle cx="430" cy="70" r="14" fill="#FBBF24" stroke="#065F46" stroke-width="4" />
+  <circle cx="456" cy="46" r="6" fill="#34D399" />
+</svg>

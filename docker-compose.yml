@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  sendora-web:
+    build:
+      context: .
+      dockerfile: ./apps/web/Dockerfile
+    container_name: sendora-web
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - NODE_ENV=production
+      - NEXT_PUBLIC_APP_URL=http://localhost:3001
+      - GATEWAY_INTERNAL_URL=http://sendora-gateway:3002
+    volumes:
+      - sendora-data:/app/apps/web/.sendora-data
+    depends_on:
+      - sendora-gateway
+
+  sendora-gateway:
+    build:
+      context: .
+      dockerfile: ./apps/gateway/Dockerfile
+    container_name: sendora-gateway
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+      - NODE_ENV=production
+    volumes:
+      - gateway-sessions:/app/apps/gateway/.sessions
+
+volumes:
+  sendora-data:
+  gateway-sessions:

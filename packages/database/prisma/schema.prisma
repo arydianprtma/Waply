@@ -1,0 +1,283 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ----------------------------------------------------
+// ENUMS
+// ----------------------------------------------------
+
+enum SubscriptionStatus {
+  INCOMPLETE
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  EXPIRED
+}
+
+enum DeviceStatus {
+  CONNECTED
+  DISCONNECTED
+  CONNECTING
+  BANNED_DETECTED
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum MessageStatus {
+  QUEUED
+  PROCESSING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+  PAUSED
+}
+
+enum MatchType {
+  EXACT
+  CONTAINS
+  REGEX
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  FAILED
+  EXPIRED
+}
+
+enum BlacklistReason {
+  UNSUBSCRIBE_KEYWORD
+  MANUAL
+  SPAM_REPORT
+}
+
+// ----------------------------------------------------
+// MODELS
+// ----------------------------------------------------
+
+model User {
+  id            String         @id // Supabase Auth User UUID
+  email         String         @unique
+  name          String?
+  avatarUrl     String?
+  role          String         @default("user") // "user" or "admin"
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  subscriptions Subscription[]
+  devices       Device[]
+  apiKeys       ApiKey[]
+  messages      Message[]
+  webhooks      Webhook[]
+  automations   Automation[]
+  blacklists    Blacklist[]
+  invoices      Invoice[]
+
+  @@map("users")
+}
+
+model Plan {
+  id              String         @id @default(cuid())
+  code            String         @unique // "FREE", "STARTER", "BUSINESS", "PRO"
+  name            String
+  price           Int            // Dalam Rupiah (IDR), e.g. 0, 49000, 149000, 299000
+  interval        String         @default("monthly")
+  maxDevices      Int            @default(1)
+  monthlyMessages Int            @default(100)
+  rateLimitPerMin Int            @default(10)
+  features        Json?
+  isActive        Boolean        @default(true)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  subscriptions   Subscription[]
+
+  @@map("plans")
+}
+
+model Subscription {
+  id            String             @id @default(cuid())
+  userId        String
+  planId        String
+  status        SubscriptionStatus @default(ACTIVE)
+  currentPeriodStart DateTime     @default(now())
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean      @default(false)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan          Plan               @relation(fields: [planId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@map("subscriptions")
+}
+
+model Device {
+  id                 String        @id @default(cuid())
+  userId             String
+  name               String
+  phoneNumber        String?
+  status             DeviceStatus  @default(DISCONNECTED)
+  sessionData        Json?         // Baileys multi-file/auth session state data
+  minDelaySeconds    Int           @default(4)
+  maxDelaySeconds    Int           @default(12)
+  batchCooldownSec   Int           @default(180) // 3 menit
+  batchSizeLimit     Int           @default(30)
+  isWarmupActive     Boolean       @default(true)
+  workingHoursStart  String?       // "08:00"
+  workingHoursEnd    String?       // "21:00"
+  lastConnectedAt    DateTime?
+  lastSentAt         DateTime?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  warmup             DeviceWarmup?
+  messages           Message[]
+  automations        Automation[]
+
+  @@index([userId])
+  @@map("devices")
+}
+
+model DeviceWarmup {
+  id             String    @id @default(cuid())
+  deviceId       String    @unique
+  stage          Int       @default(1) // 1: Cold, 2: Warm, 3: Active, 4: Mature
+  currentDay     Int       @default(1) // Hari ke-1 s/d 15
+  dailySentCount Int       @default(0)
+  maxDailyLimit  Int       @default(30)
+  lastResetDate  DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  device         Device    @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@map("device_warmups")
+}
+
+model ApiKey {
+  id          String    @id @default(cuid())
+  userId      String
+  name        String
+  keyPrefix   String    // e.g. "snd_live_abc123"
+  keyHash     String    @unique // SHA-256 hash dari full key
+  lastUsedAt  DateTime?
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([keyHash])
+  @@map("api_keys")
+}
+
+model Message {
+  id                String           @id @default(cuid())
+  userId            String
+  deviceId          String
+  direction         MessageDirection @default(OUTBOUND)
+  recipient         String           // Phone number without leading +
+  content           String           // Rendered content after Spintax processing
+  rawContent        String?          // Original template / spintax string
+  status            MessageStatus    @default(QUEUED)
+  failReason        String?
+  providerMessageId String?
+  scheduledAt       DateTime?
+  sentAt            DateTime?
+  deliveredAt       DateTime?
+  readAt            DateTime?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device            Device           @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([deviceId, status])
+  @@index([createdAt])
+  @@map("messages")
+}
+
+model Blacklist {
+  id          String          @id @default(cuid())
+  userId      String
+  phoneNumber String
+  reason      BlacklistReason @default(UNSUBSCRIBE_KEYWORD)
+  notes       String?
+  createdAt   DateTime        @default(now())
+
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, phoneNumber])
+  @@index([userId])
+  @@map("blacklists")
+}
+
+model Webhook {
+  id        String   @id @default(cuid())
+  userId    String
+  url       String
+  secret    String   // Secret key untuk HMAC signature
+  events    String[] // Array of event names, e.g. ["message.received", "message.sent"]
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("webhooks")
+}
+
+model Automation {
+  id           String    @id @default(cuid())
+  userId       String
+  deviceId     String?   // Nullable: jika null, berlaku untuk semua device user
+  keyword      String
+  matchType    MatchType @default(CONTAINS)
+  replyContent String    // Mendukung Spintax e.g. {Halo|Hai}
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device       Device?   @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@map("automations")
+}
+
+model Invoice {
+  id            String        @id @default(cuid())
+  userId        String
+  orderId       String        @unique // e.g. "INV-SENDORA-20260904-XXXX"
+  planCode      String
+  amount        Int           // IDR amount
+  status        InvoiceStatus @default(PENDING)
+  paymentMethod String?       // e.g. "qris", "bank_transfer", "gopay"
+  snapToken     String?
+  snapRedirectUrl String?
+  paidAt        DateTime?
+  expiredAt     DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([orderId])
+  @@map("invoices")
+}
