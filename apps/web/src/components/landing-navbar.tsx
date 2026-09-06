@@ -3,10 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { SendoraLogo } from "@/components/brand/SendoraLogo";
-import { Menu, X, ArrowRight, ShieldCheck, Zap, BookOpen, CreditCard, HelpCircle } from "lucide-react";
+import { Menu, X, ArrowRight, ShieldCheck, Zap, BookOpen, CreditCard, HelpCircle, Moon, Sun } from "lucide-react";
+import { useTheme } from "@/components/theme-provider";
 
 export function LandingNavbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { isDark, toggleTheme } = useTheme();
 
   const navLinks = [
     { name: "Fitur", href: "/#features", icon: Zap },
@@ -31,7 +33,7 @@ export function LandingNavbar() {
               <li key={link.name}>
                 <Link
                   href={link.href}
-                  className="hover:text-primary hover:bg-base-200/60 rounded-xl transition-colors font-semibold text-slate-700"
+                  className="hover:text-primary hover:bg-base-200/60 rounded-xl transition-colors font-semibold text-base-content/80 hover:text-base-content"
                 >
                   {link.name}
                 </Link>
@@ -40,12 +42,22 @@ export function LandingNavbar() {
           </ul>
         </div>
 
-        {/* Desktop Auth Buttons & Mobile Hamburger Button */}
+        {/* Desktop Auth Buttons & Theme Toggle & Mobile Hamburger Button */}
         <div className="navbar-end gap-2">
+          {/* Theme Toggle Button */}
+          <button
+            onClick={toggleTheme}
+            className="btn btn-ghost btn-circle btn-sm text-base-content/70 hover:text-base-content"
+            title="Ganti Tema"
+            aria-label="Ganti Tema"
+          >
+            {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
+          </button>
+
           <div className="hidden sm:flex items-center gap-2">
             <Link
               href="/login"
-              className="btn btn-ghost btn-sm font-bold text-slate-700 hover:text-slate-900 rounded-xl"
+              className="btn btn-ghost btn-sm font-bold text-base-content/80 hover:text-base-content rounded-xl"
             >
               Masuk
             </Link>
@@ -61,7 +73,7 @@ export function LandingNavbar() {
           {/* Hamburger Button (Visible on mobile/tablet) */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="btn btn-ghost btn-circle btn-sm lg:hidden text-slate-700"
+            className="btn btn-ghost btn-circle btn-sm lg:hidden text-base-content"
             aria-label="Toggle mobile menu"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -118,6 +130,13 @@ export function LandingNavbar() {
 
             {/* Drawer Bottom Actions */}
             <div className="pt-6 border-t border-base-200 space-y-3">
+              <button
+                onClick={toggleTheme}
+                className="btn btn-outline w-full rounded-2xl font-bold flex items-center justify-center gap-2"
+              >
+                {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
+                <span>{isDark ? "Tema Terang (Light Mode)" : "Tema Gelap (Dark Mode)"}</span>
+              </button>
               <Link
                 href="/register"
                 onClick={() => setMobileMenuOpen(false)}
@@ -129,7 +148,7 @@ export function LandingNavbar() {
               <Link
                 href="/login"
                 onClick={() => setMobileMenuOpen(false)}
-                className="btn btn-outline w-full rounded-2xl font-bold text-slate-700"
+                className="btn btn-ghost border border-base-300 w-full rounded-2xl font-bold text-base-content"
               >
                 Masuk ke Akun
               </Link>

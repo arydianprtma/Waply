@@ -30,6 +30,7 @@ export const metadata: Metadata = {
 };
 
 import { DialogProvider } from "@/components/confirm-dialog";
+import { ThemeProvider, themeInitScript } from "@/components/theme-provider";
 import NextTopLoader from "nextjs-toploader";
 
 export default function RootLayout({
@@ -38,29 +39,32 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" data-theme="sendoraLight">
+    <html lang="id" data-theme="sendoraLight" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <link rel="icon" href="/favicon.ico?v=2" sizes="any" />
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=2" />
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=2" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon.png?v=2" />
       </head>
       <body className={`${plusJakartaSans.className} antialiased`}>
-        <NextTopLoader
-          color="#10b981"
-          initialPosition={0.25}
-          crawlSpeed={80}
-          height={3}
-          crawl={true}
-          showSpinner={false}
-          easing="ease-out"
-          speed={100}
-          shadow="0 0 12px #10b981,0 0 4px #059669"
-          zIndex={99999}
-        />
-        <DialogProvider>
-          {children}
-        </DialogProvider>
+        <ThemeProvider>
+          <NextTopLoader
+            color="#10b981"
+            initialPosition={0.25}
+            crawlSpeed={80}
+            height={3}
+            crawl={true}
+            showSpinner={false}
+            easing="ease-out"
+            speed={100}
+            shadow="0 0 12px #10b981,0 0 4px #059669"
+            zIndex={99999}
+          />
+          <DialogProvider>
+            {children}
+          </DialogProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

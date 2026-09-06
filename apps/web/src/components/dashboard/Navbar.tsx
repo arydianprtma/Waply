@@ -25,6 +25,7 @@ import {
 import { useUserSession } from "@/lib/use-user-session";
 import { performLogout } from "@/lib/auth-logout";
 import { useMobileNav } from "@/lib/mobile-nav-context";
+import { useTheme } from "@/components/theme-provider";
 
 interface AnnouncementItem {
   id: string;
@@ -39,7 +40,7 @@ interface AnnouncementItem {
 }
 
 export function Navbar() {
-  const [isDark, setIsDark] = useState(false);
+  const { isDark, toggleTheme } = useTheme();
   const [announcements, setAnnouncements] = useState<AnnouncementItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loadingAnnouncements, setLoadingAnnouncements] = useState(false);
@@ -105,12 +106,6 @@ export function Navbar() {
     await performLogout("/login");
   };
 
-  const toggleTheme = () => {
-    const nextTheme = isDark ? "sendoraLight" : "sendoraDark";
-    document.documentElement.setAttribute("data-theme", nextTheme);
-    setIsDark(!isDark);
-  };
-
   const isAdmin = currentUser?.role === "admin";
 
   const getTypeStyle = (type: AnnouncementItem["type"]) => {
@@ -163,13 +158,13 @@ export function Navbar() {
   const { toggleNav } = useMobileNav();
 
   return (
-    <header className="navbar bg-white border-b border-slate-200 px-3 sm:px-6 h-16 shrink-0 sticky top-0 z-40 shadow-xs">
+    <header className="navbar bg-base-100 border-b border-base-200 px-3 sm:px-6 h-16 shrink-0 sticky top-0 z-40 shadow-xs transition-colors">
       {/* Left side: Mobile Menu Button + Search & Status */}
       <div className="flex-1 flex items-center gap-2 sm:gap-4 min-w-0">
         {/* Mobile Hamburger Menu Button (Visible on mobile/tablet < 1024px) */}
         <button
           onClick={toggleNav}
-          className="btn btn-ghost btn-circle btn-sm lg:hidden text-slate-700 hover:bg-slate-100 flex-shrink-0"
+          className="btn btn-ghost btn-circle btn-sm lg:hidden text-base-content/80 hover:bg-base-200 flex-shrink-0"
           aria-label="Buka Menu Navigasi"
           title="Buka Menu"
         >
@@ -181,13 +176,13 @@ export function Navbar() {
             <input
               type="text"
               placeholder="Cari pesan, nomor, API key..."
-              className="w-full pl-9 pr-3.5 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder:text-slate-400 text-xs font-medium focus:bg-white focus:outline-emerald-500 transition-all"
+              className="w-full pl-9 pr-3.5 py-1.5 rounded-xl bg-base-200 border border-base-300 text-base-content placeholder:text-base-content/40 text-xs font-medium focus:bg-base-100 focus:outline-emerald-500 transition-all"
             />
-            <Search className="w-4 h-4 absolute left-3 top-2 text-slate-400" />
+            <Search className="w-4 h-4 absolute left-3 top-2 text-base-content/40" />
           </div>
         </div>
 
-        <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 truncate">
+        <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 truncate">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0"></span>
           <span className="truncate">Gateway Online</span>
         </div>
@@ -198,10 +193,11 @@ export function Navbar() {
         {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
-          className="btn btn-ghost btn-circle btn-sm text-slate-600 hover:text-slate-900"
-          title="Ganti Tema"
+          className="btn btn-ghost btn-circle btn-sm text-base-content/70 hover:text-base-content"
+          title={isDark ? "Ganti ke Mode Terang" : "Ganti ke Mode Gelap"}
+          aria-label="Ganti Tema"
         >
-          {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
         </button>
 
         {/* Notifications */}
@@ -209,13 +205,13 @@ export function Navbar() {
           <button
             tabIndex={0}
             onClick={fetchAnnouncements}
-            className="btn btn-ghost btn-circle btn-sm text-slate-600 hover:text-slate-900 relative"
+            className="btn btn-ghost btn-circle btn-sm text-base-content/70 hover:text-base-content relative"
             title="Notifikasi & Pengumuman"
           >
             <div className="indicator">
               <Bell className="w-4 h-4" />
               {unreadCount > 0 && (
-                <span className="badge badge-xs bg-rose-500 text-white border-white indicator-item font-bold text-[10px] px-1 h-4 min-w-4 flex items-center justify-center rounded-full">
+                <span className="badge badge-xs bg-rose-500 text-white border-white dark:border-slate-900 indicator-item font-bold text-[10px] px-1 h-4 min-w-4 flex items-center justify-center rounded-full">
                   {unreadCount > 9 ? "9+" : unreadCount}
                 </span>
               )}
@@ -223,14 +219,14 @@ export function Navbar() {
           </button>
           <div
             tabIndex={0}
-            className="dropdown-content z-[50] card card-compact w-80 sm:w-96 p-0 shadow-2xl bg-white border border-slate-200 mt-3 rounded-2xl overflow-hidden"
+            className="dropdown-content z-[50] card card-compact w-80 sm:w-96 p-0 shadow-2xl bg-base-100 border border-base-200 mt-3 rounded-2xl overflow-hidden"
           >
-            <div className="p-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+            <div className="p-3.5 border-b border-base-200 flex items-center justify-between bg-base-200/50">
               <div className="flex items-center gap-2">
-                <Megaphone className="w-4 h-4 text-emerald-600" />
-                <h3 className="font-bold text-sm text-slate-900">Pengumuman Sistem</h3>
+                <Megaphone className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <h3 className="font-bold text-sm text-base-content">Pengumuman Sistem</h3>
                 {unreadCount > 0 && (
-                  <span className="px-1.5 py-0.2 text-[10px] font-extrabold bg-rose-100 text-rose-700 rounded-full">
+                  <span className="px-1.5 py-0.2 text-[10px] font-extrabold bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-full border border-rose-500/20">
                     {unreadCount} Baru
                   </span>
                 )}
@@ -238,7 +234,7 @@ export function Navbar() {
               {unreadCount > 0 && (
                 <button
                   onClick={handleMarkAllRead}
-                  className="text-[11px] font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 hover:underline cursor-pointer"
+                  className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer flex items-center gap-1"
                 >
                   <CheckCheck className="w-3.5 h-3.5" />
                   Tandai Semua Dibaca
@@ -246,12 +242,12 @@ export function Navbar() {
               )}
             </div>
 
-            <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 p-2 space-y-1.5">
+            <div className="max-h-80 overflow-y-auto divide-y divide-base-200 p-2 space-y-1.5">
               {announcements.length === 0 ? (
-                <div className="p-6 text-center text-slate-400">
+                <div className="p-6 text-center text-base-content/40">
                   <Bell className="w-8 h-8 mx-auto mb-2 opacity-30" />
                   <p className="text-xs font-semibold">Belum ada pengumuman baru</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">Semua notifikasi sistem akan muncul di sini.</p>
+                  <p className="text-[11px] text-base-content/40 mt-0.5">Semua notifikasi sistem akan muncul di sini.</p>
                 </div>
               ) : (
                 announcements.map((item) => {
@@ -262,7 +258,7 @@ export function Navbar() {
                       onClick={() => !item.isRead && handleMarkSingleRead(item.id)}
                       className={`p-3 rounded-xl border transition-all cursor-pointer ${
                         item.isRead
-                          ? "bg-white border-slate-100 opacity-80 hover:opacity-100 hover:bg-slate-50"
+                          ? "bg-base-100 border-base-200 opacity-80 hover:opacity-100 hover:bg-base-200/50"
                           : `${style.border} shadow-xs hover:shadow-sm`
                       }`}
                     >
@@ -271,7 +267,7 @@ export function Navbar() {
                           {style.icon}
                           <span
                             className={`text-xs font-bold truncate ${
-                              item.isRead ? "text-slate-800" : "text-slate-950 font-extrabold"
+                              item.isRead ? "text-base-content/80" : "text-base-content font-extrabold"
                             }`}
                           >
                             {item.title}
@@ -289,11 +285,11 @@ export function Navbar() {
                         </div>
                       </div>
 
-                      <p className="text-xs text-slate-600 mt-1.5 leading-relaxed font-normal whitespace-pre-line">
+                      <p className="text-xs text-base-content/70 mt-1.5 leading-relaxed font-normal whitespace-pre-line">
                         {item.message}
                       </p>
 
-                      <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-100/60 text-[10px] text-slate-400 font-medium">
+                      <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-base-200 text-[10px] text-base-content/50 font-medium">
                         <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${style.badge}`}>
                           {style.label}
                         </span>
@@ -312,22 +308,22 @@ export function Navbar() {
           <div
             tabIndex={0}
             role="button"
-            className="btn btn-ghost btn-sm gap-2 pl-2 pr-3.5 rounded-full border border-slate-200 text-slate-800 font-bold bg-slate-50 hover:bg-slate-100"
+            className="btn btn-ghost btn-sm gap-2 pl-2 pr-3.5 rounded-full border border-base-300 text-base-content font-bold bg-base-200/70 hover:bg-base-200"
           >
-            <div className="w-7 h-7 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs">
+            <div className="w-7 h-7 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-xs">
               <User className="w-4 h-4" />
             </div>
-            <span className="text-xs font-bold hidden md:inline text-slate-900">
+            <span className="text-xs font-bold hidden md:inline text-base-content">
               {currentUser?.name || (isAdmin ? "Admin (Online)" : "User (Online)")}
             </span>
           </div>
           <ul
             tabIndex={0}
-            className="menu dropdown-content z-[1] p-2 shadow-xl bg-white rounded-2xl w-56 mt-3 border border-slate-200 text-sm"
+            className="menu dropdown-content z-[1] p-2 shadow-xl bg-base-100 rounded-2xl w-56 mt-3 border border-base-200 text-sm"
           >
             <li className="menu-title px-4 py-2">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">ID USER</span>
+                <span className="text-[10px] font-extrabold text-base-content/50 uppercase tracking-wider">ID USER</span>
                 {isAdmin && (
                   <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-primary/10 text-primary border border-primary/20">
                     ADMIN
@@ -335,7 +331,7 @@ export function Navbar() {
                 )}
               </div>
               <span
-                className="font-mono text-[11px] font-bold text-slate-700 bg-slate-100/90 px-2.5 py-1 rounded-lg border border-slate-200/80 mt-1 select-all truncate block"
+                className="font-mono text-[11px] font-bold text-base-content/80 bg-base-200 px-2.5 py-1 rounded-lg border border-base-300 mt-1 select-all truncate block"
                 title={currentUser?.id || ""}
               >
                 {currentUser?.id ? (currentUser.id.length > 18 ? `#${currentUser.id.slice(0, 14)}...` : `#${currentUser.id}`) : "#USR-ONLINE"}
@@ -346,16 +342,16 @@ export function Navbar() {
               <Link
                 href="/dashboard/settings"
                 prefetch={true}
-                className="flex items-center gap-2 font-medium text-slate-700 hover:text-slate-900"
+                className="flex items-center gap-2 font-medium text-base-content/80 hover:text-base-content"
               >
-                <User className="w-4 h-4 text-slate-500" /> Pengaturan Akun
+                <User className="w-4 h-4 text-base-content/60" /> Pengaturan Akun
               </Link>
             </li>
             <li>
               <Link
                 href="/dashboard/billing"
                 prefetch={true}
-                className="flex items-center gap-2 font-medium text-slate-700 hover:text-slate-900"
+                className="flex items-center gap-2 font-medium text-base-content/80 hover:text-base-content"
               >
                 <Zap className="w-4 h-4 text-amber-500" /> Upgrade Paket
               </Link>
@@ -366,7 +362,7 @@ export function Navbar() {
                   <Link
                     href="/admin"
                     prefetch={true}
-                    className="flex items-center gap-2 font-bold text-emerald-700 hover:bg-emerald-50"
+                    className="flex items-center gap-2 font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
                   >
                     <ShieldCheck className="w-4 h-4" /> Admin Panel
                   </Link>
@@ -375,18 +371,18 @@ export function Navbar() {
                   <Link
                     href="/admin/account"
                     prefetch={true}
-                    className="flex items-center gap-2 font-medium text-slate-700 hover:text-slate-900"
+                    className="flex items-center gap-2 font-medium text-base-content/80 hover:text-base-content"
                   >
-                    <User className="w-4 h-4 text-emerald-600" /> Akun Super Admin
+                    <User className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Akun Super Admin
                   </Link>
                 </li>
                 <li>
                   <Link
                     href="/admin/settings"
                     prefetch={true}
-                    className="flex items-center gap-2 font-medium text-slate-700 hover:text-slate-900"
+                    className="flex items-center gap-2 font-medium text-base-content/80 hover:text-base-content"
                   >
-                    <ShieldCheck className="w-4 h-4 text-slate-500" /> Pengaturan Sistem
+                    <ShieldCheck className="w-4 h-4 text-base-content/60" /> Pengaturan Sistem
                   </Link>
                 </li>
               </>
@@ -395,7 +391,7 @@ export function Navbar() {
             <li>
               <button
                 onClick={handleLogout}
-                className="text-rose-600 flex items-center gap-2 hover:bg-rose-50 font-bold"
+                className="text-rose-600 dark:text-rose-400 flex items-center gap-2 hover:bg-rose-500/10 font-bold"
               >
                 <LogOut className="w-4 h-4" /> Keluar (Logout)
               </button>

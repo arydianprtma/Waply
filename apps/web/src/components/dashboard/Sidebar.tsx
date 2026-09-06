@@ -118,12 +118,12 @@ export function Sidebar() {
   const renderNavContent = (isMobile = false) => (
     <div className="flex flex-col h-full justify-between select-none">
       {/* Brand Header */}
-      <div className="h-16 px-5 border-b border-slate-200 flex items-center justify-between shrink-0">
+      <div className="h-16 px-5 border-b border-base-200 flex items-center justify-between shrink-0">
         <SendoraLogo href="/dashboard" size="md" badge="v1.0" />
         {isMobile && (
           <button
             onClick={closeNav}
-            className="btn btn-ghost btn-circle btn-sm text-slate-500 hover:bg-slate-100 lg:hidden"
+            className="btn btn-ghost btn-circle btn-sm text-base-content/60 hover:bg-base-200 lg:hidden"
             aria-label="Tutup Menu"
           >
             <X className="w-5 h-5" />
@@ -136,7 +136,7 @@ export function Sidebar() {
         {navigation.map((section, idx) => (
           <div key={idx}>
             {section.title && (
-              <div className="px-3 mb-2 text-[11px] font-extrabold tracking-wider text-slate-500 uppercase">
+              <div className="px-3 mb-2 text-[11px] font-extrabold tracking-wider text-base-content/50 uppercase">
                 {section.title}
               </div>
             )}
@@ -157,12 +157,12 @@ export function Sidebar() {
                         isActive
                           ? "bg-emerald-600 text-white shadow-sm font-bold"
                           : isLocked
-                          ? "text-slate-500 font-medium hover:bg-slate-100 hover:text-slate-800"
-                          : "text-slate-700 font-medium hover:bg-slate-100 hover:text-slate-950"
+                          ? "text-base-content/40 font-medium hover:bg-base-200 hover:text-base-content"
+                          : "text-base-content/80 font-medium hover:bg-base-200 hover:text-base-content"
                       )}
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <Icon className={clsx("w-4 h-4 flex-shrink-0", isLocked && !isActive ? "text-slate-400" : "")} />
+                        <Icon className={clsx("w-4 h-4 flex-shrink-0", isLocked && !isActive ? "text-base-content/30" : "")} />
                         <span className="truncate">{item.name}</span>
                       </div>
 
@@ -173,7 +173,7 @@ export function Sidebar() {
                             "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold tracking-tight shadow-2xs shrink-0",
                             isActive
                               ? "bg-amber-400/30 text-amber-200 border border-amber-300/40"
-                              : "bg-amber-50 text-amber-700 border border-amber-200/80"
+                              : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
                           )}
                           title={`Fitur ${item.name} memerlukan paket ${item.minPlanBadge || "Starter"}`}
                         >
@@ -186,7 +186,7 @@ export function Sidebar() {
                             "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide shrink-0",
                             isActive
                               ? "bg-white/20 text-white"
-                              : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
                           )}
                         >
                           {item.badge}
@@ -202,25 +202,25 @@ export function Sidebar() {
       </div>
 
       {/* Footer: Anti-Ban status & Quick Logout */}
-      <div className="p-3 border-t border-slate-200 space-y-2 bg-white shrink-0">
-        <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs">
-          <div className="flex items-center justify-between font-bold text-slate-900 mb-1">
+      <div className="p-3 border-t border-base-200 space-y-2 bg-base-100 shrink-0">
+        <div className="p-3 rounded-2xl bg-base-200/60 border border-base-300 text-xs">
+          <div className="flex items-center justify-between font-bold text-base-content mb-1">
             <span className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               Anti-Ban Engine
             </span>
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
               Active
             </span>
           </div>
-          <p className="text-slate-600 text-[11px] font-medium mt-1">
+          <p className="text-base-content/60 text-[11px] font-medium mt-1">
             Delay: 4-12s • Typing: On • Warmup: Safe
           </p>
         </div>
 
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-rose-600 hover:bg-rose-50 text-xs font-bold transition-colors cursor-pointer"
+          className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 text-xs font-bold transition-colors cursor-pointer"
         >
           <LogOut className="w-4 h-4" /> Keluar (Logout)
         </button>

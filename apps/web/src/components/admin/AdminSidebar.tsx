@@ -73,12 +73,12 @@ export function AdminSidebar() {
   const renderNavContent = (isMobile = false) => (
     <div className="flex flex-col h-full justify-between select-none">
       {/* Brand Header */}
-      <div className="h-16 px-5 border-b border-slate-200 flex items-center justify-between shrink-0">
+      <div className="h-16 px-5 border-b border-base-200 flex items-center justify-between shrink-0">
         <SendoraLogo href="/admin" size="md" badge="Admin" />
         {isMobile && (
           <button
             onClick={closeNav}
-            className="btn btn-ghost btn-circle btn-sm text-slate-500 hover:bg-slate-100 lg:hidden"
+            className="btn btn-ghost btn-circle btn-sm text-base-content/60 hover:bg-base-200 lg:hidden"
             aria-label="Tutup Menu"
           >
             <X className="w-5 h-5" />
@@ -91,7 +91,7 @@ export function AdminSidebar() {
         {navigation.map((section, idx) => (
           <div key={idx}>
             {section.title && (
-              <div className="px-3 mb-2 text-[11px] font-extrabold tracking-wider text-slate-500 uppercase">
+              <div className="px-3 mb-2 text-[11px] font-extrabold tracking-wider text-base-content/50 uppercase">
                 {section.title}
               </div>
             )}
@@ -109,7 +109,7 @@ export function AdminSidebar() {
                         "flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm transition-all",
                         isActive
                           ? "bg-emerald-600 text-white shadow-sm font-bold"
-                          : "text-slate-700 font-medium hover:bg-slate-100 hover:text-slate-950"
+                          : "text-base-content/80 font-medium hover:bg-base-200 hover:text-base-content"
                       )}
                     >
                       <div className="flex items-center gap-3">
@@ -122,7 +122,7 @@ export function AdminSidebar() {
                             "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide",
                             isActive
                               ? "bg-white/20 text-white"
-                              : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
                           )}
                         >
                           {item.badge}
@@ -138,9 +138,9 @@ export function AdminSidebar() {
       </div>
 
       {/* Footer: Admin status & Return to Dashboard */}
-      <div className="p-3 border-t border-slate-200 space-y-2 bg-white shrink-0">
-        <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs">
-          <div className="flex items-center justify-between font-bold text-slate-900 mb-1">
+      <div className="p-3 border-t border-base-200 space-y-2 bg-base-100 shrink-0">
+        <div className="p-3 rounded-2xl bg-base-200/60 border border-base-300 text-xs">
+          <div className="flex items-center justify-between font-bold text-base-content mb-1">
             <span className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               Admin Mode
@@ -149,7 +149,7 @@ export function AdminSidebar() {
               Super Admin
             </span>
           </div>
-          <p className="text-slate-600 text-[11px] font-medium mt-1">
+          <p className="text-base-content/60 text-[11px] font-medium mt-1">
             Akses penuh kontrol & monitoring sistem
           </p>
         </div>
@@ -158,14 +158,14 @@ export function AdminSidebar() {
           href="/dashboard"
           prefetch={true}
           onClick={isMobile ? closeNav : undefined}
-          className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-base-200 hover:bg-base-300 text-base-content text-xs font-bold transition-colors"
         >
           <ChevronLeft className="w-4 h-4" /> Kembali ke Dashboard
         </Link>
 
         <button
           onClick={() => performLogout("/login")}
-          className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl text-rose-600 hover:bg-rose-50 text-xs font-bold transition-colors cursor-pointer"
+          className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 text-xs font-bold transition-colors cursor-pointer"
         >
           <LogOut className="w-4 h-4" /> Keluar (Logout)
         </button>
