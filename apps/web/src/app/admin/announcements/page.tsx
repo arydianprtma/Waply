@@ -37,6 +37,7 @@ interface AnnouncementItem {
   popupActionText?: string;
   popupActionUrl?: string;
   popupImage?: string;
+  popupImageRatio?: "16:9" | "1:1" | "4:3" | "AUTO";
   createdAt: string;
   updatedAt: string;
   readBy?: string[];
@@ -66,6 +67,7 @@ export default function AdminAnnouncementsPage() {
   const [formPopupActionText, setFormPopupActionText] = useState("");
   const [formPopupActionUrl, setFormPopupActionUrl] = useState("");
   const [formPopupImage, setFormPopupImage] = useState("");
+  const [formPopupImageRatio, setFormPopupImageRatio] = useState<"16:9" | "1:1" | "4:3" | "AUTO">("16:9");
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -101,6 +103,7 @@ export default function AdminAnnouncementsPage() {
     setFormPopupActionText("");
     setFormPopupActionUrl("");
     setFormPopupImage("");
+    setFormPopupImageRatio("16:9");
     setImageError(false);
     setShowModal(true);
   };
@@ -117,6 +120,7 @@ export default function AdminAnnouncementsPage() {
     setFormPopupActionText(item.popupActionText || "");
     setFormPopupActionUrl(item.popupActionUrl || "");
     setFormPopupImage(item.popupImage || "");
+    setFormPopupImageRatio(item.popupImageRatio || "16:9");
     setImageError(false);
     setShowModal(true);
   };
@@ -164,6 +168,7 @@ export default function AdminAnnouncementsPage() {
         popupActionText: formPopupActionText,
         popupActionUrl: formPopupActionUrl,
         popupImage: formPopupImage,
+        popupImageRatio: formPopupImageRatio,
       };
 
       if (editingId) {
@@ -678,28 +683,69 @@ export default function AdminAnnouncementsPage() {
                             )}
                           </div>
 
+                          {/* Aspect Ratio Selector */}
+                          <div className="space-y-1.5 pt-1">
+                            <label className="label py-0">
+                              <span className="label-text font-bold text-[11px] text-slate-700">Pilihan Ukuran & Rasio Gambar:</span>
+                            </label>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                              {[
+                                { id: "16:9", label: "16:9 (Landscape)", desc: "Banner Widescreen" },
+                                { id: "1:1", label: "1:1 (Persegi)", desc: "Square / Poster" },
+                                { id: "4:3", label: "4:3 (Standar)", desc: "Box Proporsional" },
+                                { id: "AUTO", label: "Auto (Asli)", desc: "Ukuran Gambar Asli" },
+                              ].map((opt) => (
+                                <button
+                                  key={opt.id}
+                                  type="button"
+                                  onClick={() => setFormPopupImageRatio(opt.id as any)}
+                                  className={`p-2 rounded-xl text-left border transition-all text-xs flex flex-col ${
+                                    formPopupImageRatio === opt.id
+                                      ? "bg-purple-50 border-purple-400 text-purple-900 font-bold shadow-xs ring-2 ring-purple-400/20"
+                                      : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 font-medium"
+                                  }`}
+                                >
+                                  <span className="text-[11px]">{opt.label}</span>
+                                  <span className="text-[9px] text-slate-400 font-normal">{opt.desc}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
                           {/* Live Image Preview & Warning */}
                           {formPopupImage && (
                             <div className="mt-2 p-2.5 rounded-xl border border-slate-200 bg-white space-y-1.5">
                               <div className="flex items-center justify-between text-[11px] font-bold text-slate-600">
-                                <span>Preview Banner (Rasio 16:9):</span>
+                                <span>Preview Banner (Rasio: {formPopupImageRatio}):</span>
                                 {imageError ? (
                                   <span className="text-rose-500 flex items-center gap-1 font-bold">
                                     <AlertCircle className="w-3 h-3" /> Gagal Memuat
                                   </span>
                                 ) : (
                                   <span className="text-emerald-600 flex items-center gap-1 font-bold">
-                                    <Check className="w-3 h-3" /> Gambar Valid (16:9)
+                                    <Check className="w-3 h-3" /> Gambar Valid ({formPopupImageRatio})
                                   </span>
                                 )}
                               </div>
 
-                              <div className="relative w-full aspect-[16/9] overflow-hidden rounded-xl bg-slate-900 border border-slate-200 flex items-center justify-center">
+                              <div
+                                className={`relative w-full overflow-hidden rounded-xl bg-slate-900 border border-slate-200 flex items-center justify-center ${
+                                  formPopupImageRatio === "16:9"
+                                    ? "aspect-[16/9]"
+                                    : formPopupImageRatio === "1:1"
+                                    ? "aspect-square max-w-[240px] mx-auto"
+                                    : formPopupImageRatio === "4:3"
+                                    ? "aspect-[4/3] max-w-[280px] mx-auto"
+                                    : "max-h-52 w-auto mx-auto"
+                                }`}
+                              >
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                   src={formPopupImage}
                                   alt="Preview Banner"
-                                  className={`w-full h-full object-cover rounded-xl ${imageError ? "hidden" : "block"}`}
+                                  className={`w-full h-full ${
+                                    formPopupImageRatio === "AUTO" ? "object-contain max-h-52" : "object-cover"
+                                  } rounded-xl ${imageError ? "hidden" : "block"}`}
                                   onLoad={() => setImageError(false)}
                                   onError={() => setImageError(true)}
                                 />

@@ -13,6 +13,7 @@ export interface Announcement {
   popupActionText?: string;
   popupActionUrl?: string;
   popupImage?: string;
+  popupImageRatio?: "16:9" | "1:1" | "4:3" | "AUTO";
   createdAt: string;
   updatedAt: string;
   readBy?: string[]; // Array of user IDs who have marked this read

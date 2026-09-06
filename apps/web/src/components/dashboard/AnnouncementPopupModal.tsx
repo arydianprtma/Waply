@@ -26,6 +26,7 @@ interface Announcement {
   popupActionText?: string;
   popupActionUrl?: string;
   popupImage?: string;
+  popupImageRatio?: "16:9" | "1:1" | "4:3" | "AUTO";
   createdAt: string;
   updatedAt: string;
   isRead?: boolean;
@@ -174,14 +175,26 @@ export function AnnouncementPopupModal() {
           <X className="w-4 h-4" />
         </button>
 
-        {/* 16:9 Aspect Ratio Promo Banner Image */}
+        {/* Dynamic Aspect Ratio Promo Banner Image */}
         {popup.popupImage && (
-          <div className="relative w-full aspect-[16/9] overflow-hidden bg-slate-100 dark:bg-slate-950 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-center">
+          <div
+            className={`relative w-full overflow-hidden bg-slate-100 dark:bg-slate-950 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-center ${
+              popup.popupImageRatio === "1:1"
+                ? "aspect-square max-h-[380px]"
+                : popup.popupImageRatio === "4:3"
+                ? "aspect-[4/3]"
+                : popup.popupImageRatio === "AUTO"
+                ? "max-h-[440px]"
+                : "aspect-[16/9]"
+            }`}
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={popup.popupImage}
               alt={popup.title}
-              className="w-full h-full object-cover object-center"
+              className={`w-full h-full ${
+                popup.popupImageRatio === "AUTO" ? "object-contain max-h-[440px]" : "object-cover"
+              } object-center`}
               onError={(e) => {
                 // If image fails to load, hide image container
                 const parent = (e.target as HTMLElement).parentElement;

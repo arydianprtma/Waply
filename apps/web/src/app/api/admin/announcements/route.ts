@@ -45,6 +45,7 @@ export async function POST(req: NextRequest) {
         popupActionText: body.popupActionText,
         popupActionUrl: body.popupActionUrl,
         popupImage: body.popupImage,
+        popupImageRatio: body.popupImageRatio,
       });
 
       if (!updated) {
@@ -69,6 +70,7 @@ export async function POST(req: NextRequest) {
         popupActionText: body.popupActionText || "",
         popupActionUrl: body.popupActionUrl || "",
         popupImage: body.popupImage || "",
+        popupImageRatio: body.popupImageRatio || "16:9",
       });
 
       return NextResponse.json({ success: true, data: created });
