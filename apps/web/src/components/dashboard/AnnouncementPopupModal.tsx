@@ -169,22 +169,23 @@ export function AnnouncementPopupModal() {
         <button
           onClick={handleClose}
           aria-label="Tutup"
-          className="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-slate-100/80 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition-all shadow-sm"
+          className="absolute top-4 right-4 z-30 w-9 h-9 rounded-full bg-slate-900/60 hover:bg-slate-900/90 text-white backdrop-blur-md flex items-center justify-center transition-all shadow-md"
         >
           <X className="w-4 h-4" />
         </button>
 
         {/* Optional Promo Banner Image */}
         {popup.popupImage && (
-          <div className="relative w-full max-h-56 overflow-hidden bg-slate-100 dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800">
+          <div className="relative w-full max-h-64 overflow-hidden bg-slate-100 dark:bg-slate-950/80 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={popup.popupImage}
               alt={popup.title}
-              className="w-full h-full object-cover object-center max-h-56"
+              className="w-full max-h-64 object-cover object-center"
               onError={(e) => {
                 // If image fails to load, hide image container
-                (e.target as HTMLElement).parentElement!.style.display = "none";
+                const parent = (e.target as HTMLElement).parentElement;
+                if (parent) parent.style.display = "none";
               }}
             />
           </div>

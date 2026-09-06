@@ -20,6 +20,9 @@ import {
   X,
   Radio,
   Clock,
+  Upload,
+  Image as ImageIcon,
+  AlertCircle,
 } from "lucide-react";
 
 interface AnnouncementItem {
@@ -63,6 +66,8 @@ export default function AdminAnnouncementsPage() {
   const [formPopupActionText, setFormPopupActionText] = useState("");
   const [formPopupActionUrl, setFormPopupActionUrl] = useState("");
   const [formPopupImage, setFormPopupImage] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [successToast, setSuccessToast] = useState<string | null>(null);
 
@@ -96,6 +101,7 @@ export default function AdminAnnouncementsPage() {
     setFormPopupActionText("");
     setFormPopupActionUrl("");
     setFormPopupImage("");
+    setImageError(false);
     setShowModal(true);
   };
 
@@ -111,7 +117,36 @@ export default function AdminAnnouncementsPage() {
     setFormPopupActionText(item.popupActionText || "");
     setFormPopupActionUrl(item.popupActionUrl || "");
     setFormPopupImage(item.popupImage || "");
+    setImageError(false);
     setShowModal(true);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    setImageError(false);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/admin/announcements/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const json = await res.json();
+      if (json.success && json.url) {
+        setFormPopupImage(json.url);
+      } else {
+        alert(json.error || "Gagal mengunggah gambar");
+      }
+    } catch {
+      alert("Terjadi kesalahan saat mengunggah gambar");
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -593,17 +628,92 @@ export default function AdminAnnouncementsPage() {
                           </div>
                         </div>
 
-                        <div className="form-control">
+                        <div className="space-y-2">
                           <label className="label py-0.5">
-                            <span className="label-text font-bold text-[11px] text-slate-700">URL Gambar Banner Promo (Opsional)</span>
+                            <span className="label-text font-bold text-[11px] text-slate-700">Gambar Banner Promo (Opsional)</span>
                           </label>
-                          <input
-                            type="text"
-                            placeholder="Contoh: https://example.com/promo-banner.png atau /images/promo.png"
-                            className="input input-bordered input-xs font-semibold rounded-lg text-xs"
-                            value={formPopupImage}
-                            onChange={(e) => setFormPopupImage(e.target.value)}
-                          />
+
+                          <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+                            <label className="btn btn-outline btn-xs gap-1.5 rounded-lg border-slate-300 font-bold shrink-0 cursor-pointer hover:bg-slate-100">
+                              {uploadingImage ? (
+                                <span className="loading loading-spinner loading-xs" />
+                              ) : (
+                                <Upload className="w-3.5 h-3.5 text-primary" />
+                              )}
+                              <span>{uploadingImage ? "Mengunggah..." : "Upload File Gambar"}</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                disabled={uploadingImage}
+                                onChange={handleImageUpload}
+                              />
+                            </label>
+
+                            <div className="relative flex-1">
+                              <input
+                                type="text"
+                                placeholder="Atau tempel URL gambar langsung (https://...jpg / .png)"
+                                className="input input-bordered input-xs font-semibold rounded-lg text-xs w-full pl-7"
+                                value={formPopupImage}
+                                onChange={(e) => {
+                                  setFormPopupImage(e.target.value);
+                                  setImageError(false);
+                                }}
+                              />
+                              <ImageIcon className="w-3.5 h-3.5 text-slate-400 absolute left-2 top-1.5" />
+                            </div>
+
+                            {formPopupImage && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setFormPopupImage("");
+                                  setImageError(false);
+                                }}
+                                className="btn btn-ghost btn-xs text-rose-500 hover:bg-rose-50 rounded-lg shrink-0 text-[11px]"
+                              >
+                                Hapus
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Live Image Preview & Warning */}
+                          {formPopupImage && (
+                            <div className="mt-2 p-2.5 rounded-xl border border-slate-200 bg-white space-y-1.5">
+                              <div className="flex items-center justify-between text-[11px] font-bold text-slate-600">
+                                <span>Preview Banner:</span>
+                                {imageError ? (
+                                  <span className="text-rose-500 flex items-center gap-1 font-bold">
+                                    <AlertCircle className="w-3 h-3" /> Gagal Memuat
+                                  </span>
+                                ) : (
+                                  <span className="text-emerald-600 flex items-center gap-1 font-bold">
+                                    <Check className="w-3 h-3" /> Gambar Valid
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="relative max-h-36 overflow-hidden rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={formPopupImage}
+                                  alt="Preview Banner"
+                                  className={`w-full max-h-36 object-contain rounded-lg ${imageError ? "hidden" : "block"}`}
+                                  onLoad={() => setImageError(false)}
+                                  onError={() => setImageError(true)}
+                                />
+                                {imageError && (
+                                  <div className="p-3 text-center text-rose-600 text-xs font-medium space-y-1">
+                                    <p className="font-bold">⚠️ URL ini bukan file gambar langsung</p>
+                                    <p className="text-[10px] text-slate-500">
+                                      URL halaman web (seperti <code>id.pngtree.com/so/promo</code>) tidak bisa dijadikan banner. Silakan klik tombol <b>"Upload File Gambar"</b> di atas atau gunakan link yang berakhiran <code>.png</code> / <code>.jpg</code> / <code>.webp</code>.
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
