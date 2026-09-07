@@ -226,17 +226,29 @@ export default function PrivacyPage() {
                     Kami menerapkan standar keamanan berlapis untuk menjamin keamanan seluruh data:
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
-                    <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800">
-                      🔒 <strong>Enkripsi Transit (SSL/TLS 1.3):</strong> Seluruh komunikasi antara server Anda dan Sendora dienkripsi dengan standar 256-bit SSL.
+                    <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/90 text-xs font-medium text-slate-800 flex items-start gap-2.5">
+                      <Lock className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                      <div>
+                        <strong>Enkripsi Transit (SSL/TLS 1.3):</strong> Seluruh komunikasi antara server Anda dan Sendora dienkripsi dengan standar 256-bit SSL.
+                      </div>
                     </div>
-                    <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800">
-                      🛡️ <strong>HMAC Webhook Signatures:</strong> Setiap event webhook ditandatangani secara kriptografis untuk mencegah tampering payload.
+                    <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/90 text-xs font-medium text-slate-800 flex items-start gap-2.5">
+                      <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                      <div>
+                        <strong>HMAC Webhook Signatures:</strong> Setiap event webhook ditandatangani secara kriptografis untuk mencegah tampering payload.
+                      </div>
                     </div>
-                    <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800">
-                      🔑 <strong>Hashed API Keys:</strong> API Key disimpan dengan proteksi hash yang tidak dapat dibaca mentah oleh siapapun.
+                    <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/90 text-xs font-medium text-slate-800 flex items-start gap-2.5">
+                      <KeyRound className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                      <div>
+                        <strong>Hashed API Keys:</strong> API Key disimpan dengan proteksi hash yang tidak dapat dibaca mentah oleh siapapun.
+                      </div>
                     </div>
-                    <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800">
-                      ⚡ <strong>Automated Session Isolation:</strong> Sesi multidevice setiap nomor diisolasi secara ketat dalam memory terpisah.
+                    <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/90 text-xs font-medium text-slate-800 flex items-start gap-2.5">
+                      <Server className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                      <div>
+                        <strong>Automated Session Isolation:</strong> Sesi multidevice setiap nomor diisolasi secara ketat dalam memory terpisah.
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -24,6 +24,8 @@ import {
   RotateCcw,
   CheckCircle2,
   XCircle,
+  ShieldAlert,
+  Info,
 } from "lucide-react";
 
 type CodeLang = "curl" | "nodejs" | "python" | "php";
@@ -436,8 +438,11 @@ async def handle_sendora_webhook(request: Request):
               </div>
             </div>
 
-            <div className="p-3.5 bg-sky-50 border border-sky-200 rounded-xl text-xs text-sky-900 leading-relaxed">
-              <span><b>💡 Tips Keamanan:</b> Dapatkan API Key Anda di menu <b>Dashboard &gt; Developers &gt; API Keys</b>. Jangan pernah mempublikasikan API Key Anda di sisi frontend client-side.</span>
+            <div className="p-3.5 bg-sky-50/70 border border-sky-200/80 rounded-xl text-xs text-sky-950 leading-relaxed flex items-start gap-2.5">
+              <ShieldAlert className="w-4 h-4 text-sky-600 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-sky-900">Tips Keamanan:</span> Dapatkan API Key Anda di menu <b className="font-semibold text-sky-950">Dashboard &gt; Developers &gt; API Keys</b>. Jangan pernah mempublikasikan API Key Anda di sisi frontend client-side.
+              </div>
             </div>
           </section>
 
