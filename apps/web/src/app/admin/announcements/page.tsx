@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { createPortal } from "react-dom";
 import {
   Megaphone,
   Plus,
@@ -13,7 +12,6 @@ import {
   AlertTriangle,
   Info,
   Sparkles,
-  Flame,
   Users,
   Eye,
   Check,
@@ -23,7 +21,10 @@ import {
   Upload,
   Image as ImageIcon,
   AlertCircle,
+  ExternalLink,
+  Power,
 } from "lucide-react";
+import { ModalPortal } from "@/components/ui/ModalPortal";
 
 interface AnnouncementItem {
   id: string;
@@ -44,17 +45,13 @@ interface AnnouncementItem {
 }
 
 export default function AdminAnnouncementsPage() {
-  const [mounted, setMounted] = useState(false);
   const [announcements, setAnnouncements] = useState<AnnouncementItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<string>("ALL");
+  const [filterAudience, setFilterAudience] = useState<string>("ALL");
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Modal State
+  // Create/Edit Modal State
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formTitle, setFormTitle] = useState("");
@@ -71,7 +68,19 @@ export default function AdminAnnouncementsPage() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [successToast, setSuccessToast] = useState<string | null>(null);
+
+  // Delete Confirmation Modal State
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [targetDeleteAnnouncement, setTargetDeleteAnnouncement] = useState<AnnouncementItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  // Toast
+  const [toastMsg, setToastMsg] = useState<{ text: string; type: "success" | "error" } | null>(null);
+
+  const showToast = (text: string, type: "success" | "error" = "success") => {
+    setToastMsg({ text, type });
+    setTimeout(() => setToastMsg(null), 3500);
+  };
 
   const fetchAnnouncements = useCallback(async () => {
     try {
@@ -81,7 +90,7 @@ export default function AdminAnnouncementsPage() {
         setAnnouncements(json.data);
       }
     } catch {
-      //
+      showToast("Gagal memuat daftar pengumuman", "error");
     } finally {
       setLoading(false);
     }
@@ -125,6 +134,32 @@ export default function AdminAnnouncementsPage() {
     setShowModal(true);
   };
 
+  const handleToggleActive = async (item: AnnouncementItem) => {
+    try {
+      const res = await fetch("/api/admin/announcements", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...item,
+          isActive: !item.isActive,
+        }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        showToast(
+          item.isActive
+            ? `Pengumuman "${item.title}" dinonaktifkan`
+            : `Pengumuman "${item.title}" sekarang aktif tayang`
+        );
+        fetchAnnouncements();
+      } else {
+        showToast(json.error || "Gagal mengubah status pengumuman", "error");
+      }
+    } catch {
+      showToast("Terjadi kesalahan sistem", "error");
+    }
+  };
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -144,10 +179,10 @@ export default function AdminAnnouncementsPage() {
       if (json.success && json.url) {
         setFormPopupImage(json.url);
       } else {
-        alert(json.error || "Gagal mengunggah gambar");
+        showToast(json.error || "Gagal mengunggah gambar", "error");
       }
     } catch {
-      alert("Terjadi kesalahan saat mengunggah gambar");
+      showToast("Terjadi kesalahan saat mengunggah gambar", "error");
     } finally {
       setUploadingImage(false);
     }
@@ -158,16 +193,16 @@ export default function AdminAnnouncementsPage() {
     setSubmitting(true);
     try {
       const payload: any = {
-        title: formTitle,
-        message: formMessage,
+        title: formTitle.trim(),
+        message: formMessage.trim(),
         type: formType,
         targetAudience: formTarget,
         isPinned: formPinned,
         isActive: formActive,
         isPopup: formIsPopup,
-        popupActionText: formPopupActionText,
-        popupActionUrl: formPopupActionUrl,
-        popupImage: formPopupImage,
+        popupActionText: formPopupActionText.trim(),
+        popupActionUrl: formPopupActionUrl.trim(),
+        popupImage: formPopupImage.trim(),
         popupImageRatio: formPopupImageRatio,
       };
 
@@ -184,71 +219,109 @@ export default function AdminAnnouncementsPage() {
       const json = await res.json();
       if (json.success) {
         setShowModal(false);
-        setSuccessToast(editingId ? "Pengumuman berhasil diperbarui!" : "Pengumuman berhasil dipublikasikan ke seluruh pengguna!");
-        setTimeout(() => setSuccessToast(null), 3500);
+        showToast(
+          editingId
+            ? "Pengumuman berhasil diperbarui"
+            : "Pengumuman berhasil dipublikasikan"
+        );
         fetchAnnouncements();
+      } else {
+        showToast(json.error || "Gagal menyimpan pengumuman", "error");
       }
+    } catch {
+      showToast("Terjadi kesalahan saat memproses data", "error");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Apakah Anda yakin ingin menghapus pengumuman ini?")) return;
+  const openDeleteModal = (item: AnnouncementItem) => {
+    setTargetDeleteAnnouncement(item);
+    setDeleteModalOpen(true);
+  };
 
+  const handleConfirmDelete = async () => {
+    if (!targetDeleteAnnouncement) return;
+    setDeleting(true);
     try {
-      const res = await fetch(`/api/admin/announcements?id=${id}`, {
+      const res = await fetch(`/api/admin/announcements?id=${targetDeleteAnnouncement.id}`, {
         method: "DELETE",
       });
       const json = await res.json();
       if (json.success) {
-        setSuccessToast("Pengumuman berhasil dihapus");
-        setTimeout(() => setSuccessToast(null), 3000);
+        showToast(`Pengumuman "${targetDeleteAnnouncement.title}" berhasil dihapus`);
+        setDeleteModalOpen(false);
+        setTargetDeleteAnnouncement(null);
         fetchAnnouncements();
+      } else {
+        showToast(json.error || "Gagal menghapus pengumuman", "error");
       }
     } catch {
-      //
+      showToast("Terjadi kesalahan saat menghapus", "error");
+    } finally {
+      setDeleting(false);
     }
   };
 
   const filtered = announcements.filter((item) => {
+    const query = searchQuery.toLowerCase();
     const matchesSearch =
-      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.message.toLowerCase().includes(searchQuery.toLowerCase());
+      item.title.toLowerCase().includes(query) ||
+      item.message.toLowerCase().includes(query);
     const matchesType = filterType === "ALL" || item.type === filterType;
-    return matchesSearch && matchesType;
+    const matchesAudience = filterAudience === "ALL" || item.targetAudience === filterAudience;
+    return matchesSearch && matchesType && matchesAudience;
   });
 
   const totalAnnouncements = announcements.length;
   const activeCount = announcements.filter((a) => a.isActive).length;
   const pinnedCount = announcements.filter((a) => a.isPinned).length;
+  const infoCount = announcements.filter((a) => a.type === "INFO").length;
+  const promoCount = announcements.filter((a) => a.type === "SUCCESS").length;
+  const warningCount = announcements.filter((a) => a.type === "WARNING").length;
+  const urgentCount = announcements.filter((a) => a.type === "URGENT").length;
 
-  const getTypeBadge = (type: AnnouncementItem["type"]) => {
+  const getTypeMeta = (type: AnnouncementItem["type"]) => {
     switch (type) {
       case "URGENT":
         return {
           label: "Penting",
-          color: "bg-rose-100 text-rose-800 border border-rose-300",
-          icon: <AlertTriangle className="w-3 h-3 text-rose-600 shrink-0" />,
+          badgeClass: "bg-rose-50 text-rose-700 border-rose-200",
+          borderAccent: "border-l-rose-500",
+          icon: <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0" />,
         };
       case "WARNING":
         return {
           label: "Perhatian",
-          color: "bg-amber-100 text-amber-800 border border-amber-300",
-          icon: <AlertTriangle className="w-3 h-3 text-amber-600 shrink-0" />,
+          badgeClass: "bg-amber-50 text-amber-700 border-amber-200",
+          borderAccent: "border-l-amber-500",
+          icon: <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />,
         };
       case "SUCCESS":
         return {
           label: "Promo & Rilis",
-          color: "bg-emerald-100 text-emerald-800 border border-emerald-300",
-          icon: <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />,
+          badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-200",
+          borderAccent: "border-l-emerald-500",
+          icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />,
         };
       default:
         return {
           label: "Informasi",
-          color: "bg-blue-100 text-blue-800 border border-blue-300",
-          icon: <Info className="w-3 h-3 text-blue-600 shrink-0" />,
+          badgeClass: "bg-sky-50 text-sky-700 border-sky-200",
+          borderAccent: "border-l-sky-500",
+          icon: <Info className="w-3.5 h-3.5 text-sky-600 shrink-0" />,
         };
+    }
+  };
+
+  const getAudienceLabel = (aud: AnnouncementItem["targetAudience"]) => {
+    switch (aud) {
+      case "FREE":
+        return "Free User";
+      case "PAID":
+        return "Pro User";
+      default:
+        return "Semua User";
     }
   };
 
@@ -267,200 +340,339 @@ export default function AdminAnnouncementsPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      {/* Header Banner */}
-      <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-200/90 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 text-xs font-bold mb-2">
-            <Megaphone className="w-3.5 h-3.5" />
-            Broadcast Center
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
+      {/* Toast Notification */}
+      {toastMsg && (
+        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-3 fade-in duration-200">
+          <div
+            className={`flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-lg border text-sm font-semibold ${
+              toastMsg.type === "success"
+                ? "bg-emerald-950 text-emerald-100 border-emerald-800"
+                : "bg-rose-950 text-rose-100 border-rose-800"
+            }`}
+          >
+            {toastMsg.type === "success" ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            ) : (
+              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+            )}
+            <span>{toastMsg.text}</span>
+            <button
+              onClick={() => setToastMsg(null)}
+              className="ml-2 text-slate-400 hover:text-white"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
           </div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
+        </div>
+      )}
+
+      {/* Header Banner */}
+      <div className="bg-white rounded-2xl p-6 md:p-8 border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1.5">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 text-xs font-semibold">
+            <Megaphone className="w-3.5 h-3.5 text-slate-500" />
+            Broadcast & Notifikasi
+          </div>
+          <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
             Manajemen Pengumuman Sistem
           </h1>
-          <p className="text-xs md:text-sm text-slate-600 mt-1 max-w-xl leading-relaxed">
-            Siarkan pengumuman pembaruan, promo spesial, maintenance, atau info penting secara instan ke notifikasi seluruh pengguna.
+          <p className="text-xs md:text-sm text-slate-500 max-w-xl leading-relaxed">
+            Siarkan pengumuman pembaruan, promo khusus, pemeliharaan, atau info darurat secara terpusat ke panel notifikasi pengguna.
           </p>
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
           <button
             onClick={openCreateModal}
-            className="btn btn-primary btn-sm md:btn-md gap-2 rounded-2xl font-bold shadow-lg shadow-emerald-600/25 text-white"
+            className="btn btn-primary btn-sm md:btn-md gap-2 rounded-xl font-bold text-white shadow-sm"
           >
-            <Plus className="w-4 h-4" /> Buat Pengumuman Baru
+            <Plus className="w-4 h-4" />
+            Buat Pengumuman Baru
           </button>
         </div>
       </div>
 
-      {/* Success Toast Notification */}
-      {successToast && (
-        <div className="alert alert-success text-xs font-bold py-3 px-5 rounded-2xl border border-emerald-300 shadow-md text-white flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
-          <CheckCircle2 className="w-4 h-4 shrink-0" />
-          <span>{successToast}</span>
-        </div>
-      )}
-
-      {/* Stats Cards */}
+      {/* Metrics Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="p-5 rounded-3xl bg-white border border-slate-200 shadow-xs flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-lg">
-            <Megaphone className="w-6 h-6" />
-          </div>
+        <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
-            <div className="text-2xl font-black text-slate-900">{totalAnnouncements}</div>
-            <div className="text-xs font-bold text-slate-500">Total Pengumuman</div>
+            <div className="text-xs font-semibold text-slate-500">Total Pengumuman</div>
+            <div className="text-2xl font-bold text-slate-900 mt-1">{totalAnnouncements}</div>
+            <div className="text-[11px] text-slate-400 mt-0.5">Semua riwayat pengumuman</div>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
+            <Megaphone className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="p-5 rounded-3xl bg-white border border-slate-200 shadow-xs flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-lg">
-            <CheckCircle2 className="w-6 h-6" />
-          </div>
+        <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
-            <div className="text-2xl font-black text-slate-900">{activeCount}</div>
-            <div className="text-xs font-bold text-slate-500">Sedang Tayang (Aktif)</div>
+            <div className="text-xs font-semibold text-slate-500">Sedang Tayang (Aktif)</div>
+            <div className="text-2xl font-bold text-emerald-600 mt-1">{activeCount}</div>
+            <div className="text-[11px] text-slate-400 mt-0.5">Tampil di dashboard user</div>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <CheckCircle2 className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="p-5 rounded-3xl bg-white border border-slate-200 shadow-xs flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-lg">
-            <Pin className="w-6 h-6" />
-          </div>
+        <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
-            <div className="text-2xl font-black text-slate-900">{pinnedCount}</div>
-            <div className="text-xs font-bold text-slate-500">Disematkan (Pinned)</div>
+            <div className="text-xs font-semibold text-slate-500">Disematkan (Pinned)</div>
+            <div className="text-2xl font-bold text-amber-600 mt-1">{pinnedCount}</div>
+            <div className="text-[11px] text-slate-400 mt-0.5">Prioritas di urutan teratas</div>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+            <Pin className="w-5 h-5" />
           </div>
         </div>
       </div>
 
-      {/* Filter & Search Bar */}
-      <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="relative w-full sm:w-80">
-          <input
-            type="text"
-            placeholder="Cari judul / isi pengumuman..."
-            className="input input-bordered input-sm w-full pl-9 text-xs"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
-        </div>
+      {/* Toolbar: Search & Filters */}
+      <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs space-y-3">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+          {/* Search Input */}
+          <div className="relative flex-1 max-w-md">
+            <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Cari judul atau isi pengumuman..."
+              className="input input-bordered input-sm w-full pl-9 pr-8 text-xs rounded-xl focus:border-slate-400"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto">
-          {[
-            { id: "ALL", label: "Semua" },
-            { id: "INFO", label: "Informasi" },
-            { id: "SUCCESS", label: "Promo & Rilis" },
-            { id: "WARNING", label: "Perhatian" },
-            { id: "URGENT", label: "Penting" },
-          ].map((type) => (
-            <button
-              key={type.id}
-              onClick={() => setFilterType(type.id)}
-              className={`px-3 py-1 rounded-xl text-xs font-bold transition-colors whitespace-nowrap ${
-                filterType === type.id
-                  ? "bg-slate-900 text-white"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-              }`}
+          {/* Secondary Audience Filter */}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium shrink-0">
+              <Users className="w-3.5 h-3.5" />
+              <span>Target:</span>
+            </div>
+            <select
+              className="select select-bordered select-sm text-xs rounded-xl font-medium"
+              value={filterAudience}
+              onChange={(e) => setFilterAudience(e.target.value)}
             >
-              {type.label}
-            </button>
-          ))}
+              <option value="ALL">Semua Audiens</option>
+              <option value="FREE">Hanya Free User</option>
+              <option value="PAID">Hanya Pro User</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Category Tabs */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-1 border-t border-slate-100">
+          {[
+            { id: "ALL", label: "Semua", count: totalAnnouncements },
+            { id: "INFO", label: "Informasi", count: infoCount },
+            { id: "SUCCESS", label: "Promo & Rilis", count: promoCount },
+            { id: "WARNING", label: "Perhatian", count: warningCount },
+            { id: "URGENT", label: "Penting", count: urgentCount },
+          ].map((cat) => {
+            const isActive = filterType === cat.id;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setFilterType(cat.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                  isActive
+                    ? "bg-slate-900 text-white shadow-xs"
+                    : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/60"
+                }`}
+              >
+                <span>{cat.label}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                    isActive
+                      ? "bg-slate-800 text-slate-300"
+                      : "bg-slate-200/80 text-slate-600"
+                  }`}
+                >
+                  {cat.count}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Announcements List */}
-      <div className="space-y-3">
+      {/* Announcements Content List */}
+      <div className="space-y-3.5">
         {loading ? (
-          <div className="p-12 text-center text-slate-400 bg-white rounded-3xl border border-slate-200">
+          <div className="p-16 text-center text-slate-400 bg-white rounded-2xl border border-slate-200">
             <div className="loading loading-spinner loading-md mb-2 text-primary" />
             <p className="text-xs font-semibold">Memuat daftar pengumuman...</p>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="p-16 text-center text-slate-400 bg-white rounded-3xl border border-slate-200">
-            <Megaphone className="w-12 h-12 mx-auto mb-3 opacity-20" />
-            <p className="text-sm font-bold text-slate-600">Belum ada pengumuman ditemukan</p>
-            <p className="text-xs text-slate-400 mt-1">
-              Klik tombol "Buat Pengumuman Baru" untuk mulai menyiarkan pesan ke pengguna.
+          <div className="p-16 text-center text-slate-400 bg-white rounded-2xl border border-slate-200">
+            <Megaphone className="w-10 h-10 mx-auto mb-3 opacity-25 text-slate-500" />
+            <p className="text-sm font-bold text-slate-700">Tidak ada pengumuman ditemukan</p>
+            <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+              {searchQuery || filterType !== "ALL" || filterAudience !== "ALL"
+                ? "Coba ubah kata kunci pencarian atau sesuaikan filter di atas."
+                : "Belum ada pengumuman yang dibuat. Klik tombol 'Buat Pengumuman Baru' untuk memulai."}
             </p>
           </div>
         ) : (
           filtered.map((item) => {
-            const badge = getTypeBadge(item.type);
+            const meta = getTypeMeta(item.type);
             return (
               <div
                 key={item.id}
-                className={`p-5 rounded-3xl bg-white border transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 ${
-                  item.isActive ? "border-slate-200 shadow-xs hover:border-slate-300" : "border-slate-200/60 opacity-60 bg-slate-50"
+                className={`bg-white rounded-2xl border transition-all p-5 ${
+                  item.isActive
+                    ? `border-slate-200 shadow-xs hover:border-slate-300 hover:shadow-sm border-l-4 ${meta.borderAccent}`
+                    : "border-slate-200/70 bg-slate-50/60 opacity-75 border-l-4 border-l-slate-300"
                 }`}
               >
-                <div className="space-y-2 flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold flex items-center gap-1 ${badge.color}`}>
-                      {badge.icon}
-                      {badge.label}
+                {/* Header Row: Badges & Timestamps */}
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {/* Category Badge */}
+                    <span
+                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold border ${meta.badgeClass}`}
+                    >
+                      {meta.icon}
+                      {meta.label}
                     </span>
 
+                    {/* Pinned Badge */}
                     {item.isPinned && (
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800 flex items-center gap-1">
-                        <Pin className="w-3 h-3 fill-current" /> Pinned
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                        <Pin className="w-3 h-3 text-amber-600 fill-amber-600" />
+                        Disematkan
                       </span>
                     )}
 
+                    {/* Pop-up Badge */}
                     {item.isPopup && (
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-100 text-purple-800 border border-purple-200 flex items-center gap-1">
-                        <Sparkles className="w-3 h-3 text-purple-600" /> Pop-up Modal
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                        <Sparkles className="w-3 h-3 text-purple-600" />
+                        Pop-up Modal
                       </span>
                     )}
 
-                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600">
-                      Audiens: {item.targetAudience === "ALL" ? "Semua User" : item.targetAudience === "FREE" ? "Free User" : "Pro User"}
+                    {/* Audience Badge */}
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200/80">
+                      <Users className="w-3 h-3 text-slate-500" />
+                      {getAudienceLabel(item.targetAudience)}
                     </span>
+                  </div>
 
-                    <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1 ml-auto md:ml-2">
-                      <Clock className="w-3 h-3" />
+                  {/* Date & Active Pill */}
+                  <div className="flex items-center gap-3 text-xs text-slate-400">
+                    <span className="flex items-center gap-1 text-[11px] font-medium">
+                      <Clock className="w-3.5 h-3.5" />
                       {formatDate(item.createdAt)}
                     </span>
-                  </div>
-
-                  <div>
-                    <h3 className="font-extrabold text-sm text-slate-900 leading-snug">
-                      {item.title}
-                    </h3>
-                    <p className="text-xs text-slate-600 mt-1 whitespace-pre-line leading-relaxed">
-                      {item.message}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-4 text-[11px] text-slate-400 pt-1">
-                    <span className="flex items-center gap-1">
-                      <Eye className="w-3.5 h-3.5 text-slate-400" />
-                      Dibaca oleh: <b className="text-slate-700 font-bold">{item.readBy?.length || 0} user</b>
-                    </span>
-                    <span className="flex items-center gap-1">
-                      Status: <b className={item.isActive ? "text-emerald-600 font-bold" : "text-slate-400 font-medium"}>
-                        {item.isActive ? "● Aktif Tayang" : "○ Nonaktif (Draft)"}
-                      </b>
+                    <span
+                      className={`px-2 py-0.5 rounded-md text-[11px] font-bold border ${
+                        item.isActive
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          : "bg-slate-100 text-slate-600 border-slate-200"
+                      }`}
+                    >
+                      {item.isActive ? "● Aktif Tayang" : "○ Draft / Nonaktif"}
                     </span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
-                  <button
-                    onClick={() => openEditModal(item)}
-                    className="btn btn-ghost btn-sm rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                    title="Edit Pengumuman"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(item.id)}
-                    className="btn btn-ghost btn-sm rounded-xl text-rose-600 hover:bg-rose-50"
-                    title="Hapus Pengumuman"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                {/* Middle Row: Content & Optional Thumbnail */}
+                <div className="py-3.5 flex flex-col md:flex-row items-start justify-between gap-4">
+                  <div className="space-y-1.5 flex-1 min-w-0">
+                    <h3 className="text-base font-bold text-slate-900 leading-snug">
+                      {item.title}
+                    </h3>
+                    <p className="text-xs md:text-sm text-slate-600 leading-relaxed whitespace-pre-line line-clamp-3">
+                      {item.message}
+                    </p>
+
+                    {/* CTA Action Preview if available */}
+                    {item.popupActionText && (
+                      <div className="pt-2">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-700 font-semibold">
+                          <ExternalLink className="w-3.5 h-3.5 text-primary" />
+                          <span>Tombol CTA:</span>
+                          <span className="text-primary font-bold">{item.popupActionText}</span>
+                          {item.popupActionUrl && (
+                            <span className="text-slate-400 text-[11px] font-mono">
+                              ({item.popupActionUrl})
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Thumbnail Banner Preview if exists */}
+                  {item.popupImage && (
+                    <div className="shrink-0 w-full md:w-36 h-20 rounded-xl overflow-hidden border border-slate-200 bg-slate-100 relative group">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={item.popupImage}
+                        alt="Banner preview"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLElement).style.display = "none";
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold">
+                        Rasio: {item.popupImageRatio || "16:9"}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer Row: Readers count & Action Buttons */}
+                <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-50 border border-slate-200 text-[11px] font-medium text-slate-600">
+                      <Eye className="w-3.5 h-3.5 text-slate-400" />
+                      Dibaca oleh: <b className="font-bold text-slate-800">{item.readBy?.length || 0} user</b>
+                    </span>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      onClick={() => handleToggleActive(item)}
+                      className={`btn btn-xs rounded-lg font-bold gap-1 ${
+                        item.isActive
+                          ? "btn-ghost text-slate-500 hover:text-amber-700 hover:bg-amber-50"
+                          : "btn-ghost text-emerald-700 hover:bg-emerald-50"
+                      }`}
+                      title={item.isActive ? "Klik untuk nonaktifkan" : "Klik untuk tayangkan"}
+                    >
+                      <Power className="w-3 h-3" />
+                      <span>{item.isActive ? "Nonaktifkan" : "Tayangkan"}</span>
+                    </button>
+
+                    <button
+                      onClick={() => openEditModal(item)}
+                      className="btn btn-xs btn-outline rounded-lg border-slate-200 text-slate-700 hover:bg-slate-100 font-bold gap-1"
+                    >
+                      <Edit className="w-3 h-3 text-slate-500" />
+                      <span>Edit</span>
+                    </button>
+
+                    <button
+                      onClick={() => openDeleteModal(item)}
+                      className="btn btn-xs btn-outline rounded-lg border-rose-200 text-rose-600 hover:bg-rose-50 font-bold gap-1"
+                    >
+                      <Trash2 className="w-3 h-3 text-rose-500" />
+                      <span>Hapus</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             );
@@ -468,144 +680,212 @@ export default function AdminAnnouncementsPage() {
         )}
       </div>
 
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && targetDeleteAnnouncement && (
+        <ModalPortal>
+          <div className="fixed inset-0 z-[99999] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4 animate-in zoom-in-95 duration-150">
+              <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
+                <Trash2 className="w-6 h-6" />
+              </div>
+
+              <div className="text-center space-y-1.5">
+                <h3 className="text-base font-bold text-slate-900">Hapus Pengumuman?</h3>
+                <p className="text-xs text-slate-500">
+                  Apakah Anda yakin ingin menghapus pengumuman{" "}
+                  <b className="text-slate-800">"{targetDeleteAnnouncement.title}"</b>? Pesan ini akan dihapus permanen dari sistem dan notifikasi seluruh pengguna.
+                </p>
+              </div>
+
+              <div className="flex gap-2 justify-end pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeleteModalOpen(false);
+                    setTargetDeleteAnnouncement(null);
+                  }}
+                  disabled={deleting}
+                  className="btn btn-ghost btn-sm rounded-xl font-bold flex-1 text-slate-600"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDelete}
+                  disabled={deleting}
+                  className="btn btn-error btn-sm rounded-xl font-bold flex-1 text-white gap-2"
+                >
+                  {deleting ? (
+                    <span className="loading loading-spinner loading-xs" />
+                  ) : (
+                    <Trash2 className="w-4 h-4" />
+                  )}
+                  <span>{deleting ? "Menghapus..." : "Ya, Hapus"}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
+
       {/* Create / Edit Modal Dialog */}
-      {showModal &&
-        mounted &&
-        createPortal(
-          <div className="fixed inset-0 z-[99999] bg-black/60 flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150">
-            <div className="bg-white rounded-3xl max-w-xl w-full p-6 md:p-8 shadow-2xl border border-slate-200 space-y-5 animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto my-auto relative z-10">
+      {showModal && (
+        <ModalPortal>
+          <div className="fixed inset-0 z-[99999] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white rounded-2xl max-w-2xl w-full p-6 md:p-7 shadow-2xl border border-slate-200 space-y-5 my-auto max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-150">
+              {/* Modal Header */}
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div className="flex items-center gap-2.5 font-bold text-lg text-slate-900">
-                  <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-                    <Megaphone className="w-5 h-5" />
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold">
+                    <Megaphone className="w-4.5 h-4.5" />
                   </div>
-                  <span>{editingId ? "Edit Pengumuman" : "Buat Pengumuman Baru"}</span>
+                  <div>
+                    <h2 className="text-base font-bold text-slate-900">
+                      {editingId ? "Edit Pengumuman" : "Buat Pengumuman Baru"}
+                    </h2>
+                    <p className="text-[11px] text-slate-500">
+                      Konfigurasikan informasi, audiens target, dan banner siaran.
+                    </p>
+                  </div>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setShowModal(false)}
-                  className="btn btn-ghost btn-circle btn-xs text-slate-400"
+                  className="btn btn-ghost btn-circle btn-xs text-slate-400 hover:text-slate-600"
                 >
                   ✕
                 </button>
               </div>
 
+              {/* Modal Form */}
               <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Judul */}
                 <div className="form-control">
                   <label className="label py-1">
-                    <span className="label-text font-bold text-xs text-slate-700">Judul Pengumuman</span>
+                    <span className="label-text font-bold text-xs text-slate-700">
+                      Judul Pengumuman <span className="text-rose-500">*</span>
+                    </span>
                   </label>
                   <input
                     type="text"
                     placeholder="Contoh: Pembaruan Gateway v2.0 atau Promo Akhir Bulan"
-                    className="input input-bordered input-sm font-semibold rounded-xl text-xs"
+                    className="input input-bordered input-sm font-semibold rounded-xl text-xs focus:border-slate-400"
                     value={formTitle}
                     onChange={(e) => setFormTitle(e.target.value)}
                     required
                   />
                 </div>
 
+                {/* Pesan */}
                 <div className="form-control">
                   <label className="label py-1">
-                    <span className="label-text font-bold text-xs text-slate-700">Isi Pesan Pengumuman</span>
+                    <span className="label-text font-bold text-xs text-slate-700">
+                      Isi Pesan Pengumuman <span className="text-rose-500">*</span>
+                    </span>
                   </label>
                   <textarea
-                    placeholder="Ketik rincian pesan pengumuman untuk seluruh pengguna..."
-                    className="textarea textarea-bordered text-xs font-medium h-28 leading-relaxed rounded-xl"
+                    placeholder="Ketik rincian pesan pengumuman untuk disiarkan..."
+                    className="textarea textarea-bordered text-xs font-medium h-28 leading-relaxed rounded-xl focus:border-slate-400"
                     value={formMessage}
                     onChange={(e) => setFormMessage(e.target.value)}
                     required
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Grid Type & Target */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div className="form-control">
                     <label className="label py-1">
-                      <span className="label-text font-bold text-xs text-slate-700">Tipe / Kategori:</span>
+                      <span className="label-text font-bold text-xs text-slate-700">Tipe / Kategori</span>
                     </label>
                     <select
                       className="select select-bordered select-sm font-semibold text-xs rounded-xl"
                       value={formType}
                       onChange={(e: any) => setFormType(e.target.value)}
                     >
-                      <option value="INFO">INFO (Informasi Umum)</option>
-                      <option value="SUCCESS">SUCCESS (Promo & Rilis)</option>
-                      <option value="WARNING">WARNING (Peringatan / Pemeliharaan)</option>
-                      <option value="URGENT">URGENT (Penting / Darurat)</option>
+                      <option value="INFO">Informasi Umum (Info)</option>
+                      <option value="SUCCESS">Promo & Rilis Fitur (Success)</option>
+                      <option value="WARNING">Perhatian / Maintenance (Warning)</option>
+                      <option value="URGENT">Penting & Darurat (Urgent)</option>
                     </select>
                   </div>
 
                   <div className="form-control">
                     <label className="label py-1">
-                      <span className="label-text font-bold text-xs text-slate-700">Target Audiens:</span>
+                      <span className="label-text font-bold text-xs text-slate-700">Target Audiens</span>
                     </label>
                     <select
                       className="select select-bordered select-sm font-semibold text-xs rounded-xl"
                       value={formTarget}
                       onChange={(e: any) => setFormTarget(e.target.value)}
                     >
-                      <option value="ALL">Semua Pengguna</option>
-                      <option value="FREE">Pengguna Free Trial Saja</option>
-                      <option value="PAID">Pengguna Pro / Berlangganan</option>
+                      <option value="ALL">Semua Pengguna (All Users)</option>
+                      <option value="FREE">Hanya Free Trial User</option>
+                      <option value="PAID">Hanya Pengguna Pro / Berlangganan</option>
                     </select>
                   </div>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                  <label className="label cursor-pointer justify-start gap-3 p-0 select-none">
-                    <input
-                      type="checkbox"
-                      className="checkbox checkbox-primary checkbox-sm rounded-md"
-                      checked={formPinned}
-                      onChange={(e) => setFormPinned(e.target.checked)}
-                    />
-                    <div>
-                      <span className="label-text font-bold text-xs text-slate-900 block">
-                        Sematkan Pengumuman (Pin to Top)
-                      </span>
-                      <span className="text-[11px] text-slate-500">
-                        Selalu tampil di urutan paling atas daftar notifikasi
-                      </span>
-                    </div>
-                  </label>
-
-                  <label className="label cursor-pointer justify-start gap-3 p-0 select-none">
-                    <input
-                      type="checkbox"
-                      className="checkbox checkbox-primary checkbox-sm rounded-md"
-                      checked={formActive}
-                      onChange={(e) => setFormActive(e.target.checked)}
-                    />
-                    <div>
-                      <span className="label-text font-bold text-xs text-slate-900 block">
-                        Langsung Tayang (Published)
-                      </span>
-                      <span className="text-[11px] text-slate-500">
-                        Pengumuman langsung dikirimkan ke lonceng notifikasi pengguna
-                      </span>
-                    </div>
-                  </label>
-
-                  <div className="pt-2 border-t border-slate-200/70">
-                    <label className="label cursor-pointer justify-start gap-3 p-0 select-none">
+                {/* Advanced Options Box */}
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <label className="label cursor-pointer justify-start gap-2.5 p-0 select-none bg-white p-2.5 rounded-lg border border-slate-200/80">
                       <input
                         type="checkbox"
-                        className="checkbox checkbox-secondary checkbox-sm rounded-md"
+                        className="checkbox checkbox-primary checkbox-xs rounded-md"
+                        checked={formPinned}
+                        onChange={(e) => setFormPinned(e.target.checked)}
+                      />
+                      <div>
+                        <span className="label-text font-bold text-xs text-slate-900 block">
+                          Sematkan (Pin to Top)
+                        </span>
+                        <span className="text-[10px] text-slate-500">
+                          Tampil prioritas di daftar teratas
+                        </span>
+                      </div>
+                    </label>
+
+                    <label className="label cursor-pointer justify-start gap-2.5 p-0 select-none bg-white p-2.5 rounded-lg border border-slate-200/80">
+                      <input
+                        type="checkbox"
+                        className="checkbox checkbox-primary checkbox-xs rounded-md"
+                        checked={formActive}
+                        onChange={(e) => setFormActive(e.target.checked)}
+                      />
+                      <div>
+                        <span className="label-text font-bold text-xs text-slate-900 block">
+                          Langsung Tayang (Published)
+                        </span>
+                        <span className="text-[10px] text-slate-500">
+                          Langsung tampil ke pengguna
+                        </span>
+                      </div>
+                    </label>
+                  </div>
+
+                  {/* Pop-up Modal Option */}
+                  <div className="pt-2 border-t border-slate-200/80">
+                    <label className="label cursor-pointer justify-start gap-2.5 p-0 select-none">
+                      <input
+                        type="checkbox"
+                        className="checkbox checkbox-secondary checkbox-xs rounded-md"
                         checked={formIsPopup}
                         onChange={(e) => setFormIsPopup(e.target.checked)}
                       />
                       <div>
                         <span className="label-text font-bold text-xs text-slate-900 flex items-center gap-1.5">
                           <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-                          Tampilkan sebagai Pop-up Modal di Dashboard Pengguna
+                          Tampilkan sebagai Jendela Pop-up Modal
                         </span>
                         <span className="text-[11px] text-slate-500">
-                          Muncul otomatis sebagai jendela promo/pengumuman saat pengguna membuka dashboard
+                          Muncul otomatis sebagai pop-up promosi/pengumuman saat user login ke dashboard
                         </span>
                       </div>
                     </label>
 
                     {formIsPopup && (
-                      <div className="mt-3.5 pl-7 space-y-3 animate-in fade-in slide-in-from-top-1 duration-150">
+                      <div className="mt-3.5 pl-6 space-y-3.5 border-l-2 border-purple-200">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div className="form-control">
                             <label className="label py-0.5">
@@ -613,7 +893,7 @@ export default function AdminAnnouncementsPage() {
                             </label>
                             <input
                               type="text"
-                              placeholder="Contoh: Beli Paket Sekarang / Lihat Promo"
+                              placeholder="Contoh: Ambil Promo Sekarang"
                               className="input input-bordered input-xs font-semibold rounded-lg text-xs"
                               value={formPopupActionText}
                               onChange={(e) => setFormPopupActionText(e.target.value)}
@@ -633,9 +913,12 @@ export default function AdminAnnouncementsPage() {
                           </div>
                         </div>
 
+                        {/* Image Banner Section */}
                         <div className="space-y-2">
                           <label className="label py-0.5">
-                            <span className="label-text font-bold text-[11px] text-slate-700">Gambar Banner Promo (Opsional)</span>
+                            <span className="label-text font-bold text-[11px] text-slate-700">
+                              Gambar Banner Pop-up (Opsional)
+                            </span>
                           </label>
 
                           <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
@@ -686,44 +969,43 @@ export default function AdminAnnouncementsPage() {
                           {/* Aspect Ratio Selector */}
                           <div className="space-y-1.5 pt-1">
                             <label className="label py-0">
-                              <span className="label-text font-bold text-[11px] text-slate-700">Pilihan Ukuran & Rasio Gambar:</span>
+                              <span className="label-text font-bold text-[11px] text-slate-700">Rasio Gambar:</span>
                             </label>
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                               {[
-                                { id: "16:9", label: "16:9 (Landscape)", desc: "Banner Widescreen" },
-                                { id: "1:1", label: "1:1 (Persegi)", desc: "Square / Poster" },
-                                { id: "4:3", label: "4:3 (Standar)", desc: "Box Proporsional" },
-                                { id: "AUTO", label: "Auto (Asli)", desc: "Ukuran Gambar Asli" },
+                                { id: "16:9", label: "16:9 (Landscape)" },
+                                { id: "1:1", label: "1:1 (Persegi)" },
+                                { id: "4:3", label: "4:3 (Standar)" },
+                                { id: "AUTO", label: "Auto (Asli)" },
                               ].map((opt) => (
                                 <button
                                   key={opt.id}
                                   type="button"
                                   onClick={() => setFormPopupImageRatio(opt.id as any)}
-                                  className={`p-2 rounded-xl text-left border transition-all text-xs flex flex-col ${
+                                  className={`py-1.5 px-2 rounded-lg text-center border transition-all text-xs ${
                                     formPopupImageRatio === opt.id
-                                      ? "bg-purple-50 border-purple-400 text-purple-900 font-bold shadow-xs ring-2 ring-purple-400/20"
+                                      ? "bg-purple-50 border-purple-400 text-purple-900 font-bold shadow-xs"
                                       : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 font-medium"
                                   }`}
                                 >
-                                  <span className="text-[11px]">{opt.label}</span>
-                                  <span className="text-[9px] text-slate-400 font-normal">{opt.desc}</span>
+                                  {opt.label}
                                 </button>
                               ))}
                             </div>
                           </div>
 
-                          {/* Live Image Preview & Warning */}
+                          {/* Live Image Preview */}
                           {formPopupImage && (
                             <div className="mt-2 p-2.5 rounded-xl border border-slate-200 bg-white space-y-1.5">
                               <div className="flex items-center justify-between text-[11px] font-bold text-slate-600">
-                                <span>Preview Banner (Rasio: {formPopupImageRatio}):</span>
+                                <span>Preview Banner ({formPopupImageRatio}):</span>
                                 {imageError ? (
                                   <span className="text-rose-500 flex items-center gap-1 font-bold">
                                     <AlertCircle className="w-3 h-3" /> Gagal Memuat
                                   </span>
                                 ) : (
                                   <span className="text-emerald-600 flex items-center gap-1 font-bold">
-                                    <Check className="w-3 h-3" /> Gambar Valid ({formPopupImageRatio})
+                                    <Check className="w-3 h-3" /> Gambar Valid
                                   </span>
                                 )}
                               </div>
@@ -733,10 +1015,10 @@ export default function AdminAnnouncementsPage() {
                                   formPopupImageRatio === "16:9"
                                     ? "aspect-[16/9]"
                                     : formPopupImageRatio === "1:1"
-                                    ? "aspect-square max-w-[240px] mx-auto"
+                                    ? "aspect-square max-w-[220px] mx-auto"
                                     : formPopupImageRatio === "4:3"
-                                    ? "aspect-[4/3] max-w-[280px] mx-auto"
-                                    : "max-h-52 w-auto mx-auto"
+                                    ? "aspect-[4/3] max-w-[260px] mx-auto"
+                                    : "max-h-48 w-auto mx-auto"
                                 }`}
                               >
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -744,16 +1026,16 @@ export default function AdminAnnouncementsPage() {
                                   src={formPopupImage}
                                   alt="Preview Banner"
                                   className={`w-full h-full ${
-                                    formPopupImageRatio === "AUTO" ? "object-contain max-h-52" : "object-cover"
+                                    formPopupImageRatio === "AUTO" ? "object-contain max-h-48" : "object-cover"
                                   } rounded-xl ${imageError ? "hidden" : "block"}`}
                                   onLoad={() => setImageError(false)}
                                   onError={() => setImageError(true)}
                                 />
                                 {imageError && (
                                   <div className="p-3 text-center text-rose-600 text-xs font-medium space-y-1">
-                                    <p className="font-bold">⚠️ URL ini bukan file gambar langsung</p>
-                                    <p className="text-[10px] text-slate-500">
-                                      URL halaman web tidak bisa dijadikan banner. Silakan klik tombol <b>"Upload File Gambar"</b> di atas atau gunakan link yang berakhiran <code>.png</code> / <code>.jpg</code> / <code>.webp</code>.
+                                    <p className="font-bold">Gagal memuat URL gambar</p>
+                                    <p className="text-[10px] text-slate-400">
+                                      Pastikan URL langsung menuju file gambar (.jpg / .png / .webp).
                                     </p>
                                   </div>
                                 )}
@@ -766,32 +1048,33 @@ export default function AdminAnnouncementsPage() {
                   </div>
                 </div>
 
-                <div className="flex gap-2 justify-end pt-3">
+                {/* Form Footer Action Buttons */}
+                <div className="flex gap-2 justify-end pt-3 border-t border-slate-100">
                   <button
                     type="button"
                     onClick={() => setShowModal(false)}
-                    className="btn btn-ghost btn-sm font-bold"
+                    className="btn btn-ghost btn-sm rounded-xl font-bold text-slate-600"
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
-                    disabled={submitting || !formTitle || !formMessage}
-                    className="btn btn-primary btn-sm gap-2 font-bold px-5 text-white"
+                    disabled={submitting || !formTitle.trim() || !formMessage.trim()}
+                    className="btn btn-primary btn-sm rounded-xl gap-2 font-bold px-5 text-white"
                   >
                     {submitting ? (
                       <span className="loading loading-spinner loading-xs" />
                     ) : (
                       <Megaphone className="w-4 h-4" />
                     )}
-                    {editingId ? "Simpan Perubahan" : "Siarkan Sekarang"}
+                    <span>{editingId ? "Simpan Perubahan" : "Siarkan Sekarang"}</span>
                   </button>
                 </div>
               </form>
             </div>
-          </div>,
-          document.body
-        )}
+          </div>
+        </ModalPortal>
+      )}
     </div>
   );
 }
