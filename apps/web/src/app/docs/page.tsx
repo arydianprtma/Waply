@@ -324,18 +324,18 @@ async def handle_sendora_webhook(request: Request):
               })}
             </nav>
 
-            <div className="p-4 rounded-2xl bg-white border border-slate-200/90 space-y-2 shadow-xs">
+            <div className="p-4 rounded-xl bg-white border border-slate-200/90 space-y-2.5 shadow-xs">
               <p className="font-bold text-xs flex items-center gap-1.5 text-slate-900">
-                <Terminal className="w-3.5 h-3.5 text-emerald-600" /> Interactive Sandbox?
+                <Terminal className="w-3.5 h-3.5 text-emerald-600" /> Interactive Sandbox
               </p>
-              <p className="text-[11px] text-slate-500 leading-relaxed font-normal">
-                Coba request API langsung dari browser tanpa coding via Live Tester di dashboard.
+              <p className="text-xs text-slate-600 leading-relaxed font-normal">
+                Coba request API langsung dari browser tanpa coding melalui Live Sandbox Tester di dashboard.
               </p>
               <Link
                 href="/dashboard/docs"
-                className="inline-flex items-center justify-center gap-1.5 w-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-xl font-semibold text-xs h-8.5 transition-colors shadow-2xs mt-1"
+                className="inline-flex items-center justify-center w-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-lg font-semibold text-xs h-9 px-3 transition-colors shadow-xs mt-1"
               >
-                Buka Live Tester <ArrowRight className="w-3.5 h-3.5" />
+                Buka Live Tester
               </Link>
             </div>
           </div>
@@ -364,7 +364,7 @@ async def handle_sendora_webhook(request: Request):
                 href="/login"
                 className="text-xs font-semibold text-emerald-600 hover:underline"
               >
-                Dashboard & API Keys →
+                Dashboard & API Keys
               </Link>
             </div>
           </div>
