@@ -350,9 +350,9 @@ export default function AdminTicketDetailPage() {
       </div>
 
       {/* Main Grid: Messenger (Left) + Sticky Admin Controls & User Info (Right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-5 items-start">
-        {/* Chat Resolution Room (3 Cols) */}
-        <div className="lg:col-span-3 flex flex-col h-[580px] bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        {/* Chat Resolution Room (8-9 Cols on Desktop) */}
+        <div className="lg:col-span-8 xl:col-span-9 flex flex-col h-[600px] bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
           {/* Chat Header Status (Pinned at top) */}
           <div className="px-5 sm:px-6 py-3 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between text-xs shrink-0">
             <div className="flex items-center gap-2 text-slate-700">
@@ -473,8 +473,8 @@ export default function AdminTicketDetailPage() {
           </div>
         </div>
 
-        {/* Right Admin Controls & User Info Sidebar (1 Col - Sticky on Desktop) */}
-        <div className="lg:col-span-1 space-y-4 lg:sticky lg:top-16">
+        {/* Right Admin Controls & User Info Sidebar (4 Cols on Desktop - Sticky) */}
+        <div className="lg:col-span-4 xl:col-span-3 space-y-4 lg:sticky lg:top-16">
           {/* Status & Priority Management */}
           <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm space-y-4 text-xs">
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">

@@ -226,7 +226,7 @@ export default function UserTicketDetailPage() {
   const isResolvedOrClosed = ticket.status === "RESOLVED" || ticket.status === "CLOSED";
 
   return (
-    <div className="max-w-6xl mx-auto space-y-4 sm:space-y-5 animate-in fade-in duration-300 pb-12">
+    <div className="w-full space-y-4 sm:space-y-5 animate-in fade-in duration-300 pb-12">
       {/* Sticky Header Bar */}
       <div className="sticky -top-3.5 sm:-top-6 lg:-top-8 z-30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-white/95 backdrop-blur-md p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-sm transition-all">
         <div className="space-y-1">
@@ -288,9 +288,9 @@ export default function UserTicketDetailPage() {
       </div>
 
       {/* Main Content: Chat Messenger + Sticky Info Sidebar */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-5 items-start">
-        {/* Chat Room Area (3 Cols) */}
-        <div className="lg:col-span-3 flex flex-col h-[560px] bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        {/* Chat Room Area (8-9 Cols on Desktop) */}
+        <div className="lg:col-span-8 xl:col-span-9 flex flex-col h-[600px] bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
           {/* Chat Header Status (Pinned at top of card) */}
           <div className="px-5 sm:px-6 py-3 bg-slate-50/90 border-b border-slate-200 flex items-center justify-between text-xs shrink-0">
             <div className="flex items-center gap-2 text-slate-600">
@@ -403,8 +403,8 @@ export default function UserTicketDetailPage() {
           </div>
         </div>
 
-        {/* Right Info Sidebar (1 Col - Sticky on Desktop) */}
-        <div className="lg:col-span-1 space-y-4 lg:sticky lg:top-16">
+        {/* Right Info Sidebar (4 Cols on Desktop - Sticky) */}
+        <div className="lg:col-span-4 xl:col-span-3 space-y-4 lg:sticky lg:top-16">
           {/* Metadata Card */}
           <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm space-y-4 text-xs">
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">
