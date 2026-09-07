@@ -152,20 +152,26 @@ export async function GET(request: Request) {
   // Real System Logs from Webhooks and Auto-reply activity
   const systemLogs = [
     ...webhookLogs
-      .filter((l: any) => l.statusCode !== 200)
+      .slice(0, 15)
+      .map((l: any) => {
+        const isSuccess = Boolean(l.success || (l.responseStatus && l.responseStatus >= 200 && l.responseStatus < 300));
+        const status = typeof l.responseStatus === "number" && l.responseStatus > 0 ? l.responseStatus : null;
+        return {
+          level: isSuccess ? "INFO" : "WARN",
+          message: isSuccess
+            ? `Webhook "${l.event}" berhasil dikirimkan ke endpoint`
+            : `Webhook "${l.event}" gagal dikirim${status ? ` (HTTP ${status})` : " (Timeout/Network Error)"}`,
+          time: l.createdAt || new Date().toISOString(),
+        };
+      }),
+    ...autoReplyLogs
       .slice(0, 10)
       .map((l: any) => ({
-        level: "WARN",
-        message: `Webhook ${l.event} delivery failed (status ${l.statusCode})`,
-        time: l.deliveredAt || new Date().toISOString(),
-      })),
-    ...autoReplyLogs
-      .filter((l: any) => !l.success)
-      .slice(0, 5)
-      .map((l: any) => ({
-        level: "ERROR",
-        message: `Auto-reply gagal dikirim ke ${l.sender} (rule: ${l.ruleName})`,
-        time: l.createdAt,
+        level: l.success ? "INFO" : "ERROR",
+        message: l.success
+          ? `Auto-reply berhasil dikirim ke +${l.sender} (${l.ruleName})`
+          : `Auto-reply gagal dikirim ke +${l.sender} (${l.ruleName})`,
+        time: l.createdAt || new Date().toISOString(),
       })),
   ]
     .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())

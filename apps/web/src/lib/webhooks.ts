@@ -279,3 +279,17 @@ export async function dispatchWebhookEvent(
 
   return results;
 }
+
+export function clearWebhookLogs(userId?: string): void {
+  ensureDataDir();
+  if (!userId) {
+    fs.writeFileSync(LOGS_FILE, "[]");
+    return;
+  }
+  try {
+    const logs: WebhookLog[] = JSON.parse(fs.readFileSync(LOGS_FILE, "utf-8") || "[]");
+    const filtered = logs.filter((l) => l.userId !== userId);
+    fs.writeFileSync(LOGS_FILE, JSON.stringify(filtered, null, 2));
+  } catch {}
+}
+

@@ -55,3 +55,17 @@ export function saveAutoReplyLog(
   fs.writeFileSync(LOGS_FILE, JSON.stringify(logs, null, 2));
   return log;
 }
+
+export function clearAutoReplyLogs(userId?: string): void {
+  ensureDataDir();
+  if (!userId) {
+    fs.writeFileSync(LOGS_FILE, "[]");
+    return;
+  }
+  try {
+    const logs: AutoReplyLog[] = JSON.parse(fs.readFileSync(LOGS_FILE, "utf-8") || "[]");
+    const filtered = logs.filter((l) => l.userId !== userId);
+    fs.writeFileSync(LOGS_FILE, JSON.stringify(filtered, null, 2));
+  } catch {}
+}
+
