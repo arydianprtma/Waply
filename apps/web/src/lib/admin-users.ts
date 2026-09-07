@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { getSubscription, saveSubscription, PlanId } from "@/lib/billing";
+import { getSubscription, saveSubscription, PlanId, Subscription } from "@/lib/billing";
 
 export type UserAccountStatus = "ACTIVE" | "SUSPENDED" | "BANNED";
 

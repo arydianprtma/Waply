@@ -214,8 +214,10 @@ export default function DevicesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {sessions.map((device) => {
-            const isConnected = device.status === "CONNECTED";
-            const isBanned = device.status === "BANNED_DETECTED";
+            const rawStatus = String(device.status || "").toUpperCase();
+            const isConnected = rawStatus === "CONNECTED";
+            const isBanned = rawStatus === "BANNED_DETECTED";
+            const isConnecting = rawStatus === "CONNECTING";
 
             return (
               <div
@@ -239,7 +241,7 @@ export default function DevicesPage() {
                       </div>
                       <div className="min-w-0">
                         <h3 className="font-bold text-slate-900 text-sm sm:text-base font-mono truncate">
-                          {device.phoneNumber ? `+${device.phoneNumber}` : device.name}
+                          {device.phoneNumber ? `+${device.phoneNumber.replace(/^\+/, "")}` : device.name}
                         </h3>
                         <p className="text-xs text-slate-400 font-mono truncate">{device.name}</p>
                       </div>
@@ -256,10 +258,14 @@ export default function DevicesPage() {
                     >
                       <span
                         className={`w-1.5 h-1.5 rounded-full ${
-                          isConnected ? "bg-emerald-500 animate-pulse" : "bg-rose-500"
+                          isConnected
+                            ? "bg-emerald-500 animate-pulse"
+                            : isConnecting
+                            ? "bg-amber-500 animate-ping"
+                            : "bg-rose-500"
                         }`}
                       />
-                      {isConnected ? "Connected" : device.status}
+                      {isConnected ? "Connected" : isConnecting ? "Connecting" : isBanned ? "Banned" : "Disconnected"}
                     </span>
                   </div>
 
