@@ -1,12 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { SendoraLogo } from "@/components/brand/SendoraLogo";
-import { Menu, X, ArrowRight, ShieldCheck, Zap, BookOpen, CreditCard, HelpCircle } from "lucide-react";
+import { Menu, X, ShieldCheck, Zap, BookOpen, CreditCard, HelpCircle } from "lucide-react";
 
 export function LandingNavbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Lock body scroll when mobile drawer is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [mobileMenuOpen]);
 
   const navLinks = [
     { name: "Fitur", href: "/#features", icon: Zap },
@@ -18,7 +30,7 @@ export function LandingNavbar() {
 
   return (
     <>
-      <header className="navbar bg-white/90 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200 px-4 md:px-12 transition-all">
+      <header className="navbar bg-white/95 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200 px-4 md:px-12 transition-all">
         {/* Brand Logo */}
         <div className="navbar-start">
           <SendoraLogo href="/" size="md" />
@@ -31,7 +43,7 @@ export function LandingNavbar() {
               <li key={link.name}>
                 <Link
                   href={link.href}
-                  className="hover:text-primary hover:bg-slate-100 rounded-xl transition-colors font-semibold text-slate-700"
+                  className="hover:text-primary hover:bg-slate-100 rounded-lg transition-colors font-semibold text-slate-700"
                 >
                   {link.name}
                 </Link>
@@ -45,56 +57,57 @@ export function LandingNavbar() {
           <div className="hidden sm:flex items-center gap-2">
             <Link
               href="/login"
-              className="btn btn-ghost btn-sm font-bold text-slate-700 hover:text-slate-900 rounded-xl"
+              className="px-3.5 py-2 text-sm font-semibold text-slate-700 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition-colors"
             >
               Masuk
             </Link>
             <Link
               href="/register"
-              className="btn btn-primary btn-sm shadow-md shadow-primary/25 rounded-xl font-bold gap-1.5"
+              className="px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-primary/90 rounded-lg shadow-xs transition-colors"
             >
               Daftar Gratis
-              <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
 
           {/* Hamburger Button (Visible on mobile/tablet) */}
           <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="btn btn-ghost btn-circle btn-sm lg:hidden text-slate-700"
-            aria-label="Toggle mobile menu"
+            onClick={() => setMobileMenuOpen(true)}
+            className="p-2 rounded-lg text-slate-700 hover:bg-slate-100 lg:hidden transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+            aria-label="Buka menu navigasi"
           >
-            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            <Menu className="w-5 h-5" />
           </button>
         </div>
       </header>
 
       {/* Mobile Drawer Slide-over Overlay */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden animate-in fade-in duration-200">
-          {/* Backdrop */}
+        <div className="fixed inset-0 z-[9999] lg:hidden flex justify-end">
+          {/* Backdrop Dim */}
           <div
-            className="fixed inset-0 bg-black/40 backdrop-blur-xs"
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity duration-200 animate-in fade-in"
             onClick={() => setMobileMenuOpen(false)}
+            aria-hidden="true"
           />
 
           {/* Drawer Content Panel */}
-          <div className="fixed top-0 right-0 bottom-0 w-4/5 max-w-sm bg-white p-6 shadow-2xl flex flex-col justify-between z-50 border-l border-slate-200 animate-in slide-in-from-right duration-300">
+          <div className="relative w-full max-w-xs sm:max-w-sm h-full bg-white shadow-2xl flex flex-col justify-between z-10 border-l border-slate-200 animate-in slide-in-from-right duration-250 ease-out">
+            {/* Drawer Top Header */}
             <div>
-              {/* Drawer Header */}
-              <div className="flex items-center justify-between pb-5 border-b border-slate-200">
+              <div className="h-16 px-5 border-b border-slate-200 flex items-center justify-between shrink-0">
                 <SendoraLogo href="/" size="sm" />
                 <button
                   onClick={() => setMobileMenuOpen(false)}
-                  className="btn btn-ghost btn-circle btn-sm text-slate-500 hover:bg-slate-100"
+                  className="p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
+                  aria-label="Tutup menu"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              {/* Navigation Links */}
-              <div className="py-6 space-y-1">
-                <div className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 px-3 mb-2">
+              {/* Navigation Links (Minimum 44px tap target) */}
+              <div className="p-4 space-y-1">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-3 py-1">
                   Navigasi
                 </div>
                 {navLinks.map((link) => {
@@ -104,11 +117,9 @@ export function LandingNavbar() {
                       key={link.name}
                       href={link.href}
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-3 px-3.5 py-3 rounded-2xl text-sm font-bold text-slate-800 hover:bg-slate-100 hover:text-primary transition-colors"
+                      className="flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors min-h-[44px]"
                     >
-                      <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center">
-                        <Icon className="w-4 h-4" />
-                      </div>
+                      <Icon className="w-4 h-4 text-slate-500 shrink-0" />
                       <span>{link.name}</span>
                     </Link>
                   );
@@ -117,26 +128,25 @@ export function LandingNavbar() {
             </div>
 
             {/* Drawer Bottom Actions */}
-            <div className="pt-6 border-t border-slate-200 space-y-3">
+            <div className="p-5 border-t border-slate-200 space-y-2.5 bg-slate-50/50">
               <Link
                 href="/register"
                 onClick={() => setMobileMenuOpen(false)}
-                className="btn btn-primary w-full shadow-lg shadow-primary/25 rounded-2xl font-bold gap-2"
+                className="w-full flex items-center justify-center h-11 px-4 text-sm font-semibold text-white bg-primary hover:bg-primary/90 rounded-xl shadow-xs transition-colors"
               >
                 Daftar Gratis Sekarang
-                <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
                 href="/login"
                 onClick={() => setMobileMenuOpen(false)}
-                className="btn btn-outline w-full rounded-2xl font-bold text-slate-700"
+                className="w-full flex items-center justify-center h-11 px-4 text-sm font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl transition-colors"
               >
                 Masuk ke Akun
               </Link>
 
-              <div className="pt-2 text-center text-[11px] text-slate-400 font-medium">
+              <p className="text-center text-[11px] text-slate-500 font-medium pt-1">
                 Free 100 Pesan • Tanpa Kartu Kredit
-              </div>
+              </p>
             </div>
           </div>
         </div>
