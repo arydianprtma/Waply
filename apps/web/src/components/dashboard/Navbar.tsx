@@ -182,7 +182,10 @@ export function Navbar() {
   const { toggleNav } = useMobileNav();
 
   return (
-    <header className="navbar bg-base-100 border-b border-base-200 px-3 sm:px-6 h-16 shrink-0 sticky top-0 z-40 shadow-xs transition-colors">
+    <header
+      suppressHydrationWarning
+      className="navbar bg-base-100 border-b border-base-200 px-3 sm:px-6 h-16 shrink-0 sticky top-0 z-40 shadow-xs transition-colors"
+    >
       {/* Left side: Mobile Menu Button + Search & Status */}
       <div className="flex-1 flex items-center gap-2 sm:gap-4 min-w-0">
         {/* Mobile Hamburger Menu Button (Visible on mobile/tablet < 1024px) */}
