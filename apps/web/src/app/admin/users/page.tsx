@@ -447,52 +447,59 @@ export default function AdminUsersPage() {
 
                       {/* Actions */}
                       <td className="text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          {/* Assign Plan Button */}
-                          <button
-                            onClick={() => {
-                              setSelectedUser(u);
-                              setSelectedPlanId(u.planId || "STARTER");
-                              setPlanModalOpen(true);
-                            }}
-                            className="btn btn-ghost btn-xs text-primary hover:bg-primary/10 gap-1 rounded-lg"
-                            title="Ubah Paket Berlangganan"
-                          >
-                            <Zap className="w-3.5 h-3.5" />
-                            <span className="hidden lg:inline">Ubah Paket</span>
-                          </button>
-
-                          {/* Status Actions */}
-                          {u.status === "ACTIVE" ? (
-                            <>
-                              <button
-                                onClick={() => openStatusModal(u, "SUSPENDED")}
-                                className="btn btn-ghost btn-xs text-amber-600 hover:bg-amber-50 rounded-lg"
-                                title="Tangguhkan Akun (Suspend)"
-                              >
-                                Suspend
-                              </button>
-                              <button
-                                onClick={() => openStatusModal(u, "BANNED")}
-                                className="btn btn-ghost btn-xs text-rose-600 hover:bg-rose-50 rounded-lg"
-                                title="Blokir Permanen (Ban)"
-                              >
-                                Ban
-                              </button>
-                            </>
-                          ) : (
+                        {isAdmin ? (
+                          <div className="flex items-center justify-end">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-primary/10 text-primary border border-primary/20 shadow-xs">
+                              <ShieldCheck className="w-3.5 h-3.5" />
+                              Super Admin (Protected)
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-end gap-1.5">
+                            {/* Assign Plan Button */}
                             <button
-                              onClick={() => handleUpdateStatus(u.id, "ACTIVE")}
-                              className="btn btn-ghost btn-xs text-emerald-600 hover:bg-emerald-50 gap-1 rounded-lg font-bold"
-                              title="Buka Blokir & Aktifkan Kembali"
+                              onClick={() => {
+                                setSelectedUser(u);
+                                setSelectedPlanId(u.planId || "STARTER");
+                                setPlanModalOpen(true);
+                              }}
+                              className="btn btn-ghost btn-xs text-primary hover:bg-primary/10 gap-1 rounded-lg"
+                              title="Ubah Paket Berlangganan"
                             >
-                              <UserCheck className="w-3.5 h-3.5" />
-                              Aktifkan
+                              <Zap className="w-3.5 h-3.5" />
+                              <span className="hidden lg:inline">Ubah Paket</span>
                             </button>
-                          )}
 
-                          {/* Delete User Button (for non-super-admins) */}
-                          {!isAdmin && (
+                            {/* Status Actions */}
+                            {u.status === "ACTIVE" ? (
+                              <>
+                                <button
+                                  onClick={() => openStatusModal(u, "SUSPENDED")}
+                                  className="btn btn-ghost btn-xs text-amber-600 hover:bg-amber-50 rounded-lg"
+                                  title="Tangguhkan Akun (Suspend)"
+                                >
+                                  Suspend
+                                </button>
+                                <button
+                                  onClick={() => openStatusModal(u, "BANNED")}
+                                  className="btn btn-ghost btn-xs text-rose-600 hover:bg-rose-50 rounded-lg"
+                                  title="Blokir Permanen (Ban)"
+                                >
+                                  Ban
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                onClick={() => handleUpdateStatus(u.id, "ACTIVE")}
+                                className="btn btn-ghost btn-xs text-emerald-600 hover:bg-emerald-50 gap-1 rounded-lg font-bold"
+                                title="Buka Blokir & Aktifkan Kembali"
+                              >
+                                <UserCheck className="w-3.5 h-3.5" />
+                                Aktifkan
+                              </button>
+                            )}
+
+                            {/* Delete User Button */}
                             <button
                               onClick={() => {
                                 setSelectedUser(u);
@@ -504,8 +511,8 @@ export default function AdminUsersPage() {
                               <Trash2 className="w-3.5 h-3.5" />
                               <span className="hidden xl:inline font-bold">Hapus</span>
                             </button>
-                          )}
-                        </div>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   );
