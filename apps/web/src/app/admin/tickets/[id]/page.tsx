@@ -129,10 +129,33 @@ export default function AdminTicketDetailPage() {
 
   const handleSendReply = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!replyMessage.trim() || sendingReply || !ticket) return;
+    if (!replyMessage.trim() || !ticket) return;
 
     const msg = replyMessage.trim();
     setReplyMessage("");
+
+    // Optimistic UI update: message appears instantly
+    const tempMsg: any = {
+      id: `temp-${Date.now()}`,
+      ticketId: ticket.id,
+      senderId: user?.id || "admin",
+      senderName: user?.name || "Admin CS",
+      senderEmail: user?.email || "",
+      senderRole: "admin",
+      message: msg,
+      createdAt: new Date().toISOString(),
+      sending: true,
+    };
+
+    setTicket((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        messages: [...prev.messages, tempMsg],
+      };
+    });
+    setTimeout(() => scrollToBottom(true), 20);
+
     setSendingReply(true);
 
     try {
@@ -387,11 +410,18 @@ export default function AdminTicketDetailPage() {
                       <span className="text-[11px] font-bold text-slate-700">
                         {isAdmin ? `${msg.senderName || "Admin CS"} (Anda)` : ticket.userName || ticket.userEmail}
                       </span>
-                      <span className="text-[10px] text-slate-400">
-                        {new Date(msg.createdAt).toLocaleTimeString("id-ID", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                      <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                        {(msg as any).sending ? (
+                          <>
+                            <RefreshCw className="w-2.5 h-2.5 animate-spin text-emerald-400" />
+                            <span>Mengirim...</span>
+                          </>
+                        ) : (
+                          new Date(msg.createdAt).toLocaleTimeString("id-ID", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        )}
                       </span>
                     </div>
                     <div
@@ -433,15 +463,11 @@ export default function AdminTicketDetailPage() {
               />
               <button
                 type="submit"
-                disabled={sendingReply || !replyMessage.trim()}
+                disabled={!replyMessage.trim()}
                 className="p-3 rounded-2xl bg-slate-900 text-white hover:bg-slate-800 active:scale-95 disabled:opacity-40 transition-all shadow-md cursor-pointer shrink-0"
                 title="Kirim Balasan Admin"
               >
-                {sendingReply ? (
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Send className="w-4 h-4" />
-                )}
+                <Send className="w-4 h-4" />
               </button>
             </form>
           </div>

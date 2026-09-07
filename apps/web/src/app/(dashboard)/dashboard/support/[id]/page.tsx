@@ -118,10 +118,34 @@ export default function UserTicketDetailPage() {
 
   const handleSendReply = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!replyMessage.trim() || sendingReply || !ticket) return;
+    if (!replyMessage.trim() || !ticket) return;
 
     const messageText = replyMessage.trim();
     setReplyMessage("");
+
+    // Optimistic UI update: message appears instantly
+    const tempMsg: any = {
+      id: `temp-${Date.now()}`,
+      ticketId: ticket.id,
+      senderId: user?.id || "user",
+      senderName: user?.name || "Anda",
+      senderEmail: user?.email || "",
+      senderRole: "user",
+      message: messageText,
+      createdAt: new Date().toISOString(),
+      sending: true,
+    };
+
+    setTicket((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        status: prev.status === "RESOLVED" || prev.status === "CLOSED" ? "OPEN" : prev.status,
+        messages: [...prev.messages, tempMsg],
+      };
+    });
+    setTimeout(() => scrollToBottom(true), 20);
+
     setSendingReply(true);
 
     try {
@@ -307,11 +331,18 @@ export default function UserTicketDetailPage() {
                       <span className="text-[11px] font-bold text-slate-700">
                         {isUser ? "Anda" : msg.senderName || "Sendora Support"}
                       </span>
-                      <span className="text-[10px] text-slate-600">
-                        {new Date(msg.createdAt).toLocaleTimeString("id-ID", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                      <span className="text-[10px] text-slate-600 flex items-center gap-1">
+                        {(msg as any).sending ? (
+                          <>
+                            <RefreshCw className="w-2.5 h-2.5 animate-spin text-primary" />
+                            <span>Mengirim...</span>
+                          </>
+                        ) : (
+                          new Date(msg.createdAt).toLocaleTimeString("id-ID", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        )}
                       </span>
                     </div>
                     <div
@@ -362,15 +393,11 @@ export default function UserTicketDetailPage() {
               />
               <button
                 type="submit"
-                disabled={sendingReply || !replyMessage.trim()}
+                disabled={!replyMessage.trim()}
                 className="p-3 rounded-2xl bg-primary text-white hover:bg-primary/90 active:scale-95 disabled:opacity-40 transition-all shadow-md shadow-primary/25 cursor-pointer shrink-0"
                 title="Kirim Pesan"
               >
-                {sendingReply ? (
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Send className="w-4 h-4" />
-                )}
+                <Send className="w-4 h-4" />
               </button>
             </form>
           </div>
