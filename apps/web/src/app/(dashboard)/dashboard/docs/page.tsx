@@ -13,11 +13,21 @@ import {
   Loader2,
   CheckCircle2,
   Info,
+  Radio,
+  Users,
+  FileText,
+  Bot,
+  Ban,
+  ShieldCheck,
+  Sparkles,
+  Layers,
 } from "lucide-react";
 
 type CodeLang = "curl" | "nodejs" | "python" | "php";
+type EndpointTab = "send" | "broadcast" | "contacts" | "templates" | "autoreply" | "blacklist" | "webhooks";
 
 export default function ApiDocsPage() {
+  const [activeTab, setActiveTab] = useState<EndpointTab>("send");
   const [selectedLang, setSelectedLang] = useState<CodeLang>("curl");
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
   const [originUrl, setOriginUrl] = useState<string>("http://localhost:3001");
@@ -42,10 +52,12 @@ export default function ApiDocsPage() {
     setTimeout(() => setCopiedSection(null), 2000);
   };
 
-  const getSendSnippet = (lang: CodeLang) => {
-    switch (lang) {
-      case "curl":
-        return `curl -X POST ${originUrl}/api/v1/messages/send \\
+  const getEndpointSnippet = (tab: EndpointTab, lang: CodeLang) => {
+    switch (tab) {
+      case "send":
+        switch (lang) {
+          case "curl":
+            return `curl -X POST ${originUrl}/api/v1/messages/send \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -d '{
@@ -57,8 +69,8 @@ export default function ApiDocsPage() {
       "order_id": "INV-10928"
     }
   }'`;
-      case "nodejs":
-        return `const response = await fetch("${originUrl}/api/v1/messages/send", {
+          case "nodejs":
+            return `const response = await fetch("${originUrl}/api/v1/messages/send", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
@@ -77,8 +89,8 @@ export default function ApiDocsPage() {
 
 const data = await response.json();
 console.log(data);`;
-      case "python":
-        return `import requests
+          case "python":
+            return `import requests
 
 url = "${originUrl}/api/v1/messages/send"
 headers = {
@@ -97,8 +109,8 @@ payload = {
 
 response = requests.post(url, json=payload, headers=headers)
 print(response.json())`;
-      case "php":
-        return `<?php
+          case "php":
+            return `<?php
 $curl = curl_init();
 
 $payload = [
@@ -126,6 +138,189 @@ $response = curl_exec($curl);
 curl_close($curl);
 echo $response;
 ?>`;
+        }
+        break;
+
+      case "broadcast":
+        switch (lang) {
+          case "curl":
+            return `curl -X POST ${originUrl}/api/broadcast \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -d '{
+    "name": "Promo Weekend Diskon 30%",
+    "messageTemplate": "{Halo|Hai} {{name}}, dapatkan diskon 30% hari ini!",
+    "batchSize": 10,
+    "batchDelaySec": 60,
+    "minDelaySec": 4,
+    "maxDelaySec": 8,
+    "recipients": [
+      { "phoneNumber": "6281234567890", "name": "Budi Santoso" },
+      { "phoneNumber": "6285712345678", "name": "Siti Rahma" }
+    ]
+  }'`;
+          case "nodejs":
+            return `// 1. Buat Kampanye Broadcast
+const createRes = await fetch("${originUrl}/api/broadcast", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer YOUR_API_KEY",
+  },
+  body: JSON.stringify({
+    name: "Promo Weekend Diskon 30%",
+    messageTemplate: "{Halo|Hai} {{name}}, nikmati promo diskon spesial!",
+    batchSize: 10,
+    batchDelaySec: 60,
+    minDelaySec: 4,
+    maxDelaySec: 8,
+    recipients: [
+      { phoneNumber: "6281234567890", name: "Budi Santoso" },
+      { phoneNumber: "6285712345678", name: "Siti Rahma" },
+    ],
+  }),
+});
+const campaign = await createRes.json();
+
+// 2. Jalankan Antrean Broadcast di Background
+await fetch(\`${originUrl}/api/broadcast/\${campaign.data.id}/start\`, {
+  method: "POST",
+  headers: { "Authorization": "Bearer YOUR_API_KEY" },
+});`;
+          case "python":
+            return `import requests
+
+headers = {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer YOUR_API_KEY",
+}
+payload = {
+    "name": "Promo Weekend Diskon 30%",
+    "messageTemplate": "{Halo|Hai} {{name}}, nikmati promo diskon spesial!",
+    "batchSize": 10,
+    "batchDelaySec": 60,
+    "minDelaySec": 4,
+    "maxDelaySec": 8,
+    "recipients": [
+        {"phoneNumber": "6281234567890", "name": "Budi Santoso"},
+        {"phoneNumber": "6285712345678", "name": "Siti Rahma"}
+    ]
+}
+
+res = requests.post("${originUrl}/api/broadcast", json=payload, headers=headers)
+campaign_id = res.json()["data"]["id"]
+
+# Jalankan pengiriman
+requests.post(f"${originUrl}/api/broadcast/{campaign_id}/start", headers=headers)`;
+          case "php":
+            return `<?php
+$headers = [
+    "Content-Type: application/json",
+    "Authorization: Bearer YOUR_API_KEY"
+];
+
+$curl = curl_init("${originUrl}/api/broadcast");
+curl_setopt($curl, CURLOPT_POST, true);
+curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode([
+    "name" => "Promo Weekend Diskon 30%",
+    "messageTemplate" => "{Halo|Hai} {{name}}, nikmati promo diskon spesial!",
+    "batchSize" => 10,
+    "batchDelaySec" => 60,
+    "minDelaySec" => 4,
+    "maxDelaySec" => 8,
+    "recipients" => [
+        ["phoneNumber" => "6281234567890", "name" => "Budi Santoso"],
+        ["phoneNumber" => "6285712345678", "name" => "Siti Rahma"]
+    ]
+]));
+
+$res = json_decode(curl_exec($curl), true);
+$campaignId = $res['data']['id'];
+curl_close($curl);
+
+// Start
+$curlStart = curl_init("${originUrl}/api/broadcast/" . $campaignId . "/start");
+curl_setopt($curlStart, CURLOPT_POST, true);
+curl_setopt($curlStart, CURLOPT_HTTPHEADER, $headers);
+curl_setopt($curlStart, CURLOPT_RETURNTRANSFER, true);
+curl_exec($curlStart);
+curl_close($curlStart);
+?>`;
+        }
+        break;
+
+      case "contacts":
+        return `// Import Bulk Kontak
+curl -X POST ${originUrl}/api/contacts/import \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -d '{
+    "contacts": [
+      {
+        "name": "Budi Santoso",
+        "phoneNumber": "6281234567890",
+        "groupName": "Pelanggan VIP",
+        "customVariables": { "kota": "Jakarta", "saldo": 500000 }
+      },
+      {
+        "name": "Siti Rahma",
+        "phoneNumber": "6285712345678",
+        "groupName": "Leads Baru",
+        "customVariables": { "kota": "Surabaya", "minat": "Paket Pro" }
+      }
+    ]
+  }'`;
+
+      case "templates":
+        return `// Buat Template Pesan Baru
+curl -X POST ${originUrl}/api/templates \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -d '{
+    "name": "Konfirmasi Pembayaran",
+    "shortcode": "tpl_payment_ok",
+    "category": "NOTIFIKASI",
+    "content": "{Halo|Hai} {{name}}, pembayaran order #{{order_id}} sebesar Rp{{total}} telah berhasil diverifikasi!"
+  }'`;
+
+      case "autoreply":
+        return `// Buat Aturan Auto Reply Baru
+curl -X POST ${originUrl}/api/autoreply \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -d '{
+    "name": "Info Harga & Paket",
+    "matchType": "CONTAINS",
+    "keywords": ["harga", "pricelist", "biaya"],
+    "replyMessage": "{Halo|Hai} {{pushName}}! Paket layanan Sendora mulai dari Rp99.000/bln.",
+    "delaySec": 2,
+    "isActive": true
+  }'`;
+
+      case "blacklist":
+        return `// Tambah Nomor ke Blacklist (DND)
+curl -X POST ${originUrl}/api/blacklist \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -d '{
+    "phoneNumber": "6281234567890",
+    "reason": "MANUAL_BLOCK",
+    "notes": "Pelanggan meminta jangan dihubungi via WA"
+  }'`;
+
+      case "webhooks":
+        return `// Registrasi Webhook Endpoint
+curl -X POST ${originUrl}/api/webhooks \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -d '{
+    "name": "Production CRM Inbound Webhook",
+    "url": "https://api.crm-anda.com/webhooks/whatsapp",
+    "events": ["message.received", "message.delivered", "device.connected"],
+    "isActive": true
+  }'`;
     }
   };
 
@@ -162,15 +357,15 @@ echo $response;
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
             <Code2 className="w-6 h-6 text-emerald-600" />
-            Developer API Reference
+            Developer API & Features Reference
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Panduan REST API untuk integrasi pengiriman pesan WhatsApp, spintax, multi-device, dan webhook.
+            Panduan lengkap REST API untuk integrasi pengiriman pesan, broadcast massal, kontak, template, dan webhook real-time.
           </p>
         </div>
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200 self-start sm:self-auto">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          API v1.0 • REST JSON
+          API v1.2 • REST JSON
         </div>
       </div>
 
@@ -191,15 +386,59 @@ echo $response;
         </p>
       </div>
 
-      {/* Endpoint: Send Message */}
+      {/* Endpoints Tab Switcher */}
+      <div className="flex overflow-x-auto gap-1.5 p-1.5 bg-slate-100 rounded-2xl border border-slate-200/80">
+        {[
+          { id: "send", label: "Direct Send API", icon: Send },
+          { id: "broadcast", label: "Broadcast Campaigns", icon: Radio },
+          { id: "contacts", label: "Contacts & Groups", icon: Users },
+          { id: "templates", label: "Message Templates", icon: FileText },
+          { id: "autoreply", label: "Auto Reply Rules", icon: Bot },
+          { id: "blacklist", label: "Blacklist (DND)", icon: Ban },
+          { id: "webhooks", label: "Webhooks Dispatcher", icon: Webhook },
+        ].map((tab) => {
+          const Icon = tab.icon;
+          const isSelected = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as EndpointTab)}
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                isSelected
+                  ? "bg-white text-slate-900 shadow-xs border border-slate-200/80"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
+              }`}
+            >
+              <Icon className={`w-3.5 h-3.5 ${isSelected ? "text-emerald-600" : "text-slate-400"}`} />
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Endpoint Details Card */}
       <div className="bg-white border border-slate-200/90 shadow-xs rounded-2xl overflow-hidden">
         <div className="p-5 sm:p-6 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
             <span className="bg-emerald-600 text-white font-mono font-bold text-xs px-2.5 py-0.5 rounded-lg">POST</span>
-            <span className="font-mono font-bold text-xs sm:text-sm text-slate-900">/api/v1/messages/send</span>
+            <span className="font-mono font-bold text-xs sm:text-sm text-slate-900">
+              {activeTab === "send" && "/api/v1/messages/send"}
+              {activeTab === "broadcast" && "/api/broadcast"}
+              {activeTab === "contacts" && "/api/contacts/import"}
+              {activeTab === "templates" && "/api/templates"}
+              {activeTab === "autoreply" && "/api/autoreply"}
+              {activeTab === "blacklist" && "/api/blacklist"}
+              {activeTab === "webhooks" && "/api/webhooks"}
+            </span>
           </div>
           <p className="text-xs text-slate-500 mt-1.5">
-            Mengirim pesan WhatsApp ke nomor tujuan dengan dukungan format Spintax dinamis dan substitusi variabel.
+            {activeTab === "send" && "Mengirim pesan WhatsApp ke nomor tujuan dengan dukungan format Spintax dinamis dan substitusi variabel."}
+            {activeTab === "broadcast" && "Membuat dan menjalankan antrean kampanye broadcast massal dengan safety throttling dan batch delay anti-ban."}
+            {activeTab === "contacts" && "Mengimpor kontak massal (CSV/JSON), menetapkan grup segmentasi, dan menyimpan custom variables."}
+            {activeTab === "templates" && "Membuat dan mengelola format template pesan (OTP, Promo, Notifikasi) siap pakai."}
+            {activeTab === "autoreply" && "Mengonfigurasi respon chat instan otomatis dengan metode pencocokan EXACT, CONTAINS, STARTS_WITH, atau REGEX."}
+            {activeTab === "blacklist" && "Menambahkan nomor ke daftar blokir DND untuk mencegah pesan spam dan menghormati privasi pelanggan."}
+            {activeTab === "webhooks" && "Mendaftarkan URL endpoint webhook server Anda untuk menerima event WhatsApp secara real-time."}
           </p>
         </div>
 
@@ -222,10 +461,10 @@ echo $response;
               ))}
             </div>
             <button
-              onClick={() => copyCode(getSendSnippet(selectedLang), "send-code")}
+              onClick={() => copyCode(getEndpointSnippet(activeTab, selectedLang), `snippet-${activeTab}`)}
               className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors cursor-pointer"
             >
-              {copiedSection === "send-code" ? (
+              {copiedSection === `snippet-${activeTab}` ? (
                 <>
                   <Check className="w-3.5 h-3.5 text-emerald-600" /> Disalin
                 </>
@@ -238,50 +477,7 @@ echo $response;
           </div>
 
           <div className="bg-slate-900 text-slate-100 p-4 rounded-xl font-mono text-xs leading-relaxed overflow-x-auto border border-slate-800 shadow-inner">
-            <pre>{getSendSnippet(selectedLang)}</pre>
-          </div>
-        </div>
-
-        {/* Parameters Table */}
-        <div className="p-5 sm:p-6 space-y-3">
-          <h3 className="font-bold text-xs uppercase tracking-wider text-slate-500">Request Body Schema</h3>
-          <div className="overflow-x-auto rounded-xl border border-slate-200">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
-                  <th className="p-3">Field</th>
-                  <th className="p-3">Tipe</th>
-                  <th className="p-3">Status</th>
-                  <th className="p-3">Keterangan</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 font-mono">
-                <tr className="hover:bg-slate-50/50">
-                  <td className="p-3 font-bold text-emerald-700">to</td>
-                  <td className="p-3 text-slate-500">string</td>
-                  <td className="p-3 font-sans"><span className="bg-rose-50 text-rose-700 border border-rose-200 text-[10px] px-2 py-0.5 rounded-full font-semibold">Wajib</span></td>
-                  <td className="p-3 font-sans text-slate-600">Nomor WhatsApp tujuan (format internasional: 62812xxx)</td>
-                </tr>
-                <tr className="hover:bg-slate-50/50">
-                  <td className="p-3 font-bold text-emerald-700">message</td>
-                  <td className="p-3 text-slate-500">string</td>
-                  <td className="p-3 font-sans"><span className="bg-rose-50 text-rose-700 border border-rose-200 text-[10px] px-2 py-0.5 rounded-full font-semibold">Wajib</span></td>
-                  <td className="p-3 font-sans text-slate-600">Isi pesan teks. Mendukung Spintax: <code className="bg-slate-100 text-slate-800 px-1 py-0.5 rounded">{`{Halo|Hai}`}</code></td>
-                </tr>
-                <tr className="hover:bg-slate-50/50">
-                  <td className="p-3 font-bold text-emerald-700">deviceId</td>
-                  <td className="p-3 text-slate-500">string</td>
-                  <td className="p-3 font-sans"><span className="bg-slate-100 text-slate-600 border border-slate-200 text-[10px] px-2 py-0.5 rounded-full font-semibold">Opsional</span></td>
-                  <td className="p-3 font-sans text-slate-600">ID session device pengirim, atau isi <code className="bg-slate-100 text-slate-800 px-1 py-0.5 rounded">auto_rotate</code> untuk rotasi acak</td>
-                </tr>
-                <tr className="hover:bg-slate-50/50">
-                  <td className="p-3 font-bold text-emerald-700">variables</td>
-                  <td className="p-3 text-slate-500">object</td>
-                  <td className="p-3 font-sans"><span className="bg-slate-100 text-slate-600 border border-slate-200 text-[10px] px-2 py-0.5 rounded-full font-semibold">Opsional</span></td>
-                  <td className="p-3 font-sans text-slate-600">Key-value pasangan variabel seperti <code className="bg-slate-100 text-slate-800 px-1 py-0.5 rounded">{`{ name: "Budi" }`}</code></td>
-                </tr>
-              </tbody>
-            </table>
+            <pre>{getEndpointSnippet(activeTab, selectedLang)}</pre>
           </div>
         </div>
       </div>
@@ -398,4 +594,3 @@ echo $response;
     </div>
   );
 }
-
