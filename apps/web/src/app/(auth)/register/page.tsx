@@ -4,12 +4,13 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
-import { Lock, Mail, User, Loader2, AlertCircle, CheckCircle, Info } from "lucide-react";
+import { Lock, Mail, User, Loader2, AlertCircle, CheckCircle, Info, Eye, EyeOff } from "lucide-react";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -144,15 +145,28 @@ export default function RegisterPage() {
           </label>
           <div className="relative">
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               placeholder="Minimal 6 karakter"
               minLength={6}
-              className="input input-bordered w-full pl-10"
+              className="input input-bordered w-full pl-10 pr-10"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
             <Lock className="w-5 h-5 absolute left-3 top-3.5 text-base-content/40" />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-3.5 text-base-content/40 hover:text-base-content transition-colors p-0.5 focus:outline-none"
+              aria-label={showPassword ? "Sembunyikan password" : "Lihat password"}
+              tabIndex={-1}
+            >
+              {showPassword ? (
+                <EyeOff className="w-5 h-5 text-slate-500" />
+              ) : (
+                <Eye className="w-5 h-5 text-slate-400 hover:text-slate-600" />
+              )}
+            </button>
           </div>
         </div>
         <div className="form-control pt-1">
