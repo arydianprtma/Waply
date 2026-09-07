@@ -6,6 +6,7 @@ import {
   getUserSessionIds,
   registerUserDevice,
 } from "@/lib/user-devices";
+import { getAllDevicesSentTodayMap } from "@/lib/messages";
 
 export async function GET() {
   try {
@@ -29,12 +30,37 @@ export async function GET() {
       userSessions = allSessions.filter((s: any) => userSessionIds.includes(s.id));
     }
 
+    const sentTodayMap = getAllDevicesSentTodayMap();
+    const enrichedSessions = userSessions.map((s: any) => {
+      const sentToday = sentTodayMap[s.id] || 0;
+      let warmupStage: "Cold" | "Warm" | "Active" | "Mature" = "Cold";
+      let dailyLimit = 50;
+
+      if (sentToday > 200) {
+        warmupStage = "Mature";
+        dailyLimit = 500;
+      } else if (sentToday > 80) {
+        warmupStage = "Active";
+        dailyLimit = 250;
+      } else if (sentToday > 25) {
+        warmupStage = "Warm";
+        dailyLimit = 100;
+      }
+
+      return {
+        ...s,
+        sentToday,
+        warmupStage,
+        dailyLimit,
+      };
+    });
+
     const currentCount = userSessions.length;
     const canAddMore = currentCount < limitInfo.maxDevices;
 
     return NextResponse.json({
       success: true,
-      data: userSessions,
+      data: enrichedSessions,
       limit: {
         maxDevices: limitInfo.maxDevices,
         currentCount,

@@ -27,6 +27,9 @@ interface SessionData {
   status: "DISCONNECTED" | "CONNECTING" | "CONNECTED" | "BANNED_DETECTED";
   lastConnectedAt?: string;
   lastError?: string;
+  sentToday?: number;
+  warmupStage?: "Cold" | "Warm" | "Active" | "Mature";
+  dailyLimit?: number;
 }
 
 interface DeviceLimitInfo {
@@ -273,9 +276,22 @@ export default function DevicesPage() {
                   <div className="mt-4 pt-3.5 border-t border-slate-100 space-y-2 text-xs">
                     <div className="flex items-center justify-between text-slate-600">
                       <span>Status Warmup:</span>
-                      <span className="font-semibold text-emerald-700 flex items-center gap-1">
-                        <Flame className="w-3.5 h-3.5 text-emerald-600" /> Stage 1 (Cold)
+                      <span className="font-semibold text-amber-700 flex items-center gap-1">
+                        <Flame className="w-3.5 h-3.5 text-amber-600" /> Stage: {device.warmupStage || "Cold"}
                       </span>
+                    </div>
+                    <div className="space-y-1 py-0.5">
+                      <div className="flex items-center justify-between text-slate-600 text-[11px]">
+                        <span>Pengiriman Hari Ini:</span>
+                        <span className="font-semibold text-slate-800">
+                          {device.sentToday || 0} / {device.dailyLimit || 50} pesan
+                        </span>
+                      </div>
+                      <progress
+                        className="progress progress-primary w-full h-1.5"
+                        value={device.sentToday || 0}
+                        max={device.dailyLimit || 50}
+                      />
                     </div>
                     <div className="flex items-center justify-between text-slate-600">
                       <span>Safety Delay:</span>

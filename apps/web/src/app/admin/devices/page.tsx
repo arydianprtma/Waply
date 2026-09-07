@@ -82,9 +82,9 @@ export default function AdminDevicesPage() {
             phoneNumber: d.phoneNumber || d.user?.id?.split(":")[0] || "-",
             status,
             lastConnectedAt: d.lastConnectedAt || d.updatedAt || new Date().toISOString(),
-            sentCountToday: d.sentToday || 0,
-            warmupStage: "Active",
-            dailyLimit: d.dailyLimit || 250,
+            sentCountToday: typeof d.sentToday === "number" ? d.sentToday : 0,
+            warmupStage: d.warmupStage || "Cold",
+            dailyLimit: d.dailyLimit || 50,
           };
         });
         setDevices(enriched);

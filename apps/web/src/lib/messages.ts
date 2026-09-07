@@ -180,3 +180,47 @@ export function canUserSendMessage(
     isUnlimited: false,
   };
 }
+
+/**
+ * Check if a date string falls on today (local or UTC)
+ */
+export function isDateToday(dateStr?: string | null): boolean {
+  if (!dateStr) return false;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return false;
+  const now = new Date();
+  const isLocalToday =
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate();
+  const isUtcToday = d.toISOString().slice(0, 10) === now.toISOString().slice(0, 10);
+  return isLocalToday || isUtcToday;
+}
+
+/**
+ * Get map of deviceId -> total messages sent today
+ */
+export function getAllDevicesSentTodayMap(): Record<string, number> {
+  const all = getStoredMessages();
+  const map: Record<string, number> = {};
+  for (const m of all) {
+    if (m.deviceId && m.status === "SENT" && isDateToday(m.sentAt || m.createdAt)) {
+      map[m.deviceId] = (map[m.deviceId] || 0) + 1;
+    }
+  }
+  return map;
+}
+
+/**
+ * Get total messages sent today for a single device
+ */
+export function getDeviceSentTodayCount(deviceId: string): number {
+  const all = getStoredMessages();
+  return all.filter(
+    (m) =>
+      m.deviceId === deviceId &&
+      m.status === "SENT" &&
+      isDateToday(m.sentAt || m.createdAt)
+  ).length;
+}
+
