@@ -569,7 +569,10 @@ export default function AdminSettingsPage() {
             {/* Live WhatsApp Message Preview */}
             <div className="p-5 rounded-2xl bg-slate-900 text-slate-100 border border-slate-800 space-y-3">
               <div className="flex items-center justify-between text-xs text-emerald-400 font-bold border-b border-slate-800 pb-2">
-                <span>Simulasi Pesan Masuk di WhatsApp Penerima (Contoh: Sistem Absensi):</span>
+                <span className="flex items-center gap-1.5">
+                  <Smartphone className="w-4 h-4 text-emerald-400 shrink-0" />
+                  Simulasi Pesan Masuk di WhatsApp Penerima (Contoh: Sistem Absensi):
+                </span>
                 <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full">Paket Free Client</span>
               </div>
 
