@@ -20,17 +20,37 @@ function readJson<T>(file: string, fallback: T): T {
   }
 }
 
-function getLast7Days(): string[] {
-  return Array.from({ length: 7 }, (_, i) => {
+function getDaysForRange(range: string): string[] {
+  let count = 7;
+  if (range === "24h") count = 1;
+  else if (range === "30d") count = 30;
+  else if (range === "all") count = 60;
+
+  return Array.from({ length: count }, (_, i) => {
     const d = new Date();
-    d.setDate(d.getDate() - (6 - i));
+    d.setDate(d.getDate() - (count - 1 - i));
     return d.toISOString().split("T")[0];
   });
 }
 
-export async function GET() {
+function formatDayLabel(dateStr: string): string {
+  try {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("id-ID", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    });
+  } catch {
+    return dateStr.slice(5);
+  }
+}
+
+export async function GET(request: Request) {
   try {
     const user = await getAuthUser();
+    const { searchParams } = new URL(request.url);
+    const range = searchParams.get("range") || "7d";
 
     // Read all local storage files
     const contacts = readJson<any[]>("contacts.json", []);
@@ -60,13 +80,27 @@ export async function GET() {
       (m.sentAt || m.createdAt || "").startsWith(today)
     ).length;
 
-    // Trend data: messages per day for last 7 days
-    const days = getLast7Days();
-    const messageTrend = days.map((day) => ({
-      date: day,
-      count: sentMessages.filter((m: any) =>
+    // Traffic History data with Inbound & Outbound for Recharts AreaChart
+    const days = getDaysForRange(range);
+    const trafficHistory = days.map((day) => {
+      const outbound = sentMessages.filter((m: any) =>
         (m.sentAt || m.createdAt || "").startsWith(day)
-      ).length,
+      ).length;
+      const inbound = webhookLogs.filter((l: any) =>
+        (l.deliveredAt || "").startsWith(day)
+      ).length;
+      return {
+        date: day,
+        dayLabel: formatDayLabel(day),
+        outbound,
+        inbound,
+        total: outbound + inbound,
+      };
+    });
+
+    const messageTrend = trafficHistory.map((t) => ({
+      date: t.date,
+      count: t.outbound,
     }));
 
     // Recent activity (last 5 messages)
@@ -120,6 +154,7 @@ export async function GET() {
         totalTemplates,
         totalWebhookLogs,
         messageTrend,
+        trafficHistory,
         recentActivity,
         quota: {
           planId,
