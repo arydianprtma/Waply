@@ -51,6 +51,41 @@ export default function AdminPlansPage() {
 
   // Form State
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [targetDeletePlan, setTargetDeletePlan] = useState<Plan | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleOpenDelete = (p: Plan) => {
+    setTargetDeletePlan(p);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!targetDeletePlan) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/plans?id=${targetDeletePlan.id}`, {
+        method: "DELETE",
+      });
+      const json = await res.json();
+      if (json.success) {
+        showToast(json.message || `Paket ${targetDeletePlan.name} berhasil dihapus`);
+        setDeleteModalOpen(false);
+        setTargetDeletePlan(null);
+        if (editingId === targetDeletePlan.id) {
+          setModalOpen(false);
+        }
+        fetchPlans();
+      } else {
+        showToast(`Gagal menghapus: ${json.error || "Terjadi kesalahan"}`);
+      }
+    } catch {
+      showToast("Terjadi kesalahan saat menghapus paket");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const [formData, setFormData] = useState<{
     id: string;
     name: string;
@@ -514,12 +549,22 @@ export default function AdminPlansPage() {
                     {p.isActive !== false ? "Nonaktifkan" : "Aktifkan"}
                   </button>
 
-                  <button
-                    onClick={() => handleOpenEdit(p)}
-                    className="btn btn-primary btn-sm rounded-xl gap-1.5 px-3.5 font-bold"
-                  >
-                    <Edit className="w-3.5 h-3.5" /> Edit Paket
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => handleOpenDelete(p)}
+                      title="Hapus Paket"
+                      className="btn btn-ghost btn-sm rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 p-2 transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+
+                    <button
+                      onClick={() => handleOpenEdit(p)}
+                      className="btn btn-primary btn-sm rounded-xl gap-1.5 px-3 font-bold shadow-xs cursor-pointer"
+                    >
+                      <Edit className="w-3.5 h-3.5" /> Edit
+                    </button>
+                  </div>
                 </div>
               </div>
             );
@@ -886,24 +931,86 @@ export default function AdminPlansPage() {
               </div>
 
               {/* Actions */}
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setModalOpen(false)}
-                  className="btn btn-ghost btn-sm rounded-xl"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="btn btn-primary btn-sm gap-2 rounded-xl"
-                >
-                  {saving ? <span className="loading loading-spinner loading-xs" /> : <CheckCircle2 className="w-4 h-4" />}
-                  Simpan Paket Layanan
-                </button>
+              <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-100">
+                <div>
+                  {editingId && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const plan = plans.find((p) => p.id === editingId);
+                        if (plan) handleOpenDelete(plan);
+                      }}
+                      className="btn btn-ghost btn-sm text-rose-600 hover:bg-rose-50 gap-1.5 rounded-xl text-xs cursor-pointer"
+                    >
+                      <Trash2 className="w-4 h-4" /> Hapus Paket
+                    </button>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setModalOpen(false)}
+                    className="btn btn-ghost btn-sm rounded-xl cursor-pointer"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="btn btn-primary btn-sm gap-2 rounded-xl cursor-pointer"
+                  >
+                    {saving ? <span className="loading loading-spinner loading-xs" /> : <CheckCircle2 className="w-4 h-4" />}
+                    Simpan Paket Layanan
+                  </button>
+                </div>
               </div>
             </form>
+          </div>
+        </div>
+      </ModalPortal>
+    )}
+
+    {/* MODAL: Konfirmasi Hapus Layanan */}
+    {deleteModalOpen && targetDeletePlan && (
+      <ModalPortal>
+        <div className="fixed inset-0 z-[999999] bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 animate-in fade-in zoom-in-95 duration-150 relative z-10">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-rose-50 text-rose-600 rounded-2xl">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-bold text-base text-slate-900">Hapus Paket Layanan?</h3>
+                <p className="text-xs text-slate-500">Tindakan ini permanen.</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Apakah Anda yakin ingin menghapus paket <b className="text-slate-900">{targetDeletePlan.name}</b> (ID: <code className="font-mono text-slate-800 bg-slate-100 px-1 py-0.5 rounded">{targetDeletePlan.id}</code>)? Paket ini tidak akan lagi muncul di katalog harga atau halaman checkout.
+            </p>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => {
+                  setDeleteModalOpen(false);
+                  setTargetDeletePlan(null);
+                }}
+                className="btn btn-ghost btn-sm rounded-xl text-slate-600 cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={handleConfirmDelete}
+                className="btn btn-error btn-sm text-white gap-2 rounded-xl cursor-pointer"
+              >
+                {deleting ? <span className="loading loading-spinner loading-xs" /> : <Trash2 className="w-4 h-4" />}
+                Hapus Permanen
+              </button>
+            </div>
           </div>
         </div>
       </ModalPortal>

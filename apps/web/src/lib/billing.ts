@@ -69,12 +69,15 @@ export function saveCustomPlan(plan: Plan): Plan {
 }
 
 export function deleteCustomPlan(planId: string): boolean {
+  ensureDataDir();
   try {
-    const all = getAllPlans();
-    if (all[planId]) {
-      all[planId].isActive = false;
-      fs.writeFileSync(PLANS_FILE, JSON.stringify(all, null, 2));
-      return true;
+    if (fs.existsSync(PLANS_FILE)) {
+      const all: Record<string, Plan> = JSON.parse(fs.readFileSync(PLANS_FILE, "utf-8"));
+      if (all[planId]) {
+        delete all[planId];
+        fs.writeFileSync(PLANS_FILE, JSON.stringify(all, null, 2));
+        return true;
+      }
     }
   } catch {}
   return false;

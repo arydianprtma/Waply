@@ -106,7 +106,7 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({
       success: true,
       deleted,
-      message: `Paket ${planId} dinonaktifkan`,
+      message: `Paket ${planId} berhasil dihapus`,
     });
   } catch (err: any) {
     const status = err.message.includes("403") ? 403 : 500;
