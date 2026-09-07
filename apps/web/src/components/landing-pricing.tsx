@@ -54,24 +54,19 @@ export default function LandingPricing({ plans }: LandingPricingProps) {
   });
 
   return (
-    <div className="space-y-10">
-      {/* Category Tabs with Ultra Liquid Glass 3D Fluid Morph Animation */}
-      <div className="flex justify-center w-full px-2">
-        <div className="relative inline-flex p-1.5 rounded-2xl bg-slate-200/70 dark:bg-slate-800/60 border border-slate-300/60 dark:border-white/10 shadow-[inset_0_2px_4px_rgba(0,0,0,0.06),0_8px_20px_-4px_rgba(0,0,0,0.04)] backdrop-blur-md">
-          {/* Midnight Obsidian Liquid Glass Fluid Pill */}
+    <div className="space-y-8 sm:space-y-10">
+      {/* Category Tabs Container */}
+      <div className="flex justify-center w-full px-2 overflow-x-auto">
+        <div className="relative inline-flex p-1.5 rounded-2xl bg-slate-200/80 dark:bg-slate-800/80 border border-slate-300/70 dark:border-white/10 shadow-xs max-w-full">
+          {/* Active Tab Sliding Indicator */}
           <div
-            className="absolute top-1.5 bottom-1.5 rounded-xl bg-gradient-to-b from-slate-800 via-slate-900 to-slate-950 shadow-[inset_0_1.5px_1px_rgba(255,255,255,0.4),inset_0_-1.5px_2px_rgba(0,0,0,0.5),0_8px_20px_-3px_rgba(15,23,42,0.5)] border-t border-white/25 pointer-events-none transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] overflow-hidden"
+            className="absolute top-1.5 bottom-1.5 rounded-xl bg-slate-900 shadow-sm transition-all duration-300 ease-out"
             style={{
               left: `${indicatorStyle.left}px`,
               width: `${indicatorStyle.width}px`,
               opacity: indicatorStyle.opacity,
             }}
-          >
-            {/* Top Gloss Specular Reflex Overlay (Liquid Glass Glare) */}
-            <div className="absolute inset-x-0 top-0 h-[48%] bg-gradient-to-b from-white/25 via-white/10 to-transparent rounded-t-xl pointer-events-none" />
-            {/* Ambient Base Bloom */}
-            <div className="absolute -bottom-2 inset-x-0 h-4 bg-slate-700/30 blur-xs pointer-events-none" />
-          </div>
+          />
 
           {tabs.map((tab, idx) => {
             const Icon = tab.icon;
@@ -83,26 +78,26 @@ export default function LandingPricing({ plans }: LandingPricingProps) {
                   tabsRef.current[idx] = el;
                 }}
                 onClick={() => setActiveTab(tab.id)}
-                className={`relative z-10 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all duration-300 flex items-center gap-1.5 select-none shrink-0 cursor-pointer active:scale-95 ${
+                className={`relative z-10 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors flex items-center gap-1.5 select-none shrink-0 cursor-pointer min-h-[40px] ${
                   isActive
-                    ? "text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]"
-                    : "text-slate-600 hover:text-slate-950 hover:bg-white/40"
+                    ? "text-white"
+                    : "text-slate-600 hover:text-slate-900"
                 }`}
               >
                 {Icon && (
                   <Icon
-                    className={`w-3.5 h-3.5 transition-transform duration-300 ${
-                      isActive ? "scale-115 -rotate-3 text-slate-100" : "text-slate-500 group-hover:scale-105"
+                    className={`w-3.5 h-3.5 ${
+                      isActive ? "text-slate-100" : "text-slate-500"
                     }`}
                   />
                 )}
                 <span>{tab.label}</span>
                 {tab.badge && (
                   <span
-                    className={`inline-flex items-center px-1.5 py-0.2 rounded-full text-[10px] font-black tracking-wide ml-0.5 transition-all duration-300 ${
+                    className={`inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold tracking-tight ml-0.5 ${
                       isActive
-                        ? "bg-emerald-500 text-white shadow-2xs scale-105"
-                        : "bg-emerald-100 text-emerald-700 border border-emerald-200"
+                        ? "bg-emerald-500 text-white"
+                        : "bg-emerald-100 text-emerald-800"
                     }`}
                   >
                     {tab.badge}
@@ -115,7 +110,7 @@ export default function LandingPricing({ plans }: LandingPricingProps) {
       </div>
 
       {/* Grid of Plans */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch w-full animate-in fade-in duration-300">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 sm:gap-6 items-stretch w-full animate-in fade-in duration-300">
         {filteredPlans.map((plan) => {
           const isFree = plan.price === 0;
           const priceFormatted = isFree ? "Rp0" : `Rp${plan.price.toLocaleString("id-ID")}`;
@@ -133,20 +128,20 @@ export default function LandingPricing({ plans }: LandingPricingProps) {
           return (
             <div
               key={plan.id}
-              className={`card bg-white p-6 rounded-3xl flex flex-col justify-between transition-all duration-300 ${
+              className={`bg-white p-5 sm:p-6 rounded-2xl flex flex-col justify-between transition-all duration-200 ${
                 plan.isPopular
-                  ? "border-2 border-primary shadow-xl relative ring-2 ring-primary/20 scale-[1.02]"
-                  : "border border-slate-200 hover:shadow-lg"
+                  ? "border-2 border-primary shadow-md relative ring-2 ring-primary/10"
+                  : "border border-slate-200 hover:shadow-md"
               }`}
             >
               {plan.isPopular && (
-                <div className="badge badge-primary absolute -top-3 right-6 font-bold shadow-sm">
+                <div className="badge badge-primary absolute -top-3 right-5 font-bold shadow-xs text-xs">
                   Paling Populer
                 </div>
               )}
               <div>
                 <div className="flex items-center justify-between gap-2 min-h-[28px]">
-                  <h3 className={`font-bold text-lg leading-snug ${plan.isPopular ? "text-primary" : "text-slate-900"}`}>
+                  <h3 className={`font-bold text-base sm:text-lg leading-snug ${plan.isPopular ? "text-primary" : "text-slate-900"}`}>
                     {plan.name}
                   </h3>
                   {plan.period === "day" && (
@@ -157,25 +152,25 @@ export default function LandingPricing({ plans }: LandingPricingProps) {
                 </div>
 
                 {/* Price Section */}
-                <div className="mt-4 min-h-[58px] flex flex-col justify-end">
+                <div className="mt-3 sm:mt-4 min-h-[52px] flex flex-col justify-end">
                   {plan.originalPrice && plan.originalPrice > plan.price ? (
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-xs text-slate-400 line-through font-semibold">
                         Rp{plan.originalPrice.toLocaleString("id-ID")}
                       </span>
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black bg-rose-500 text-white shadow-xs tracking-wider shrink-0">
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-500 text-white tracking-tight shrink-0">
                         {plan.discountBadge || `HEMAT ${plan.discountPercent || Math.round(((plan.originalPrice - plan.price) / plan.originalPrice) * 100)}%`}
                       </span>
                     </div>
                   ) : null}
 
                   <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-black text-slate-900">{priceFormatted}</span>
+                    <span className="text-2xl sm:text-3xl font-black text-slate-900">{priceFormatted}</span>
                     <span className="text-xs text-slate-500 font-medium">{periodLabel}</span>
                   </div>
                 </div>
 
-                <div className="divider my-4"></div>
+                <div className="divider my-3.5 sm:my-4"></div>
 
                 <ul className="space-y-2.5 text-xs">
                   {detailedFeatures.map((feat, idx) => (
@@ -199,12 +194,12 @@ export default function LandingPricing({ plans }: LandingPricingProps) {
               <Link
                 href={isFree ? `/register?plan=FREE` : `/order?plan=${encodeURIComponent(plan.id)}`}
                 prefetch={true}
-                className={`btn btn-block mt-8 rounded-xl ${
+                className={`w-full mt-6 sm:mt-8 min-h-[44px] flex items-center justify-center rounded-xl font-semibold text-sm transition-colors ${
                   plan.isPopular
-                    ? "btn-primary shadow-lg shadow-primary/25 text-white"
+                    ? "bg-primary hover:bg-primary/90 text-white shadow-xs"
                     : isFree
-                    ? "btn-outline border-slate-300 text-slate-800 hover:bg-slate-100"
-                    : "btn-primary"
+                    ? "bg-white border border-slate-300 text-slate-800 hover:bg-slate-50"
+                    : "bg-primary hover:bg-primary/90 text-white"
                 }`}
               >
                 {isFree ? "Daftar Gratis" : `Pilih ${plan.name}`}
