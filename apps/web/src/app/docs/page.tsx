@@ -655,19 +655,35 @@ async def handle_sendora_webhook(request: Request):
               Endpoint utama untuk mengirim pesan WhatsApp transaksional (OTP, notifikasi pesanan, invoice tagihan) ke nomor pelanggan secara otomatis.
             </p>
 
-            {/* Architecture Explainer Box for Devs */}
-            <div className="p-4 bg-emerald-50/80 border border-emerald-200 rounded-2xl text-xs space-y-2 text-emerald-950">
-              <span className="font-bold text-emerald-900 flex items-center gap-1.5">
-                <Info className="w-4 h-4 text-emerald-600 shrink-0" /> Konsep Pengirim vs Penerima untuk Developer:
-              </span>
-              <ul className="list-disc list-inside space-y-1 text-slate-700 leading-relaxed pl-1">
-                <li>
-                  <b className="text-slate-900">Nomor Pengirim (WhatsApp Anda):</b> <b>Tidak perlu ditulis di kode</b>. Nomor pengirim otomatis ditentukan dari akun WhatsApp yang telah Anda scan di menu <Link href="/dashboard/devices" className="text-emerald-700 font-semibold underline decoration-emerald-300 hover:text-emerald-800">Devices</Link>. Cukup gunakan <code className="bg-white px-1.5 py-0.5 rounded border border-emerald-200 font-bold font-mono">deviceId: "auto_rotate"</code>.
-                </li>
-                <li>
-                  <b className="text-slate-900">Nomor Penerima (<code className="font-mono text-emerald-800 font-bold">to</code>):</b> <b>Wajib diisi</b> dengan nomor WhatsApp pelanggan Anda secara dinamis dari database/aplikasi Anda (format internasional diawali <code className="bg-white px-1.5 py-0.5 rounded border border-emerald-200 font-mono font-bold">628...</code>).
-                </li>
-              </ul>
+            {/* Architecture Explainer: 2-Card Responsive Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div className="p-4 bg-white border border-slate-200/90 rounded-2xl space-y-2 shadow-xs">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                    <Smartphone className="w-4 h-4 text-emerald-600" /> Nomor Pengirim
+                  </span>
+                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                    Otomatis
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  <b>Tidak perlu ditulis di kode</b>. Nomor pengirim otomatis ditentukan dari akun WhatsApp yang telah Anda scan di menu <Link href="/dashboard/devices" className="text-emerald-700 font-semibold underline decoration-emerald-300 hover:text-emerald-800">Devices</Link>. Cukup gunakan <code className="bg-slate-100 px-1 py-0.5 rounded font-mono font-bold text-slate-800">deviceId: "auto_rotate"</code>.
+                </p>
+              </div>
+
+              <div className="p-4 bg-white border border-slate-200/90 rounded-2xl space-y-2 shadow-xs">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                    <Send className="w-4 h-4 text-sky-600" /> Nomor Penerima (<code className="font-mono text-slate-800">to</code>)
+                  </span>
+                  <span className="text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-md">
+                    Wajib Dinamis
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  <b>Wajib diisi</b> dengan nomor WhatsApp pelanggan Anda secara dinamis dari database/aplikasi Anda (format internasional diawali <code className="bg-slate-100 px-1 py-0.5 rounded font-mono font-bold text-slate-800">628...</code> tanpa spasi atau simbol <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-800">+</code>).
+                </p>
+              </div>
             </div>
 
             {/* Code Snippet Tabs */}
@@ -709,56 +725,101 @@ async def handle_sendora_webhook(request: Request):
               </div>
             </div>
 
-            {/* Request Body Parameters Table */}
-            <div className="space-y-2.5">
+            {/* Request Body Parameters Breakdown */}
+            <div className="space-y-3">
               <h3 className="text-xs sm:text-sm font-bold text-slate-900">
                 Spesifikasi Parameter Request (JSON Body):
               </h3>
-              <div className="overflow-x-auto border border-slate-200 rounded-xl shadow-xs bg-white">
+
+              {/* Desktop / Tablet Table View */}
+              <div className="hidden sm:block overflow-x-auto border border-slate-200 rounded-2xl shadow-xs bg-white">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
                     <tr>
-                      <th className="p-3">Parameter</th>
-                      <th className="p-3">Tipe Data</th>
-                      <th className="p-3">Status</th>
-                      <th className="p-3">Keterangan &amp; Contoh</th>
+                      <th className="px-4 py-3 w-28 whitespace-nowrap">Parameter</th>
+                      <th className="px-4 py-3 w-24 whitespace-nowrap">Tipe Data</th>
+                      <th className="px-4 py-3 w-24 whitespace-nowrap">Status</th>
+                      <th className="px-4 py-3">Keterangan &amp; Contoh</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-xs text-slate-900">
                     <tr className="hover:bg-slate-50/50">
-                      <td className="font-mono font-bold text-emerald-700 p-3">to</td>
-                      <td className="font-mono text-slate-500 p-3">string</td>
-                      <td className="p-3"><span className="text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded">Wajib</span></td>
-                      <td className="p-3 text-slate-600">
-                        <b>Nomor WhatsApp Penerima (Pelanggan)</b>. Wajib format internasional tanpa tanda + (contoh: <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-800">6281234567890</code>). Diisi dengan variabel dinamis dari database/sistem Anda.
+                      <td className="font-mono font-bold text-emerald-700 px-4 py-3 whitespace-nowrap">to</td>
+                      <td className="font-mono text-slate-500 px-4 py-3">string</td>
+                      <td className="px-4 py-3"><span className="text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-md">Wajib</span></td>
+                      <td className="px-4 py-3 text-slate-600 leading-relaxed">
+                        <b>Nomor WhatsApp Penerima (Pelanggan)</b>. Wajib format internasional (contoh: <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-800">6281234567890</code>). Diisi variabel dinamis dari database/sistem Anda.
                       </td>
                     </tr>
                     <tr className="hover:bg-slate-50/50">
-                      <td className="font-mono font-bold text-emerald-700 p-3">message</td>
-                      <td className="font-mono text-slate-500 p-3">string</td>
-                      <td className="p-3"><span className="text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded">Wajib</span></td>
-                      <td className="p-3 text-slate-600">
-                        Isi pesan WhatsApp. Mendukung format Spintax variasi kata <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-800">{"{Halo|Hai}"}</code> dan tag variabel <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-800">{"{{name}}"}</code>.
+                      <td className="font-mono font-bold text-emerald-700 px-4 py-3 whitespace-nowrap">message</td>
+                      <td className="font-mono text-slate-500 px-4 py-3">string</td>
+                      <td className="px-4 py-3"><span className="text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-md">Wajib</span></td>
+                      <td className="px-4 py-3 text-slate-600 leading-relaxed">
+                        Isi pesan WhatsApp. Mendukung Spintax <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-800">{"{Halo|Hai}"}</code> dan variabel <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-800">{"{{name}}"}</code>.
                       </td>
                     </tr>
                     <tr className="hover:bg-slate-50/50">
-                      <td className="font-mono font-bold text-emerald-700 p-3">deviceId</td>
-                      <td className="font-mono text-slate-500 p-3">string</td>
-                      <td className="p-3"><span className="text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">Opsional</span></td>
-                      <td className="p-3 text-slate-600">
-                        ID WhatsApp Device pengirim. Gunakan <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-800 font-bold">"auto_rotate"</code> (rekomendasi) agar Sendora otomatis merotasi nomor WhatsApp aktif Anda, atau isi ID session device tertentu.
+                      <td className="font-mono font-bold text-emerald-700 px-4 py-3 whitespace-nowrap">deviceId</td>
+                      <td className="font-mono text-slate-500 px-4 py-3">string</td>
+                      <td className="px-4 py-3"><span className="text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md">Opsional</span></td>
+                      <td className="px-4 py-3 text-slate-600 leading-relaxed">
+                        ID WhatsApp Device pengirim. Gunakan <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-800 font-bold">"auto_rotate"</code> (rekomendasi) agar Sendora otomatis merotasi nomor WhatsApp aktif Anda.
                       </td>
                     </tr>
                     <tr className="hover:bg-slate-50/50">
-                      <td className="font-mono font-bold text-emerald-700 p-3">variables</td>
-                      <td className="font-mono text-slate-500 p-3">object</td>
-                      <td className="p-3"><span className="text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">Opsional</span></td>
-                      <td className="p-3 text-slate-600">
-                        Key-Value pasangan data untuk menggantikan tag variabel pada template pesan (contoh: <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-800">{`{"name": "Budi", "order_id": "INV-001"}`}</code>).
+                      <td className="font-mono font-bold text-emerald-700 px-4 py-3 whitespace-nowrap">variables</td>
+                      <td className="font-mono text-slate-500 px-4 py-3">object</td>
+                      <td className="px-4 py-3"><span className="text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md">Opsional</span></td>
+                      <td className="px-4 py-3 text-slate-600 leading-relaxed">
+                        Key-Value pasangan data pengganti tag variabel (contoh: <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-800">{`{"name": "Budi", "order_id": "INV-001"}`}</code>).
                       </td>
                     </tr>
                   </tbody>
                 </table>
+              </div>
+
+              {/* Mobile Card Reflow View */}
+              <div className="block sm:hidden space-y-2.5">
+                <div className="p-3.5 bg-white border border-slate-200/90 rounded-2xl space-y-1.5 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <code className="font-mono font-bold text-emerald-700 text-xs">to</code>
+                    <span className="text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded-md">Wajib</span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    <b>Nomor Penerima (Pelanggan)</b>. Format internasional <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-800">628...</code> dari database/aplikasi Anda.
+                  </p>
+                </div>
+
+                <div className="p-3.5 bg-white border border-slate-200/90 rounded-2xl space-y-1.5 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <code className="font-mono font-bold text-emerald-700 text-xs">message</code>
+                    <span className="text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded-md">Wajib</span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Isi teks pesan. Mendukung Spintax <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-800">{"{Halo|Hai}"}</code> &amp; variabel <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-800">{"{{name}}"}</code>.
+                  </p>
+                </div>
+
+                <div className="p-3.5 bg-white border border-slate-200/90 rounded-2xl space-y-1.5 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <code className="font-mono font-bold text-emerald-700 text-xs">deviceId</code>
+                    <span className="text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded-md">Opsional</span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Device pengirim. Rekomendasi: <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-800 font-bold">"auto_rotate"</code> untuk rotasi otomatis.
+                  </p>
+                </div>
+
+                <div className="p-3.5 bg-white border border-slate-200/90 rounded-2xl space-y-1.5 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <code className="font-mono font-bold text-emerald-700 text-xs">variables</code>
+                    <span className="text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded-md">Opsional</span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Data dinamis untuk mengganti placeholder variabel di dalam teks pesan.
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -768,47 +829,52 @@ async def handle_sendora_webhook(request: Request):
                 Contoh Kasus Integrasi Nyata:
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                <div className="p-4 bg-white border border-slate-200/90 rounded-2xl space-y-2 shadow-xs">
+                <div className="p-4 bg-white border border-slate-200/90 rounded-2xl space-y-2.5 shadow-xs">
                   <span className="text-xs font-bold text-emerald-800 block">
-                    1. Pengiriman Kode OTP Login
+                    1. Pengiriman Kode OTP Login (Node.js)
                   </span>
                   <p className="text-[11px] text-slate-600 leading-relaxed">
                     Kirim kode 6-digit ke nomor yang diinput user saat login:
                   </p>
-                  <div className="bg-slate-900 text-slate-200 p-3 rounded-xl font-mono text-[11px] overflow-x-auto">
-                    <pre>{`// Node.js Express Controller
-const res = await axios.post(
+                  <div className="bg-slate-900 text-slate-200 p-3.5 rounded-xl font-mono text-[11px] leading-relaxed overflow-x-auto">
+                    <pre>{`const res = await axios.post(
   "${originUrl}/api/v1/messages/send",
   {
-    to: req.body.phone, // Dinamis dari form
-    message: "Kode OTP Anda: *{{otp}}*. Rahasiakan kode ini.",
+    to: req.body.phone,
+    message: "Kode OTP Anda: *{{otp}}*.",
     deviceId: "auto_rotate",
     variables: { otp: "492810" }
   },
-  { headers: { Authorization: "Bearer " + API_KEY } }
+  { 
+    headers: { 
+      Authorization: "Bearer " + API_KEY 
+    } 
+  }
 );`}</pre>
                   </div>
                 </div>
 
-                <div className="p-4 bg-white border border-slate-200/90 rounded-2xl space-y-2 shadow-xs">
+                <div className="p-4 bg-white border border-slate-200/90 rounded-2xl space-y-2.5 shadow-xs">
                   <span className="text-xs font-bold text-sky-800 block">
-                    2. Notifikasi Invoice / Pesanan Masuk
+                    2. Notifikasi Tagihan Pesanan (PHP)
                   </span>
                   <p className="text-[11px] text-slate-600 leading-relaxed">
-                    Kirim tagihan setelah checkout dari database toko:
+                    Kirim tagihan otomatis setelah checkout dari database toko:
                   </p>
-                  <div className="bg-slate-900 text-slate-200 p-3 rounded-xl font-mono text-[11px] overflow-x-auto">
-                    <pre>{`// PHP / Laravel Controller
-Http::withToken($apiKey)->post("${originUrl}/api/v1/messages/send", [
-  "to" => $order->customer_phone, // Dinamis
-  "message" => "Halo {{name}}, tagihan Rp {{total}} untuk pesanan #{{inv}} sudah terbit.",
-  "deviceId" => "auto_rotate",
-  "variables" => [
-    "name" => $order->customer_name,
-    "total" => "150.000",
-    "inv" => (string)$order->id
+                  <div className="bg-slate-900 text-slate-200 p-3.5 rounded-xl font-mono text-[11px] leading-relaxed overflow-x-auto">
+                    <pre>{`$res = Http::withToken($apiKey)->post(
+  "${originUrl}/api/v1/messages/send",
+  [
+    "to" => $order->customer_phone,
+    "message" => "Halo {{name}}, tagihan Rp {{total}} terbit.",
+    "deviceId" => "auto_rotate",
+    "variables" => [
+      "name" => $order->customer_name,
+      "total" => "150.000",
+      "inv" => (string)$order->id
+    ]
   ]
-]);`}</pre>
+);`}</pre>
                   </div>
                 </div>
               </div>
