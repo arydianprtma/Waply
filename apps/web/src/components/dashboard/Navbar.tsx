@@ -9,8 +9,6 @@ import {
   Search,
   User,
   LogOut,
-  Moon,
-  Sun,
   ShieldCheck,
   Zap,
   Megaphone,
@@ -25,7 +23,6 @@ import {
 import { useUserSession } from "@/lib/use-user-session";
 import { performLogout } from "@/lib/auth-logout";
 import { useMobileNav } from "@/lib/mobile-nav-context";
-import { useTheme } from "@/components/theme-provider";
 
 interface AnnouncementItem {
   id: string;
@@ -40,7 +37,6 @@ interface AnnouncementItem {
 }
 
 export function Navbar() {
-  const { isDark, toggleTheme } = useTheme();
   const [announcements, setAnnouncements] = useState<AnnouncementItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loadingAnnouncements, setLoadingAnnouncements] = useState(false);
@@ -190,16 +186,6 @@ export function Navbar() {
 
       {/* Right side: Quick Actions & Profile */}
       <div className="flex-none flex items-center gap-3">
-        {/* Theme Toggle */}
-        <button
-          onClick={toggleTheme}
-          className="btn btn-ghost btn-circle btn-sm text-base-content/70 hover:text-base-content"
-          title={isDark ? "Ganti ke Mode Terang" : "Ganti ke Mode Gelap"}
-          aria-label="Ganti Tema"
-        >
-          {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
-        </button>
-
         {/* Notifications */}
         <div className="dropdown dropdown-end">
           <button
