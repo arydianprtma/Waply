@@ -240,7 +240,7 @@ export function Navbar() {
         )}
 
         {/* Notifications */}
-        <div className="dropdown dropdown-end">
+        <div className="dropdown dropdown-end static sm:relative">
           <button
             tabIndex={0}
             onClick={fetchAnnouncements}
@@ -258,7 +258,7 @@ export function Navbar() {
           </button>
           <div
             tabIndex={0}
-            className="dropdown-content z-[60] card card-compact w-[calc(100vw-24px)] max-w-sm sm:w-96 -right-10 sm:right-0 p-0 shadow-2xl bg-base-100 border border-base-200 mt-3 rounded-2xl overflow-hidden"
+            className="dropdown-content z-[60] card card-compact left-3 right-3 w-auto sm:w-96 sm:left-auto sm:right-0 top-full mt-2 sm:mt-3 p-0 shadow-2xl bg-base-100 border border-base-200 rounded-2xl overflow-hidden"
           >
             <div className="p-3.5 border-b border-base-200 flex items-center justify-between bg-base-200/50">
               <div className="flex items-center gap-2">
