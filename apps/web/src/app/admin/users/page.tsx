@@ -366,35 +366,34 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      {/* User Table */}
-      <div className="rounded-xl bg-white border border-slate-200 shadow-xs overflow-hidden">
+      {/* Desktop User Table View */}
+      <div className="hidden md:block rounded-2xl bg-white border border-slate-200 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="table w-full">
             <thead>
-              <tr className="bg-slate-50/80 text-[11px] font-extrabold uppercase tracking-wider text-slate-600 border-b border-slate-200">
-                <th>Pengguna</th>
-                <th>Alamat IP & Keamanan</th>
-                <th>Status Akun</th>
-                <th>Paket Layanan</th>
-                <th>Penggunaan</th>
-                <th>Terdaftar</th>
-                <th className="text-right">Aksi Super Admin</th>
+              <tr className="bg-slate-50/90 text-[11px] font-extrabold uppercase tracking-wider text-slate-600 border-b border-slate-200">
+                <th className="py-3.5 pl-5">Pengguna</th>
+                <th className="py-3.5">IP & Keamanan</th>
+                <th className="py-3.5">Status Akun</th>
+                <th className="py-3.5">Paket & Penggunaan</th>
+                <th className="py-3.5">Terdaftar</th>
+                <th className="py-3.5 pr-5 text-right min-w-[220px]">Aksi Super Admin</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-12">
+                  <td colSpan={6} className="text-center py-16">
                     <span className="loading loading-spinner loading-md text-primary" />
                     <p className="text-xs text-slate-500 mt-2 font-medium">Memuat data pengguna...</p>
                   </td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-12 text-slate-400">
-                    <Users className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                    <p className="font-semibold text-slate-600">Tidak ada user ditemukan</p>
-                    <p className="text-xs mt-0.5">Coba ubah kata kunci pencarian atau filter status.</p>
+                  <td colSpan={6} className="text-center py-16 text-slate-400">
+                    <Users className="w-10 h-10 mx-auto mb-2 opacity-30 text-slate-500" />
+                    <p className="font-bold text-slate-700">Tidak ada pengguna ditemukan</p>
+                    <p className="text-xs text-slate-400 mt-0.5">Coba ubah kata kunci pencarian atau filter status.</p>
                   </td>
                 </tr>
               ) : (
@@ -406,9 +405,9 @@ export default function AdminUsersPage() {
                   const isDuplicateIp = (u.duplicateIpCount || 0) > 1;
 
                   return (
-                    <tr key={u.id} className="hover:bg-slate-50/60 transition-colors">
+                    <tr key={u.id} className="hover:bg-slate-50/70 transition-colors">
                       {/* User Column */}
-                      <td>
+                      <td className="pl-5 py-4">
                         <div className="flex items-center gap-3">
                           <div
                             className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${
@@ -416,24 +415,28 @@ export default function AdminUsersPage() {
                                 ? "bg-primary/10 text-primary border border-primary/20"
                                 : isBanned
                                 ? "bg-rose-100 text-rose-700"
+                                : isSuspended
+                                ? "bg-amber-100 text-amber-700"
                                 : "bg-slate-100 text-slate-700"
                             }`}
                           >
                             {u.name.charAt(0).toUpperCase()}
                           </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-slate-900 text-sm">{u.name}</span>
+                          <div className="min-w-0 max-w-[220px]">
+                            <div className="flex items-center gap-1.5 truncate">
+                              <span className="font-bold text-slate-900 text-sm truncate">{u.name}</span>
                               {isAdmin && (
-                                <span className="badge badge-primary badge-xs text-[9px] font-extrabold">ADMIN</span>
+                                <span className="badge badge-primary badge-xs text-[9px] font-extrabold shrink-0">
+                                  ADMIN
+                                </span>
                               )}
                             </div>
-                            <div className="text-[11px] text-slate-500 font-medium">{u.email}</div>
+                            <div className="text-[11px] text-slate-500 font-medium truncate">{u.email}</div>
                             <div className="flex items-center gap-1 font-mono text-[10px] text-slate-400 mt-0.5">
-                              <span>ID: {u.id.length > 18 ? `${u.id.slice(0, 16)}...` : u.id}</span>
+                              <span className="truncate">ID: {u.id.length > 14 ? `${u.id.slice(0, 12)}...` : u.id}</span>
                               <button
                                 onClick={() => copyToClipboard(u.id, u.id)}
-                                className="hover:text-primary"
+                                className="hover:text-primary shrink-0"
                                 title="Salin ID User"
                               >
                                 {copiedId === u.id ? (
@@ -448,16 +451,16 @@ export default function AdminUsersPage() {
                       </td>
 
                       {/* IP Address & Anti-Spam Security Column */}
-                      <td>
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-1.5 font-mono text-[11px] text-slate-700">
-                            <Globe className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                            <span className="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                      <td className="py-4">
+                        <div className="space-y-1 max-w-[200px]">
+                          <div className="inline-flex items-center gap-1.5 font-mono text-[11px] text-slate-700 bg-slate-100/90 px-2 py-0.5 rounded-lg border border-slate-200/80 max-w-full">
+                            <Globe className="w-3 h-3 text-slate-400 shrink-0" />
+                            <span className="truncate max-w-[130px]" title={ipAddress}>
                               {ipAddress}
                             </span>
                             <button
                               onClick={() => copyToClipboard(ipAddress, `ip-${u.id}`)}
-                              className="hover:text-primary text-slate-400"
+                              className="hover:text-primary text-slate-400 shrink-0"
                               title="Salin Alamat IP"
                             >
                               {copiedId === `ip-${u.id}` ? (
@@ -469,13 +472,13 @@ export default function AdminUsersPage() {
                           </div>
 
                           {isDuplicateIp && !isAdmin && (
-                            <div className="flex items-center gap-1 mt-0.5">
+                            <div>
                               <button
                                 onClick={() => setSearch(ipAddress)}
-                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100 transition-colors"
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100 transition-colors"
                                 title={`Ada ${u.duplicateIpCount} akun terdaftar dari IP ini. Klik untuk melihat semuanya.`}
                               >
-                                <AlertTriangle className="w-3 h-3 text-amber-600" />
+                                <AlertTriangle className="w-3 h-3 text-amber-600 shrink-0" />
                                 <span>{u.duplicateIpCount} Akun (IP Sama)</span>
                               </button>
                             </div>
@@ -484,10 +487,10 @@ export default function AdminUsersPage() {
                       </td>
 
                       {/* Status Column */}
-                      <td>
+                      <td className="py-4">
                         <div>
                           <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold border ${
                               u.status === "ACTIVE"
                                 ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                                 : u.status === "SUSPENDED"
@@ -496,81 +499,76 @@ export default function AdminUsersPage() {
                             }`}
                           >
                             {u.status === "ACTIVE"
-                              ? "Aktif"
+                              ? "● Aktif"
                               : u.status === "SUSPENDED"
-                              ? "Ditangguhkan"
-                              : "Diblokir (Banned)"}
+                              ? "○ Ditangguhkan"
+                              : "✕ Diblokir (Banned)"}
                           </span>
                           {u.banReason && (
-                            <p className="text-[10px] text-rose-600 mt-1 max-w-xs truncate" title={u.banReason}>
+                            <p className="text-[10px] text-rose-600 mt-1 max-w-[160px] truncate" title={u.banReason}>
                               Alasan: {u.banReason}
                             </p>
                           )}
                         </div>
                       </td>
 
-                      {/* Plan Column */}
-                      <td>
+                      {/* Plan & Usage Column */}
+                      <td className="py-4">
                         <div className="space-y-1">
-                          <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-extrabold uppercase border ${
-                              u.planId === "PRO"
-                                ? "bg-indigo-50 text-indigo-700 border-indigo-200"
-                                : u.planId === "BUSINESS"
-                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                : u.planId === "STARTER"
-                                ? "bg-blue-50 text-blue-700 border-blue-200"
-                                : "bg-slate-100 text-slate-600 border-slate-200"
-                            }`}
-                          >
-                            {u.planId}
-                          </span>
-                          <div className="text-[10px] text-slate-500 font-medium">
-                            Status:{" "}
-                            <strong className={u.planStatus === "ACTIVE" ? "text-emerald-600" : "text-slate-600"}>
-                              {u.planStatus}
-                            </strong>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Usage Column */}
-                      <td>
-                        <div className="space-y-0.5 text-slate-600 text-[11px]">
                           <div className="flex items-center gap-1.5">
-                            <MessageSquare className="w-3.5 h-3.5 text-slate-400" />
-                            <span>{u.messagesUsed.toLocaleString()} pesan</span>
+                            <span
+                              className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase border ${
+                                u.planId === "PRO"
+                                  ? "bg-indigo-50 text-indigo-700 border-indigo-200"
+                                  : u.planId === "BUSINESS"
+                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                  : u.planId === "STARTER" || u.planId === "DAILY_STARTER"
+                                  ? "bg-blue-50 text-blue-700 border-blue-200"
+                                  : "bg-slate-100 text-slate-600 border-slate-200"
+                              }`}
+                            >
+                              {u.planId}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-medium">
+                              ({u.planStatus})
+                            </span>
                           </div>
-                          <div className="flex items-center gap-1.5">
-                            <Smartphone className="w-3.5 h-3.5 text-slate-400" />
-                            <span>{u.devicesCount} devices</span>
+                          <div className="flex items-center gap-2 text-slate-500 text-[10px]">
+                            <span className="flex items-center gap-1">
+                              <MessageSquare className="w-3 h-3 text-slate-400" />
+                              {u.messagesUsed.toLocaleString()} pesan
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Smartphone className="w-3 h-3 text-slate-400" />
+                              {u.devicesCount} devices
+                            </span>
                           </div>
                         </div>
                       </td>
 
                       {/* Registered Date */}
-                      <td>
-                        <div className="text-slate-600 text-[11px]">
-                          <div>
+                      <td className="py-4">
+                        <div className="text-slate-600 text-[11px] space-y-0.5">
+                          <div className="font-medium">
                             {new Date(u.createdAt).toLocaleDateString("id-ID", {
                               day: "numeric",
                               month: "short",
                               year: "numeric",
                             })}
                           </div>
-                          <span className="text-[10px] text-slate-400">
+                          <div className="text-[10px] text-slate-400">
                             {u.lastLoginAt
                               ? `Login: ${new Date(u.lastLoginAt).toLocaleTimeString("id-ID", {
                                   hour: "2-digit",
                                   minute: "2-digit",
                                 })}`
-                              : "Belum pernah"}
-                          </span>
+                              : "Belum pernah login"}
+                          </div>
                         </div>
                       </td>
 
-                      {/* Actions */}
-                      <td className="text-right">
+                      {/* Actions Column */}
+                      <td className="py-4 pr-5 text-right">
                         {isAdmin ? (
                           <div className="flex items-center justify-end">
                             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-primary/10 text-primary border border-primary/20 shadow-xs">
@@ -579,7 +577,7 @@ export default function AdminUsersPage() {
                             </span>
                           </div>
                         ) : (
-                          <div className="flex items-center justify-end gap-1.5">
+                          <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
                             {/* Assign Plan Button */}
                             <button
                               onClick={() => {
@@ -587,11 +585,11 @@ export default function AdminUsersPage() {
                                 setSelectedPlanId(u.planId || "STARTER");
                                 setPlanModalOpen(true);
                               }}
-                              className="btn btn-ghost btn-xs text-primary hover:bg-primary/10 gap-1 rounded-lg"
+                              className="btn btn-xs btn-outline rounded-lg text-primary border-primary/30 hover:bg-primary hover:text-white font-bold gap-1"
                               title="Ubah Paket Berlangganan"
                             >
-                              <Zap className="w-3.5 h-3.5" />
-                              <span className="hidden lg:inline font-semibold">Paket</span>
+                              <Zap className="w-3 h-3" />
+                              <span>Paket</span>
                             </button>
 
                             {/* Status Actions */}
@@ -599,14 +597,14 @@ export default function AdminUsersPage() {
                               <>
                                 <button
                                   onClick={() => openStatusModal(u, "SUSPENDED")}
-                                  className="btn btn-ghost btn-xs text-amber-600 hover:bg-amber-50 rounded-lg font-semibold"
+                                  className="btn btn-xs btn-ghost text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-lg font-bold"
                                   title="Tangguhkan Akun (Suspend)"
                                 >
                                   Suspend
                                 </button>
                                 <button
                                   onClick={() => openStatusModal(u, "BANNED")}
-                                  className="btn btn-ghost btn-xs text-rose-600 hover:bg-rose-50 rounded-lg font-semibold"
+                                  className="btn btn-xs btn-ghost text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-lg font-bold"
                                   title="Blokir Permanen (Ban)"
                                 >
                                   Ban
@@ -615,11 +613,11 @@ export default function AdminUsersPage() {
                             ) : (
                               <button
                                 onClick={() => handleUpdateStatus(u.id, "ACTIVE")}
-                                className="btn btn-ghost btn-xs text-emerald-600 hover:bg-emerald-50 gap-1 rounded-lg font-bold"
+                                className="btn btn-xs btn-ghost text-emerald-700 bg-emerald-50 hover:bg-emerald-100 gap-1 rounded-lg font-bold"
                                 title="Buka Blokir & Aktifkan Kembali"
                               >
                                 <UserCheck className="w-3.5 h-3.5" />
-                                Aktifkan
+                                <span>Aktifkan</span>
                               </button>
                             )}
 
@@ -627,11 +625,11 @@ export default function AdminUsersPage() {
                             {isDuplicateIp && ipAddress !== "127.0.0.1" && (
                               <button
                                 onClick={() => openBanIpModal(ipAddress)}
-                                className="btn btn-ghost btn-xs text-amber-700 hover:bg-amber-100 rounded-lg gap-1 font-bold"
+                                className="btn btn-xs btn-ghost text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-lg gap-1 font-bold"
                                 title={`Blokir seluruh ${u.duplicateIpCount} akun dari IP ini`}
                               >
-                                <Ban className="w-3.5 h-3.5" />
-                                <span className="hidden xl:inline">Ban IP</span>
+                                <Ban className="w-3 h-3" />
+                                <span>Ban IP</span>
                               </button>
                             )}
 
@@ -641,7 +639,7 @@ export default function AdminUsersPage() {
                                 setSelectedUser(u);
                                 setDeleteModalOpen(true);
                               }}
-                              className="btn btn-ghost btn-xs text-rose-600 hover:bg-rose-100 hover:text-rose-700 rounded-lg"
+                              className="btn btn-xs btn-ghost text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg"
                               title="Hapus Akun Pengguna Permanen"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -656,6 +654,162 @@ export default function AdminUsersPage() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Mobile User Card View (for Smartphones & Small Tablets) */}
+      <div className="block md:hidden space-y-3.5">
+        {loading ? (
+          <div className="p-12 text-center text-slate-400 bg-white rounded-2xl border border-slate-200">
+            <span className="loading loading-spinner loading-md text-primary mb-2" />
+            <p className="text-xs font-semibold">Memuat data pengguna...</p>
+          </div>
+        ) : users.length === 0 ? (
+          <div className="p-12 text-center text-slate-400 bg-white rounded-2xl border border-slate-200">
+            <Users className="w-10 h-10 mx-auto mb-2 opacity-30 text-slate-500" />
+            <p className="font-bold text-slate-700">Tidak ada pengguna ditemukan</p>
+          </div>
+        ) : (
+          users.map((u) => {
+            const isBanned = u.status === "BANNED";
+            const isSuspended = u.status === "SUSPENDED";
+            const isAdmin = u.role === "admin";
+            const ipAddress = u.lastLoginIp || u.registeredIp || "127.0.0.1";
+            const isDuplicateIp = (u.duplicateIpCount || 0) > 1;
+
+            return (
+              <div
+                key={u.id}
+                className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 space-y-3"
+              >
+                {/* Mobile Card Header */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${
+                        isAdmin
+                          ? "bg-primary/10 text-primary border border-primary/20"
+                          : isBanned
+                          ? "bg-rose-100 text-rose-700"
+                          : isSuspended
+                          ? "bg-amber-100 text-amber-700"
+                          : "bg-slate-100 text-slate-700"
+                      }`}
+                    >
+                      {u.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 truncate">
+                        <span className="font-bold text-slate-900 text-sm truncate">{u.name}</span>
+                        {isAdmin && (
+                          <span className="badge badge-primary badge-xs text-[9px] font-extrabold shrink-0">
+                            ADMIN
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-slate-500 truncate">{u.email}</div>
+                    </div>
+                  </div>
+
+                  <span
+                    className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border shrink-0 ${
+                      u.status === "ACTIVE"
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                        : u.status === "SUSPENDED"
+                        ? "bg-amber-50 text-amber-700 border-amber-200"
+                        : "bg-rose-50 text-rose-700 border-rose-200"
+                    }`}
+                  >
+                    {u.status === "ACTIVE"
+                      ? "Aktif"
+                      : u.status === "SUSPENDED"
+                      ? "Suspend"
+                      : "Banned"}
+                  </span>
+                </div>
+
+                {/* Mobile Card Details */}
+                <div className="grid grid-cols-2 gap-2 text-[11px] bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                  <div>
+                    <span className="text-slate-400 block text-[10px]">Paket:</span>
+                    <span className="font-extrabold text-slate-800 uppercase">{u.planId}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[10px]">Penggunaan:</span>
+                    <span className="font-semibold text-slate-700">{u.messagesUsed} pesan / {u.devicesCount} dev</span>
+                  </div>
+                  <div className="col-span-2 flex items-center justify-between pt-1 border-t border-slate-200/60 font-mono text-[10px]">
+                    <span className="text-slate-600 truncate max-w-[180px]">IP: {ipAddress}</span>
+                    <span className="text-slate-400">
+                      {new Date(u.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Mobile Card Actions */}
+                {!isAdmin && (
+                  <div className="flex flex-wrap items-center justify-end gap-1.5 pt-1">
+                    <button
+                      onClick={() => {
+                        setSelectedUser(u);
+                        setSelectedPlanId(u.planId || "STARTER");
+                        setPlanModalOpen(true);
+                      }}
+                      className="btn btn-xs btn-outline rounded-lg text-primary border-primary/30 font-bold gap-1"
+                    >
+                      <Zap className="w-3 h-3" />
+                      <span>Paket</span>
+                    </button>
+
+                    {u.status === "ACTIVE" ? (
+                      <>
+                        <button
+                          onClick={() => openStatusModal(u, "SUSPENDED")}
+                          className="btn btn-xs btn-ghost text-amber-700 bg-amber-50 rounded-lg font-bold"
+                        >
+                          Suspend
+                        </button>
+                        <button
+                          onClick={() => openStatusModal(u, "BANNED")}
+                          className="btn btn-xs btn-ghost text-rose-700 bg-rose-50 rounded-lg font-bold"
+                        >
+                          Ban
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => handleUpdateStatus(u.id, "ACTIVE")}
+                        className="btn btn-xs btn-ghost text-emerald-700 bg-emerald-50 rounded-lg font-bold gap-1"
+                      >
+                        <UserCheck className="w-3.5 h-3.5" />
+                        <span>Aktifkan</span>
+                      </button>
+                    )}
+
+                    {isDuplicateIp && ipAddress !== "127.0.0.1" && (
+                      <button
+                        onClick={() => openBanIpModal(ipAddress)}
+                        className="btn btn-xs btn-ghost text-rose-700 bg-rose-50 rounded-lg font-bold gap-1"
+                      >
+                        <Ban className="w-3 h-3" />
+                        <span>Ban IP</span>
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => {
+                        setSelectedUser(u);
+                        setDeleteModalOpen(true);
+                      }}
+                      className="btn btn-xs btn-ghost text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
       </div>
 
       {/* MODAL: Suspend / Ban Akun User */}
