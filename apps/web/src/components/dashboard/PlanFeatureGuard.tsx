@@ -83,14 +83,14 @@ export function PlanFeatureGuard({
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
             <Link
               href="/dashboard/billing"
-              className="btn btn-primary bg-emerald-600 hover:bg-emerald-700 text-white border-none rounded-xl font-semibold px-6 text-xs sm:text-sm h-10 min-h-0 w-full sm:w-auto gap-2"
+              className="inline-flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-xl font-semibold px-6 text-xs sm:text-sm h-10 w-full sm:w-auto gap-2 transition-colors shadow-xs"
             >
               <CreditCard className="w-4 h-4" />
               Upgrade ke {minPlanName}
             </Link>
             <Link
               href="/dashboard/billing"
-              className="btn btn-outline border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-50 rounded-xl font-semibold px-5 text-xs sm:text-sm h-10 min-h-0 w-full sm:w-auto"
+              className="inline-flex items-center justify-center border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 active:bg-slate-100 rounded-xl font-semibold px-5 text-xs sm:text-sm h-10 w-full sm:w-auto transition-colors shadow-xs"
             >
               Lihat Perbandingan Paket
             </Link>
