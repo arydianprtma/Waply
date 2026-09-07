@@ -144,20 +144,22 @@ export function Sidebar() {
               {section.items.map((item) => {
                 const isActive = pathname === item.href;
                 const Icon = item.icon;
-                const isLocked = Boolean(item.accessKey && planAccess[item.accessKey] === false);
+                const isAccountSuspendedOrBanned = user?.status === "BANNED" || user?.status === "SUSPENDED";
+                const isPlanLocked = Boolean(item.accessKey && planAccess[item.accessKey] === false);
+                const isLocked = isAccountSuspendedOrBanned || isPlanLocked;
 
                 return (
                   <li key={item.href}>
                     <Link
-                      href={item.href}
+                      href={isAccountSuspendedOrBanned ? "/dashboard" : item.href}
                       prefetch={true}
                       onClick={isMobile ? closeNav : undefined}
                       className={clsx(
                         "flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm transition-all",
-                        isActive
+                        isActive && !isAccountSuspendedOrBanned
                           ? "bg-emerald-600 text-white shadow-sm font-bold"
                           : isLocked
-                          ? "text-base-content/40 font-medium hover:bg-base-200 hover:text-base-content"
+                          ? "text-base-content/40 font-medium hover:bg-base-200 hover:text-base-content opacity-75"
                           : "text-base-content/80 font-medium hover:bg-base-200 hover:text-base-content"
                       )}
                     >
@@ -167,13 +169,21 @@ export function Sidebar() {
                       </div>
 
                       {/* Locked or custom badge */}
-                      {isLocked ? (
+                      {isAccountSuspendedOrBanned ? (
+                        <span
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold tracking-tight bg-rose-500/10 text-rose-600 border border-rose-500/20 shrink-0"
+                          title="Akses dikunci karena akun diblokir/ditangguhkan"
+                        >
+                          <Lock className="w-2.5 h-2.5 shrink-0" />
+                          <span>Locked</span>
+                        </span>
+                      ) : isPlanLocked ? (
                         <span
                           className={clsx(
                             "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold tracking-tight shadow-2xs shrink-0",
                             isActive
                               ? "bg-amber-400/30 text-amber-200 border border-amber-300/40"
-                              : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                              : "bg-amber-500/10 text-amber-600 border border-amber-500/20"
                           )}
                           title={`Fitur ${item.name} memerlukan paket ${item.minPlanBadge || "Starter"}`}
                         >

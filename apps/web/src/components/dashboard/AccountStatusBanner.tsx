@@ -5,9 +5,11 @@ import { useUserSession } from "@/lib/use-user-session";
 
 export function AccountStatusBanner() {
   const { user } = useUserSession();
-  const [dismissed, setDismissed] = useState(false);
 
-  if (!user || !user.status || user.status === "ACTIVE" || dismissed) return null;
+  // If user is banned/suspended, full AccountLockedScreen is rendered by DashboardContentGuard
+  if (!user || !user.status || user.status === "ACTIVE" || user.status === "BANNED" || user.status === "SUSPENDED") {
+    return null;
+  }
 
   const isBanned = user.status === "BANNED";
   const userStatus = {
