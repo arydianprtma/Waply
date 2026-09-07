@@ -42,6 +42,11 @@ export default function RegisterPage() {
 
     try {
       const supabase = createClient();
+      const redirectUrl =
+        typeof window !== "undefined"
+          ? `${window.location.origin}/auth/callback`
+          : undefined;
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -49,6 +54,7 @@ export default function RegisterPage() {
           data: {
             name,
           },
+          emailRedirectTo: redirectUrl,
         },
       });
 

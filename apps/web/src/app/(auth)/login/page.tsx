@@ -10,6 +10,7 @@ import {
   ArrowRight,
   Loader2,
   AlertCircle,
+  CheckCircle,
   Eye,
   EyeOff,
 } from "lucide-react";
@@ -24,6 +25,8 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirectTo") || "/dashboard";
+  const authError = searchParams.get("error");
+  const isVerified = searchParams.get("verified") === "true";
 
   const performDemoLogin = async (userEmail: string) => {
     try {
@@ -103,8 +106,22 @@ function LoginForm() {
         </p>
       </div>
 
+      {isVerified && (
+        <div className="alert alert-success text-xs py-2.5 mb-4 text-white font-medium flex items-center gap-2">
+          <CheckCircle className="w-4 h-4 shrink-0" />
+          <span>Email Anda telah berhasil dikonfirmasi! Silakan masuk ke akun Anda.</span>
+        </div>
+      )}
+
+      {authError === "auth_callback_failed" && (
+        <div className="alert alert-warning text-xs py-2.5 mb-4 font-medium flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>Tautan konfirmasi email tidak valid atau sudah pernah digunakan. Silakan masuk langsung dengan akun Anda.</span>
+        </div>
+      )}
+
       {errorMsg && (
-        <div className="alert alert-error text-xs py-2.5 mb-4">
+        <div className="alert alert-error text-xs py-2.5 mb-4 font-medium flex items-center gap-2">
           <AlertCircle className="w-4 h-4 flex-shrink-0" />
           <span>{errorMsg}</span>
         </div>

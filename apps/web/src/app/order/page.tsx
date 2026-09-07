@@ -387,6 +387,11 @@ function OrderContent() {
 
         if (isSupabaseConfigured() && customerPassword) {
           const supabase = createClient();
+          const redirectUrl =
+            typeof window !== "undefined"
+              ? `${window.location.origin}/auth/callback?next=/dashboard/billing`
+              : undefined;
+
           supabase.auth.signUp({
             email: cleanEmail,
             password: customerPassword,
@@ -395,6 +400,7 @@ function OrderContent() {
                 name: cleanName,
                 phone: cleanPhone || undefined,
               },
+              emailRedirectTo: redirectUrl,
             },
           }).catch(() => {});
         }
