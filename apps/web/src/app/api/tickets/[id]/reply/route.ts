@@ -23,6 +23,14 @@ export async function POST(
       return NextResponse.json({ success: false, error: "Tiket tidak ditemukan" }, { status: 404 });
     }
 
+    // Sesi sudah diakhiri / ditutup -> chat dinonaktifkan
+    if (ticket.status === "RESOLVED" || ticket.status === "CLOSED") {
+      return NextResponse.json({
+        success: false,
+        error: "Sesi tiket bantuan ini telah selesai dan ditutup. Percakapan dinonaktifkan.",
+      }, { status: 400 });
+    }
+
     const isOwner =
       ticket.userId === user.id ||
       ticket.userEmail.toLowerCase() === user.email.toLowerCase();

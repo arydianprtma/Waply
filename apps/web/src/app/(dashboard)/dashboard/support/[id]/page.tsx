@@ -360,46 +360,72 @@ export default function UserTicketDetailPage() {
             })}
           </div>
 
-          {/* Chat Reply Input Bar */}
+          {/* Chat Reply Input Bar / Closed Session Panel */}
           <div className="p-4 bg-white border-t border-slate-200">
             {isResolvedOrClosed ? (
-              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-center flex items-center justify-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                <span className="text-xs text-slate-600 font-semibold">
-                  Tiket ini telah ditandai selesai. Kirim pesan baru untuk membuka kembali obrolan.
-                </span>
-              </div>
-            ) : null}
+              <div className="p-4 bg-slate-50/90 rounded-2xl border border-slate-200 space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-xl bg-emerald-100 text-emerald-700 shrink-0 mt-0.5">
+                    <CheckCircle2 className="w-4 h-4" />
+                  </div>
+                  <div className="space-y-0.5 flex-1">
+                    <h4 className="text-xs font-black text-slate-900">
+                      Sesi Percakapan Tiket Telah Selesai
+                    </h4>
+                    <p className="text-[11px] text-slate-500 leading-relaxed">
+                      Kendala telah ditandai selesai dan sesi chat dinonaktifkan. Seluruh riwayat obrolan tiket ini akan otomatis dibersihkan dari database dalam <strong>7 hari</strong> untuk menghemat ruang penyimpanan.
+                    </p>
+                  </div>
+                </div>
 
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSendReply();
-              }}
-              className="mt-2 flex items-center gap-2"
-            >
-              <textarea
-                value={replyMessage}
-                onChange={(e) => setReplyMessage(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendReply();
-                  }
+                <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-200/70 justify-end">
+                  <button
+                    onClick={() => handleToggleStatus("OPEN")}
+                    disabled={statusUpdating}
+                    className="px-3.5 py-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Buka Kembali Tiket Ini</span>
+                  </button>
+                  <Link
+                    href="/dashboard/support/new"
+                    className="px-4 py-1.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 transition-all flex items-center gap-1.5 shadow-xs"
+                  >
+                    <span>Buka Tiket Baru</span>
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSendReply();
                 }}
-                rows={1}
-                placeholder="Tulis balasan atau penjelasan tambahan... (Enter untuk kirim)"
-                className="flex-1 text-xs px-4 py-3 rounded-2xl border border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none shadow-xs max-h-32"
-              />
-              <button
-                type="submit"
-                disabled={!replyMessage.trim()}
-                className="p-3 rounded-2xl bg-primary text-white hover:bg-primary/90 active:scale-95 disabled:opacity-40 transition-all shadow-md shadow-primary/25 cursor-pointer shrink-0"
-                title="Kirim Pesan"
+                className="flex items-center gap-2"
               >
-                <Send className="w-4 h-4" />
-              </button>
-            </form>
+                <textarea
+                  value={replyMessage}
+                  onChange={(e) => setReplyMessage(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendReply();
+                    }
+                  }}
+                  rows={1}
+                  placeholder="Tulis balasan atau penjelasan tambahan... (Enter untuk kirim)"
+                  className="flex-1 text-xs px-4 py-3 rounded-2xl border border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none shadow-xs max-h-32"
+                />
+                <button
+                  type="submit"
+                  disabled={!replyMessage.trim()}
+                  className="p-3 rounded-2xl bg-primary text-white hover:bg-primary/90 active:scale-95 disabled:opacity-40 transition-all shadow-md shadow-primary/25 cursor-pointer shrink-0"
+                  title="Kirim Pesan"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </form>
+            )}
           </div>
         </div>
 
@@ -470,6 +496,12 @@ export default function UserTicketDetailPage() {
                   </span>
                 </div>
               </div>
+
+              {isResolvedOrClosed && (
+                <div className="p-3 bg-amber-50/70 border border-amber-200/80 rounded-2xl text-[10px] text-amber-900 leading-relaxed">
+                  <strong>Pembersihan Otomatis:</strong> Riwayat chat tiket ini akan otomatis terhapus dari sistem 7 hari setelah status diselesaikan.
+                </div>
+              )}
             </div>
           </div>
 

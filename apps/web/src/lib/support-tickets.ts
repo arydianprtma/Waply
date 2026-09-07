@@ -52,6 +52,7 @@ export interface CreateTicketInput {
 
 const DATA_DIR = path.resolve(process.cwd(), ".sendora-data");
 const TICKETS_FILE = path.join(DATA_DIR, "support-tickets.json");
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
 
 function ensureDataDir() {
   if (!fs.existsSync(DATA_DIR)) {
@@ -61,6 +62,24 @@ function ensureDataDir() {
 
 function getDefaultTickets(): SupportTicket[] {
   return [];
+}
+
+function purgeExpiredTickets(tickets: SupportTicket[]): { active: SupportTicket[]; changed: boolean } {
+  const now = Date.now();
+  let changed = false;
+  const active = tickets.filter((t) => {
+    if (t.status === "RESOLVED" || t.status === "CLOSED") {
+      const resolvedTime = t.resolvedAt
+        ? new Date(t.resolvedAt).getTime()
+        : new Date(t.updatedAt).getTime();
+      if (now - resolvedTime > SEVEN_DAYS_MS) {
+        changed = true;
+        return false; // Purge ticket older than 7 days
+      }
+    }
+    return true;
+  });
+  return { active, changed };
 }
 
 export function getAllTickets(): SupportTicket[] {
@@ -76,7 +95,14 @@ export function getAllTickets(): SupportTicket[] {
     if (!Array.isArray(data)) {
       return getDefaultTickets();
     }
-    return data.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+
+    // Auto-purge tickets resolved more than 7 days ago to save database space
+    const { active, changed } = purgeExpiredTickets(data);
+    if (changed) {
+      saveTickets(active);
+    }
+
+    return active.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
   } catch (err) {
     console.error("[SupportTickets] Error reading tickets file:", err);
     return getDefaultTickets();
@@ -158,6 +184,11 @@ export function replyToTicket(
   const index = all.findIndex((t) => t.id.toUpperCase() === ticketId.toUpperCase());
   if (index === -1) return null;
 
+  // Sesi sudah diakhiri / ditutup -> tidak boleh mengirim pesan lagi
+  if (all[index].status === "RESOLVED" || all[index].status === "CLOSED") {
+    return null;
+  }
+
   const now = new Date().toISOString();
   const newMsg: TicketMessage = {
     id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
@@ -175,9 +206,6 @@ export function replyToTicket(
 
   // Update status and unread indicators
   if (reply.senderRole === "user") {
-    if (all[index].status === "RESOLVED" || all[index].status === "CLOSED") {
-      all[index].status = "OPEN";
-    }
     all[index].unreadByAdmin = true;
     all[index].unreadByUser = false;
   } else {

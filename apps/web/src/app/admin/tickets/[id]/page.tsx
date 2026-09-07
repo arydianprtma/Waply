@@ -439,37 +439,66 @@ export default function AdminTicketDetailPage() {
             })}
           </div>
 
-          {/* Chat Reply Input Bar */}
+          {/* Chat Reply Input Bar / Closed Session Panel */}
           <div className="p-4 bg-white border-t border-slate-200">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSendReply();
-              }}
-              className="flex items-center gap-2"
-            >
-              <textarea
-                value={replyMessage}
-                onChange={(e) => setReplyMessage(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendReply();
-                  }
+            {ticket.status === "RESOLVED" || ticket.status === "CLOSED" ? (
+              <div className="p-4 bg-slate-50/90 rounded-2xl border border-slate-200 space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-xl bg-emerald-100 text-emerald-700 shrink-0 mt-0.5">
+                    <CheckCircle2 className="w-4 h-4" />
+                  </div>
+                  <div className="space-y-0.5 flex-1">
+                    <h4 className="text-xs font-black text-slate-900">
+                      Tiket Berstatus Selesai ({ticket.status})
+                    </h4>
+                    <p className="text-[11px] text-slate-500 leading-relaxed">
+                      Sesi obrolan dinonaktifkan. Data riwayat tiket ini akan otomatis dihapus permanen dari database dalam <strong>7 hari</strong> setelah selesai. Klik tombol di bawah jika ingin membuka kembali percakapan.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-1 border-t border-slate-200/70">
+                  <button
+                    onClick={() => handleUpdateStatus("IN_PROGRESS")}
+                    disabled={updatingStatus}
+                    className="px-4 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Buka Kembali untuk Menanggapi</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSendReply();
                 }}
-                rows={1}
-                placeholder="Tulis tanggapan atau instruksi solusi untuk pengguna... (Enter untuk kirim)"
-                className="flex-1 text-xs px-4 py-3 rounded-2xl border border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none shadow-xs max-h-32"
-              />
-              <button
-                type="submit"
-                disabled={!replyMessage.trim()}
-                className="p-3 rounded-2xl bg-slate-900 text-white hover:bg-slate-800 active:scale-95 disabled:opacity-40 transition-all shadow-md cursor-pointer shrink-0"
-                title="Kirim Balasan Admin"
+                className="flex items-center gap-2"
               >
-                <Send className="w-4 h-4" />
-              </button>
-            </form>
+                <textarea
+                  value={replyMessage}
+                  onChange={(e) => setReplyMessage(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendReply();
+                    }
+                  }}
+                  rows={1}
+                  placeholder="Tulis tanggapan atau instruksi solusi untuk pengguna... (Enter untuk kirim)"
+                  className="flex-1 text-xs px-4 py-3 rounded-2xl border border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none shadow-xs max-h-32"
+                />
+                <button
+                  type="submit"
+                  disabled={!replyMessage.trim()}
+                  className="p-3 rounded-2xl bg-slate-900 text-white hover:bg-slate-800 active:scale-95 disabled:opacity-40 transition-all shadow-md cursor-pointer shrink-0"
+                  title="Kirim Balasan Admin"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </form>
+            )}
           </div>
         </div>
 
