@@ -161,41 +161,36 @@ export default function DashboardOverviewPage() {
 
   const metricCards = [
     {
-      label: "Sisa Kuota Pesan",
-      value: quota.isUnlimitedMessages
-        ? "Unlimited"
-        : `${quota.remainingMessages.toLocaleString("id-ID")} Pesan`,
-      sub: quota.isUnlimitedMessages
-        ? "Kirim pesan tanpa batas"
-        : `Sisa dari total ${quota.maxMessages.toLocaleString("id-ID")} pesan (${quota.usedMessages} terpakai)`,
-      icon: MessageSquare,
-      color: "text-emerald-600",
-      bg: "bg-emerald-500/10",
-      highlight: true,
-    },
-    {
-      label: "Slot Device WhatsApp",
-      value: `${quota.usedDevices} / ${quota.maxDevices} Device`,
-      sub: quota.remainingDevices > 0 ? `Tersedia ${quota.remainingDevices} slot lagi` : "Batas kuota device tercapai",
-      icon: Smartphone,
-      color: "text-sky-600",
-      bg: "bg-sky-500/10",
-    },
-    {
       label: "Pesan Hari Ini",
       value: fmt(data.messagesToday),
-      sub: `${fmt(data.totalMessages)} total pesan terkirim`,
-      icon: Send,
-      color: "text-primary",
-      bg: "bg-primary/10",
+      sub: `${fmt(data.totalMessages)} total terkirim`,
+      icon: MessageSquare,
+      color: "text-emerald-600",
+      bg: "bg-emerald-50",
     },
     {
       label: "Total Kontak",
       value: fmt(data.totalContacts),
-      sub: "Kontak buku telepon terdaftar",
+      sub: "Kontak terdaftar",
       icon: Users,
+      color: "text-sky-600",
+      bg: "bg-sky-50",
+    },
+    {
+      label: "Broadcast",
+      value: fmt(data.totalBroadcasts),
+      sub: `${data.activeBroadcasts} sedang berjalan`,
+      icon: Radio,
       color: "text-violet-600",
-      bg: "bg-violet-500/10",
+      bg: "bg-violet-50",
+    },
+    {
+      label: "Aturan Auto-Reply",
+      value: fmt(data.totalAutoReplies),
+      sub: `${data.activeAutoReplies} aturan aktif`,
+      icon: Bot,
+      color: "text-amber-600",
+      bg: "bg-amber-50",
     },
   ];
 
@@ -244,45 +239,41 @@ export default function DashboardOverviewPage() {
         </div>
       </div>
 
-      {/* Quota & Subscription Status Banner */}
+      {/* Quota & Subscription Status Card */}
       {data.quota && (
-        <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 text-white rounded-3xl p-6 sm:p-7 shadow-xl border border-slate-700/50">
-          <div className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-1/3 -mb-12 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-
-          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-            {/* Left: Plan badge and Overview */}
-            <div className="space-y-2 max-w-md">
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-sm">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            {/* Left: Plan details */}
+            <div className="space-y-1.5 max-w-sm">
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                  <ShieldCheck className="w-3.5 h-3.5" />
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                   Paket: {data.quota.planName}
                 </span>
                 {data.quota.planId === "FREE" && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                    <Sparkles className="w-3 h-3" />
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
                     Trial
                   </span>
                 )}
               </div>
-              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
-                Sisa Kuota & Kapasitas Layanan
+              <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+                Kapasitas & Kuota Akun
               </h2>
-              <p className="text-xs sm:text-sm text-slate-300">
-                Pantau sisa kuota pesan WhatsApp dan batasan slot device yang terhubung pada akun Anda.
+              <p className="text-xs text-slate-500">
+                Pantau sisa kuota pesan WhatsApp dan alokasi slot perangkat aktif pada akun Anda.
               </p>
             </div>
 
             {/* Middle: Quota Progress Stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1 lg:max-w-xl">
-              {/* Message Quota Card */}
-              <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-4 transition-all hover:bg-white/15">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1 lg:max-w-2xl">
+              {/* Message Quota */}
+              <div className="bg-slate-50/70 border border-slate-200/80 rounded-xl p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                    <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                    <MessageSquare className="w-4 h-4 text-emerald-600" />
                     Sisa Kuota Pesan
                   </span>
-                  <span className="text-xs font-extrabold text-emerald-300">
+                  <span className="text-xs font-bold text-slate-900 font-mono">
                     {data.quota.isUnlimitedMessages
                       ? "Unlimited"
                       : `${data.quota.remainingMessages.toLocaleString("id-ID")} / ${data.quota.maxMessages.toLocaleString("id-ID")}`}
@@ -291,25 +282,25 @@ export default function DashboardOverviewPage() {
 
                 {/* Progress bar */}
                 {!data.quota.isUnlimitedMessages && (
-                  <div className="w-full bg-slate-700/60 rounded-full h-2.5 overflow-hidden mb-2">
+                  <div className="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden mb-2">
                     <div
-                      className={`h-full rounded-full transition-all duration-500 ${
-                        (data.quota.usedMessages / data.quota.maxMessages) > 0.85
-                          ? "bg-gradient-to-r from-amber-500 to-rose-500"
-                          : "bg-gradient-to-r from-emerald-500 to-teal-400"
+                      className={`h-full rounded-full transition-all duration-300 ${
+                        (data.quota.usedMessages / (data.quota.maxMessages || 1)) > 0.85
+                          ? "bg-rose-500"
+                          : "bg-emerald-500"
                       }`}
                       style={{
-                        width: `${Math.min(100, Math.round((data.quota.usedMessages / (data.quota.maxMessages || 1)) * 100))}%`,
+                        width: `${Math.min(100, Math.max(4, Math.round((data.quota.usedMessages / (data.quota.maxMessages || 1)) * 100)))}%`,
                       }}
                     />
                   </div>
                 )}
 
-                <div className="flex items-center justify-between text-[11px] text-slate-400 font-medium">
+                <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium">
                   <span>
                     {data.quota.isUnlimitedMessages
-                      ? `${data.quota.usedMessages} pesan terkirim`
-                      : `Terpakai: ${data.quota.usedMessages} (${Math.round((data.quota.usedMessages / (data.quota.maxMessages || 1)) * 100)}%)`}
+                      ? `${data.quota.usedMessages} terkirim`
+                      : `${data.quota.usedMessages} terpakai (${Math.round((data.quota.usedMessages / (data.quota.maxMessages || 1)) * 100)}%)`}
                   </span>
                   <span>
                     {data.quota.isUnlimitedMessages
@@ -319,37 +310,37 @@ export default function DashboardOverviewPage() {
                 </div>
               </div>
 
-              {/* Device Quota Card */}
-              <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-4 transition-all hover:bg-white/15">
+              {/* Device Quota */}
+              <div className="bg-slate-50/70 border border-slate-200/80 rounded-xl p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                    <Smartphone className="w-3.5 h-3.5 text-sky-400" />
+                  <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                    <Smartphone className="w-4 h-4 text-sky-600" />
                     Slot Device WhatsApp
                   </span>
-                  <span className="text-xs font-extrabold text-sky-300">
+                  <span className="text-xs font-bold text-slate-900 font-mono">
                     {data.quota.usedDevices} / {data.quota.maxDevices} Device
                   </span>
                 </div>
 
                 {/* Progress bar */}
-                <div className="w-full bg-slate-700/60 rounded-full h-2.5 overflow-hidden mb-2">
+                <div className="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden mb-2">
                   <div
-                    className={`h-full rounded-full transition-all duration-500 ${
+                    className={`h-full rounded-full transition-all duration-300 ${
                       data.quota.usedDevices >= data.quota.maxDevices
-                        ? "bg-gradient-to-r from-amber-500 to-rose-500"
-                        : "bg-gradient-to-r from-sky-400 to-blue-500"
+                        ? "bg-amber-500"
+                        : "bg-sky-500"
                     }`}
                     style={{
-                      width: `${Math.min(100, Math.round((data.quota.usedDevices / (data.quota.maxDevices || 1)) * 100))}%`,
+                      width: `${Math.min(100, Math.max(data.quota.usedDevices > 0 ? 10 : 0, Math.round((data.quota.usedDevices / (data.quota.maxDevices || 1)) * 100)))}%`,
                     }}
                   />
                 </div>
 
-                <div className="flex items-center justify-between text-[11px] text-slate-400 font-medium">
+                <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium">
                   <span>
                     {data.quota.usedDevices >= data.quota.maxDevices
-                      ? "Slot Penuh"
-                      : `Sisa: ${data.quota.remainingDevices} slot`}
+                      ? "Semua slot terpakai"
+                      : `${data.quota.remainingDevices} slot tersedia`}
                   </span>
                   <span>Batas: {data.quota.maxDevices} device</span>
                 </div>
@@ -360,10 +351,9 @@ export default function DashboardOverviewPage() {
             <div className="flex lg:flex-col items-center justify-end shrink-0">
               <Link
                 href="/dashboard/billing"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="btn btn-outline btn-sm md:btn-md border-slate-300 hover:border-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 gap-2 text-slate-700 font-semibold text-xs md:text-sm"
               >
-                <Sparkles className="w-4 h-4 fill-slate-950" />
-                <span>Upgrade Paket</span>
+                <span>Kelola Paket</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
