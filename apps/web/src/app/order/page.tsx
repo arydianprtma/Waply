@@ -660,7 +660,7 @@ function OrderContent() {
                             placeholder="Contoh: Budi Pratama"
                             value={customerName}
                             onChange={(e) => setCustomerName(e.target.value)}
-                            className="input input-bordered input-sm w-full rounded-xl text-xs bg-slate-50/50"
+                            className="input input-bordered input-sm w-full rounded-xl text-xs bg-white"
                           />
                         </div>
 
@@ -682,7 +682,7 @@ function OrderContent() {
                             placeholder="contoh@bisnis.id"
                             value={customerEmail}
                             onChange={(e) => setCustomerEmail(e.target.value)}
-                            className="input input-bordered input-sm w-full rounded-xl text-xs bg-slate-50/50"
+                            className="input input-bordered input-sm w-full rounded-xl text-xs bg-white"
                           />
                         </div>
                       </div>

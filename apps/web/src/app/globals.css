@@ -123,6 +123,48 @@
 }
 
 /* Form Inputs, Selects, Textareas */
+input.input,
+textarea.textarea,
+select.select,
+.input-bordered,
+input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]) {
+  outline: none !important;
+  outline-offset: 0 !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+/* Light Mode Input Hover & Focus */
+input.input:not(:focus),
+textarea.textarea:not(:focus),
+select.select:not(:focus),
+.input-bordered:not(:focus) {
+  border-color: #cbd5e1;
+}
+
+input.input:hover:not(:disabled):not(:focus),
+textarea.textarea:hover:not(:disabled):not(:focus),
+select.select:hover:not(:disabled):not(:focus),
+.input-bordered:hover:not(:disabled):not(:focus) {
+  border-color: #94a3b8 !important;
+}
+
+input.input:focus,
+input.input:focus-visible,
+input.input:focus-within,
+textarea.textarea:focus,
+textarea.textarea:focus-visible,
+select.select:focus,
+select.select:focus-visible,
+.input-bordered:focus,
+.input-bordered:focus-visible,
+.input-bordered:focus-within,
+input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]):focus {
+  outline: none !important;
+  outline-offset: 0 !important;
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15) !important;
+}
+
 [data-theme="sendoraDark"] input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
 [data-theme="sendoraDark"] select,
 [data-theme="sendoraDark"] textarea,
@@ -132,6 +174,44 @@
   background-color: #0f172a;
   border-color: #334155;
   color: #f8fafc;
+}
+
+[data-theme="sendoraDark"] input.input:hover:not(:disabled):not(:focus),
+[data-theme="sendoraDark"] textarea.textarea:hover:not(:disabled):not(:focus),
+[data-theme="sendoraDark"] select.select:hover:not(:disabled):not(:focus),
+[data-theme="sendoraDark"] .input-bordered:hover:not(:disabled):not(:focus),
+.dark input.input:hover:not(:disabled):not(:focus),
+.dark textarea.textarea:hover:not(:disabled):not(:focus),
+.dark select.select:hover:not(:disabled):not(:focus),
+.dark .input-bordered:hover:not(:disabled):not(:focus) {
+  border-color: #64748b !important;
+}
+
+[data-theme="sendoraDark"] input.input:focus,
+[data-theme="sendoraDark"] input.input:focus-visible,
+[data-theme="sendoraDark"] input.input:focus-within,
+[data-theme="sendoraDark"] textarea.textarea:focus,
+[data-theme="sendoraDark"] textarea.textarea:focus-visible,
+[data-theme="sendoraDark"] select.select:focus,
+[data-theme="sendoraDark"] select.select:focus-visible,
+[data-theme="sendoraDark"] .input-bordered:focus,
+[data-theme="sendoraDark"] .input-bordered:focus-visible,
+[data-theme="sendoraDark"] .input-bordered:focus-within,
+.dark input.input:focus,
+.dark input.input:focus-visible,
+.dark input.input:focus-within,
+.dark textarea.textarea:focus,
+.dark textarea.textarea:focus-visible,
+.dark select.select:focus,
+.dark select.select:focus-visible,
+.dark .input-bordered:focus,
+.dark .input-bordered:focus-visible,
+.dark .input-bordered:focus-within,
+.dark input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]):focus {
+  outline: none !important;
+  outline-offset: 0 !important;
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25) !important;
 }
 
 [data-theme="sendoraDark"] select option,
