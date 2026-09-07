@@ -347,7 +347,7 @@ function BillingContent() {
               </div>
 
               {/* Period Tabs with Liquid Glass 3D Fluid Morph Animation */}
-              <div className="relative inline-flex p-1.5 rounded-2xl bg-base-200/80 border border-slate-300/50 dark:border-white/10 shadow-[inset_0_2px_4px_rgba(0,0,0,0.06),0_8px_20px_-4px_rgba(0,0,0,0.04)] backdrop-blur-md">
+              <div className="relative inline-flex max-w-full overflow-x-auto p-1.5 rounded-2xl bg-base-200/80 border border-slate-300/50 dark:border-white/10 shadow-[inset_0_2px_4px_rgba(0,0,0,0.06),0_8px_20px_-4px_rgba(0,0,0,0.04)] backdrop-blur-md">
                 {/* Midnight Obsidian Liquid Glass Fluid Pill */}
                 <div
                   className="absolute top-1.5 bottom-1.5 rounded-xl bg-gradient-to-b from-slate-800 via-slate-900 to-slate-950 shadow-[inset_0_1.5px_1px_rgba(255,255,255,0.4),inset_0_-1.5px_2px_rgba(0,0,0,0.5),0_8px_20px_-3px_rgba(15,23,42,0.5)] border-t border-white/25 pointer-events-none transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] overflow-hidden"
