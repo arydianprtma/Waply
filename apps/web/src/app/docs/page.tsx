@@ -289,18 +289,21 @@ async def handle_sendora_webhook(request: Request):
       <LandingNavbar />
 
       {/* Docs Body with Interactive Sticky Sidebar */}
-      <div className="max-w-7xl mx-auto w-full px-4 md:px-8 py-10 flex-1 flex flex-col md:flex-row gap-10">
+      <div className="max-w-7xl mx-auto w-full px-4 md:px-8 py-8 md:py-10 flex-1 flex flex-col md:flex-row gap-8 lg:gap-10">
         {/* Left Sticky Sidebar (ScrollSpy Highlight) */}
         <aside className="w-full md:w-72 flex-shrink-0">
-          <div className="sticky top-24 space-y-5">
-            <div className="px-4 py-3 bg-emerald-100/80 rounded-2xl border border-emerald-300 flex items-center justify-between shadow-sm">
-              <span className="text-sm font-black text-emerald-900 flex items-center gap-2">
-                <Code2 className="w-4 h-4 text-emerald-700" /> REST API Docs v1.0
+          <div className="sticky top-24 space-y-4">
+            <div className="px-4 py-3 bg-white rounded-2xl border border-slate-200/90 flex items-center justify-between shadow-xs">
+              <span className="text-xs font-bold text-slate-900 flex items-center gap-2">
+                <Code2 className="w-4 h-4 text-emerald-600" /> REST API Docs v1.0
               </span>
-              <span className="badge badge-sm badge-success text-white font-bold">Online</span>
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Active
+              </span>
             </div>
 
-            <nav className="space-y-1.5 bg-white p-3 rounded-2xl border border-slate-200 max-h-[calc(100vh-250px)] overflow-y-auto shadow-sm">
+            <nav className="space-y-1 bg-white p-2.5 rounded-2xl border border-slate-200/90 max-h-[calc(100vh-250px)] overflow-y-auto shadow-xs">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeNav === item.id;
@@ -308,55 +311,58 @@ async def handle_sendora_webhook(request: Request):
                   <button
                     key={item.id}
                     onClick={() => scrollTo(item.id)}
-                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all text-left ${
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all text-left cursor-pointer ${
                       isActive
-                        ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/30"
-                        : "text-slate-700 hover:bg-slate-100 hover:text-emerald-700"
+                        ? "bg-slate-900 text-white shadow-xs"
+                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                     }`}
                   >
-                    <Icon className="w-4 h-4 flex-shrink-0" />
+                    <Icon className="w-3.5 h-3.5 flex-shrink-0" />
                     <span className="truncate">{item.label}</span>
                   </button>
                 );
               })}
             </nav>
 
-            <div className="p-5 rounded-2xl bg-white border border-slate-200 space-y-2.5 shadow-sm">
-              <p className="font-black text-sm flex items-center gap-2 text-slate-900">
-                <Terminal className="w-4 h-4 text-emerald-600" /> Interactive Sandbox?
+            <div className="p-4 rounded-2xl bg-white border border-slate-200/90 space-y-2 shadow-xs">
+              <p className="font-bold text-xs flex items-center gap-1.5 text-slate-900">
+                <Terminal className="w-3.5 h-3.5 text-emerald-600" /> Interactive Sandbox?
               </p>
-              <p className="text-xs text-slate-600 leading-relaxed font-normal">
-                Ingin mencoba request API langsung dari browser tanpa coding? Buka Live Tester di dashboard.
+              <p className="text-[11px] text-slate-500 leading-relaxed font-normal">
+                Coba request API langsung dari browser tanpa coding via Live Tester di dashboard.
               </p>
-              <Link href="/dashboard/api-keys" className="btn btn-sm btn-block gap-1.5 mt-2 font-bold text-white bg-emerald-600 hover:bg-emerald-700 border-none shadow-sm">
-                Buka API Keys <ArrowRight className="w-4 h-4" />
+              <Link
+                href="/dashboard/docs"
+                className="inline-flex items-center justify-center gap-1.5 w-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-xl font-semibold text-xs h-8.5 transition-colors shadow-2xs mt-1"
+              >
+                Buka Live Tester <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
           </div>
         </aside>
 
-        {/* Right Main Content (Solid Black High Contrast Typography) */}
-        <main className="flex-1 space-y-16 max-w-4xl min-w-0">
+        {/* Right Main Content */}
+        <main className="flex-1 space-y-12 max-w-4xl min-w-0">
           {/* Breadcrumb Navigation */}
           <div className="flex items-center justify-between gap-4 pb-2 border-b border-slate-200">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
               <Link href="/" className="hover:text-emerald-600 transition-colors flex items-center gap-1">
                 Beranda
               </Link>
               <span>/</span>
-              <span className="text-slate-900 font-extrabold">Dokumentasi API</span>
+              <span className="text-slate-900 font-bold">Dokumentasi API</span>
             </div>
             <div className="flex items-center gap-3">
               <Link
                 href="/#pricing"
-                className="text-xs font-bold text-slate-600 hover:text-emerald-600 transition-colors"
+                className="text-xs font-semibold text-slate-600 hover:text-emerald-600 transition-colors"
               >
                 Lihat Paket
               </Link>
               <span className="text-slate-300">•</span>
               <Link
                 href="/login"
-                className="text-xs font-bold text-emerald-600 hover:underline"
+                className="text-xs font-semibold text-emerald-600 hover:underline"
               >
                 Dashboard & API Keys →
               </Link>
@@ -364,35 +370,35 @@ async def handle_sendora_webhook(request: Request):
           </div>
 
           {/* 1. Intro */}
-          <section id="intro" className="space-y-5 scroll-mt-24">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-300">
-              <Zap className="w-4 h-4 text-emerald-700" /> Getting Started Guide
+          <section id="intro" className="space-y-4 scroll-mt-24">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-semibold border border-emerald-200">
+              <Zap className="w-3.5 h-3.5 text-emerald-600" /> Getting Started Guide
             </div>
-            <h1 className="text-3xl md:text-4xl font-black tracking-tight text-slate-950">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
               Dokumentasi REST API Sendora
             </h1>
-            <p className="text-base md:text-lg text-slate-800 leading-relaxed font-normal">
+            <p className="text-xs sm:text-sm md:text-base text-slate-700 leading-relaxed font-normal">
               Sendora menyediakan RESTful API berbasis JSON berkecepatan tinggi yang memungkinkan Anda mengirim pesan WhatsApp transaksional (OTP, notifikasi pesanan, invoice), menjalankan broadcast massal dengan perlindungan anti-ban, merotasi multi-device secara otomatis (<b>Round-Robin load balancing</b>), dan menangkap webhook event pesan masuk.
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 text-sm">
-              <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm">
-                <span className="text-slate-500 font-bold block mb-1">Base URL:</span>
-                <code className="font-bold text-emerald-700 text-sm break-all">{originUrl}/api/v1</code>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 text-xs">
+              <div className="p-3.5 rounded-xl bg-white border border-slate-200/90 shadow-xs">
+                <span className="text-slate-500 font-semibold block mb-1">Base URL:</span>
+                <code className="font-bold text-emerald-700 text-xs break-all">{originUrl}/api/v1</code>
               </div>
-              <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm">
-                <span className="text-slate-500 font-bold block mb-1">Content-Type:</span>
-                <span className="font-bold font-mono text-slate-900">application/json</span>
+              <div className="p-3.5 rounded-xl bg-white border border-slate-200/90 shadow-xs">
+                <span className="text-slate-500 font-semibold block mb-1">Content-Type:</span>
+                <span className="font-bold font-mono text-slate-900 text-xs">application/json</span>
               </div>
-              <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm">
-                <span className="text-slate-500 font-bold block mb-1">Kecepatan Kirim:</span>
-                <span className="font-bold text-emerald-600 font-mono">&lt; 1.2 detik / pesan</span>
+              <div className="p-3.5 rounded-xl bg-white border border-slate-200/90 shadow-xs">
+                <span className="text-slate-500 font-semibold block mb-1">Kecepatan Kirim:</span>
+                <span className="font-bold text-emerald-600 font-mono text-xs">&lt; 1.2 detik / pesan</span>
               </div>
             </div>
 
-            <div className="p-5 bg-white rounded-2xl border border-slate-200 space-y-3 shadow-sm">
-              <h4 className="font-bold text-base text-slate-950">Format Standard Response JSON:</h4>
-              <div className="mockup-code bg-slate-900 text-slate-100 text-sm p-4 rounded-xl font-mono leading-relaxed shadow-inner">
+            <div className="p-4 sm:p-5 bg-white rounded-2xl border border-slate-200/90 space-y-2.5 shadow-xs">
+              <h4 className="font-bold text-xs sm:text-sm text-slate-900">Format Standard Response JSON:</h4>
+              <div className="bg-slate-900 text-slate-100 text-xs p-4 rounded-xl font-mono leading-relaxed border border-slate-800 shadow-inner overflow-x-auto">
                 <pre><code>{`// Sukses (HTTP 200):
 {
   "success": true,
@@ -410,53 +416,55 @@ async def handle_sendora_webhook(request: Request):
           </section>
 
           {/* 2. Authentication */}
-          <section id="auth" className="space-y-5 scroll-mt-24 border-t border-slate-200 pt-10">
-            <h2 className="text-2xl font-black flex items-center gap-2.5 text-slate-950">
-              <KeyRound className="w-6 h-6 text-emerald-600" /> 2. Autentikasi & API Key
+          <section id="auth" className="space-y-4 scroll-mt-24 border-t border-slate-200 pt-8">
+            <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-slate-900">
+              <KeyRound className="w-5 h-5 text-emerald-600" /> 2. Autentikasi & API Key
             </h2>
-            <p className="text-base text-slate-800 leading-relaxed font-normal">
+            <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
               Semua permintaan ke API Sendora wajib diautentikasi dengan menyertakan <b>API Key</b> di Header HTTP. Kami mendukung dua format header:
             </p>
 
-            <div className="space-y-3">
-              <span className="text-sm font-bold text-slate-900">Opsi 1 (Standar Rekomendasi):</span>
-              <div className="mockup-code bg-slate-900 text-emerald-400 text-sm rounded-xl p-4 font-mono shadow-inner">
-                <pre><code>Authorization: Bearer snd_live_948f928c2e1739f8bc20a</code></pre>
+            <div className="space-y-2.5">
+              <span className="text-xs font-bold text-slate-700">Opsi 1 (Standar Rekomendasi):</span>
+              <div className="bg-slate-900 text-emerald-400 text-xs rounded-xl p-3.5 font-mono border border-slate-800 shadow-inner overflow-x-auto">
+                <code>Authorization: Bearer snd_live_948f928c2e1739f8bc20a</code>
               </div>
 
-              <span className="text-sm font-bold text-slate-900 pt-2 block">Opsi 2:</span>
-              <div className="mockup-code bg-slate-900 text-emerald-400 text-sm rounded-xl p-4 font-mono shadow-inner">
-                <pre><code>X-API-Key: snd_live_948f928c2e1739f8bc20a</code></pre>
+              <span className="text-xs font-bold text-slate-700 pt-1 block">Opsi 2:</span>
+              <div className="bg-slate-900 text-emerald-400 text-xs rounded-xl p-3.5 font-mono border border-slate-800 shadow-inner overflow-x-auto">
+                <code>X-API-Key: snd_live_948f928c2e1739f8bc20a</code>
               </div>
             </div>
 
-            <div className="p-4 bg-sky-50 border border-sky-200 rounded-xl text-sm font-medium text-sky-950">
+            <div className="p-3.5 bg-sky-50 border border-sky-200 rounded-xl text-xs text-sky-900 leading-relaxed">
               <span><b>💡 Tips Keamanan:</b> Dapatkan API Key Anda di menu <b>Dashboard &gt; Developers &gt; API Keys</b>. Jangan pernah mempublikasikan API Key Anda di sisi frontend client-side.</span>
             </div>
           </section>
 
           {/* 3. Send Message */}
-          <section id="send-message" className="space-y-6 scroll-mt-24 border-t border-slate-200 pt-10">
-            <div className="space-y-2">
-              <div className="flex items-center gap-3">
-                <span className="badge badge-success text-white font-mono font-bold text-xs px-3 py-3.5">POST</span>
-                <span className="font-mono font-bold text-lg text-slate-950">/api/v1/messages/send</span>
+          <section id="send-message" className="space-y-5 scroll-mt-24 border-t border-slate-200 pt-8">
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2.5">
+                <span className="bg-emerald-600 text-white font-mono font-bold text-xs px-2.5 py-0.5 rounded-lg">POST</span>
+                <span className="font-mono font-bold text-sm sm:text-base text-slate-900">/api/v1/messages/send</span>
               </div>
-              <p className="text-base text-slate-800 leading-relaxed font-normal">
+              <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
                 Mengirimkan pesan WhatsApp ke nomor tujuan tunggal dengan fitur rendering Spintax, substitusi variabel dinamis, dan opsi pemilihan device pengirim.
               </p>
             </div>
 
             {/* Code Selector Tabs */}
-            <div className="card bg-white border border-slate-300 shadow-md rounded-2xl overflow-hidden">
-              <div className="bg-slate-100 p-3.5 border-b border-slate-300 flex items-center justify-between">
-                <div className="flex gap-1.5">
+            <div className="bg-white border border-slate-200/90 shadow-xs rounded-2xl overflow-hidden">
+              <div className="bg-slate-50 p-3 sm:p-4 border-b border-slate-100 flex items-center justify-between gap-2">
+                <div className="flex flex-wrap gap-1">
                   {(["curl", "nodejs", "python", "php"] as CodeLang[]).map((lang) => (
                     <button
                       key={lang}
                       onClick={() => setSelectedLang(lang)}
-                      className={`btn btn-sm uppercase font-mono rounded-xl font-bold ${
-                        selectedLang === lang ? "bg-emerald-600 text-white shadow-sm border-none" : "btn-ghost text-slate-700"
+                      className={`px-3 py-1 text-xs uppercase font-mono rounded-lg font-semibold transition-all cursor-pointer border ${
+                        selectedLang === lang
+                          ? "bg-slate-900 text-white border-slate-900 shadow-xs"
+                          : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900"
                       }`}
                     >
                       {lang}
@@ -465,74 +473,74 @@ async def handle_sendora_webhook(request: Request):
                 </div>
                 <button
                   onClick={() => copyCode(snippets.send[selectedLang], "send-main")}
-                  className="btn btn-ghost btn-sm gap-1.5 font-bold text-slate-900 hover:text-emerald-700"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors cursor-pointer"
                 >
                   {copiedSection === "send-main" ? (
                     <>
-                      <Check className="w-4 h-4 text-emerald-600" /> Disalin
+                      <Check className="w-3.5 h-3.5 text-emerald-600" /> Disalin
                     </>
                   ) : (
                     <>
-                      <Copy className="w-4 h-4" /> Salin Kode
+                      <Copy className="w-3.5 h-3.5" /> Salin Kode
                     </>
                   )}
                 </button>
               </div>
-              <div className="bg-slate-950 text-slate-100 p-5 font-mono text-sm shadow-inner leading-relaxed">
+              <div className="bg-slate-950 text-slate-100 p-4 sm:p-5 font-mono text-xs leading-relaxed border border-slate-800 shadow-inner overflow-x-auto">
                 <pre className="whitespace-pre-wrap break-words">{snippets.send[selectedLang]}</pre>
               </div>
             </div>
 
             {/* Parameters Table */}
-            <div className="space-y-3">
-              <h3 className="font-bold text-sm uppercase text-slate-950 tracking-wider">Request Body Parameters</h3>
-              <div className="overflow-x-auto border border-slate-200 rounded-2xl shadow-sm bg-white">
-                <table className="table table-sm text-sm">
-                  <thead className="bg-slate-100 text-slate-950 font-black border-b border-slate-200">
+            <div className="space-y-2.5">
+              <h3 className="font-bold text-xs uppercase text-slate-500 tracking-wider">Request Body Parameters</h3>
+              <div className="overflow-x-auto border border-slate-200 rounded-xl shadow-xs bg-white">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
                     <tr>
-                      <th className="py-3 px-4">Parameter</th>
-                      <th className="py-3 px-4">Tipe</th>
-                      <th className="py-3 px-4">Wajib</th>
-                      <th className="py-3 px-4">Deskripsi</th>
+                      <th className="p-3">Parameter</th>
+                      <th className="p-3">Tipe</th>
+                      <th className="p-3">Status</th>
+                      <th className="p-3">Deskripsi</th>
                     </tr>
                   </thead>
-                  <tbody className="font-mono text-sm divide-y divide-slate-200 text-slate-900">
-                    <tr>
-                      <td className="font-bold text-emerald-700 py-3 px-4">to</td>
-                      <td className="py-3 px-4">string</td>
-                      <td className="py-3 px-4"><span className="badge badge-sm badge-error text-white font-bold">Ya</span></td>
-                      <td className="font-sans text-slate-800 py-3 px-4">Nomor penerima WhatsApp (format <code>62812xxx</code> atau <code>0812xxx</code>).</td>
+                  <tbody className="font-mono text-xs divide-y divide-slate-100 text-slate-900">
+                    <tr className="hover:bg-slate-50/50">
+                      <td className="font-bold text-emerald-700 p-3">to</td>
+                      <td className="p-3 text-slate-500">string</td>
+                      <td className="p-3 font-sans"><span className="bg-rose-50 text-rose-700 border border-rose-200 text-[10px] px-2 py-0.5 rounded-full font-semibold">Wajib</span></td>
+                      <td className="font-sans text-slate-700 p-3">Nomor penerima WhatsApp (format <code>62812xxx</code> atau <code>0812xxx</code>).</td>
                     </tr>
-                    <tr>
-                      <td className="font-bold text-emerald-700 py-3 px-4">message</td>
-                      <td className="py-3 px-4">string</td>
-                      <td className="py-3 px-4"><span className="badge badge-sm badge-error text-white font-bold">Ya</span></td>
-                      <td className="font-sans text-slate-800 py-3 px-4">Isi pesan teks. Mendukung Spintax <code>{`{A|B}`}</code> dan placeholder <code>{`{{key}}`}</code>.</td>
+                    <tr className="hover:bg-slate-50/50">
+                      <td className="font-bold text-emerald-700 p-3">message</td>
+                      <td className="p-3 text-slate-500">string</td>
+                      <td className="p-3 font-sans"><span className="bg-rose-50 text-rose-700 border border-rose-200 text-[10px] px-2 py-0.5 rounded-full font-semibold">Wajib</span></td>
+                      <td className="font-sans text-slate-700 p-3">Isi pesan teks. Mendukung Spintax <code>{`{A|B}`}</code> dan placeholder <code>{`{{key}}`}</code>.</td>
                     </tr>
-                    <tr>
-                      <td className="font-bold text-emerald-700 py-3 px-4">deviceId</td>
-                      <td className="py-3 px-4">string</td>
-                      <td className="py-3 px-4"><span className="badge badge-sm badge-ghost font-semibold">Opsional</span></td>
-                      <td className="font-sans text-slate-800 py-3 px-4">ID device pengirim spesifik, atau gunakan <code>"auto_rotate"</code> untuk Round-Robin otomatis.</td>
+                    <tr className="hover:bg-slate-50/50">
+                      <td className="font-bold text-emerald-700 p-3">deviceId</td>
+                      <td className="p-3 text-slate-500">string</td>
+                      <td className="p-3 font-sans"><span className="bg-slate-100 text-slate-600 border border-slate-200 text-[10px] px-2 py-0.5 rounded-full font-semibold">Opsional</span></td>
+                      <td className="font-sans text-slate-700 p-3">ID device pengirim spesifik, atau gunakan <code>"auto_rotate"</code> untuk Round-Robin otomatis.</td>
                     </tr>
-                    <tr>
-                      <td className="font-bold text-emerald-700 py-3 px-4">variables</td>
-                      <td className="py-3 px-4">object</td>
-                      <td className="py-3 px-4"><span className="badge badge-sm badge-ghost font-semibold">Opsional</span></td>
-                      <td className="font-sans text-slate-800 py-3 px-4">Key-value pengganti variabel (contoh: <code>{`{ "name": "Budi", "order_id": "123" }`}</code>).</td>
+                    <tr className="hover:bg-slate-50/50">
+                      <td className="font-bold text-emerald-700 p-3">variables</td>
+                      <td className="p-3 text-slate-500">object</td>
+                      <td className="p-3 font-sans"><span className="bg-slate-100 text-slate-600 border border-slate-200 text-[10px] px-2 py-0.5 rounded-full font-semibold">Opsional</span></td>
+                      <td className="font-sans text-slate-700 p-3">Key-value pengganti variabel (contoh: <code>{`{ "name": "Budi", "order_id": "123" }`}</code>).</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
             </div>
 
-            {/* Response Examples (Dark High Contrast Code Blocks with No Horizontal Scroll) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 text-sm">
-              <div className="p-5 rounded-2xl bg-white border-2 border-emerald-500 shadow-sm space-y-3">
-                <span className="font-black text-emerald-700 flex items-center gap-2 text-base">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" /> 200 OK (Success)
+            {/* Response Examples */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div className="p-4 rounded-xl bg-white border border-emerald-300 shadow-xs space-y-2">
+                <span className="font-bold text-emerald-800 flex items-center gap-1.5 text-xs">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> 200 OK (Success)
                 </span>
-                <pre className="bg-slate-950 p-4 rounded-xl font-mono text-xs text-emerald-300 leading-relaxed shadow-inner whitespace-pre-wrap break-all overflow-x-hidden">
+                <pre className="bg-slate-950 p-3.5 rounded-lg font-mono text-xs text-emerald-400 leading-relaxed border border-slate-800 shadow-inner overflow-x-auto">
 {`{
   "success": true,
   "data": {
@@ -547,11 +555,11 @@ async def handle_sendora_webhook(request: Request):
                 </pre>
               </div>
 
-              <div className="p-5 rounded-2xl bg-white border-2 border-rose-500 shadow-sm space-y-3">
-                <span className="font-black text-rose-700 flex items-center gap-2 text-base">
-                  <XCircle className="w-5 h-5 text-rose-600 flex-shrink-0" /> 400 / 404 (Error)
+              <div className="p-4 rounded-xl bg-white border border-rose-300 shadow-xs space-y-2">
+                <span className="font-bold text-rose-800 flex items-center gap-1.5 text-xs">
+                  <XCircle className="w-4 h-4 text-rose-600 shrink-0" /> 400 / 404 (Error)
                 </span>
-                <pre className="bg-slate-950 p-4 rounded-xl font-mono text-xs text-rose-300 leading-relaxed shadow-inner whitespace-pre-wrap break-words overflow-x-hidden">
+                <pre className="bg-slate-950 p-3.5 rounded-lg font-mono text-xs text-rose-400 leading-relaxed border border-slate-800 shadow-inner overflow-x-auto">
 {`{
   "success": false,
   "error": "Recipient in Blacklist / DND list."
@@ -562,14 +570,14 @@ async def handle_sendora_webhook(request: Request):
           </section>
 
           {/* 4. Auto-Rotate */}
-          <section id="auto-rotate" className="space-y-5 scroll-mt-24 border-t border-slate-200 pt-10">
-            <h2 className="text-2xl font-black flex items-center gap-2.5 text-slate-950">
-              <RotateCcw className="w-6 h-6 text-emerald-600" /> 4. Multi-Device Auto-Rotation (Round-Robin)
+          <section id="auto-rotate" className="space-y-4 scroll-mt-24 border-t border-slate-200 pt-8">
+            <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-slate-900">
+              <RotateCcw className="w-5 h-5 text-emerald-600" /> 4. Multi-Device Auto-Rotation (Round-Robin)
             </h2>
-            <p className="text-base text-slate-800 leading-relaxed font-normal">
+            <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
               Untuk bisnis dengan volume pengiriman tinggi, Sendora menyediakan engine <b>Auto-Rotate</b> yang otomatis membagi antrean pesan bergantian ke seluruh nomor WhatsApp yang aktif terhubung (<b>Round-Robin load balancing</b>).
             </p>
-            <div className="mockup-code bg-slate-900 text-slate-100 text-sm p-4 rounded-xl font-mono shadow-inner">
+            <div className="bg-slate-900 text-slate-100 text-xs p-4 rounded-xl font-mono border border-slate-800 shadow-inner overflow-x-auto">
               <pre><code>{`// Cantumkan "deviceId": "auto_rotate" pada request API:
 {
   "to": "6281234567890",
@@ -577,37 +585,37 @@ async def handle_sendora_webhook(request: Request):
   "deviceId": "auto_rotate"
 }`}</code></pre>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm pt-2">
-              <div className="p-4 bg-white border border-slate-200 shadow-sm rounded-2xl">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs pt-1">
+              <div className="p-3.5 bg-white border border-slate-200/90 shadow-xs rounded-xl">
                 <span className="font-bold text-emerald-700 block mb-1">Mencegah Nomor Terblokir</span>
-                <span className="text-slate-700 text-xs">Volume tidak bertumpuk pada satu kartu SIM.</span>
+                <span className="text-slate-600">Volume tidak bertumpuk pada satu kartu SIM.</span>
               </div>
-              <div className="p-4 bg-white border border-slate-200 shadow-sm rounded-2xl">
+              <div className="p-3.5 bg-white border border-slate-200/90 shadow-xs rounded-xl">
                 <span className="font-bold text-emerald-700 block mb-1">Otomatis Failover</span>
-                <span className="text-slate-700 text-xs">Device yang sedang offline otomatis dilewati.</span>
+                <span className="text-slate-600">Device yang sedang offline otomatis dilewati.</span>
               </div>
-              <div className="p-4 bg-white border border-slate-200 shadow-sm rounded-2xl">
+              <div className="p-3.5 bg-white border border-slate-200/90 shadow-xs rounded-xl">
                 <span className="font-bold text-emerald-700 block mb-1">Zero Configuration</span>
-                <span className="text-slate-700 text-xs">Cukup hubungkan nomor di menu Devices.</span>
+                <span className="text-slate-600">Cukup hubungkan nomor di menu Devices.</span>
               </div>
             </div>
           </section>
 
           {/* 5. Spintax */}
-          <section id="spintax" className="space-y-5 scroll-mt-24 border-t border-slate-200 pt-10">
-            <h2 className="text-2xl font-black flex items-center gap-2.5 text-slate-950">
-              <ShieldCheck className="w-6 h-6 text-emerald-600" /> 5. Spintax & Dynamic Variables
+          <section id="spintax" className="space-y-4 scroll-mt-24 border-t border-slate-200 pt-8">
+            <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-slate-900">
+              <ShieldCheck className="w-5 h-5 text-emerald-600" /> 5. Spintax & Dynamic Variables
             </h2>
-            <p className="text-base text-slate-800 leading-relaxed font-normal">
+            <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
               <b>Spintax (Spin Syntax)</b> memungkinkan Anda menghasilkan ribuan variasi kalimat unik dari satu pesan master dengan format kurung kurawal <code>{`{pilihan1|pilihan2|pilihan3}`}</code>.
             </p>
-            <div className="p-5 bg-white rounded-2xl border border-slate-200 space-y-3 text-sm shadow-sm">
-              <span className="font-bold text-slate-950">Master Template:</span>
-              <div className="mockup-code bg-slate-900 text-slate-100 text-sm p-4 rounded-xl font-mono shadow-inner">
+            <div className="p-4 sm:p-5 bg-white rounded-2xl border border-slate-200/90 space-y-2.5 text-xs shadow-xs">
+              <span className="font-bold text-slate-900">Master Template:</span>
+              <div className="bg-slate-900 text-slate-100 text-xs p-3.5 rounded-xl font-mono border border-slate-800 shadow-inner overflow-x-auto">
                 <pre><code>{`{Halo|Hai|Selamat pagi} {{name}}, pesanan {{order_id}} {sudah|telah} {dikirim|diproses} via {{kurir}}!`}</code></pre>
               </div>
-              <span className="font-bold text-slate-950 block pt-1">Variasi yang Dihasilkan:</span>
-              <ul className="list-disc list-inside space-y-1.5 font-mono text-xs text-slate-800 font-semibold">
+              <span className="font-bold text-slate-900 block pt-1">Variasi yang Dihasilkan:</span>
+              <ul className="list-disc list-inside space-y-1 font-mono text-xs text-slate-700">
                 <li>"Halo Budi, pesanan INV-01 sudah dikirim via JNE!"</li>
                 <li>"Hai Budi, pesanan INV-01 telah diproses via JNE!"</li>
                 <li>"Selamat pagi Budi, pesanan INV-01 sudah diproses via JNE!"</li>
@@ -616,18 +624,18 @@ async def handle_sendora_webhook(request: Request):
           </section>
 
           {/* 6. Devices API */}
-          <section id="devices-api" className="space-y-5 scroll-mt-24 border-t border-slate-200 pt-10">
-            <h2 className="text-2xl font-black flex items-center gap-2.5 text-slate-950">
-              <Smartphone className="w-6 h-6 text-emerald-600" /> 6. Manajemen WhatsApp Devices API
+          <section id="devices-api" className="space-y-4 scroll-mt-24 border-t border-slate-200 pt-8">
+            <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-slate-900">
+              <Smartphone className="w-5 h-5 text-emerald-600" /> 6. Manajemen WhatsApp Devices API
             </h2>
-            <p className="text-base text-slate-800 leading-relaxed font-normal">
+            <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
               Cek daftar device WhatsApp yang terdaftar beserta status koneksi socket real-time.
             </p>
-            <div className="flex items-center gap-3">
-              <span className="badge badge-info text-white font-mono font-bold text-xs px-3 py-3.5">GET</span>
-              <span className="font-mono font-bold text-base text-slate-950">/api/gateway/sessions</span>
+            <div className="flex items-center gap-2.5">
+              <span className="bg-sky-600 text-white font-mono font-bold text-xs px-2.5 py-0.5 rounded-lg">GET</span>
+              <span className="font-mono font-bold text-xs sm:text-sm text-slate-900">/api/gateway/sessions</span>
             </div>
-            <div className="mockup-code bg-slate-900 text-slate-100 text-sm p-4 rounded-xl font-mono shadow-inner">
+            <div className="bg-slate-900 text-slate-100 text-xs p-4 rounded-xl font-mono border border-slate-800 shadow-inner overflow-x-auto">
               <pre><code>{`// Response:
 {
   "success": true,
@@ -645,215 +653,126 @@ async def handle_sendora_webhook(request: Request):
           </section>
 
           {/* 7. Messages Status */}
-          <section id="messages-status" className="space-y-5 scroll-mt-24 border-t border-slate-200 pt-10">
-            <h2 className="text-2xl font-black flex items-center gap-2.5 text-slate-950">
-              <Activity className="w-6 h-6 text-emerald-600" /> 7. Siklus Status Pesan (Message Lifecycle)
+          <section id="messages-status" className="space-y-4 scroll-mt-24 border-t border-slate-200 pt-8">
+            <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-slate-900">
+              <Activity className="w-5 h-5 text-emerald-600" /> 7. Siklus Status Pesan (Message Lifecycle)
             </h2>
-            <p className="text-base text-slate-800 leading-relaxed font-normal">
+            <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
               Setiap pesan yang diproses melalui sistem Sendora melewati transisi status berikut:
             </p>
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center text-sm font-mono font-bold">
-              <div className="p-3.5 bg-white rounded-xl border border-slate-300 text-slate-900 shadow-sm">1. QUEUED</div>
-              <div className="p-3.5 bg-amber-100 text-amber-900 rounded-xl border border-amber-300 shadow-sm">2. PROCESSING</div>
-              <div className="p-3.5 bg-sky-100 text-sky-900 rounded-xl border border-sky-300 shadow-sm">3. SENT</div>
-              <div className="p-3.5 bg-emerald-100 text-emerald-900 rounded-xl border border-emerald-300 shadow-sm">4. DELIVERED</div>
-              <div className="p-3.5 bg-indigo-100 text-indigo-900 rounded-xl border border-indigo-300 shadow-sm">5. READ</div>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-center text-xs font-mono font-bold">
+              <div className="p-3 bg-white rounded-xl border border-slate-200 text-slate-800 shadow-2xs">1. QUEUED</div>
+              <div className="p-3 bg-amber-50 text-amber-800 rounded-xl border border-amber-200 shadow-2xs">2. PROCESSING</div>
+              <div className="p-3 bg-sky-50 text-sky-800 rounded-xl border border-sky-200 shadow-2xs">3. SENT</div>
+              <div className="p-3 bg-emerald-50 text-emerald-800 rounded-xl border border-emerald-200 shadow-2xs">4. DELIVERED</div>
+              <div className="p-3 bg-indigo-50 text-indigo-800 rounded-xl border border-indigo-200 shadow-2xs">5. READ</div>
             </div>
           </section>
 
           {/* 8. Webhooks */}
-          <section id="webhooks" className="space-y-6 scroll-mt-24 border-t border-slate-200 pt-10">
+          <section id="webhooks" className="space-y-5 scroll-mt-24 border-t border-slate-200 pt-8">
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-300 mb-2">
-                <Webhook className="w-3.5 h-3.5 text-emerald-700" /> Two-Way Messaging Event Stream
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-semibold border border-emerald-200 mb-2">
+                <Webhook className="w-3.5 h-3.5 text-emerald-600" /> Two-Way Messaging Event Stream
               </div>
-              <h2 className="text-2xl md:text-3xl font-black text-slate-950 flex items-center gap-2.5">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900 flex items-center gap-2">
                 8. Inbound Webhooks & HMAC Signature Verification
               </h2>
             </div>
 
-            <p className="text-base text-slate-800 leading-relaxed font-normal">
-              <b>Inbound Webhook</b> adalah mekanisme pengiriman data otomatis secara <i>real-time</i> dari server Sendora ke URL endpoint aplikasi/server Anda setiap kali terjadi aktivitas di WhatsApp (seperti pesan balasan dari pelanggan, laporan status centang dua, nomor meminta berhenti kirim, atau perangkat terputus).
+            <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
+              <b>Inbound Webhook</b> adalah mekanisme pengiriman data otomatis secara <i>real-time</i> dari server Sendora ke URL endpoint aplikasi/server Anda setiap kali terjadi aktivitas di WhatsApp.
             </p>
 
             {/* Architecture Flow Diagram */}
-            <div className="p-5 bg-white rounded-2xl border border-slate-200 space-y-3 shadow-sm">
-              <h4 className="font-bold text-sm text-slate-950 flex items-center gap-2">
+            <div className="p-4 sm:p-5 bg-white rounded-2xl border border-slate-200/90 space-y-3 shadow-xs">
+              <h4 className="font-bold text-xs sm:text-sm text-slate-900 flex items-center gap-2">
                 <Activity className="w-4 h-4 text-emerald-600" /> Alur Kerja Inbound Webhook:
               </h4>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
-                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
-                  <span className="font-extrabold text-slate-900 block">1. Pelanggan Chat</span>
-                  <p className="text-slate-600">Pelanggan mengirim pesan balasan / status pesan berubah di WhatsApp.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 text-xs">
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+                  <span className="font-bold text-slate-900 block">1. Pelanggan Chat</span>
+                  <p className="text-slate-600 text-[11px]">Pelanggan mengirim pesan balasan di WhatsApp.</p>
                 </div>
-                <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl space-y-1">
-                  <span className="font-extrabold text-emerald-900 block">2. Gateway Mendeteksi</span>
-                  <p className="text-emerald-800">Sendora Gateway menangkap event pesan WhatsApp secara instan (&lt; 200ms).</p>
+                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl space-y-1">
+                  <span className="font-bold text-emerald-900 block">2. Gateway Tangkap</span>
+                  <p className="text-emerald-800 text-[11px]">Sendora menangkap event pesan secara instan (&lt; 200ms).</p>
                 </div>
-                <div className="p-3.5 bg-sky-50 border border-sky-200 rounded-xl space-y-1">
-                  <span className="font-extrabold text-sky-900 block">3. Dispatcher HTTP POST</span>
-                  <p className="text-sky-800">Sendora mengirim HTTP POST payload JSON ke Webhook URL Anda dengan tanda tangan HMAC.</p>
+                <div className="p-3 bg-sky-50 border border-sky-200 rounded-xl space-y-1">
+                  <span className="font-bold text-sky-900 block">3. Dispatcher POST</span>
+                  <p className="text-sky-800 text-[11px]">Sendora mengirim HTTP POST JSON dengan signature HMAC.</p>
                 </div>
-                <div className="p-3.5 bg-purple-50 border border-purple-200 rounded-xl space-y-1">
-                  <span className="font-extrabold text-purple-900 block">4. Server Anda Memproses</span>
-                  <p className="text-purple-800">Aplikasi Anda memvalidasi signature, memproses chat, membalas via AI / bot, dan merespon 200 OK.</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Step-by-Step Usage Guide */}
-            <div className="p-5 md:p-6 bg-white rounded-2xl border border-slate-200 space-y-4 shadow-sm">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-100">
-                <h4 className="font-bold text-base text-slate-950 flex items-center gap-2">
-                  <BookOpen className="w-5 h-5 text-emerald-600" /> Panduan Langkah Penggunaan Webhook (Step-by-Step):
-                </h4>
-                <Link
-                  href="/dashboard/webhooks"
-                  className="btn btn-xs btn-primary gap-1 font-bold text-white shadow-sm self-start sm:self-auto"
-                >
-                  Buka Menu Webhooks <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 text-xs">
-                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200/90 space-y-1.5">
-                  <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 font-extrabold flex items-center justify-center text-[11px]">
-                    1
-                  </div>
-                  <span className="font-bold text-slate-900 block text-xs">Siapkan Endpoint URL</span>
-                  <p className="text-slate-600 leading-relaxed">
-                    Buat route POST di server Anda (misal: <code>/api/webhook</code>) atau gunakan <a href="https://webhook.site" target="_blank" rel="noreferrer" className="text-emerald-600 underline font-semibold">webhook.site</a> untuk uji coba instan.
-                  </p>
-                </div>
-
-                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200/90 space-y-1.5">
-                  <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 font-extrabold flex items-center justify-center text-[11px]">
-                    2
-                  </div>
-                  <span className="font-bold text-slate-900 block text-xs">Daftarkan di Dashboard</span>
-                  <p className="text-slate-600 leading-relaxed">
-                    Masuk ke menu <b>Webhooks</b> di dashboard, klik <b>+ Tambah Endpoint</b>, lalu masukkan URL webhook Anda.
-                  </p>
-                </div>
-
-                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200/90 space-y-1.5">
-                  <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 font-extrabold flex items-center justify-center text-[11px]">
-                    3
-                  </div>
-                  <span className="font-bold text-slate-900 block text-xs">Pilih Event yang Diinginkan</span>
-                  <p className="text-slate-600 leading-relaxed">
-                    Centang event yang ingin didengar (misal: <code>message.received</code> untuk pesan masuk, <code>message.delivered</code>, dsb).
-                  </p>
-                </div>
-
-                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200/90 space-y-1.5">
-                  <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 font-extrabold flex items-center justify-center text-[11px]">
-                    4
-                  </div>
-                  <span className="font-bold text-slate-900 block text-xs">Lakukan Test Ping</span>
-                  <p className="text-slate-600 leading-relaxed">
-                    Klik tombol <b>Test Ping</b> di dashboard untuk memastikan server Anda dapat menerima payload dan merespon <code>200 OK</code>.
-                  </p>
-                </div>
-
-                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200/90 space-y-1.5">
-                  <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 font-extrabold flex items-center justify-center text-[11px]">
-                    5
-                  </div>
-                  <span className="font-bold text-slate-900 block text-xs">Selesai & Live!</span>
-                  <p className="text-slate-600 leading-relaxed">
-                    Kirim chat ke nomor WhatsApp Anda dari HP lain, server Anda akan otomatis menerima data chat secara live.
-                  </p>
+                <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl space-y-1">
+                  <span className="font-bold text-indigo-900 block">4. Server Anda Respon</span>
+                  <p className="text-indigo-800 text-[11px]">Aplikasi memproses chat dan merespon 200 OK.</p>
                 </div>
               </div>
             </div>
 
             {/* Supported Events Table */}
-            <div className="space-y-3">
-              <h4 className="font-bold text-base text-slate-950 flex items-center gap-2">
+            <div className="space-y-2.5">
+              <h4 className="font-bold text-xs sm:text-sm text-slate-900 flex items-center gap-2">
                 <Zap className="w-4 h-4 text-emerald-600" /> Daftar Event Types yang Didukung:
               </h4>
-              <div className="overflow-x-auto border border-slate-200 rounded-2xl shadow-sm bg-white">
-                <table className="table table-sm text-sm">
-                  <thead className="bg-slate-100 text-slate-950 font-black border-b border-slate-200">
+              <div className="overflow-x-auto border border-slate-200 rounded-xl shadow-xs bg-white">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
                     <tr>
-                      <th className="py-3 px-4">Event Type</th>
-                      <th className="py-3 px-4">Deskripsi Peristiwa</th>
-                      <th className="py-3 px-4">Kapan Diterima?</th>
+                      <th className="p-3">Event Type</th>
+                      <th className="p-3">Deskripsi Peristiwa</th>
+                      <th className="p-3">Trigger</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-200 text-slate-900 text-xs">
-                    <tr>
-                      <td className="font-mono font-bold text-emerald-700 py-3 px-4">message.received</td>
-                      <td className="font-medium py-3 px-4">Pesan teks, gambar, atau dokumen masuk dari pelanggan.</td>
-                      <td className="text-slate-600 py-3 px-4">Saat user membalas chat WhatsApp Anda.</td>
+                  <tbody className="divide-y divide-slate-100 text-slate-900">
+                    <tr className="hover:bg-slate-50/50">
+                      <td className="font-mono font-bold text-emerald-700 p-3">message.received</td>
+                      <td className="font-medium p-3">Pesan teks, gambar, atau dokumen masuk dari pelanggan.</td>
+                      <td className="text-slate-600 p-3">Saat user membalas chat WhatsApp.</td>
                     </tr>
-                    <tr>
-                      <td className="font-mono font-bold text-sky-700 py-3 px-4">message.delivered</td>
-                      <td className="font-medium py-3 px-4">Laporan status pesan telah diterima di perangkat penerima (Centang Dua).</td>
-                      <td className="text-slate-600 py-3 px-4">Setelah pesan sukses terkirim dan sampai di HP penerima.</td>
+                    <tr className="hover:bg-slate-50/50">
+                      <td className="font-mono font-bold text-sky-700 p-3">message.delivered</td>
+                      <td className="font-medium p-3">Laporan status pesan diterima di perangkat tujuan (Centang Dua).</td>
+                      <td className="text-slate-600 p-3">Saat pesan sampai di HP penerima.</td>
                     </tr>
-                    <tr>
-                      <td className="font-mono font-bold text-indigo-700 py-3 px-4">message.read</td>
-                      <td className="font-medium py-3 px-4">Laporan status pesan telah dibaca/dibuka (Centang Biru).</td>
-                      <td className="text-slate-600 py-3 px-4">Saat penerima membuka chat WhatsApp.</td>
+                    <tr className="hover:bg-slate-50/50">
+                      <td className="font-mono font-bold text-indigo-700 p-3">message.read</td>
+                      <td className="font-medium p-3">Laporan status pesan dibaca/dibuka (Centang Biru).</td>
+                      <td className="text-slate-600 p-3">Saat penerima membuka chat.</td>
                     </tr>
-                    <tr>
-                      <td className="font-mono font-bold text-teal-700 py-3 px-4">device.connected</td>
-                      <td className="font-medium py-3 px-4">Koneksi nomor WhatsApp aktif dan siap digunakan.</td>
-                      <td className="text-slate-600 py-3 px-4">Saat QR code berhasil discan atau sesi tersambung kembali.</td>
+                    <tr className="hover:bg-slate-50/50">
+                      <td className="font-mono font-bold text-teal-700 p-3">device.connected</td>
+                      <td className="font-medium p-3">Koneksi nomor WhatsApp aktif dan siap digunakan.</td>
+                      <td className="text-slate-600 p-3">Saat sesi tersambung kembali.</td>
                     </tr>
-                    <tr>
-                      <td className="font-mono font-bold text-rose-700 py-3 px-4">device.disconnected</td>
-                      <td className="font-medium py-3 px-4">Perangkat WhatsApp logout, HP mati, atau kehilangan koneksi internet.</td>
-                      <td className="text-slate-600 py-3 px-4">Segera saat socket WhatsApp terputus.</td>
+                    <tr className="hover:bg-slate-50/50">
+                      <td className="font-mono font-bold text-rose-700 p-3">device.disconnected</td>
+                      <td className="font-medium p-3">Perangkat WhatsApp logout atau HP mati.</td>
+                      <td className="text-slate-600 p-3">Saat socket WhatsApp terputus.</td>
                     </tr>
-                    <tr>
-                      <td className="font-mono font-bold text-amber-700 py-3 px-4">blacklist.opt_out</td>
-                      <td className="font-medium py-3 px-4">Kontak membalas kata kunci <code>STOP</code> atau <code>UNSUB</code>.</td>
-                      <td className="text-slate-600 py-3 px-4">Nomor otomatis dimasukkan ke Blacklist & DND.</td>
+                    <tr className="hover:bg-slate-50/50">
+                      <td className="font-mono font-bold text-amber-700 p-3">blacklist.opt_out</td>
+                      <td className="font-medium p-3">Kontak membalas kata kunci <code>STOP</code> atau <code>UNSUB</code>.</td>
+                      <td className="text-slate-600 p-3">Nomor otomatis masuk DND.</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
             </div>
 
-            {/* Payload JSON Example */}
-            <div className="space-y-3">
-              <h4 className="font-bold text-base text-slate-950 flex items-center gap-2">
-                <Code2 className="w-4 h-4 text-emerald-600" /> Contoh Struktur Payload JSON (Event: message.received):
-              </h4>
-              <div className="mockup-code bg-slate-900 text-slate-100 text-sm p-4 rounded-xl font-mono shadow-inner">
-                <pre><code>{`{
-  "event": "message.received",
-  "timestamp": "2026-09-06T15:25:00.120Z",
-  "data": {
-    "messageId": "msg_981726351271",
-    "deviceId": "dev_01_support",
-    "from": "6281234567890",
-    "pushName": "Budi Santoso",
-    "messageType": "text",
-    "message": "Halo kak, saya mau tanya harga paket langganannya?",
-    "isGroup": false
-  }
-}`}</code></pre>
-              </div>
-            </div>
-
             {/* Signature Verification Code Switcher */}
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <h4 className="font-bold text-base text-slate-950 flex items-center gap-2">
+                <h4 className="font-bold text-xs sm:text-sm text-slate-900 flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-emerald-600" /> Verifikasi Keamanan Header HMAC-SHA256:
                 </h4>
-                <div className="flex bg-slate-200/80 p-1 rounded-xl text-xs font-bold gap-1 self-start sm:self-auto">
+                <div className="flex bg-slate-100 p-1 rounded-xl text-xs font-semibold gap-1 self-start sm:self-auto border border-slate-200">
                   {(["nodejs", "php", "python"] as const).map((lang) => (
                     <button
                       key={lang}
                       onClick={() => setSelectedWebhookLang(lang)}
-                      className={`px-3 py-1 rounded-lg transition-all ${
+                      className={`px-2.5 py-0.5 rounded-lg transition-all cursor-pointer ${
                         selectedWebhookLang === lang
-                          ? "bg-white text-slate-900 shadow-sm"
+                          ? "bg-white text-slate-900 shadow-2xs font-bold"
                           : "text-slate-600 hover:text-slate-900"
                       }`}
                     >
@@ -863,17 +782,13 @@ async def handle_sendora_webhook(request: Request):
                 </div>
               </div>
 
-              <p className="text-xs text-slate-600">
-                Setiap webhook request menyertakan header <code>X-Sendora-Signature</code>. Gunakan Webhook Secret Anda untuk memastikan request benar-benar berasal dari server resmi Sendora.
-              </p>
-
               <div className="relative">
-                <div className="mockup-code bg-slate-900 text-slate-100 text-sm p-4 rounded-xl font-mono shadow-inner">
+                <div className="bg-slate-900 text-slate-100 text-xs p-4 sm:p-5 rounded-xl font-mono leading-relaxed border border-slate-800 shadow-inner overflow-x-auto">
                   <pre><code>{snippets.webhookVerify[selectedWebhookLang]}</code></pre>
                 </div>
                 <button
                   onClick={() => copyCode(snippets.webhookVerify[selectedWebhookLang], "webhook-code")}
-                  className="absolute top-3 right-3 btn btn-xs btn-ghost text-slate-400 hover:text-white gap-1 bg-slate-800/80 border border-slate-700"
+                  className="absolute top-3 right-3 inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold text-slate-300 hover:text-white bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-lg transition-colors cursor-pointer"
                 >
                   {copiedSection === "webhook-code" ? (
                     <>
@@ -889,56 +804,56 @@ async def handle_sendora_webhook(request: Request):
             </div>
 
             {/* Best Practice Note */}
-            <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-900 space-y-1.5 shadow-sm">
-              <span className="font-extrabold flex items-center gap-1.5 text-emerald-800">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Best Practice & Standar Response:
+            <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 space-y-1 shadow-2xs">
+              <span className="font-bold flex items-center gap-1.5 text-emerald-800">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> Best Practice & Standar Response:
               </span>
-              <ul className="list-disc list-inside space-y-1 text-emerald-800 font-medium">
-                <li>Server Anda <b>wajib merespon dengan status HTTP 200</b> dalam waktu maksimal 5 detik agar event dianggap berhasil dikirim.</li>
-                <li>Jika server endpoint Anda mengembalikan status 5xx atau timeout, sistem retry otomatis Sendora akan mencoba mengirim ulang hingga 3 kali dengan jeda eksponensial.</li>
+              <ul className="list-disc list-inside space-y-0.5 text-emerald-800 text-[11px]">
+                <li>Server Anda <b>wajib merespon status HTTP 200</b> dalam waktu maksimal 5 detik.</li>
+                <li>Jika server endpoint timeout atau 5xx, sistem retry otomatis akan mencoba hingga 3 kali dengan jeda eksponensial.</li>
               </ul>
             </div>
           </section>
 
           {/* 9. Rate Limits */}
-          <section id="rate-limits" className="space-y-5 scroll-mt-24 border-t border-slate-200 pt-10">
-            <h2 className="text-2xl font-black flex items-center gap-2.5 text-slate-950">
-              <Clock className="w-6 h-6 text-emerald-600" /> 9. Rate Limits & Kuota Paket
+          <section id="rate-limits" className="space-y-4 scroll-mt-24 border-t border-slate-200 pt-8">
+            <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-slate-900">
+              <Clock className="w-5 h-5 text-emerald-600" /> 9. Rate Limits & Kuota Paket
             </h2>
-            <div className="overflow-x-auto border border-slate-200 rounded-2xl shadow-sm bg-white">
-              <table className="table table-sm text-sm">
-                <thead className="bg-slate-100 text-slate-950 font-black border-b border-slate-200">
+            <div className="overflow-x-auto border border-slate-200 rounded-xl shadow-xs bg-white">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
                   <tr>
-                    <th className="py-3 px-4">Paket</th>
-                    <th className="py-3 px-4">Batas Request / Menit</th>
-                    <th className="py-3 px-4">Maksimal Devices</th>
-                    <th className="py-3 px-4">Kuota Bulanan</th>
+                    <th className="p-3">Paket</th>
+                    <th className="p-3">Batas Request / Menit</th>
+                    <th className="p-3">Maksimal Devices</th>
+                    <th className="p-3">Kuota Bulanan</th>
                   </tr>
                 </thead>
-                <tbody className="font-mono text-sm divide-y divide-slate-200 text-slate-900">
-                  <tr>
-                    <td className="font-bold py-3 px-4">Free Trial</td>
-                    <td className="py-3 px-4">10 req / min</td>
-                    <td className="py-3 px-4">1 Device</td>
-                    <td className="py-3 px-4">100 pesan</td>
+                <tbody className="font-mono text-xs divide-y divide-slate-100 text-slate-900">
+                  <tr className="hover:bg-slate-50/50">
+                    <td className="font-bold p-3">Free Trial</td>
+                    <td className="p-3">10 req / min</td>
+                    <td className="p-3">1 Device</td>
+                    <td className="p-3">100 pesan</td>
                   </tr>
-                  <tr>
-                    <td className="font-bold text-sky-700 py-3 px-4">Starter</td>
-                    <td className="py-3 px-4">60 req / min</td>
-                    <td className="py-3 px-4">2 Devices</td>
-                    <td className="py-3 px-4">5.000 pesan</td>
+                  <tr className="hover:bg-slate-50/50">
+                    <td className="font-bold text-sky-700 p-3">Starter</td>
+                    <td className="p-3">60 req / min</td>
+                    <td className="p-3">2 Devices</td>
+                    <td className="p-3">5.000 pesan</td>
                   </tr>
-                  <tr>
-                    <td className="font-bold text-emerald-700 py-3 px-4">Business</td>
-                    <td className="py-3 px-4">300 req / min</td>
-                    <td className="py-3 px-4">5 Devices</td>
-                    <td className="py-3 px-4">25.000 pesan</td>
+                  <tr className="hover:bg-slate-50/50">
+                    <td className="font-bold text-emerald-700 p-3">Business</td>
+                    <td className="p-3">300 req / min</td>
+                    <td className="p-3">5 Devices</td>
+                    <td className="p-3">25.000 pesan</td>
                   </tr>
-                  <tr>
-                    <td className="font-bold text-indigo-700 py-3 px-4">Pro Unlimited</td>
-                    <td className="py-3 px-4">1.000 req / min</td>
-                    <td className="py-3 px-4">10 Devices</td>
-                    <td className="py-3 px-4">100.000 pesan</td>
+                  <tr className="hover:bg-slate-50/50">
+                    <td className="font-bold text-indigo-700 p-3">Pro Unlimited</td>
+                    <td className="p-3">1.000 req / min</td>
+                    <td className="p-3">10 Devices</td>
+                    <td className="p-3">100.000 pesan</td>
                   </tr>
                 </tbody>
               </table>
@@ -946,39 +861,39 @@ async def handle_sendora_webhook(request: Request):
           </section>
 
           {/* 10. Errors */}
-          <section id="errors" className="space-y-5 scroll-mt-24 border-t border-slate-200 pt-10 pb-20">
-            <h2 className="text-2xl font-black flex items-center gap-2.5 text-slate-950">
-              <AlertCircle className="w-6 h-6 text-emerald-600" /> 10. Error Codes & Troubleshooting
+          <section id="errors" className="space-y-4 scroll-mt-24 border-t border-slate-200 pt-8 pb-16">
+            <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-slate-900">
+              <AlertCircle className="w-5 h-5 text-emerald-600" /> 10. Error Codes & Troubleshooting
             </h2>
-            <div className="overflow-x-auto border border-slate-200 rounded-2xl shadow-sm bg-white">
-              <table className="table table-sm text-sm">
-                <thead className="bg-slate-100 text-slate-950 font-black border-b border-slate-200">
+            <div className="overflow-x-auto border border-slate-200 rounded-xl shadow-xs bg-white">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
                   <tr>
-                    <th className="py-3 px-4">Status Code</th>
-                    <th className="py-3 px-4">Penyebab Error</th>
-                    <th className="py-3 px-4">Solusi</th>
+                    <th className="p-3">Status Code</th>
+                    <th className="p-3">Penyebab Error</th>
+                    <th className="p-3">Solusi</th>
                   </tr>
                 </thead>
-                <tbody className="font-mono text-sm divide-y divide-slate-200 text-slate-900">
-                  <tr>
-                    <td className="font-bold text-rose-600 py-3 px-4">400 Bad Request</td>
-                    <td className="font-sans text-slate-800 py-3 px-4">Format nomor salah atau parameter wajib kosong.</td>
-                    <td className="font-sans text-slate-800 py-3 px-4">Pastikan format nomor diawali kode negara seperti <code>62812xxx</code>.</td>
+                <tbody className="divide-y divide-slate-100 text-xs text-slate-900">
+                  <tr className="hover:bg-slate-50/50">
+                    <td className="font-mono font-bold text-rose-600 p-3">400 Bad Request</td>
+                    <td className="p-3 text-slate-700">Format nomor salah atau parameter wajib kosong.</td>
+                    <td className="p-3 text-slate-600">Pastikan format nomor diawali kode negara seperti <code>62812xxx</code>.</td>
                   </tr>
-                  <tr>
-                    <td className="font-bold text-rose-600 py-3 px-4">401 Unauthorized</td>
-                    <td className="font-sans text-slate-800 py-3 px-4">API Key tidak valid atau header authorization hilang.</td>
-                    <td className="font-sans text-slate-800 py-3 px-4">Periksa kembali API Key di dashboard Sendora.</td>
+                  <tr className="hover:bg-slate-50/50">
+                    <td className="font-mono font-bold text-rose-600 p-3">401 Unauthorized</td>
+                    <td className="p-3 text-slate-700">API Key tidak valid atau header authorization hilang.</td>
+                    <td className="p-3 text-slate-600">Periksa kembali API Key di dashboard Sendora.</td>
                   </tr>
-                  <tr>
-                    <td className="font-bold text-rose-600 py-3 px-4">404 Not Found</td>
-                    <td className="font-sans text-slate-800 py-3 px-4">Tidak ada WhatsApp device aktif yang terhubung.</td>
-                    <td className="font-sans text-slate-800 py-3 px-4">Scan QR Code di menu WhatsApp Devices pada dashboard.</td>
+                  <tr className="hover:bg-slate-50/50">
+                    <td className="font-mono font-bold text-rose-600 p-3">404 Not Found</td>
+                    <td className="p-3 text-slate-700">Tidak ada WhatsApp device aktif yang terhubung.</td>
+                    <td className="p-3 text-slate-600">Scan QR Code di menu WhatsApp Devices pada dashboard.</td>
                   </tr>
-                  <tr>
-                    <td className="font-bold text-rose-600 py-3 px-4">429 Rate Limit</td>
-                    <td className="font-sans text-slate-800 py-3 px-4">Melampaui batas kecepatan request paket Anda.</td>
-                    <td className="font-sans text-slate-800 py-3 px-4">Tambahkan jeda request atau upgrade paket Anda.</td>
+                  <tr className="hover:bg-slate-50/50">
+                    <td className="font-mono font-bold text-rose-600 p-3">429 Rate Limit</td>
+                    <td className="p-3 text-slate-700">Melampaui batas kecepatan request paket Anda.</td>
+                    <td className="p-3 text-slate-600">Tambahkan jeda request atau upgrade paket Anda.</td>
                   </tr>
                 </tbody>
               </table>
