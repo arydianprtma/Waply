@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import type { SupportTicket, TicketCategory, TicketPriority, TicketStatus } from "@/lib/support-tickets";
+import { useUserSession } from "@/lib/use-user-session";
 import Link from "next/link";
 
 const CATEGORY_LABELS: Record<TicketCategory, string> = {
@@ -59,6 +60,7 @@ const PRIORITY_BADGES: Record<TicketPriority, { label: string; color: string }> 
 };
 
 export default function UserSupportPage() {
+  const { user } = useUserSession();
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -210,8 +212,49 @@ export default function UserSupportPage() {
   const activeTickets = tickets.filter((t) => t.status === "OPEN" || t.status === "IN_PROGRESS").length;
   const resolvedTickets = tickets.filter((t) => t.status === "RESOLVED").length;
 
+  const isAccountLocked = user?.status === "BANNED" || user?.status === "SUSPENDED";
+
   return (
     <div className="space-y-8 animate-in fade-in duration-300 pb-12">
+      {/* Account Lock Notification Banner */}
+      {isAccountLocked && (
+        <div className={`p-4 rounded-3xl border shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
+          user?.status === "BANNED"
+            ? "bg-rose-50 border-rose-200 text-rose-900"
+            : "bg-amber-50 border-amber-200 text-amber-900"
+        }`}>
+          <div className="flex items-start sm:items-center gap-3">
+            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
+              user?.status === "BANNED" ? "bg-rose-100 text-rose-600" : "bg-amber-100 text-amber-600"
+            }`}>
+              <ShieldAlert className="w-5 h-5" />
+            </div>
+            <div className="space-y-0.5">
+              <h4 className="text-xs sm:text-sm font-black">
+                {user?.status === "BANNED"
+                  ? "Akun Anda Sedang Diblokir (Banned)"
+                  : "Akun Anda Sedang Ditangguhkan (Suspended)"}
+              </h4>
+              <p className="text-[11px] sm:text-xs opacity-90 leading-relaxed">
+                Anda berada di Ruang Pusat Bantuan. Anda dapat membuat tiket baru atau membalas pesan di bawah untuk mengajukan permohonan banding dan berkomunikasi langsung dengan customer support.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setCategory("APPEAL");
+              setPriority("HIGH");
+              setSubject(`Permohonan Banding Akun ${user?.email}`);
+              setCreateModalOpen(true);
+            }}
+            className="px-4 py-2 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 transition-all shrink-0 shadow-xs cursor-pointer"
+          >
+            + Ajukan Banding Cepat
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

@@ -23,6 +23,7 @@ import {
   Phone,
   Mail,
   Zap,
+  ChevronDown,
 } from "lucide-react";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import type { SupportTicket, TicketCategory, TicketPriority, TicketStatus } from "@/lib/support-tickets";
@@ -146,6 +147,14 @@ export default function AdminTicketsPage() {
   };
 
   const handleUpdateStatus = async (ticketId: string, newStatus: TicketStatus) => {
+    // Optimistic UI update
+    setTickets((prev) =>
+      prev.map((t) => (t.id === ticketId ? { ...t, status: newStatus, updatedAt: new Date().toISOString() } : t))
+    );
+    if (selectedTicket && selectedTicket.id === ticketId) {
+      setSelectedTicket((prev) => (prev ? { ...prev, status: newStatus } : null));
+    }
+
     try {
       const res = await fetch(`/api/tickets/${ticketId}`, {
         method: "PATCH",
@@ -161,10 +170,19 @@ export default function AdminTicketsPage() {
       }
     } catch (err) {
       console.error("Failed to update status:", err);
+      fetchTickets();
     }
   };
 
   const handleUpdatePriority = async (ticketId: string, newPriority: TicketPriority) => {
+    // Optimistic UI update
+    setTickets((prev) =>
+      prev.map((t) => (t.id === ticketId ? { ...t, priority: newPriority, updatedAt: new Date().toISOString() } : t))
+    );
+    if (selectedTicket && selectedTicket.id === ticketId) {
+      setSelectedTicket((prev) => (prev ? { ...prev, priority: newPriority } : null));
+    }
+
     try {
       const res = await fetch(`/api/tickets/${ticketId}`, {
         method: "PATCH",
@@ -180,6 +198,7 @@ export default function AdminTicketsPage() {
       }
     } catch (err) {
       console.error("Failed to update priority:", err);
+      fetchTickets();
     }
   };
 
@@ -515,29 +534,53 @@ export default function AdminTicketsPage() {
                     <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${CATEGORY_COLORS[selectedTicket.category]}`}>
                       {CATEGORY_LABELS[selectedTicket.category]}
                     </span>
-                    {/* Priority Selector */}
-                    <select
-                      value={selectedTicket.priority}
-                      onChange={(e) => handleUpdatePriority(selectedTicket.id, e.target.value as TicketPriority)}
-                      className="text-[10px] font-bold px-2 py-0.5 rounded-md border border-slate-200 bg-white text-slate-800"
-                    >
-                      <option value="LOW">Prioritas: Low</option>
-                      <option value="MEDIUM">Prioritas: Medium</option>
-                      <option value="HIGH">Prioritas: High</option>
-                      <option value="URGENT">Prioritas: Urgent</option>
-                    </select>
+                    {/* Priority Selector Badge */}
+                    <div className="relative inline-flex items-center">
+                      <select
+                        value={selectedTicket.priority}
+                        onChange={(e) => handleUpdatePriority(selectedTicket.id, e.target.value as TicketPriority)}
+                        className={`text-[11px] font-bold px-3 py-1 rounded-xl border appearance-none pr-6 cursor-pointer transition-all shadow-xs ${
+                          selectedTicket.priority === "URGENT"
+                            ? "bg-rose-100 text-rose-800 border-rose-300 hover:bg-rose-200"
+                            : selectedTicket.priority === "HIGH"
+                            ? "bg-orange-100 text-orange-800 border-orange-300 hover:bg-orange-200"
+                            : selectedTicket.priority === "MEDIUM"
+                            ? "bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-200"
+                            : "bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200"
+                        }`}
+                        title="Ubah Tingkat Prioritas Tiket"
+                      >
+                        <option value="LOW">Prioritas: Rendah (Low)</option>
+                        <option value="MEDIUM">Prioritas: Sedang (Medium)</option>
+                        <option value="HIGH">Prioritas: Tinggi (High)</option>
+                        <option value="URGENT">Prioritas: Mendesak (Urgent)</option>
+                      </select>
+                      <ChevronDown className="w-3 h-3 text-current opacity-70 absolute right-2 pointer-events-none" />
+                    </div>
 
-                    {/* Status Selector */}
-                    <select
-                      value={selectedTicket.status}
-                      onChange={(e) => handleUpdateStatus(selectedTicket.id, e.target.value as TicketStatus)}
-                      className="text-[10px] font-bold px-2 py-0.5 rounded-md border border-slate-200 bg-white text-slate-800"
-                    >
-                      <option value="OPEN">Status: Open</option>
-                      <option value="IN_PROGRESS">Status: In Progress</option>
-                      <option value="RESOLVED">Status: Resolved</option>
-                      <option value="CLOSED">Status: Closed</option>
-                    </select>
+                    {/* Status Selector Badge */}
+                    <div className="relative inline-flex items-center">
+                      <select
+                        value={selectedTicket.status}
+                        onChange={(e) => handleUpdateStatus(selectedTicket.id, e.target.value as TicketStatus)}
+                        className={`text-[11px] font-bold px-3 py-1 rounded-xl border appearance-none pr-6 cursor-pointer transition-all shadow-xs ${
+                          selectedTicket.status === "OPEN"
+                            ? "bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-200"
+                            : selectedTicket.status === "IN_PROGRESS"
+                            ? "bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200"
+                            : selectedTicket.status === "RESOLVED"
+                            ? "bg-emerald-100 text-emerald-800 border-emerald-300 hover:bg-emerald-200"
+                            : "bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200"
+                        }`}
+                        title="Ubah Status Penanganan Tiket"
+                      >
+                        <option value="OPEN">Status: Menunggu Respon (Open)</option>
+                        <option value="IN_PROGRESS">Status: Sedang Ditangani (In Progress)</option>
+                        <option value="RESOLVED">Status: Selesai (Resolved)</option>
+                        <option value="CLOSED">Status: Ditutup (Closed)</option>
+                      </select>
+                      <ChevronDown className="w-3 h-3 text-current opacity-70 absolute right-2 pointer-events-none" />
+                    </div>
                   </div>
                   <h3 className="text-base font-black text-slate-900 line-clamp-1">
                     {selectedTicket.subject}

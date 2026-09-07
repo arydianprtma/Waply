@@ -151,7 +151,8 @@ export function Sidebar() {
               {section.items.map((item) => {
                 const isActive = pathname === item.href;
                 const Icon = item.icon;
-                const isAccountSuspendedOrBanned = user?.status === "BANNED" || user?.status === "SUSPENDED";
+                const isSupportPage = item.href === "/dashboard/support";
+                const isAccountSuspendedOrBanned = (user?.status === "BANNED" || user?.status === "SUSPENDED") && !isSupportPage;
                 const isPlanLocked = Boolean(item.accessKey && planAccess[item.accessKey] === false);
                 const isLocked = isAccountSuspendedOrBanned || isPlanLocked;
 
@@ -163,7 +164,7 @@ export function Sidebar() {
                       onClick={isMobile ? closeNav : undefined}
                       className={clsx(
                         "flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm transition-all",
-                        isActive && !isAccountSuspendedOrBanned
+                        isActive
                           ? "bg-emerald-600 text-white shadow-sm font-bold"
                           : isLocked
                           ? "text-base-content/40 font-medium hover:bg-base-200 hover:text-base-content opacity-75"
