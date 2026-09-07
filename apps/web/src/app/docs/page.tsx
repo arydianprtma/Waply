@@ -35,6 +35,10 @@ import {
   CreditCard,
   LifeBuoy,
   Sparkles,
+  Lock,
+  Package,
+  Tag,
+  Headphones,
 } from "lucide-react";
 
 type CodeLang = "curl" | "nodejs" | "python" | "php";
@@ -814,18 +818,30 @@ async def handle_sendora_webhook(request: Request):
             <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
               Simpan format pesan siap pakai di menu <Link href="/dashboard/templates" className="text-emerald-700 font-semibold underline decoration-emerald-300 underline-offset-2 hover:text-emerald-800">Templates</Link> untuk efisiensi tim customer service dan pengiriman broadcast:
             </p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
-              <div className="p-3 bg-white border border-slate-200 rounded-xl text-center font-semibold text-slate-800">
-                🔐 OTP Verifikasi
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <div className="p-3.5 bg-white border border-slate-200/90 rounded-xl flex items-center gap-2.5 font-semibold text-slate-800 shadow-xs">
+                <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-700">
+                  <Lock className="w-4 h-4" />
+                </div>
+                <span>OTP Verifikasi</span>
               </div>
-              <div className="p-3 bg-white border border-slate-200 rounded-xl text-center font-semibold text-slate-800">
-                📦 Notifikasi Order
+              <div className="p-3.5 bg-white border border-slate-200/90 rounded-xl flex items-center gap-2.5 font-semibold text-slate-800 shadow-xs">
+                <div className="p-1.5 rounded-lg bg-sky-50 text-sky-700">
+                  <Package className="w-4 h-4" />
+                </div>
+                <span>Notifikasi Order</span>
               </div>
-              <div className="p-3 bg-white border border-slate-200 rounded-xl text-center font-semibold text-slate-800">
-                🔥 Promo Diskon
+              <div className="p-3.5 bg-white border border-slate-200/90 rounded-xl flex items-center gap-2.5 font-semibold text-slate-800 shadow-xs">
+                <div className="p-1.5 rounded-lg bg-amber-50 text-amber-700">
+                  <Tag className="w-4 h-4" />
+                </div>
+                <span>Promo Diskon</span>
               </div>
-              <div className="p-3 bg-white border border-slate-200 rounded-xl text-center font-semibold text-slate-800">
-                💬 CS Support
+              <div className="p-3.5 bg-white border border-slate-200/90 rounded-xl flex items-center gap-2.5 font-semibold text-slate-800 shadow-xs">
+                <div className="p-1.5 rounded-lg bg-indigo-50 text-indigo-700">
+                  <Headphones className="w-4 h-4" />
+                </div>
+                <span>CS Support</span>
               </div>
             </div>
           </section>
