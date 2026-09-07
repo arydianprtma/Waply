@@ -5,6 +5,7 @@ import { normalizePhoneNumber } from "./contacts";
 import { getNextRotatedDevice } from "./device-rotation";
 import { fetchGateway } from "./gateway-client";
 import { applyWatermarkIfFree } from "./watermark";
+import { canUserSendMessage, recordSentMessage } from "./messages";
 
 export type BroadcastStatus = "DRAFT" | "RUNNING" | "PAUSED" | "COMPLETED" | "CANCELLED";
 
@@ -310,6 +311,19 @@ export async function startBroadcastCampaign(userId: string, campaignId: string)
         const { finalMessage } = applyWatermarkIfFree(campaign.userId, rendered);
         recipient.renderedMessage = finalMessage;
 
+        // Quota check before sending
+        const quotaCheck = canUserSendMessage(campaign.userId);
+        if (!quotaCheck.allowed) {
+          recipient.status = "FAILED";
+          recipient.error = quotaCheck.reason || "Kuota pesan akun Anda telah habis";
+          campaign.failedCount++;
+          campaign.status = "PAUSED";
+          campaign.updatedAt = new Date().toISOString();
+          saveLocalCampaigns(campaigns);
+          activeRunners.delete(campaignId);
+          break;
+        }
+
         // Determine device to use (supports per-message Round-Robin rotation if auto_rotate)
         const activeDev = await getNextRotatedDevice(campaign.deviceId);
         const sendDeviceId = activeDev?.id || deviceId;
@@ -331,6 +345,17 @@ export async function startBroadcastCampaign(userId: string, campaignId: string)
             recipient.sentAt = new Date().toISOString();
             recipient.messageId = json.data?.messageId;
             campaign.sentCount++;
+
+            // Record sent message
+            await recordSentMessage({
+              userId: campaign.userId,
+              deviceId: sendDeviceId,
+              recipient: recipient.phoneNumber,
+              content: finalMessage,
+              status: "SENT",
+              providerMessageId: json.data?.messageId || null,
+              sentAt: recipient.sentAt,
+            });
           } else {
             recipient.status = "FAILED";
             recipient.error = json.error || "Gagal dikirim via gateway";

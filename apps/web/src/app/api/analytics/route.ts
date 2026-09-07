@@ -6,6 +6,8 @@ import { getUserSessionIds } from "@/lib/user-devices";
 import fs from "fs";
 import path from "path";
 
+import { getStoredMessages } from "@/lib/messages";
+
 const DATA_DIR = path.resolve(process.cwd(), ".sendora-data");
 
 function readJson<T>(file: string, fallback: T): T {
@@ -32,26 +34,29 @@ export async function GET() {
 
     // Read all local storage files
     const contacts = readJson<any[]>("contacts.json", []);
-    const broadcasts = readJson<any[]>("broadcast.json", []);
+    const broadcasts = readJson<any[]>("broadcast-campaigns.json", []);
     const autoreplies = readJson<any[]>("autoreply.json", []);
-    const messages = readJson<any[]>("messages.json", []);
     const webhookLogs = readJson<any[]>("webhook_logs.json", []);
     const templates = readJson<any[]>("templates.json", []);
+
+    // Get user-specific stored messages
+    const userMessages = getStoredMessages(user.role === "admin" ? undefined : user.id);
+    const sentMessages = userMessages.filter((m) => m.status === "SENT");
 
     const totalContacts = contacts.length;
     const totalBroadcasts = broadcasts.length;
     const activeBroadcasts = broadcasts.filter((b: any) =>
-      ["running", "pending"].includes(b.status)
+      ["RUNNING", "running", "pending"].includes(b.status)
     ).length;
     const totalAutoReplies = autoreplies.length;
     const activeAutoReplies = autoreplies.filter((r: any) => r.isActive).length;
-    const totalMessages = messages.length;
+    const totalMessages = sentMessages.length;
     const totalTemplates = templates.length;
     const totalWebhookLogs = webhookLogs.length;
 
     // Messages sent today
     const today = new Date().toISOString().split("T")[0];
-    const messagesToday = messages.filter((m: any) =>
+    const messagesToday = sentMessages.filter((m: any) =>
       (m.sentAt || m.createdAt || "").startsWith(today)
     ).length;
 
@@ -59,18 +64,17 @@ export async function GET() {
     const days = getLast7Days();
     const messageTrend = days.map((day) => ({
       date: day,
-      count: messages.filter((m: any) =>
+      count: sentMessages.filter((m: any) =>
         (m.sentAt || m.createdAt || "").startsWith(day)
       ).length,
     }));
 
     // Recent activity (last 5 messages)
-    const recentMessages = messages
-      .slice(-5)
-      .reverse()
+    const recentMessages = sentMessages
+      .slice(0, 5)
       .map((m: any) => ({
         type: "message",
-        label: `Pesan terkirim ke ${m.to || m.phone || "—"}`,
+        label: `Pesan terkirim ke ${m.recipient || m.to || m.phone || "—"}`,
         time: m.sentAt || m.createdAt || new Date().toISOString(),
       }));
 

@@ -9,6 +9,7 @@ import { apiMessageRateLimiter, checkRateLimitResponse } from "@/lib/rate-limite
 import { sendMessageSchema, validateSchema } from "@/lib/validation-schemas";
 import { sanitizePhoneNumber, isValidPhoneNumber } from "@/lib/sanitizer";
 import { applyWatermarkIfFree } from "@/lib/watermark";
+import { canUserSendMessage, recordSentMessage } from "@/lib/messages";
 
 const GATEWAY_URL = process.env.GATEWAY_INTERNAL_URL || "http://localhost:3002";
 const GATEWAY_SECRET = process.env.GATEWAY_SECRET || "sendora_internal_gateway_token_key";
@@ -42,6 +43,18 @@ export async function POST(request: Request) {
     }
 
     const userId = auth.user.id;
+
+    // Check Quota
+    const quotaCheck = canUserSendMessage(userId, auth.user.role);
+    if (!quotaCheck.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: quotaCheck.reason || "Kuota pengiriman pesan akun Anda telah habis. Silakan upgrade paket untuk melanjutkan.",
+        },
+        { status: 403 }
+      );
+    }
 
     // 3. Validate & Sanitize Request Body
     const body = await request.json().catch(() => ({}));
@@ -154,28 +167,22 @@ export async function POST(request: Request) {
       failReason = `Gateway connection error: ${err.message}`;
     }
 
-    // 8. Save Message to Database (with local fallback)
+    // 8. Save Message to Database and local storage
     const msgId = `msg_${Date.now()}`;
     const sentAt = status === "SENT" ? new Date().toISOString() : null;
 
-    try {
-      await prisma.message.create({
-        data: {
-          id: msgId,
-          userId,
-          deviceId: targetDeviceId,
-          recipient,
-          content: finalContent,
-          rawContent: message,
-          status: status === "SENT" ? "SENT" : "FAILED",
-          failReason,
-          providerMessageId,
-          sentAt: status === "SENT" ? new Date() : null,
-        },
-      });
-    } catch (dbErr) {
-      console.warn("DB save message skipped:", (dbErr as Error).message);
-    }
+    await recordSentMessage({
+      id: msgId,
+      userId,
+      deviceId: targetDeviceId,
+      recipient,
+      content: finalContent,
+      rawContent: message,
+      status: status === "SENT" ? "SENT" : "FAILED",
+      failReason,
+      providerMessageId,
+      sentAt,
+    });
 
     if (status === "FAILED") {
       return NextResponse.json(
