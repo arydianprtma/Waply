@@ -42,8 +42,9 @@ export default function AdminUsersPage() {
 
   // Action Modals
   const [selectedUser, setSelectedUser] = useState<ManagedUser | null>(null);
-  const [banModalOpen, setBanModalOpen] = useState(false);
-  const [banReason, setBanReason] = useState("");
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [statusActionType, setStatusActionType] = useState<"SUSPENDED" | "BANNED">("BANNED");
+  const [statusReason, setStatusReason] = useState("");
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [planModalOpen, setPlanModalOpen] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState("STARTER");
@@ -81,6 +82,13 @@ export default function AdminUsersPage() {
     setTimeout(() => setToastMsg(null), 3000);
   };
 
+  const openStatusModal = (user: ManagedUser, type: "SUSPENDED" | "BANNED") => {
+    setSelectedUser(user);
+    setStatusActionType(type);
+    setStatusReason("");
+    setStatusModalOpen(true);
+  };
+
   const handleUpdateStatus = async (
     userId: string,
     status: UserAccountStatus,
@@ -101,8 +109,8 @@ export default function AdminUsersPage() {
       const json = await res.json();
       if (json.success) {
         showToast(json.message);
-        setBanModalOpen(false);
-        setBanReason("");
+        setStatusModalOpen(false);
+        setStatusReason("");
         setSelectedUser(null);
         fetchUsers();
       }
@@ -458,17 +466,14 @@ export default function AdminUsersPage() {
                           {u.status === "ACTIVE" ? (
                             <>
                               <button
-                                onClick={() => handleUpdateStatus(u.id, "SUSPENDED")}
+                                onClick={() => openStatusModal(u, "SUSPENDED")}
                                 className="btn btn-ghost btn-xs text-amber-600 hover:bg-amber-50 rounded-lg"
                                 title="Tangguhkan Akun (Suspend)"
                               >
                                 Suspend
                               </button>
                               <button
-                                onClick={() => {
-                                  setSelectedUser(u);
-                                  setBanModalOpen(true);
-                                }}
+                                onClick={() => openStatusModal(u, "BANNED")}
                                 className="btn btn-ghost btn-xs text-rose-600 hover:bg-rose-50 rounded-lg"
                                 title="Blokir Permanen (Ban)"
                               >
@@ -511,57 +516,139 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      {/* MODAL: Ban Akun User */}
-      {banModalOpen && selectedUser && (
+      {/* MODAL: Suspend / Ban Akun User dengan Input Alasan Wajib */}
+      {statusModalOpen && selectedUser && (
         <ModalPortal>
-          <div className="fixed inset-0 z-[99999] bg-black/60 flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-5 animate-in fade-in zoom-in-95 duration-150 my-auto relative z-10">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 font-bold text-base text-rose-600">
-                  <ShieldAlert className="w-5 h-5" /> Blokir Akun Pengguna (Ban)
+          <div className="fixed inset-0 z-[99999] bg-black/60 flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150">
+            <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-5 animate-in zoom-in-95 duration-150 my-auto relative z-10">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                <div
+                  className={`flex items-center gap-2 font-black text-base ${
+                    statusActionType === "BANNED" ? "text-rose-600" : "text-amber-600"
+                  }`}
+                >
+                  {statusActionType === "BANNED" ? (
+                    <ShieldAlert className="w-5 h-5 shrink-0" />
+                  ) : (
+                    <AlertTriangle className="w-5 h-5 shrink-0" />
+                  )}
+                  <span>
+                    {statusActionType === "BANNED"
+                      ? "Blokir Akun Pengguna (Ban)"
+                      : "Tangguhkan Akun Pengguna (Suspend)"}
+                  </span>
                 </div>
                 <button
-                  onClick={() => setBanModalOpen(false)}
+                  onClick={() => setStatusModalOpen(false)}
                   className="btn btn-ghost btn-circle btn-xs text-slate-400"
                 >
                   ✕
                 </button>
               </div>
 
-              <p className="text-xs text-slate-600">
-                Apakah Anda yakin ingin memblokir akun <strong>{selectedUser.name}</strong> ({selectedUser.email})? Pengguna tidak akan dapat mengakses gateway dan sistem Sendora.
+              {/* User Card Summary */}
+              <div
+                className={`p-3.5 rounded-2xl border text-xs space-y-1 ${
+                  statusActionType === "BANNED"
+                    ? "bg-rose-50/70 border-rose-200 text-rose-950"
+                    : "bg-amber-50/70 border-amber-200 text-amber-950"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-extrabold text-sm">{selectedUser.name}</span>
+                  <span className="badge badge-sm font-bold bg-white/80 border-slate-200 text-slate-700">
+                    Paket: {selectedUser.planId}
+                  </span>
+                </div>
+                <div className="text-slate-600 font-medium">{selectedUser.email}</div>
+                <div className="text-[10px] text-slate-400 font-mono">ID: {selectedUser.id}</div>
+              </div>
+
+              {/* Notice */}
+              <p className="text-xs text-slate-600 leading-relaxed">
+                {statusActionType === "BANNED"
+                  ? "Tindakan ini akan memblokir total akses pengguna. Seluruh koneksi WhatsApp, pesan broadcast, dan API Key akan langsung dinonaktifkan."
+                  : "Tindakan ini akan menangguhkan akun pengguna sementara waktu sampai diaktifkan kembali."}
               </p>
 
+              {/* Preset Quick Reasons */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 block">
-                  Alasan Pemblokiran:
+                  Pilih Alasan Cepat (Preset) atau Ketik Sendiri:
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    "Pelanggaran aturan sistem Sendora",
+                    "Spamming & Broadcast tanpa persetujuan",
+                    "Terdeteksi anomali bot abuse / DDoS traffic",
+                    "Penggunaan nomor tidak valid / melanggar ToS",
+                    "Keterlambatan pembayaran tagihan langganan",
+                  ].map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setStatusReason(preset)}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all text-left ${
+                        statusReason === preset
+                          ? "bg-slate-900 text-white border-slate-900 shadow-xs"
+                          : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                      }`}
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Reason Textarea Input */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-800 flex items-center justify-between">
+                  <span>Isi Alasan Penonaktifan (Wajib):</span>
+                  <span className="text-[10px] text-slate-400 font-normal">
+                    Akan ditampilkan ke pengguna
+                  </span>
                 </label>
                 <textarea
-                  className="textarea textarea-bordered w-full text-xs"
-                  placeholder="Misal: Pelanggaran spam WhatsApp massal, terdeteksi aktivitas mencurigakan..."
+                  className="textarea textarea-bordered w-full text-xs font-medium leading-relaxed rounded-xl focus:outline-primary"
+                  placeholder="Ketik alasan penonaktifan akun secara jelas dan spesifik..."
                   rows={3}
-                  value={banReason}
-                  onChange={(e) => setBanReason(e.target.value)}
+                  value={statusReason}
+                  onChange={(e) => setStatusReason(e.target.value)}
                   required
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2">
+              {/* Footer Actions */}
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
                 <button
                   type="button"
-                  onClick={() => setBanModalOpen(false)}
-                  className="btn btn-ghost btn-sm rounded-xl"
+                  onClick={() => setStatusModalOpen(false)}
+                  className="btn btn-ghost btn-sm rounded-xl font-bold"
                 >
                   Batal
                 </button>
                 <button
                   type="button"
-                  disabled={actionLoading}
-                  onClick={() => handleUpdateStatus(selectedUser.id, "BANNED", banReason)}
-                  className="btn btn-error btn-sm gap-2 rounded-xl"
+                  disabled={actionLoading || !statusReason.trim()}
+                  onClick={() =>
+                    handleUpdateStatus(selectedUser.id, statusActionType, statusReason.trim())
+                  }
+                  className={`btn btn-sm gap-2 rounded-xl font-bold text-white shadow-md ${
+                    statusActionType === "BANNED"
+                      ? "btn-error shadow-rose-600/20"
+                      : "btn-warning shadow-amber-600/20"
+                  }`}
                 >
-                  {actionLoading ? <span className="loading loading-spinner loading-xs" /> : <UserX className="w-4 h-4" />}
-                  Konfirmasi Blokir Akun
+                  {actionLoading ? (
+                    <span className="loading loading-spinner loading-xs" />
+                  ) : statusActionType === "BANNED" ? (
+                    <UserX className="w-4 h-4" />
+                  ) : (
+                    <AlertTriangle className="w-4 h-4" />
+                  )}
+                  {statusActionType === "BANNED"
+                    ? "Konfirmasi Blokir Akun"
+                    : "Konfirmasi Suspend Akun"}
                 </button>
               </div>
             </div>
