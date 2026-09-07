@@ -555,14 +555,14 @@ export default function AdminSettingsPage() {
             <div className="form-control">
               <label className="label py-1">
                 <span className="label-text font-bold text-xs text-slate-700">Format / Teks Watermark</span>
-                <span className="label-text-alt text-slate-400">Mendukung format Markdown WhatsApp (*bold*, _italic_)</span>
+                <span className="label-text-alt text-slate-400">Mendukung format Markdown WhatsApp (```monospace```, *bold*, _italic_)</span>
               </label>
               <textarea
                 rows={3}
                 className="textarea textarea-bordered font-mono text-xs leading-relaxed"
-                value={settings.watermarkConfig?.text ?? "\n\n—\n⚡ *Sendora.com*"}
+                value={settings.watermarkConfig?.text ?? "\n\n—\n```Sendora.com```"}
                 onChange={(e) => updateWatermark("text", e.target.value)}
-                placeholder="\n\n—\n⚡ *Sendora.com*"
+                placeholder="\n\n—\n```Sendora.com```"
               />
             </div>
 
@@ -576,9 +576,9 @@ export default function AdminSettingsPage() {
               <div className="bg-[#0b141a] p-4 rounded-xl border border-slate-800/80 max-w-md ml-auto text-xs text-slate-200 font-sans shadow-lg space-y-2">
                 <div className="whitespace-pre-wrap leading-relaxed font-medium">
                   {`Nama : Ahmad Fauzi\nKelas : XII RPL 1\nAbsensi : Hadir\nJam : 07:15 WIB`}
-                  <span className="text-emerald-400 font-bold">
+                  <span className="text-emerald-400 font-mono font-bold block mt-2">
                     {settings.watermarkConfig?.enabled
-                      ? (settings.watermarkConfig?.text || "\n\n—\n⚡ *Sendora.com*")
+                      ? (settings.watermarkConfig?.text || "\n\n—\n```Sendora.com```")
                       : ""}
                   </span>
                 </div>
@@ -586,7 +586,7 @@ export default function AdminSettingsPage() {
               </div>
 
               <p className="text-[11px] text-slate-400 italic">
-                * Keterangan: Jika klien meng-upgrade akun ke <strong>Paket Pro</strong>, teks <span className="text-emerald-400">"{settings.watermarkConfig?.text?.trim() || "Sendora.com"}"</span> di atas akan otomatis hilang 100%.
+                * Keterangan: Jika klien meng-upgrade akun ke <strong>Paket Pro</strong>, teks <span className="text-emerald-400">"{settings.watermarkConfig?.text?.trim() || "```Sendora.com```"}"</span> di atas akan otomatis hilang 100%.
               </p>
             </div>
           </div>
