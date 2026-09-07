@@ -264,6 +264,24 @@ export function updateTicketPriority(
   return all[index];
 }
 
+export function markTicketAsRead(
+  ticketId: string,
+  role: "admin" | "user"
+): SupportTicket | null {
+  const all = getAllTickets();
+  const index = all.findIndex((t) => t.id.toUpperCase() === ticketId.toUpperCase());
+  if (index === -1) return null;
+
+  if (role === "admin") {
+    all[index].unreadByAdmin = false;
+  } else {
+    all[index].unreadByUser = false;
+  }
+
+  saveTickets(all);
+  return all[index];
+}
+
 export function deleteTicket(ticketId: string): boolean {
   const all = getAllTickets();
   const filtered = all.filter((t) => t.id.toUpperCase() !== ticketId.toUpperCase());

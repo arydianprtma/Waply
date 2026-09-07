@@ -23,11 +23,14 @@ import { performLogout } from "@/lib/auth-logout";
 import { SendoraLogo } from "@/components/brand/SendoraLogo";
 import { useMobileNav } from "@/lib/mobile-nav-context";
 
+import { useAdminTickets } from "@/lib/admin-tickets-context";
+
 interface NavItem {
   name: string;
   href: string;
   icon: React.ElementType;
   badge?: string;
+  isTicketItem?: boolean;
 }
 
 interface NavSection {
@@ -38,6 +41,7 @@ interface NavSection {
 export function AdminSidebar() {
   const pathname = usePathname();
   const { isOpen, closeNav } = useMobileNav();
+  const { unreadCount } = useAdminTickets();
 
   const navigation: NavSection[] = [
     {
@@ -49,7 +53,13 @@ export function AdminSidebar() {
       title: "SaaS & Pengguna",
       items: [
         { name: "Manajemen User", href: "/admin/users", icon: Users, badge: "Users" },
-        { name: "Tiket Bantuan & CS", href: "/admin/tickets", icon: Headphones, badge: "CS" },
+        {
+          name: "Tiket Bantuan & CS",
+          href: "/admin/tickets",
+          icon: Headphones,
+          badge: unreadCount > 0 ? `${unreadCount}` : "CS",
+          isTicketItem: true,
+        },
         { name: "Pengumuman", href: "/admin/announcements", icon: Megaphone, badge: "Broadcast" },
         { name: "Layanan & Paket", href: "/admin/plans", icon: Layers, badge: "Plans" },
         { name: "Voucher & Promo", href: "/admin/vouchers", icon: Ticket, badge: "Promo" },
@@ -101,6 +111,8 @@ export function AdminSidebar() {
               {section.items.map((item) => {
                 const isActive = pathname === item.href;
                 const Icon = item.icon;
+                const isTicketWithBadge = item.isTicketItem && unreadCount > 0;
+
                 return (
                   <li key={item.href}>
                     <Link
@@ -121,8 +133,10 @@ export function AdminSidebar() {
                       {item.badge && (
                         <span
                           className={clsx(
-                            "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide",
-                            isActive
+                            "inline-flex items-center justify-center min-w-5 px-1.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wide transition-transform",
+                            isTicketWithBadge
+                              ? "bg-rose-500 text-white shadow-xs animate-pulse ring-2 ring-rose-300 dark:ring-rose-900"
+                              : isActive
                               ? "bg-white/20 text-white"
                               : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
                           )}

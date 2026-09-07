@@ -18,6 +18,7 @@ import {
   Pin,
   CheckCheck,
   Menu,
+  Headphones,
 } from "lucide-react";
 
 import { useUserSession } from "@/lib/use-user-session";
@@ -39,6 +40,7 @@ interface AnnouncementItem {
 export function Navbar() {
   const [announcements, setAnnouncements] = useState<AnnouncementItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [adminTicketUnreadCount, setAdminTicketUnreadCount] = useState(0);
   const [loadingAnnouncements, setLoadingAnnouncements] = useState(false);
   const { user: currentUser } = useUserSession();
   const router = useRouter();
@@ -58,11 +60,37 @@ export function Navbar() {
     }
   }, []);
 
+  const fetchAdminTickets = useCallback(async () => {
+    if (currentUser?.role !== "admin") return;
+    try {
+      const res = await fetch("/api/tickets?scope=all", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data)) {
+          const unread = data.data.filter(
+            (t: any) => t.unreadByAdmin === true || (t.status === "OPEN" && t.messages.length > 0)
+          ).length;
+          setAdminTicketUnreadCount(unread);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to fetch admin tickets:", e);
+    }
+  }, [currentUser?.role]);
+
   useEffect(() => {
     fetchAnnouncements();
     const interval = setInterval(fetchAnnouncements, 60000); // Check every 60s
     return () => clearInterval(interval);
   }, [fetchAnnouncements]);
+
+  useEffect(() => {
+    if (currentUser?.role === "admin") {
+      fetchAdminTickets();
+      const interval = setInterval(fetchAdminTickets, 10000); // Check every 10s
+      return () => clearInterval(interval);
+    }
+  }, [currentUser?.role, fetchAdminTickets]);
 
   const handleMarkAllRead = async () => {
     try {
@@ -185,7 +213,29 @@ export function Navbar() {
       </div>
 
       {/* Right side: Quick Actions & Profile */}
-      <div className="flex-none flex items-center gap-3">
+      <div className="flex-none flex items-center gap-2 sm:gap-3">
+        {/* Admin Support Tickets Notification Button */}
+        {isAdmin && (
+          <Link
+            href="/admin/tickets"
+            className="btn btn-ghost btn-circle btn-sm text-base-content/70 hover:text-base-content relative"
+            title={
+              adminTicketUnreadCount > 0
+                ? `${adminTicketUnreadCount} Tiket Bantuan Butuh Penanganan`
+                : "Tiket Bantuan & CS"
+            }
+          >
+            <div className="indicator">
+              <Headphones className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              {adminTicketUnreadCount > 0 && (
+                <span className="badge badge-xs bg-rose-500 text-white border-white dark:border-slate-900 indicator-item font-extrabold text-[10px] px-1 h-4 min-w-4 flex items-center justify-center rounded-full animate-pulse shadow-xs">
+                  {adminTicketUnreadCount > 9 ? "9+" : adminTicketUnreadCount}
+                </span>
+              )}
+            </div>
+          </Link>
+        )}
+
         {/* Notifications */}
         <div className="dropdown dropdown-end">
           <button

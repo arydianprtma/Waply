@@ -4,6 +4,7 @@ import {
   getTicketById,
   updateTicketStatus,
   updateTicketPriority,
+  markTicketAsRead,
   deleteTicket,
   TicketStatus,
   TicketPriority,
@@ -25,17 +26,21 @@ export async function GET(
     }
 
     // Check authorization: admin or owner
-    if (
-      user.role !== "admin" &&
-      ticket.userId !== user.id &&
-      ticket.userEmail.toLowerCase() !== user.email.toLowerCase()
-    ) {
+    const isAdmin = user.role === "admin";
+    const isOwner =
+      ticket.userId === user.id ||
+      ticket.userEmail.toLowerCase() === user.email.toLowerCase();
+
+    if (!isAdmin && !isOwner) {
       return NextResponse.json({ success: false, error: "Akses tidak diizinkan" }, { status: 403 });
     }
 
+    // Automatically mark as read
+    const updated = markTicketAsRead(id, isAdmin ? "admin" : "user") || ticket;
+
     return NextResponse.json({
       success: true,
-      data: ticket,
+      data: updated,
     });
   } catch (error: any) {
     console.error("[Ticket Detail API] GET Error:", error);

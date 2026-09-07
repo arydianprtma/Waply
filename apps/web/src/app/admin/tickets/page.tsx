@@ -20,9 +20,11 @@ import {
   Phone,
   Mail,
   Zap,
+  Volume2,
 } from "lucide-react";
 import type { SupportTicket, TicketCategory, TicketPriority, TicketStatus } from "@/lib/support-tickets";
 import { useUserSession } from "@/lib/use-user-session";
+import { playTicketNotificationSound } from "@/lib/admin-tickets-context";
 
 const CATEGORY_LABELS: Record<TicketCategory, string> = {
   TECHNICAL: "Kendala Teknis",
@@ -139,14 +141,25 @@ export default function AdminTicketsPage() {
           </p>
         </div>
 
-        <button
-          onClick={() => fetchTickets()}
-          disabled={loading}
-          className="p-2.5 rounded-2xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all shadow-xs cursor-pointer self-start sm:self-center flex items-center gap-2 text-xs font-bold"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-primary" : ""}`} />
-          <span>Refresh Data</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-center">
+          <button
+            onClick={() => playTicketNotificationSound()}
+            className="p-2.5 rounded-2xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-all shadow-xs cursor-pointer flex items-center gap-2 text-xs font-bold"
+            title="Uji coba suara lonceng notifikasi tiket"
+          >
+            <Volume2 className="w-4 h-4 text-emerald-600" />
+            <span className="hidden sm:inline">Tes Suara</span>
+          </button>
+
+          <button
+            onClick={() => fetchTickets()}
+            disabled={loading}
+            className="p-2.5 rounded-2xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all shadow-xs cursor-pointer flex items-center gap-2 text-xs font-bold"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-primary" : ""}`} />
+            <span>Refresh Data</span>
+          </button>
+        </div>
       </div>
 
       {/* Metrics Row */}
