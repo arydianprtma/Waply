@@ -13,7 +13,9 @@ import {
   AlertCircle,
   Loader2,
   CheckCircle2,
+  Sparkles,
 } from "lucide-react";
+import Link from "next/link";
 import { ConnectDeviceModal } from "@/components/devices/ConnectDeviceModal";
 
 interface SessionData {
@@ -25,8 +27,17 @@ interface SessionData {
   lastError?: string;
 }
 
+interface DeviceLimitInfo {
+  maxDevices: number;
+  currentCount: number;
+  canAddMore: boolean;
+  planName: string;
+  planId: string;
+}
+
 export default function DevicesPage() {
   const [sessions, setSessions] = useState<SessionData[]>([]);
+  const [limit, setLimit] = useState<DeviceLimitInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -41,6 +52,9 @@ export default function DevicesPage() {
       if (json.success && Array.isArray(json.data)) {
         setSessions(json.data);
       }
+      if (json.limit) {
+        setLimit(json.limit);
+      }
     } catch (err) {
       console.error("Failed to fetch sessions:", err);
     } finally {
@@ -53,6 +67,18 @@ export default function DevicesPage() {
     const interval = setInterval(fetchSessions, 5000);
     return () => clearInterval(interval);
   }, []);
+
+  const handleOpenConnect = async () => {
+    if (limit && !limit.canAddMore) {
+      await showAlert({
+        title: "Batas WhatsApp Device Penuh",
+        message: `Paket Anda saat ini (${limit.planName}) hanya mendukung maksimal ${limit.maxDevices} WhatsApp Device. Silakan upgrade paket Anda untuk menghubungkan device tambahan.`,
+        variant: "warning",
+      });
+      return;
+    }
+    setModalOpen(true);
+  };
 
   const handleDisconnect = async (sessionId: string) => {
     const isConfirmed = await confirm({
@@ -78,25 +104,73 @@ export default function DevicesPage() {
     }
   };
 
+  const isLimitReached = Boolean(limit && !limit.canAddMore);
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">WhatsApp Devices</h1>
-          <p className="text-sm text-base-content/60 mt-1">
+          <div className="flex items-center gap-2 mb-1">
+            <h1 className="text-2xl font-bold tracking-tight">WhatsApp Devices</h1>
+            {limit && (
+              <span
+                className={`badge font-bold text-xs ${
+                  isLimitReached
+                    ? "badge-warning text-amber-900 border-amber-300"
+                    : "badge-primary badge-outline"
+                }`}
+              >
+                {sessions.length} / {limit.maxDevices} Device ({limit.planName})
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-base-content/60">
             Kelola nomor WhatsApp yang terhubung ke Sendora WhatsApp Gateway Engine.
           </p>
         </div>
 
-        <button
-          onClick={() => setModalOpen(true)}
-          className="btn btn-primary gap-2 shadow-md shadow-primary/25"
-        >
-          <Plus className="w-4 h-4" />
-          Connect WhatsApp Baru
-        </button>
+        <div className="flex items-center gap-2">
+          {isLimitReached && (
+            <Link
+              href="/dashboard/billing"
+              className="btn btn-sm btn-outline btn-warning gap-1.5 font-bold rounded-xl"
+            >
+              <Sparkles className="w-4 h-4" /> Upgrade Kuota Device
+            </Link>
+          )}
+
+          <button
+            onClick={handleOpenConnect}
+            className={`btn btn-sm md:btn-md gap-2 shadow-md rounded-xl ${
+              isLimitReached
+                ? "btn-ghost border border-amber-300 text-amber-800 bg-amber-50"
+                : "btn-primary shadow-primary/25"
+            }`}
+          >
+            <Plus className="w-4 h-4" />
+            Connect WhatsApp Baru
+          </button>
+        </div>
       </div>
+
+      {/* Limit Reached Warning Banner */}
+      {isLimitReached && limit && (
+        <div className="alert alert-warning p-4 rounded-2xl border border-amber-300 text-xs flex items-center justify-between shadow-xs">
+          <div className="flex items-center gap-2.5 font-medium text-amber-950">
+            <AlertCircle className="w-5 h-5 text-amber-700 shrink-0" />
+            <span>
+              <strong>Batas Device Tercapai:</strong> Anda telah menggunakan seluruh slot ({limit.maxDevices} dari {limit.maxDevices} Device) pada paket <strong>{limit.planName}</strong>. Upgrade untuk menambah slot device WhatsApp.
+            </span>
+          </div>
+          <Link
+            href="/dashboard/billing"
+            className="btn btn-xs bg-amber-800 text-white hover:bg-amber-900 border-none font-bold shrink-0 rounded-lg ml-2"
+          >
+            Lihat Paket Pro
+          </Link>
+        </div>
+      )}
 
       {/* Device List */}
       {loading ? (

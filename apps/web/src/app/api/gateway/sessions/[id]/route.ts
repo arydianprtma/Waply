@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { fetchGateway } from "@/lib/gateway-client";
 import { requireActiveUser } from "@/lib/auth-user";
+import { unregisterUserDevice } from "@/lib/user-devices";
 
 export async function DELETE(
   request: Request,
@@ -13,6 +14,7 @@ export async function DELETE(
       method: "DELETE",
     });
     const data = await res.json();
+    unregisterUserDevice(id);
     return NextResponse.json(data, { status: res.status });
   } catch (error: any) {
     const status = error.message?.includes("403") ? 403 : 503;
