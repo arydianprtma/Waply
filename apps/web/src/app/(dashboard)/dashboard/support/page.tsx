@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Headphones,
   Plus,
@@ -85,10 +85,11 @@ export default function UserSupportPage() {
   // Reply state
   const [replyMessage, setReplyMessage] = useState("");
   const [sendingReply, setSendingReply] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const fetchTickets = useCallback(async () => {
+  const fetchTickets = useCallback(async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const res = await fetch("/api/tickets");
       const json = await res.json();
       if (json.success) {
@@ -97,13 +98,50 @@ export default function UserSupportPage() {
     } catch (err) {
       console.error("Failed to load tickets:", err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
     fetchTickets();
   }, [fetchTickets]);
+
+  // Real-time polling while detail chat modal is open
+  useEffect(() => {
+    if (!detailModalOpen || !selectedTicket) return;
+
+    // Fast poll active ticket every 2 seconds
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/tickets/${selectedTicket.id}`);
+        const json = await res.json();
+        if (json.success && json.data) {
+          setSelectedTicket((prev) => {
+            if (!prev) return json.data;
+            if (
+              prev.messages.length !== json.data.messages.length ||
+              prev.status !== json.data.status ||
+              prev.updatedAt !== json.data.updatedAt
+            ) {
+              return json.data;
+            }
+            return prev;
+          });
+        }
+      } catch (err) {
+        console.error("Live poll ticket error:", err);
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [detailModalOpen, selectedTicket?.id]);
+
+  // Auto scroll to bottom when messages update
+  useEffect(() => {
+    if (detailModalOpen && selectedTicket) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [selectedTicket?.messages?.length, detailModalOpen]);
 
   const handleCopyId = (id: string) => {
     navigator.clipboard.writeText(id);
@@ -138,7 +176,7 @@ export default function UserSupportPage() {
         setMessage("");
         setPhone("");
         setCreateModalOpen(false);
-        fetchTickets();
+        fetchTickets(true);
         if (json.data) {
           setSelectedTicket(json.data);
           setDetailModalOpen(true);
@@ -153,22 +191,40 @@ export default function UserSupportPage() {
     }
   };
 
-  const handleSendReply = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedTicket || !replyMessage.trim()) return;
+  const handleSendReply = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!selectedTicket || !replyMessage.trim() || sendingReply) return;
+
+    const messageText = replyMessage.trim();
+    setReplyMessage("");
+
+    // Optimistic local message append
+    const tempMsg = {
+      id: `temp_${Date.now()}`,
+      ticketId: selectedTicket.id,
+      senderId: user?.id || "usr_current",
+      senderName: user?.name || "Anda (Pengguna)",
+      senderEmail: user?.email || "",
+      senderRole: "user" as const,
+      message: messageText,
+      createdAt: new Date().toISOString(),
+    };
+
+    setSelectedTicket((prev) =>
+      prev ? { ...prev, messages: [...prev.messages, tempMsg], updatedAt: new Date().toISOString() } : null
+    );
 
     try {
       setSendingReply(true);
       const res = await fetch(`/api/tickets/${selectedTicket.id}/reply`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: replyMessage }),
+        body: JSON.stringify({ message: messageText }),
       });
       const json = await res.json();
       if (json.success && json.data) {
         setSelectedTicket(json.data);
-        setReplyMessage("");
-        fetchTickets();
+        fetchTickets(true);
       }
     } catch (err) {
       console.error("Failed to send reply:", err);
@@ -798,6 +854,7 @@ export default function UserSupportPage() {
                     </div>
                   );
                 })}
+                <div ref={messagesEndRef} />
               </div>
 
               {/* Reply Input Form */}
@@ -807,7 +864,13 @@ export default function UserSupportPage() {
                     type="text"
                     value={replyMessage}
                     onChange={(e) => setReplyMessage(e.target.value)}
-                    placeholder="Tulis balasan pesan untuk customer support..."
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendReply();
+                      }
+                    }}
+                    placeholder="Tulis balasan pesan untuk customer support (tekan Enter untuk kirim)..."
                     className="flex-1 text-xs px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                   />
                   <button

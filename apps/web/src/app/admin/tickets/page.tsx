@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Headphones,
   Search,
@@ -97,9 +97,11 @@ export default function AdminTicketsPage() {
   const [deleteTicketId, setDeleteTicketId] = useState<string | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
-  const fetchTickets = useCallback(async () => {
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const fetchTickets = useCallback(async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const res = await fetch("/api/tickets?scope=all");
       const json = await res.json();
       if (json.success) {
@@ -108,13 +110,55 @@ export default function AdminTicketsPage() {
     } catch (err) {
       console.error("Failed to load admin tickets:", err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
     fetchTickets();
+    // Background refresh all tickets every 8 seconds
+    const interval = setInterval(() => {
+      fetchTickets(true);
+    }, 8000);
+    return () => clearInterval(interval);
   }, [fetchTickets]);
+
+  // Live polling active ticket conversation every 2 seconds
+  useEffect(() => {
+    if (!detailModalOpen || !selectedTicket) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/tickets/${selectedTicket.id}`);
+        const json = await res.json();
+        if (json.success && json.data) {
+          setSelectedTicket((prev) => {
+            if (!prev) return json.data;
+            if (
+              prev.messages.length !== json.data.messages.length ||
+              prev.status !== json.data.status ||
+              prev.priority !== json.data.priority ||
+              prev.updatedAt !== json.data.updatedAt
+            ) {
+              return json.data;
+            }
+            return prev;
+          });
+        }
+      } catch (err) {
+        console.error("Live admin poll ticket error:", err);
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [detailModalOpen, selectedTicket?.id]);
+
+  // Auto scroll to bottom when messages update
+  useEffect(() => {
+    if (detailModalOpen && selectedTicket) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [selectedTicket?.messages?.length, detailModalOpen]);
 
   const handleCopyId = (id: string) => {
     navigator.clipboard.writeText(id);
@@ -122,22 +166,40 @@ export default function AdminTicketsPage() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleSendAdminReply = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedTicket || !adminReply.trim()) return;
+  const handleSendAdminReply = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!selectedTicket || !adminReply.trim() || sendingReply) return;
+
+    const replyText = adminReply.trim();
+    setAdminReply("");
+
+    // Optimistic local message append
+    const tempMsg = {
+      id: `temp_${Date.now()}`,
+      ticketId: selectedTicket.id,
+      senderId: "admin-master-sendora-01",
+      senderName: "Sendora CS (Admin)",
+      senderEmail: "support@sendora.id",
+      senderRole: "support" as const,
+      message: replyText,
+      createdAt: new Date().toISOString(),
+    };
+
+    setSelectedTicket((prev) =>
+      prev ? { ...prev, messages: [...prev.messages, tempMsg], updatedAt: new Date().toISOString() } : null
+    );
 
     try {
       setSendingReply(true);
       const res = await fetch(`/api/tickets/${selectedTicket.id}/reply`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: adminReply }),
+        body: JSON.stringify({ message: replyText }),
       });
       const json = await res.json();
       if (json.success && json.data) {
         setSelectedTicket(json.data);
-        setAdminReply("");
-        fetchTickets();
+        fetchTickets(true);
       }
     } catch (err) {
       console.error("Failed to send admin reply:", err);
@@ -657,6 +719,7 @@ export default function AdminTicketsPage() {
                     </div>
                   );
                 })}
+                <div ref={messagesEndRef} />
               </div>
 
               {/* Quick Preset Replies */}
@@ -670,7 +733,7 @@ export default function AdminTicketsPage() {
                       key={idx}
                       type="button"
                       onClick={() => setAdminReply(q.text)}
-                      className="px-2.5 py-1 rounded-xl bg-white border border-slate-200 hover:border-primary/40 hover:bg-primary/5 text-slate-700 font-semibold shrink-0 transition-colors"
+                      className="px-2.5 py-1 rounded-xl bg-white border border-slate-200 hover:border-primary/40 hover:bg-primary/5 text-slate-700 font-semibold shrink-0 transition-colors cursor-pointer"
                     >
                       {q.title}
                     </button>
@@ -685,7 +748,13 @@ export default function AdminTicketsPage() {
                     <textarea
                       value={adminReply}
                       onChange={(e) => setAdminReply(e.target.value)}
-                      placeholder="Tulis respon resmi sebagai Sendora Support Staff..."
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSendAdminReply();
+                        }
+                      }}
+                      placeholder="Tulis respon resmi sebagai Sendora Support Staff (tekan Enter untuk kirim, Shift+Enter untuk baris baru)..."
                       rows={2}
                       className="flex-1 text-xs px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none"
                     />
