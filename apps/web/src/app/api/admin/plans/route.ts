@@ -31,13 +31,31 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { id, name, price, period, maxDevices, monthlyMessages, features, access, isPopular, isActive } = validation.data;
+    const {
+      id,
+      name,
+      price,
+      originalPrice,
+      discountPercent,
+      discountBadge,
+      period,
+      maxDevices,
+      monthlyMessages,
+      features,
+      access,
+      isPopular,
+      isActive,
+      watermarkEnabled,
+    } = validation.data;
 
     const planData: Plan = {
       id,
       name,
       price,
-      period: period || "month",
+      originalPrice: typeof originalPrice === "number" ? originalPrice : undefined,
+      discountPercent: typeof discountPercent === "number" ? discountPercent : undefined,
+      discountBadge: discountBadge || undefined,
+      period: (period as any) || "month",
       maxDevices: maxDevices || 1,
       monthlyMessages: monthlyMessages || 1000,
       features: Array.isArray(features) ? features : (typeof features === "string" ? features.split("\n").filter(Boolean) : []),
@@ -58,6 +76,7 @@ export async function POST(req: NextRequest) {
       },
       isPopular: Boolean(isPopular),
       isActive: isActive !== false,
+      watermarkEnabled: typeof watermarkEnabled === "boolean" ? watermarkEnabled : (id === "FREE" || price === 0),
       createdAt: new Date().toISOString(),
     };
 

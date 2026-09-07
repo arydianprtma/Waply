@@ -1,9 +1,11 @@
-import { getSubscription } from "./billing";
+import { getSubscription, getAllPlans } from "./billing";
+import { DEFAULT_PLANS } from "./billing-types";
 import { getAdminSettings } from "./admin-settings";
 
 /**
- * Applies a watermark/footer to outgoing WhatsApp messages if the user is on the Free or Trial plan.
- * Paid plans (PRO, BUSINESS, ENTERPRISE, etc.) and Admin accounts are white-labeled (no watermark).
+ * Applies a watermark/footer to outgoing WhatsApp messages if the user's plan has watermark enabled
+ * or if the user is on the Free/Trial plan.
+ * Paid plans with watermark disabled and Admin accounts are 100% white-labeled.
  */
 export function applyWatermarkIfFree(
   userId: string,
@@ -27,12 +29,23 @@ export function applyWatermarkIfFree(
       return { finalMessage: message, isWatermarked: false };
     }
 
-    // Check user subscription
+    // Check user subscription & corresponding plan config
     const sub = getSubscription(userId);
-    const isPaidActive = sub.status === "ACTIVE" && sub.planId && sub.planId !== "FREE";
+    const planId = sub?.planId || "FREE";
+    const allPlans = getAllPlans();
+    const currentPlan = allPlans[planId] || DEFAULT_PLANS[planId];
 
-    if (config.applyToFreeOnly && isPaidActive) {
-      // User is on an active paid subscription -> white-labeled (no watermark)
+    let shouldApplyWatermark = false;
+
+    if (currentPlan && typeof currentPlan.watermarkEnabled === "boolean") {
+      shouldApplyWatermark = currentPlan.watermarkEnabled;
+    } else {
+      // Fallback if not specified on plan: Free/expired = true, Active paid = false
+      const isPaidActive = sub.status === "ACTIVE" && planId && planId !== "FREE";
+      shouldApplyWatermark = !isPaidActive;
+    }
+
+    if (!shouldApplyWatermark) {
       return { finalMessage: message, isWatermarked: false };
     }
 

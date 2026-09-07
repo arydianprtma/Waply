@@ -182,6 +182,7 @@ export interface Plan {
   access?: PlanFeatureAccess;
   isPopular?: boolean;
   isActive?: boolean;
+  watermarkEnabled?: boolean;
   createdAt?: string;
 }
 
@@ -339,6 +340,7 @@ export const DEFAULT_PLANS: Record<string, Plan> = {
       apiAccess: true,
       contactsUnlimited: false,
     },
+    watermarkEnabled: true,
     isActive: true,
   },
   STARTER: {

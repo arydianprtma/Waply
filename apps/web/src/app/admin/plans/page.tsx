@@ -67,6 +67,7 @@ export default function AdminPlansPage() {
     access: PlanFeatureAccess;
     isPopular: boolean;
     isActive: boolean;
+    watermarkEnabled: boolean;
   }>({
     id: "",
     name: "",
@@ -83,6 +84,7 @@ export default function AdminPlansPage() {
     access: DEFAULT_ACCESS,
     isPopular: false,
     isActive: true,
+    watermarkEnabled: false,
   });
 
   const fetchPlans = useCallback(async () => {
@@ -125,6 +127,7 @@ export default function AdminPlansPage() {
       access: { ...DEFAULT_ACCESS },
       isPopular: false,
       isActive: true,
+      watermarkEnabled: false,
     });
     setModalOpen(true);
   };
@@ -152,6 +155,7 @@ export default function AdminPlansPage() {
       access: p.access || { ...DEFAULT_ACCESS },
       isPopular: Boolean(p.isPopular),
       isActive: p.isActive !== false,
+      watermarkEnabled: p.watermarkEnabled ?? (p.id === "FREE" || p.price === 0),
     });
     setModalOpen(true);
   };
@@ -202,6 +206,7 @@ export default function AdminPlansPage() {
         access: formData.access,
         isPopular: formData.isPopular,
         isActive: formData.isActive,
+        watermarkEnabled: formData.watermarkEnabled,
       };
 
       const res = await fetch("/api/admin/plans", {
@@ -376,6 +381,15 @@ export default function AdminPlansPage() {
                       }`}>
                         {p.isActive !== false ? "Aktif" : "Nonaktif"}
                       </span>
+                      {p.watermarkEnabled ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border bg-amber-50 text-amber-700 border-amber-200">
+                          <Sparkles className="w-2.5 h-2.5" /> Watermark ON
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border bg-slate-50 text-slate-500 border-slate-200">
+                          White-Label
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -739,6 +753,45 @@ export default function AdminPlansPage() {
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* ── Watermark Pesan Setting ─────────────────────────────── */}
+              <div
+                className={`p-3.5 rounded-2xl border transition-all ${
+                  formData.watermarkEnabled
+                    ? "bg-amber-50/80 border-amber-300"
+                    : "bg-slate-50 border-slate-200"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      className="checkbox checkbox-warning checkbox-sm mt-0.5"
+                      checked={formData.watermarkEnabled}
+                      onChange={(e) =>
+                        setFormData({ ...formData, watermarkEnabled: e.target.checked })
+                      }
+                    />
+                    <div>
+                      <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-600" /> Sertakan Watermark Pesan (Footer Promosi)
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                        Jika diaktifkan, seluruh pesan keluar dari akun pengguna paket ini akan disisipkan watermark footer (misal: untuk Paket Free / Trial). Nonaktifkan untuk Paket Berbayar (White-Label murni).
+                      </p>
+                    </div>
+                  </label>
+                  <span
+                    className={`badge text-[10px] font-bold shrink-0 ${
+                      formData.watermarkEnabled
+                        ? "badge-warning"
+                        : "badge-ghost text-slate-500 bg-white border-slate-200"
+                    }`}
+                  >
+                    {formData.watermarkEnabled ? "Watermark Aktif" : "White-Label"}
+                  </span>
+                </div>
               </div>
 
               {/* Checklist Hak Akses Fitur */}

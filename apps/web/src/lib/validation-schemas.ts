@@ -100,22 +100,15 @@ export const planSchema = z.object({
     .max(100, "Nama Paket maksimal 100 karakter")
     .transform((val) => sanitizeText(val, 100)),
   price: z.coerce.number().min(0, "Harga tidak boleh negatif"),
-  period: z.enum(["month", "year"]).default("month"),
+  period: z.enum(["month", "year", "week", "day"]).default("month"),
   maxDevices: z.coerce.number().int().min(1, "Minimal 1 device"),
   monthlyMessages: z.coerce.number().int().min(0, "Pesan bulanan tidak boleh negatif"),
+  originalPrice: z.coerce.number().optional(),
+  discountPercent: z.coerce.number().optional(),
+  discountBadge: z.string().optional(),
+  watermarkEnabled: z.boolean().optional(),
   features: z.union([z.array(z.string()), z.string()]).optional(),
-  access: z
-    .object({
-      broadcast: z.boolean().optional(),
-      autoReply: z.boolean().optional(),
-      apiAccess: z.boolean().optional(),
-      webhooks: z.boolean().optional(),
-      warmupHealth: z.boolean().optional(),
-      templatesSpintax: z.boolean().optional(),
-      blacklistDnd: z.boolean().optional(),
-      contactsUnlimited: z.boolean().optional(),
-    })
-    .optional(),
+  access: z.record(z.string(), z.boolean()).optional(),
   isPopular: z.boolean().optional(),
   isActive: z.boolean().optional(),
 });
