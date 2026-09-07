@@ -1,20 +1,32 @@
 import { NextResponse } from "next/server";
 import { fetchGateway } from "@/lib/gateway-client";
 import { requireActiveUser } from "@/lib/auth-user";
+import { applyWatermarkIfFree } from "@/lib/watermark";
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireActiveUser();
+    const user = await requireActiveUser();
     const { id } = await params;
     const body = await request.json();
+
+    let outgoingMessage = body.message;
+    if (typeof outgoingMessage === "string" && outgoingMessage.trim()) {
+      const { finalMessage } = applyWatermarkIfFree(user.id, outgoingMessage, user.role);
+      outgoingMessage = finalMessage;
+    }
+
+    const payload = {
+      ...body,
+      message: outgoingMessage,
+    };
 
     const res = await fetchGateway(`/api/sessions/${id}/send`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      body: JSON.stringify(payload),
     });
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });

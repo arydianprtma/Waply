@@ -8,6 +8,7 @@ import { getNextRotatedDevice } from "@/lib/device-rotation";
 import { apiMessageRateLimiter, checkRateLimitResponse } from "@/lib/rate-limiter";
 import { sendMessageSchema, validateSchema } from "@/lib/validation-schemas";
 import { sanitizePhoneNumber, isValidPhoneNumber } from "@/lib/sanitizer";
+import { applyWatermarkIfFree } from "@/lib/watermark";
 
 const GATEWAY_URL = process.env.GATEWAY_INTERNAL_URL || "http://localhost:3002";
 const GATEWAY_SECRET = process.env.GATEWAY_SECRET || "sendora_internal_gateway_token_key";
@@ -112,7 +113,14 @@ export async function POST(request: Request) {
     }
 
     // 6. Parse Spintax & Dynamic Variables
-    const finalContent = parseSpintax(message, variables || {});
+    const parsedContent = parseSpintax(message, variables || {});
+
+    // 7. Apply Watermark for Free/Trial Plan Users
+    const { finalMessage: finalContent, isWatermarked } = applyWatermarkIfFree(
+      userId,
+      parsedContent,
+      auth.user.role
+    );
 
     // 7. Send to Gateway with internal secret token
     let gatewayRes;

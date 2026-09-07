@@ -15,6 +15,11 @@ export interface AdminSystemSettings {
     autoRotateEnabled: boolean;
     circuitBreakerThreshold: number;
   };
+  watermarkConfig: {
+    enabled: boolean;
+    text: string;
+    applyToFreeOnly: boolean;
+  };
   paymentConfig: {
     provider: "midtrans";
     environment: "sandbox" | "production";
@@ -65,6 +70,11 @@ export function getDefaultAdminSettings(): AdminSystemSettings {
       typingPresence: true,
       autoRotateEnabled: true,
       circuitBreakerThreshold: 5,
+    },
+    watermarkConfig: {
+      enabled: true,
+      text: "\n\n—\n⚡ *Sendora.com*",
+      applyToFreeOnly: true,
     },
     paymentConfig: {
       provider: "midtrans",
@@ -136,6 +146,14 @@ export function saveAdminSettings(data: Partial<AdminSystemSettings>): AdminSyst
     gatewayConfig: {
       ...current.gatewayConfig,
       ...(data.gatewayConfig || {}),
+    },
+    watermarkConfig: {
+      ...(current.watermarkConfig || {
+        enabled: true,
+        text: "\n\n—\n⚡ *Sendora.com*",
+        applyToFreeOnly: true,
+      }),
+      ...(data.watermarkConfig || {}),
     },
     paymentConfig: {
       ...current.paymentConfig,

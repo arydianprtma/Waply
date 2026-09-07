@@ -4,6 +4,7 @@ import { parseSpintax } from "./spintax";
 import { normalizePhoneNumber } from "./contacts";
 import { getNextRotatedDevice } from "./device-rotation";
 import { fetchGateway } from "./gateway-client";
+import { applyWatermarkIfFree } from "./watermark";
 
 export type BroadcastStatus = "DRAFT" | "RUNNING" | "PAUSED" | "COMPLETED" | "CANCELLED";
 
@@ -306,7 +307,8 @@ export async function startBroadcastCampaign(userId: string, campaignId: string)
           ...(recipient.variables || {}),
         };
         const rendered = parseSpintax(campaign.messageTemplate, vars);
-        recipient.renderedMessage = rendered;
+        const { finalMessage } = applyWatermarkIfFree(campaign.userId, rendered);
+        recipient.renderedMessage = finalMessage;
 
         // Determine device to use (supports per-message Round-Robin rotation if auto_rotate)
         const activeDev = await getNextRotatedDevice(campaign.deviceId);
@@ -319,7 +321,7 @@ export async function startBroadcastCampaign(userId: string, campaignId: string)
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               to: recipient.phoneNumber,
-              message: rendered,
+              message: finalMessage,
             }),
           });
           const json = await res.json();

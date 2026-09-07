@@ -26,6 +26,7 @@ import {
   Sliders,
   QrCode,
   Check,
+  Sparkles,
 } from "lucide-react";
 
 interface AdminSystemSettings {
@@ -41,6 +42,11 @@ interface AdminSystemSettings {
     typingPresence: boolean;
     autoRotateEnabled: boolean;
     circuitBreakerThreshold: number;
+  };
+  watermarkConfig?: {
+    enabled: boolean;
+    text: string;
+    applyToFreeOnly: boolean;
   };
   paymentConfig: {
     provider: "midtrans";
@@ -83,6 +89,11 @@ const DEFAULT_ADMIN_SETTINGS: AdminSystemSettings = {
     autoRotateEnabled: true,
     circuitBreakerThreshold: 5,
   },
+  watermarkConfig: {
+    enabled: true,
+    text: "\n\n—\n⚡ *Sendora.com*",
+    applyToFreeOnly: true,
+  },
   paymentConfig: {
     provider: "midtrans",
     environment: "sandbox",
@@ -114,7 +125,7 @@ export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [activeTab, setActiveTab] = useState<"gateway" | "payment" | "smtp" | "security" | "maintenance">("gateway");
+  const [activeTab, setActiveTab] = useState<"gateway" | "watermark" | "payment" | "smtp" | "security" | "maintenance">("gateway");
 
   // Gateway Ping Test State
   const [pinging, setPinging] = useState(false);
@@ -260,8 +271,23 @@ export default function AdminSettingsPage() {
     }));
   };
 
+  const updateWatermark = (field: string, value: unknown) => {
+    setSettings((prev) => ({
+      ...prev,
+      watermarkConfig: {
+        ...(prev.watermarkConfig || {
+          enabled: true,
+          text: "\n\n—\n⚡ *Sendora.com*",
+          applyToFreeOnly: true,
+        }),
+        [field]: value,
+      },
+    }));
+  };
+
   const tabs = [
     { key: "gateway", label: "Engine & Gateway", icon: Server },
+    { key: "watermark", label: "Watermark Free Plan", icon: Sparkles },
     { key: "payment", label: "Midtrans Payment", icon: CreditCard },
     { key: "smtp", label: "SMTP & Email", icon: Mail },
     { key: "security", label: "Keamanan Admin", icon: ShieldCheck },
@@ -482,6 +508,86 @@ export default function AdminSettingsPage() {
                   </span>
                 </div>
               </label>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB: Watermark Free Plan */}
+      {activeTab === "watermark" && (
+        <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-200/90 shadow-xs space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-emerald-600" /> Branding & Watermark Pesan (Paket Free / Trial)
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Setiap pesan keluar dari akun pengguna paket Gratis akan disematkan footer branding secara otomatis. Paket berbayar (Pro/Business) 100% white-label tanpa watermark.
+              </p>
+            </div>
+            <span
+              className={`badge badge-sm font-bold ${
+                settings.watermarkConfig?.enabled ? "badge-success text-white" : "badge-ghost text-slate-400"
+              }`}
+            >
+              {settings.watermarkConfig?.enabled ? "Aktif" : "Nonaktif"}
+            </span>
+          </div>
+
+          <div className="space-y-4">
+            <label className="label cursor-pointer justify-start gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-200">
+              <input
+                type="checkbox"
+                className="toggle toggle-primary toggle-sm"
+                checked={settings.watermarkConfig?.enabled ?? true}
+                onChange={(e) => updateWatermark("enabled", e.target.checked)}
+              />
+              <div>
+                <span className="label-text font-bold text-xs text-slate-900 block">
+                  Aktifkan Watermark Otomatis
+                </span>
+                <span className="text-[11px] text-slate-500">
+                  Otomatis sisipkan footer watermark ke pesan keluar yang dikirimkan oleh pengguna Free plan (REST API, Single Send, dan Broadcast).
+                </span>
+              </div>
+            </label>
+
+            <div className="form-control">
+              <label className="label py-1">
+                <span className="label-text font-bold text-xs text-slate-700">Format / Teks Watermark</span>
+                <span className="label-text-alt text-slate-400">Mendukung format Markdown WhatsApp (*bold*, _italic_)</span>
+              </label>
+              <textarea
+                rows={3}
+                className="textarea textarea-bordered font-mono text-xs leading-relaxed"
+                value={settings.watermarkConfig?.text ?? "\n\n—\n⚡ *Sendora.com*"}
+                onChange={(e) => updateWatermark("text", e.target.value)}
+                placeholder="\n\n—\n⚡ *Sendora.com*"
+              />
+            </div>
+
+            {/* Live WhatsApp Message Preview */}
+            <div className="p-5 rounded-2xl bg-slate-900 text-slate-100 border border-slate-800 space-y-3">
+              <div className="flex items-center justify-between text-xs text-emerald-400 font-bold border-b border-slate-800 pb-2">
+                <span>📱 Simulasi Pesan Masuk di WhatsApp Penerima (Contoh: Sistem Absensi):</span>
+                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full">Paket Free Client</span>
+              </div>
+
+              <div className="bg-[#0b141a] p-4 rounded-xl border border-slate-800/80 max-w-md ml-auto text-xs text-slate-200 font-sans shadow-lg space-y-2">
+                <div className="whitespace-pre-wrap leading-relaxed font-medium">
+                  {`Nama : Ahmad Fauzi\nKelas : XII RPL 1\nAbsensi : Hadir\nJam : 07:15 WIB`}
+                  <span className="text-emerald-400 font-bold">
+                    {settings.watermarkConfig?.enabled
+                      ? (settings.watermarkConfig?.text || "\n\n—\n⚡ *Sendora.com*")
+                      : ""}
+                  </span>
+                </div>
+                <div className="text-[10px] text-slate-500 text-right">07:15 ✓✓</div>
+              </div>
+
+              <p className="text-[11px] text-slate-400 italic">
+                * Keterangan: Jika klien meng-upgrade akun ke <strong>Paket Pro</strong>, teks <span className="text-emerald-400">"{settings.watermarkConfig?.text?.trim() || "Sendora.com"}"</span> di atas akan otomatis hilang 100%.
+              </p>
             </div>
           </div>
         </div>
