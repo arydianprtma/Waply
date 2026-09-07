@@ -693,6 +693,59 @@ async def handle_sendora_webhook(request: Request):
                 <pre>{snippets.send[selectedLang]}</pre>
               </div>
             </div>
+
+            {/* Request Body Parameters Table */}
+            <div className="space-y-2.5">
+              <h3 className="text-xs sm:text-sm font-bold text-slate-900">
+                Spesifikasi Parameter Request (JSON Body):
+              </h3>
+              <div className="overflow-x-auto border border-slate-200 rounded-xl shadow-xs bg-white">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+                    <tr>
+                      <th className="p-3">Parameter</th>
+                      <th className="p-3">Tipe Data</th>
+                      <th className="p-3">Status</th>
+                      <th className="p-3">Keterangan &amp; Contoh</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-xs text-slate-900">
+                    <tr className="hover:bg-slate-50/50">
+                      <td className="font-mono font-bold text-emerald-700 p-3">to</td>
+                      <td className="font-mono text-slate-500 p-3">string</td>
+                      <td className="p-3"><span className="text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded">Wajib</span></td>
+                      <td className="p-3 text-slate-600">
+                        <b>Nomor WhatsApp Penerima (Pelanggan)</b>. Wajib format internasional tanpa tanda + (contoh: <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-800">6281234567890</code>). Diisi dengan variabel dinamis dari database/sistem Anda.
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-slate-50/50">
+                      <td className="font-mono font-bold text-emerald-700 p-3">message</td>
+                      <td className="font-mono text-slate-500 p-3">string</td>
+                      <td className="p-3"><span className="text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded">Wajib</span></td>
+                      <td className="p-3 text-slate-600">
+                        Isi pesan WhatsApp. Mendukung format Spintax variasi kata <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-800">{"{Halo|Hai}"}</code> dan tag variabel <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-800">{"{{name}}"}</code>.
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-slate-50/50">
+                      <td className="font-mono font-bold text-emerald-700 p-3">deviceId</td>
+                      <td className="font-mono text-slate-500 p-3">string</td>
+                      <td className="p-3"><span className="text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">Opsional</span></td>
+                      <td className="p-3 text-slate-600">
+                        ID WhatsApp Device pengirim. Gunakan <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-800 font-bold">"auto_rotate"</code> (rekomendasi) agar Sendora otomatis merotasi nomor WhatsApp aktif Anda, atau isi ID session device tertentu.
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-slate-50/50">
+                      <td className="font-mono font-bold text-emerald-700 p-3">variables</td>
+                      <td className="font-mono text-slate-500 p-3">object</td>
+                      <td className="p-3"><span className="text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">Opsional</span></td>
+                      <td className="p-3 text-slate-600">
+                        Key-Value pasangan data untuk menggantikan tag variabel pada template pesan (contoh: <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-800">{`{"name": "Budi", "order_id": "INV-001"}`}</code>).
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </section>
 
           {/* 6. Spintax */}
