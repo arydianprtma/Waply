@@ -316,64 +316,64 @@ export default function AdminPlansPage() {
 
       {/* Category Tabs Filter */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
-        <div className="inline-flex p-1 rounded-2xl bg-slate-100 border border-slate-200 gap-1 text-xs">
+        <div className="inline-flex p-1 rounded-2xl bg-slate-100 border border-slate-200/80 gap-1 text-xs">
           <button
             onClick={() => setFilterCategory("all")}
-            className={`px-3 py-1.5 rounded-xl font-bold transition-all ${
+            className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${
               filterCategory === "all"
-                ? "bg-white text-slate-900 shadow-sm"
+                ? "bg-white text-slate-900 shadow-xs border border-slate-200/80"
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            Semua ({plans.length})
+            Semua Paket ({plans.length})
           </button>
           <button
             onClick={() => setFilterCategory("day")}
-            className={`px-3 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1 ${
+            className={`px-3 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
               filterCategory === "day"
-                ? "bg-white text-primary shadow-sm"
+                ? "bg-white text-slate-900 shadow-xs border border-slate-200/80"
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            <Zap className="w-3.5 h-3.5 text-warning" /> Harian ({plans.filter((p) => p.period === "day").length})
+            <Zap className="w-3.5 h-3.5 text-amber-500" /> Harian ({plans.filter((p) => p.period === "day").length})
           </button>
           <button
             onClick={() => setFilterCategory("month")}
-            className={`px-3 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1 ${
+            className={`px-3 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
               filterCategory === "month"
-                ? "bg-white text-primary shadow-sm"
+                ? "bg-white text-slate-900 shadow-xs border border-slate-200/80"
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            <Calendar className="w-3.5 h-3.5 text-primary" /> Bulanan ({plans.filter((p) => (p.period || "month") === "month").length})
+            <Calendar className="w-3.5 h-3.5 text-emerald-600" /> Bulanan ({plans.filter((p) => (p.period || "month") === "month").length})
           </button>
           <button
             onClick={() => setFilterCategory("year")}
-            className={`px-3 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1 ${
+            className={`px-3 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
               filterCategory === "year"
-                ? "bg-white text-emerald-600 shadow-sm"
+                ? "bg-white text-slate-900 shadow-xs border border-slate-200/80"
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            <Flame className="w-3.5 h-3.5 text-emerald-500" /> Tahunan ({plans.filter((p) => p.period === "year").length})
+            <Flame className="w-3.5 h-3.5 text-sky-600" /> Tahunan ({plans.filter((p) => p.period === "year").length})
           </button>
         </div>
 
-        <div className="text-xs text-slate-400 font-medium">
-          Menampilkan {
+        <div className="text-xs text-slate-500 font-medium">
+          Menampilkan <span className="font-bold text-slate-900">{
             plans.filter((p) => {
               if (filterCategory === "all") return true;
               return (p.period || "month") === filterCategory;
             }).length
-          } dari {plans.length} paket
+          }</span> dari {plans.length} paket
         </div>
       </div>
 
-      {/* Plan Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+      {/* Plan Grid: Spacious 3-Column Layout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
         {loading ? (
-          <div className="col-span-4 text-center py-16">
-            <span className="loading loading-spinner loading-lg text-primary" />
+          <div className="col-span-full text-center py-16">
+            <span className="loading loading-spinner loading-lg text-emerald-600" />
             <p className="text-xs text-slate-500 mt-3 font-medium">Memuat konfigurasi layanan...</p>
           </div>
         ) : (
@@ -384,165 +384,148 @@ export default function AdminPlansPage() {
             })
             .map((p) => {
             const isFree = p.price === 0;
-            const access = p.access || DEFAULT_ACCESS;
+            const periodLabel =
+              p.period === "day"
+                ? "hari"
+                : p.period === "week"
+                ? "minggu"
+                : p.period === "year"
+                ? "tahun"
+                : "bulan";
 
             return (
               <div
                 key={p.id}
-                className={`card bg-white border rounded-3xl p-5 flex flex-col justify-between transition-all duration-200 hover:shadow-lg ${
+                className={`bg-white border rounded-3xl p-5 sm:p-6 flex flex-col justify-between transition-all duration-200 hover:shadow-md ${
                   p.isPopular
-                    ? "border-primary ring-2 ring-primary/20 shadow-md"
+                    ? "border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs"
                     : p.isActive === false
-                    ? "border-slate-200 opacity-60 bg-slate-50"
+                    ? "border-slate-200 opacity-60 bg-slate-50/70"
                     : "border-slate-200/90 shadow-xs"
                 }`}
               >
-                {/* Header & Badges */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-mono font-extrabold text-slate-400 uppercase">
+                {/* Top Section */}
+                <div className="space-y-4">
+                  {/* Header Meta: ID & Badges */}
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-mono font-bold text-slate-400 uppercase truncate">
                       ID: {p.id}
                     </span>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 flex-wrap justify-end">
                       {p.isPopular && (
-                        <span className="badge badge-primary badge-xs py-2 px-2 text-[10px] font-bold">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-600 text-white shadow-2xs whitespace-nowrap">
                           Best Seller
                         </span>
                       )}
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border whitespace-nowrap ${
                         p.isActive !== false
                           ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                          : "bg-slate-200 text-slate-600 border-slate-300"
+                          : "bg-slate-100 text-slate-600 border-slate-200"
                       }`}>
                         {p.isActive !== false ? "Aktif" : "Nonaktif"}
                       </span>
                       {p.watermarkEnabled ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border bg-amber-50 text-amber-700 border-amber-200">
-                          <Sparkles className="w-2.5 h-2.5" /> Watermark ON
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border bg-amber-50 text-amber-700 border-amber-200 whitespace-nowrap">
+                          Watermark ON
                         </span>
                       ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border bg-slate-50 text-slate-500 border-slate-200">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border bg-slate-50 text-slate-600 border-slate-200 whitespace-nowrap">
                           White-Label
                         </span>
                       )}
                     </div>
                   </div>
 
+                  {/* Plan Name & Price */}
                   <div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-2">
                       <h3 className="font-bold text-lg text-slate-900">{p.name}</h3>
                       {p.discountBadge ? (
-                        <span className="badge badge-error text-white font-extrabold text-[10px] shadow-xs">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 font-extrabold text-[10px] whitespace-nowrap">
                           {p.discountBadge}
                         </span>
                       ) : p.discountPercent ? (
-                        <span className="badge badge-error text-white font-extrabold text-[10px] shadow-xs">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 font-extrabold text-[10px] whitespace-nowrap">
                           -{p.discountPercent}%
                         </span>
                       ) : null}
                     </div>
 
                     {p.originalPrice && p.originalPrice > p.price && (
-                      <div className="mt-1 flex items-center gap-1.5">
+                      <div className="mt-1 flex items-center gap-2">
                         <span className="text-xs text-slate-400 line-through font-semibold">
                           Rp {p.originalPrice.toLocaleString("id-ID")}
                         </span>
                         {p.discountPercent && (
-                          <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
+                          <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.2 rounded border border-rose-200">
                             Diskon {p.discountPercent}%
                           </span>
                         )}
                       </div>
                     )}
 
-                    <div className="mt-1 flex items-baseline gap-1">
-                      <span className="text-2xl font-black text-slate-900">
+                    <div className="mt-1.5 flex items-baseline gap-1.5">
+                      <span className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
                         {isFree ? "Gratis" : `Rp ${p.price.toLocaleString("id-ID")}`}
                       </span>
                       {!isFree && (
                         <span className="text-xs text-slate-500 font-medium">
-                          /{" "}
-                          {p.period === "day"
-                            ? "hari"
-                            : p.period === "week"
-                            ? "minggu"
-                            : p.period === "year"
-                            ? "tahun"
-                            : "bulan"}
+                          / {periodLabel}
                         </span>
                       )}
                     </div>
                   </div>
 
                   {/* Limits Badge Box */}
-                  <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5 text-xs">
+                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2 text-xs">
                     <div className="flex items-center justify-between font-semibold text-slate-800">
                       <span className="flex items-center gap-1.5 text-slate-600">
-                        <MessageSquare className="w-3.5 h-3.5 text-primary" /> Kuota Chat:
+                        <MessageSquare className="w-3.5 h-3.5 text-emerald-600" /> Kuota Chat:
                       </span>
-                      <span className="font-bold">
+                      <span className="font-bold font-mono text-slate-900">
                         {p.monthlyMessages === -1
                           ? "Unlimited"
-                          : `${p.monthlyMessages.toLocaleString()} / ${
-                              p.period === "day"
-                                ? "hari"
-                                : p.period === "week"
-                                ? "minggu"
-                                : p.period === "year"
-                                ? "thn"
-                                : "bln"
-                            }`}
+                          : `${p.monthlyMessages.toLocaleString("id-ID")} pesan / ${periodLabel}`}
                       </span>
                     </div>
                     <div className="flex items-center justify-between font-semibold text-slate-800">
                       <span className="flex items-center gap-1.5 text-slate-600">
-                        <Smartphone className="w-3.5 h-3.5 text-primary" /> Batas Device:
+                        <Smartphone className="w-3.5 h-3.5 text-emerald-600" /> Batas Device:
                       </span>
-                      <span className="font-bold">{p.maxDevices} WhatsApp</span>
+                      <span className="font-bold font-mono text-slate-900">{p.maxDevices} WhatsApp</span>
                     </div>
                   </div>
 
-                  {/* Feature Checklist Tags */}
-                  <div className="space-y-1.5 pt-1">
+                  {/* Feature Highlights List */}
+                  <div className="space-y-2 pt-1">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
-                      Hak Akses Fitur Dashboard:
+                      Fitur &amp; Kemampuan Paket:
                     </span>
-                    <div className="space-y-1 text-xs max-h-48 overflow-y-auto pr-1">
-                      {FEATURE_ACCESS_CATEGORIES.flatMap((c) => c.items).map((item, idx) => {
-                        let isEnabled = Boolean(access[item.key as keyof PlanFeatureAccess]);
-                        if (item.key === "apiKeys" && access.apiAccess !== undefined) {
-                          isEnabled = Boolean(access.apiKeys || access.apiAccess);
-                        }
-                        if (item.key === "contacts" && access.contactsUnlimited !== undefined) {
-                          isEnabled = Boolean(access.contacts || access.contactsUnlimited);
-                        }
-                        return (
-                          <div
-                            key={idx}
-                            className={`flex items-center justify-between px-2.5 py-1 rounded-lg text-[11px] ${
-                              isEnabled
-                                ? "text-slate-800 font-medium bg-emerald-50/50"
-                                : "text-slate-400 line-through bg-slate-50 opacity-60"
-                            }`}
-                          >
-                            <span className="truncate pr-2">{item.label}</span>
-                            {isEnabled ? (
-                              <Check className="w-3.5 h-3.5 text-emerald-600 font-bold shrink-0" />
-                            ) : (
-                              <span className="text-[10px] text-slate-400 shrink-0">Lock</span>
-                            )}
+                    <div className="space-y-1.5 text-xs">
+                      {p.features && p.features.length > 0 ? (
+                        p.features.slice(0, 6).map((feat, idx) => (
+                          <div key={idx} className="flex items-start gap-2 text-slate-700 leading-snug">
+                            <Check className="w-3.5 h-3.5 text-emerald-600 font-bold shrink-0 mt-0.5" />
+                            <span className="text-[11px] font-medium">{feat}</span>
                           </div>
-                        );
-                      })}
+                        ))
+                      ) : (
+                        <p className="text-xs text-slate-400 italic">Belum ada rincian fitur.</p>
+                      )}
+                      {p.features && p.features.length > 6 && (
+                        <span className="text-[10px] text-slate-400 font-semibold pl-5 block">
+                          +{p.features.length - 6} fitur tambahan lainnya
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
 
                 {/* Footer Buttons */}
-                <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between gap-2">
+                <div className="pt-4 mt-5 border-t border-slate-100 flex items-center justify-between gap-2">
                   <button
                     onClick={() => handleToggleActive(p)}
-                    className={`btn btn-xs rounded-xl ${
+                    className={`btn btn-xs rounded-xl transition-colors cursor-pointer ${
                       p.isActive !== false ? "btn-ghost text-slate-500 hover:text-rose-600" : "btn-outline btn-success"
                     }`}
                   >
@@ -560,7 +543,7 @@ export default function AdminPlansPage() {
 
                     <button
                       onClick={() => handleOpenEdit(p)}
-                      className="btn btn-primary btn-sm rounded-xl gap-1.5 px-3 font-bold shadow-xs cursor-pointer"
+                      className="btn btn-primary btn-sm rounded-xl gap-1.5 px-3.5 font-bold shadow-xs cursor-pointer"
                     >
                       <Edit className="w-3.5 h-3.5" /> Edit
                     </button>
