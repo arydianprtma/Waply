@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
-import { cookies } from "next/headers";
-
+import { cookies, headers } from "next/headers";
 import { registerOrSyncUser, getUserById, getUserByEmail } from "@/lib/admin-users";
+import { extractClientIp } from "@/lib/ip-utils";
 
 export interface SessionUser {
   id: string;
@@ -30,6 +30,14 @@ const DEFAULT_DEMO_USER: SessionUser = {
 export async function getSessionUser(): Promise<SessionUser> {
   try {
     const cookieStore = await cookies();
+    let clientIp = "127.0.0.1";
+    try {
+      const headerList = await headers();
+      clientIp = extractClientIp(headerList);
+    } catch {
+      // Fallback
+    }
+
     const isDemoAuth = cookieStore.get("sendora_demo_auth")?.value === "true";
     const rawEmail = cookieStore.get("sendora_user_email")?.value || "";
     const rawName = cookieStore.get("sendora_user_name")?.value || "";
@@ -62,6 +70,7 @@ export async function getSessionUser(): Promise<SessionUser> {
           email,
           name,
           role,
+          ipAddress: clientIp,
         });
 
       return {
@@ -106,6 +115,7 @@ export async function getSessionUser(): Promise<SessionUser> {
           email,
           name,
           role: role as "admin" | "user",
+          ipAddress: clientIp,
         });
 
         return {
@@ -153,5 +163,3 @@ export async function requireAdminUser(): Promise<SessionUser> {
   }
   return user;
 }
-
-

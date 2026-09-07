@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
-import { Lock, Mail, User, ArrowRight, Loader2, AlertCircle, CheckCircle, Info } from "lucide-react";
+import { Lock, Mail, User, Loader2, AlertCircle, CheckCircle, Info } from "lucide-react";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
@@ -23,12 +23,19 @@ export default function RegisterPage() {
     setErrorMsg(null);
     setSuccessMsg(null);
 
-    // If Supabase credentials are not provided yet in local .env, allow instant access to dashboard
+    // If Supabase credentials are not provided yet in local .env, register via demo-login to track IP and enter dashboard
     if (!isSupabaseConfigured()) {
-      setTimeout(() => {
-        router.push("/dashboard");
-        router.refresh();
-      }, 600);
+      try {
+        await fetch("/api/auth/demo-login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, name }),
+        });
+      } catch {
+        // Continue
+      }
+      router.push("/dashboard");
+      router.refresh();
       return;
     }
 
@@ -182,10 +189,7 @@ export default function RegisterPage() {
               Mendaftarkan...
             </>
           ) : (
-            <>
-              Daftar Sekarang
-              <ArrowRight className="w-4 h-4" />
-            </>
+            "Daftar Sekarang"
           )}
         </button>
       </form>

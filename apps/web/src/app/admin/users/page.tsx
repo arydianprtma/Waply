@@ -10,20 +10,18 @@ import {
   UserX,
   UserCheck,
   Zap,
-  MoreVertical,
   CheckCircle2,
   AlertTriangle,
-  Clock,
   Smartphone,
   MessageSquare,
   Copy,
   Check,
   RefreshCw,
-  Eye,
   Trash2,
+  Globe,
+  Ban,
 } from "lucide-react";
 import type { ManagedUser, UserAccountStatus } from "@/lib/admin-users";
-import type { Plan } from "@/lib/billing-types";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 
 export default function AdminUsersPage() {
@@ -33,6 +31,7 @@ export default function AdminUsersPage() {
     activeSubscribed: 0,
     freeUsers: 0,
     bannedUsers: 0,
+    duplicateIpUsers: 0,
   });
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -49,6 +48,12 @@ export default function AdminUsersPage() {
   const [planModalOpen, setPlanModalOpen] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState("STARTER");
   const [planDurationDays, setPlanDurationDays] = useState(30);
+
+  // IP Ban Modal
+  const [banIpModalOpen, setBanIpModalOpen] = useState(false);
+  const [targetIpToBan, setTargetIpToBan] = useState<string | null>(null);
+  const [ipBanReason, setIpBanReason] = useState("Spam multi-akun free trial dari IP yang sama");
+
   const [actionLoading, setActionLoading] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
@@ -89,6 +94,12 @@ export default function AdminUsersPage() {
     setStatusModalOpen(true);
   };
 
+  const openBanIpModal = (ip: string) => {
+    setTargetIpToBan(ip);
+    setIpBanReason("Spam multi-akun free trial dari IP yang sama");
+    setBanIpModalOpen(true);
+  };
+
   const handleUpdateStatus = async (
     userId: string,
     status: UserAccountStatus,
@@ -114,6 +125,35 @@ export default function AdminUsersPage() {
         setSelectedUser(null);
         fetchUsers();
       }
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleBanByIp = async () => {
+    if (!targetIpToBan) return;
+    setActionLoading(true);
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "ban_by_ip",
+          ip: targetIpToBan,
+          banReason: ipBanReason,
+        }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        showToast(json.message);
+        setBanIpModalOpen(false);
+        setTargetIpToBan(null);
+        fetchUsers();
+      } else {
+        showToast(json.error || "Gagal memblokir IP");
+      }
+    } catch {
+      showToast("Terjadi kesalahan saat memproses blokir IP");
     } finally {
       setActionLoading(false);
     }
@@ -184,7 +224,7 @@ export default function AdminUsersPage() {
       {/* Toast Notification */}
       {toastMsg && (
         <div className="toast toast-top toast-center z-50">
-          <div className="alert alert-success text-xs font-bold py-2.5 px-4 shadow-xl rounded-2xl flex items-center gap-2">
+          <div className="alert alert-success text-xs font-bold py-2.5 px-4 shadow-xl rounded-2xl flex items-center gap-2 text-white">
             <CheckCircle2 className="w-4 h-4" />
             <span>{toastMsg}</span>
           </div>
@@ -198,7 +238,7 @@ export default function AdminUsersPage() {
             <Users className="w-6 h-6 text-primary" /> Manajemen Pengguna
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Kelola data akun, status akses (Ban/Suspend), serta pemberian paket berlangganan user.
+            Pantau data akun, aktivitas IP & anti-spam multi-akun, serta status paket berlangganan pengguna.
           </p>
         </div>
 
@@ -212,49 +252,72 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Stats Overview Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5">
+        <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total User</span>
-            <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
-              <Users className="w-4 h-4" />
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total User</span>
+            <div className="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
+              <Users className="w-3.5 h-3.5" />
             </div>
           </div>
           <div className="text-2xl font-black text-slate-900">{stats.totalUsers}</div>
-          <span className="text-[11px] text-slate-500">Semua akun terdaftar di sistem</span>
+          <span className="text-[11px] text-slate-400">Semua akun sistem</span>
         </div>
 
-        <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
+        <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider">Berlangganan</span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <Zap className="w-4 h-4" />
+            <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">Berlangganan</span>
+            <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <Zap className="w-3.5 h-3.5" />
             </div>
           </div>
           <div className="text-2xl font-black text-emerald-600">{stats.activeSubscribed}</div>
-          <span className="text-[11px] text-slate-500">Starter, Business, Pro aktif</span>
+          <span className="text-[11px] text-slate-400">Paket berbayar aktif</span>
         </div>
 
-        <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
+        <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">Free Trial</span>
-            <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-              <Users className="w-4 h-4" />
+            <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider">Free Trial</span>
+            <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+              <Users className="w-3.5 h-3.5" />
             </div>
           </div>
           <div className="text-2xl font-black text-slate-900">{stats.freeUsers}</div>
-          <span className="text-[11px] text-slate-500">Pengguna paket gratis</span>
+          <span className="text-[11px] text-slate-400">Paket trial gratis</span>
         </div>
 
-        <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
+        <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-rose-600 uppercase tracking-wider">Banned / Suspend</span>
-            <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
-              <ShieldAlert className="w-4 h-4" />
+            <span className="text-[11px] font-bold text-rose-600 uppercase tracking-wider">Banned / Suspend</span>
+            <div className="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+              <ShieldAlert className="w-3.5 h-3.5" />
             </div>
           </div>
           <div className="text-2xl font-black text-rose-600">{stats.bannedUsers}</div>
-          <span className="text-[11px] text-slate-500">Akun terkunci / diblokir</span>
+          <span className="text-[11px] text-slate-400">Akun terblokir</span>
+        </div>
+
+        {/* Duplicate IP Multi-Account Alert Card */}
+        <div
+          onClick={() => setStatusFilter(statusFilter === "DUPLICATE_IP" ? "ALL" : "DUPLICATE_IP")}
+          className={`p-4 rounded-2xl border shadow-xs space-y-1.5 cursor-pointer transition-all ${
+            statusFilter === "DUPLICATE_IP"
+              ? "bg-amber-100 border-amber-400 ring-2 ring-amber-400/30"
+              : stats.duplicateIpUsers > 0
+              ? "bg-amber-50/70 border-amber-200 hover:bg-amber-100/60"
+              : "bg-white border-slate-200"
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wider">Duplikat IP</span>
+            <div className="w-7 h-7 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center">
+              <Globe className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div className="text-2xl font-black text-amber-800">{stats.duplicateIpUsers}</div>
+          <span className="text-[11px] text-amber-700 font-medium">
+            {stats.duplicateIpUsers > 0 ? "Klik untuk filter spam" : "Tidak ada anomali"}
+          </span>
         </div>
       </div>
 
@@ -263,8 +326,8 @@ export default function AdminUsersPage() {
         <div className="relative w-full md:w-80">
           <input
             type="text"
-            placeholder="Cari user, email, atau ID..."
-            className="input input-bordered input-sm w-full pl-9 text-xs"
+            placeholder="Cari user, email, ID, atau IP..."
+            className="input input-bordered input-sm w-full pl-9 text-xs rounded-xl"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -285,6 +348,7 @@ export default function AdminUsersPage() {
             <option value="ACTIVE">Aktif (Active)</option>
             <option value="SUSPENDED">Ditangguhkan (Suspended)</option>
             <option value="BANNED">Diblokir (Banned)</option>
+            <option value="DUPLICATE_IP">Duplikat IP (Potensi Spam Free Trial)</option>
           </select>
 
           <select
@@ -308,6 +372,7 @@ export default function AdminUsersPage() {
             <thead>
               <tr className="bg-slate-50/80 text-[11px] font-extrabold uppercase tracking-wider text-slate-600 border-b border-slate-200">
                 <th>Pengguna</th>
+                <th>Alamat IP & Keamanan</th>
                 <th>Status Akun</th>
                 <th>Paket Layanan</th>
                 <th>Penggunaan</th>
@@ -318,14 +383,14 @@ export default function AdminUsersPage() {
             <tbody className="divide-y divide-slate-100 text-xs">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-12">
+                  <td colSpan={7} className="text-center py-12">
                     <span className="loading loading-spinner loading-md text-primary" />
                     <p className="text-xs text-slate-500 mt-2 font-medium">Memuat data pengguna...</p>
                   </td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-12 text-slate-400">
+                  <td colSpan={7} className="text-center py-12 text-slate-400">
                     <Users className="w-8 h-8 mx-auto mb-2 opacity-40" />
                     <p className="font-semibold text-slate-600">Tidak ada user ditemukan</p>
                     <p className="text-xs mt-0.5">Coba ubah kata kunci pencarian atau filter status.</p>
@@ -336,19 +401,23 @@ export default function AdminUsersPage() {
                   const isBanned = u.status === "BANNED";
                   const isSuspended = u.status === "SUSPENDED";
                   const isAdmin = u.role === "admin";
+                  const ipAddress = u.lastLoginIp || u.registeredIp || "127.0.0.1";
+                  const isDuplicateIp = (u.duplicateIpCount || 0) > 1;
 
                   return (
                     <tr key={u.id} className="hover:bg-slate-50/60 transition-colors">
                       {/* User Column */}
                       <td>
                         <div className="flex items-center gap-3">
-                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${
-                            isAdmin
-                              ? "bg-primary/10 text-primary border border-primary/20"
-                              : isBanned
-                              ? "bg-rose-100 text-rose-700"
-                              : "bg-slate-100 text-slate-700"
-                          }`}>
+                          <div
+                            className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${
+                              isAdmin
+                                ? "bg-primary/10 text-primary border border-primary/20"
+                                : isBanned
+                                ? "bg-rose-100 text-rose-700"
+                                : "bg-slate-100 text-slate-700"
+                            }`}
+                          >
                             {u.name.charAt(0).toUpperCase()}
                           </div>
                           <div>
@@ -377,18 +446,56 @@ export default function AdminUsersPage() {
                         </div>
                       </td>
 
+                      {/* IP Address & Anti-Spam Security Column */}
+                      <td>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1.5 font-mono text-[11px] text-slate-700">
+                            <Globe className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <span className="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                              {ipAddress}
+                            </span>
+                            <button
+                              onClick={() => copyToClipboard(ipAddress, `ip-${u.id}`)}
+                              className="hover:text-primary text-slate-400"
+                              title="Salin Alamat IP"
+                            >
+                              {copiedId === `ip-${u.id}` ? (
+                                <Check className="w-3 h-3 text-emerald-600" />
+                              ) : (
+                                <Copy className="w-3 h-3" />
+                              )}
+                            </button>
+                          </div>
+
+                          {isDuplicateIp && !isAdmin && (
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <button
+                                onClick={() => setSearch(ipAddress)}
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100 transition-colors"
+                                title={`Ada ${u.duplicateIpCount} akun terdaftar dari IP ini. Klik untuk melihat semuanya.`}
+                              >
+                                <AlertTriangle className="w-3 h-3 text-amber-600" />
+                                <span>{u.duplicateIpCount} Akun (IP Sama)</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+
                       {/* Status Column */}
                       <td>
                         <div>
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
-                            u.status === "ACTIVE"
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                              : u.status === "SUSPENDED"
-                              ? "bg-amber-50 text-amber-700 border-amber-200"
-                              : "bg-rose-50 text-rose-700 border-rose-200"
-                          }`}>
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
+                              u.status === "ACTIVE"
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                : u.status === "SUSPENDED"
+                                ? "bg-amber-50 text-amber-700 border-amber-200"
+                                : "bg-rose-50 text-rose-700 border-rose-200"
+                            }`}
+                          >
                             {u.status === "ACTIVE"
-                              ? "Aktif (Active)"
+                              ? "Aktif"
                               : u.status === "SUSPENDED"
                               ? "Ditangguhkan"
                               : "Diblokir (Banned)"}
@@ -404,19 +511,24 @@ export default function AdminUsersPage() {
                       {/* Plan Column */}
                       <td>
                         <div className="space-y-1">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-extrabold uppercase border ${
-                            u.planId === "PRO"
-                              ? "bg-indigo-50 text-indigo-700 border-indigo-200"
-                              : u.planId === "BUSINESS"
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                              : u.planId === "STARTER"
-                              ? "bg-blue-50 text-blue-700 border-blue-200"
-                              : "bg-slate-100 text-slate-600 border-slate-200"
-                          }`}>
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-extrabold uppercase border ${
+                              u.planId === "PRO"
+                                ? "bg-indigo-50 text-indigo-700 border-indigo-200"
+                                : u.planId === "BUSINESS"
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                : u.planId === "STARTER"
+                                ? "bg-blue-50 text-blue-700 border-blue-200"
+                                : "bg-slate-100 text-slate-600 border-slate-200"
+                            }`}
+                          >
                             {u.planId}
                           </span>
                           <div className="text-[10px] text-slate-500 font-medium">
-                            Status: <strong className={u.planStatus === "ACTIVE" ? "text-emerald-600" : "text-slate-600"}>{u.planStatus}</strong>
+                            Status:{" "}
+                            <strong className={u.planStatus === "ACTIVE" ? "text-emerald-600" : "text-slate-600"}>
+                              {u.planStatus}
+                            </strong>
                           </div>
                         </div>
                       </td>
@@ -438,9 +550,20 @@ export default function AdminUsersPage() {
                       {/* Registered Date */}
                       <td>
                         <div className="text-slate-600 text-[11px]">
-                          <div>{new Date(u.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</div>
+                          <div>
+                            {new Date(u.createdAt).toLocaleDateString("id-ID", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })}
+                          </div>
                           <span className="text-[10px] text-slate-400">
-                            {u.lastLoginAt ? `Login: ${new Date(u.lastLoginAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}` : "Belum pernah"}
+                            {u.lastLoginAt
+                              ? `Login: ${new Date(u.lastLoginAt).toLocaleTimeString("id-ID", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}`
+                              : "Belum pernah"}
                           </span>
                         </div>
                       </td>
@@ -451,7 +574,7 @@ export default function AdminUsersPage() {
                           <div className="flex items-center justify-end">
                             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-primary/10 text-primary border border-primary/20 shadow-xs">
                               <ShieldCheck className="w-3.5 h-3.5" />
-                              Super Admin (Protected)
+                              Super Admin
                             </span>
                           </div>
                         ) : (
@@ -467,7 +590,7 @@ export default function AdminUsersPage() {
                               title="Ubah Paket Berlangganan"
                             >
                               <Zap className="w-3.5 h-3.5" />
-                              <span className="hidden lg:inline">Ubah Paket</span>
+                              <span className="hidden lg:inline font-semibold">Paket</span>
                             </button>
 
                             {/* Status Actions */}
@@ -475,14 +598,14 @@ export default function AdminUsersPage() {
                               <>
                                 <button
                                   onClick={() => openStatusModal(u, "SUSPENDED")}
-                                  className="btn btn-ghost btn-xs text-amber-600 hover:bg-amber-50 rounded-lg"
+                                  className="btn btn-ghost btn-xs text-amber-600 hover:bg-amber-50 rounded-lg font-semibold"
                                   title="Tangguhkan Akun (Suspend)"
                                 >
                                   Suspend
                                 </button>
                                 <button
                                   onClick={() => openStatusModal(u, "BANNED")}
-                                  className="btn btn-ghost btn-xs text-rose-600 hover:bg-rose-50 rounded-lg"
+                                  className="btn btn-ghost btn-xs text-rose-600 hover:bg-rose-50 rounded-lg font-semibold"
                                   title="Blokir Permanen (Ban)"
                                 >
                                   Ban
@@ -499,17 +622,28 @@ export default function AdminUsersPage() {
                               </button>
                             )}
 
+                            {/* Quick Ban All Accounts By IP if duplicate detected */}
+                            {isDuplicateIp && ipAddress !== "127.0.0.1" && (
+                              <button
+                                onClick={() => openBanIpModal(ipAddress)}
+                                className="btn btn-ghost btn-xs text-amber-700 hover:bg-amber-100 rounded-lg gap-1 font-bold"
+                                title={`Blokir seluruh ${u.duplicateIpCount} akun dari IP ini`}
+                              >
+                                <Ban className="w-3.5 h-3.5" />
+                                <span className="hidden xl:inline">Ban IP</span>
+                              </button>
+                            )}
+
                             {/* Delete User Button */}
                             <button
                               onClick={() => {
                                 setSelectedUser(u);
                                 setDeleteModalOpen(true);
                               }}
-                              className="btn btn-ghost btn-xs text-rose-600 hover:bg-rose-100 hover:text-rose-700 rounded-lg gap-1"
+                              className="btn btn-ghost btn-xs text-rose-600 hover:bg-rose-100 hover:text-rose-700 rounded-lg"
                               title="Hapus Akun Pengguna Permanen"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
-                              <span className="hidden xl:inline font-bold">Hapus</span>
                             </button>
                           </div>
                         )}
@@ -523,7 +657,7 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      {/* MODAL: Suspend / Ban Akun User dengan Input Alasan Wajib */}
+      {/* MODAL: Suspend / Ban Akun User */}
       {statusModalOpen && selectedUser && (
         <ModalPortal>
           <div className="fixed inset-0 z-[99999] bg-black/60 flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150">
@@ -568,13 +702,16 @@ export default function AdminUsersPage() {
                   </span>
                 </div>
                 <div className="text-slate-600 font-medium">{selectedUser.email}</div>
-                <div className="text-[10px] text-slate-400 font-mono">ID: {selectedUser.id}</div>
+                <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono mt-0.5">
+                  <span>ID: {selectedUser.id}</span>
+                  <span>IP: {selectedUser.lastLoginIp || "127.0.0.1"}</span>
+                </div>
               </div>
 
               {/* Notice */}
               <p className="text-xs text-slate-600 leading-relaxed">
                 {statusActionType === "BANNED"
-                  ? "Tindakan ini akan memblokir total akses pengguna. Seluruh koneksi WhatsApp, pesan broadcast, dan API Key akan langsung dinonaktifkan."
+                  ? "Tindakan ini akan memblokir akses pengguna. Seluruh koneksi WhatsApp, pesan broadcast, dan API Key akan langsung dinonaktifkan."
                   : "Tindakan ini akan menangguhkan akun pengguna sementara waktu sampai diaktifkan kembali."}
               </p>
 
@@ -585,11 +722,11 @@ export default function AdminUsersPage() {
                 </label>
                 <div className="flex flex-wrap gap-1.5">
                   {[
+                    "Spam multi-akun free trial dari IP yang sama",
                     "Pelanggaran aturan sistem Sendora",
                     "Spamming & Broadcast tanpa persetujuan",
                     "Terdeteksi anomali bot abuse / DDoS traffic",
                     "Penggunaan nomor tidak valid / melanggar ToS",
-                    "Keterlambatan pembayaran tagihan langganan",
                   ].map((preset) => (
                     <button
                       key={preset}
@@ -612,7 +749,7 @@ export default function AdminUsersPage() {
                 <label className="text-xs font-bold text-slate-800 flex items-center justify-between">
                   <span>Isi Alasan Penonaktifan (Wajib):</span>
                   <span className="text-[10px] text-slate-400 font-normal">
-                    Akan ditampilkan ke pengguna
+                    Akan ditampilkan ke pengguna saat mencoba login
                   </span>
                 </label>
                 <textarea
@@ -656,6 +793,72 @@ export default function AdminUsersPage() {
                   {statusActionType === "BANNED"
                     ? "Konfirmasi Blokir Akun"
                     : "Konfirmasi Suspend Akun"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
+
+      {/* MODAL: Blokir Seluruh Akun dari IP Tertentu (Bulk Ban IP) */}
+      {banIpModalOpen && targetIpToBan && (
+        <ModalPortal>
+          <div className="fixed inset-0 z-[99999] bg-black/60 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-5 animate-in fade-in zoom-in-95 duration-150 my-auto relative z-10">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                <div className="flex items-center gap-2 font-black text-base text-rose-600">
+                  <Ban className="w-5 h-5" /> Blokir Massal IP (Anti-Spam)
+                </div>
+                <button
+                  onClick={() => setBanIpModalOpen(false)}
+                  className="btn btn-ghost btn-circle btn-xs text-slate-400"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="p-3.5 bg-rose-50 rounded-2xl border border-rose-200 text-xs space-y-1">
+                <div className="font-bold text-rose-950 flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-rose-600" />
+                  <span className="font-mono text-sm">{targetIpToBan}</span>
+                </div>
+                <p className="text-rose-700 leading-relaxed mt-1">
+                  Seluruh akun pengguna non-admin yang terdaftar atau melakukan login dari alamat IP ini akan diblokir secara serentak.
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-800">
+                  Alasan Pemblokiran IP:
+                </label>
+                <input
+                  type="text"
+                  className="input input-bordered input-sm w-full text-xs rounded-xl"
+                  value={ipBanReason}
+                  onChange={(e) => setIpBanReason(e.target.value)}
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setBanIpModalOpen(false)}
+                  className="btn btn-ghost btn-sm rounded-xl font-bold"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  disabled={actionLoading || !ipBanReason.trim()}
+                  onClick={handleBanByIp}
+                  className="btn btn-error btn-sm gap-2 rounded-xl font-bold text-white shadow-md shadow-rose-600/20"
+                >
+                  {actionLoading ? (
+                    <span className="loading loading-spinner loading-xs" />
+                  ) : (
+                    <Ban className="w-4 h-4" />
+                  )}
+                  Blokir Seluruh Akun dari IP Ini
                 </button>
               </div>
             </div>

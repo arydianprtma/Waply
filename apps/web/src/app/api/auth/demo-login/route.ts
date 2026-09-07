@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getUserByEmail, registerOrSyncUser } from "@/lib/admin-users";
+import { extractClientIp } from "@/lib/ip-utils";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
     const cleanEmail = (body.email || "").toLowerCase().trim();
+    const clientIp = extractClientIp(request);
 
     if (!cleanEmail) {
       return NextResponse.json(
@@ -32,6 +34,7 @@ export async function POST(request: Request) {
         email: cleanEmail,
         name: initialName,
         role: initialRole,
+        ipAddress: clientIp,
       });
     }
 
@@ -64,12 +67,13 @@ export async function POST(request: Request) {
       dbUser.role || (cleanEmail === "admin@sendora.id" ? "admin" : "user");
     const exactName = dbUser.name || cleanEmail.split("@")[0] || "Sendora User";
 
-    // 5. Update last login timestamp in database
+    // 5. Update last login timestamp and client IP in database
     registerOrSyncUser({
       id: dbUser.id,
       email: dbUser.email,
       name: exactName,
       role: exactRole,
+      ipAddress: clientIp,
     });
 
     // 6. Set Session Cookies
@@ -116,6 +120,7 @@ export async function POST(request: Request) {
         role: exactRole,
         status: dbUser.status,
         planId: dbUser.planId,
+        lastLoginIp: clientIp,
       },
       redirectTo: redirectPath,
     });

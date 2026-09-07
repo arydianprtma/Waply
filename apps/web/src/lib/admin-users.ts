@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { getSubscription, saveSubscription, PlanId, getAllPlans, DEFAULT_PLANS } from "@/lib/billing";
+import { getSubscription, saveSubscription, PlanId } from "@/lib/billing";
 
 export type UserAccountStatus = "ACTIVE" | "SUSPENDED" | "BANNED";
 
@@ -17,6 +17,9 @@ export interface ManagedUser {
   devicesCount: number;
   createdAt: string;
   lastLoginAt?: string | null;
+  registeredIp?: string | null;
+  lastLoginIp?: string | null;
+  duplicateIpCount?: number;
 }
 
 const DATA_DIR = path.resolve(process.cwd(), ".sendora-data");
@@ -42,19 +45,43 @@ const INITIAL_USERS: ManagedUser[] = [
     devicesCount: 0,
     createdAt: new Date().toISOString(),
     lastLoginAt: new Date().toISOString(),
+    registeredIp: "127.0.0.1",
+    lastLoginIp: "127.0.0.1",
   },
 ];
 
+/**
+ * Returns all managed users with dynamic duplicate IP count calculation.
+ */
 export function getAllManagedUsers(): ManagedUser[] {
   ensureDataDir();
   try {
+    let list: ManagedUser[] = [];
     if (!fs.existsSync(USERS_FILE)) {
       fs.writeFileSync(USERS_FILE, JSON.stringify(INITIAL_USERS, null, 2));
-      return INITIAL_USERS;
+      list = INITIAL_USERS;
+    } else {
+      const raw = fs.readFileSync(USERS_FILE, "utf-8");
+      list = JSON.parse(raw);
     }
-    const raw = fs.readFileSync(USERS_FILE, "utf-8");
-    const list: ManagedUser[] = JSON.parse(raw);
-    return list;
+
+    // Calculate duplicate IP count for every user
+    const ipCounts = new Map<string, number>();
+    for (const u of list) {
+      const ip = u.lastLoginIp || u.registeredIp;
+      if (ip && ip !== "127.0.0.1" && ip !== "::1") {
+        ipCounts.set(ip, (ipCounts.get(ip) || 0) + 1);
+      }
+    }
+
+    return list.map((u) => {
+      const ip = u.lastLoginIp || u.registeredIp;
+      const count = ip && ip !== "127.0.0.1" && ip !== "::1" ? (ipCounts.get(ip) || 1) : 1;
+      return {
+        ...u,
+        duplicateIpCount: count,
+      };
+    });
   } catch {
     return INITIAL_USERS;
   }
@@ -70,6 +97,7 @@ export function registerOrSyncUser(user: {
   email: string;
   name: string;
   role?: "admin" | "user";
+  ipAddress?: string | null;
 }): ManagedUser {
   const users = getAllManagedUsers();
   const existingIdx = users.findIndex(
@@ -77,6 +105,7 @@ export function registerOrSyncUser(user: {
   );
 
   const sub = getSubscription(user.id);
+  const cleanIp = user.ipAddress && user.ipAddress.trim() ? user.ipAddress.trim() : null;
 
   if (existingIdx >= 0) {
     users[existingIdx] = {
@@ -86,8 +115,10 @@ export function registerOrSyncUser(user: {
       email: user.email,
       role: user.role || users[existingIdx].role,
       planId: sub.planId || users[existingIdx].planId || "FREE",
-      planStatus: sub.status === "ACTIVE" ? "ACTIVE" : (sub.planId === "FREE" ? "FREE" : "EXPIRED"),
+      planStatus: sub.status === "ACTIVE" ? "ACTIVE" : sub.planId === "FREE" ? "FREE" : "EXPIRED",
       lastLoginAt: new Date().toISOString(),
+      registeredIp: users[existingIdx].registeredIp || cleanIp,
+      lastLoginIp: cleanIp || users[existingIdx].lastLoginIp || "127.0.0.1",
     };
     saveManagedUsers(users);
     return users[existingIdx];
@@ -106,6 +137,8 @@ export function registerOrSyncUser(user: {
     devicesCount: 0,
     createdAt: new Date().toISOString(),
     lastLoginAt: new Date().toISOString(),
+    registeredIp: cleanIp || "127.0.0.1",
+    lastLoginIp: cleanIp || "127.0.0.1",
   };
 
   users.push(newUser);
@@ -124,6 +157,33 @@ export function getUserByEmail(email: string): ManagedUser | null {
   return users.find((u) => u.email.toLowerCase() === clean) || null;
 }
 
+export function getUsersByIp(ip: string): ManagedUser[] {
+  const users = getAllManagedUsers();
+  const clean = ip.trim();
+  return users.filter((u) => u.lastLoginIp === clean || u.registeredIp === clean);
+}
+
+export function banUsersByIp(
+  ip: string,
+  banReason: string = "Spam multi-akun free trial dari IP yang sama"
+): { bannedCount: number; users: ManagedUser[] } {
+  const users = getAllManagedUsers();
+  const clean = ip.trim();
+  let count = 0;
+
+  for (let i = 0; i < users.length; i++) {
+    const isTarget = users[i].lastLoginIp === clean || users[i].registeredIp === clean;
+    if (isTarget && users[i].role !== "admin" && users[i].id !== "admin-master-sendora-01") {
+      users[i].status = "BANNED";
+      users[i].banReason = banReason;
+      count++;
+    }
+  }
+
+  saveManagedUsers(users);
+  return { bannedCount: count, users: getAllManagedUsers() };
+}
+
 export function updateUserStatus(
   userId: string,
   status: UserAccountStatus,
@@ -134,7 +194,7 @@ export function updateUserStatus(
   if (idx === -1) return null;
 
   users[idx].status = status;
-  users[idx].banReason = status === "BANNED" ? (banReason || "Pelanggaran aturan sistem Sendora") : null;
+  users[idx].banReason = status === "BANNED" ? banReason || "Pelanggaran aturan sistem Sendora" : null;
   saveManagedUsers(users);
   return users[idx];
 }
@@ -175,7 +235,11 @@ export function deleteUser(userId: string): { success: boolean; error?: string }
     return { success: false, error: "User tidak ditemukan" };
   }
 
-  if (target.role === "admin" || target.email.toLowerCase() === "admin@sendora.id" || target.id === "admin-master-sendora-01") {
+  if (
+    target.role === "admin" ||
+    target.email.toLowerCase() === "admin@sendora.id" ||
+    target.id === "admin-master-sendora-01"
+  ) {
     return { success: false, error: "Akun Super Admin utama tidak dapat dihapus!" };
   }
 
@@ -192,10 +256,13 @@ export function getAdminUserStats() {
   const freeUsers = users.filter((u) => u.planId === "FREE" || u.planStatus === "FREE").length;
   const bannedUsers = users.filter((u) => u.status === "BANNED" || u.status === "SUSPENDED").length;
 
+  const duplicateIpUsers = users.filter((u) => (u.duplicateIpCount || 0) > 1).length;
+
   return {
     totalUsers,
     activeSubscribed,
     freeUsers,
     bannedUsers,
+    duplicateIpUsers,
   };
 }

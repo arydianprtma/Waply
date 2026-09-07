@@ -6,6 +6,8 @@ import {
   updateUserStatus,
   updateUserPlan,
   deleteUser,
+  banUsersByIp,
+  getUsersByIp,
   UserAccountStatus,
 } from "@/lib/admin-users";
 
@@ -19,19 +21,40 @@ export async function GET(req: NextRequest) {
     const query = searchParams.get("q")?.toLowerCase() || "";
     const statusFilter = searchParams.get("status");
     const planFilter = searchParams.get("plan");
+    const duplicateOnly = searchParams.get("duplicateIp") === "true";
+    const targetIp = searchParams.get("ip");
 
     let filtered = users;
+
+    if (targetIp) {
+      filtered = filtered.filter(
+        (u) => u.lastLoginIp === targetIp || u.registeredIp === targetIp
+      );
+    }
+
     if (query) {
       filtered = filtered.filter(
         (u) =>
           u.name.toLowerCase().includes(query) ||
           u.email.toLowerCase().includes(query) ||
-          u.id.toLowerCase().includes(query)
+          u.id.toLowerCase().includes(query) ||
+          (u.lastLoginIp && u.lastLoginIp.toLowerCase().includes(query)) ||
+          (u.registeredIp && u.registeredIp.toLowerCase().includes(query))
       );
     }
-    if (statusFilter && statusFilter !== "ALL") {
-      filtered = filtered.filter((u) => u.status === statusFilter);
+
+    if (duplicateOnly) {
+      filtered = filtered.filter((u) => (u.duplicateIpCount || 0) > 1);
     }
+
+    if (statusFilter && statusFilter !== "ALL") {
+      if (statusFilter === "DUPLICATE_IP") {
+        filtered = filtered.filter((u) => (u.duplicateIpCount || 0) > 1);
+      } else {
+        filtered = filtered.filter((u) => u.status === statusFilter);
+      }
+    }
+
     if (planFilter && planFilter !== "ALL") {
       filtered = filtered.filter((u) => u.planId === planFilter);
     }
@@ -53,14 +76,33 @@ export async function POST(req: NextRequest) {
   try {
     await requireAdminUser();
     const body = await req.json();
-    const { action, userId } = body;
+    const { action, userId, ip, banReason } = body;
+
+    // Quick Ban by IP
+    if (action === "ban_by_ip") {
+      if (!ip || ip === "127.0.0.1" || ip === "::1") {
+        return NextResponse.json(
+          { success: false, error: "Alamat IP tidak valid atau IP localhost dilindungi" },
+          { status: 400 }
+        );
+      }
+      const res = banUsersByIp(
+        ip,
+        banReason || "Spam multi-akun free trial dari IP yang sama"
+      );
+      return NextResponse.json({
+        success: true,
+        data: res,
+        message: `Berhasil memblokir ${res.bannedCount} akun dari IP ${ip}`,
+      });
+    }
 
     if (!userId) {
       return NextResponse.json({ success: false, error: "User ID diperlukan" }, { status: 400 });
     }
 
     if (action === "update_status") {
-      const { status, banReason } = body;
+      const { status } = body;
       const updated = updateUserStatus(userId, status as UserAccountStatus, banReason);
       if (!updated) {
         return NextResponse.json({ success: false, error: "User tidak ditemukan" }, { status: 404 });
