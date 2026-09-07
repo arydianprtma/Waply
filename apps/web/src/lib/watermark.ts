@@ -50,7 +50,7 @@ export function applyWatermarkIfFree(
     }
 
     // Append watermark
-    const watermarkText = config.text || "\n\n—\n```Sendora.com```";
+    const watermarkText = config.text || "\n\n—\n⚡ ```Sendora.com```";
     const finalMessage = `${message.trimEnd()}${watermarkText}`;
 
     return {

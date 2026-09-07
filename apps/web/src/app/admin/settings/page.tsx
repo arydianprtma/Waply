@@ -560,9 +560,9 @@ export default function AdminSettingsPage() {
               <textarea
                 rows={3}
                 className="textarea textarea-bordered font-mono text-xs leading-relaxed"
-                value={settings.watermarkConfig?.text ?? "\n\n—\n```Sendora.com```"}
+                value={settings.watermarkConfig?.text ?? "\n\n—\n⚡ ```Sendora.com```"}
                 onChange={(e) => updateWatermark("text", e.target.value)}
-                placeholder="\n\n—\n```Sendora.com```"
+                placeholder="\n\n—\n⚡ ```Sendora.com```"
               />
             </div>
 
@@ -578,7 +578,7 @@ export default function AdminSettingsPage() {
                   {`Nama : Ahmad Fauzi\nKelas : XII RPL 1\nAbsensi : Hadir\nJam : 07:15 WIB`}
                   <span className="text-emerald-400 font-mono font-bold block mt-2">
                     {settings.watermarkConfig?.enabled
-                      ? (settings.watermarkConfig?.text || "\n\n—\n```Sendora.com```")
+                      ? (settings.watermarkConfig?.text || "\n\n—\n⚡ ```Sendora.com```")
                       : ""}
                   </span>
                 </div>
@@ -586,7 +586,7 @@ export default function AdminSettingsPage() {
               </div>
 
               <p className="text-[11px] text-slate-400 italic">
-                * Keterangan: Jika klien meng-upgrade akun ke <strong>Paket Pro</strong>, teks <span className="text-emerald-400">"{settings.watermarkConfig?.text?.trim() || "```Sendora.com```"}"</span> di atas akan otomatis hilang 100%.
+                * Keterangan: Jika klien meng-upgrade akun ke <strong>Paket Pro</strong>, teks <span className="text-emerald-400">"{settings.watermarkConfig?.text?.trim() || "⚡ ```Sendora.com```"}"</span> di atas akan otomatis hilang 100%.
               </p>
             </div>
           </div>
