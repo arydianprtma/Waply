@@ -85,7 +85,7 @@ export default function DevicesPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">WhatsApp Devices</h1>
           <p className="text-sm text-base-content/60 mt-1">
-            Kelola nomor WhatsApp yang terhubung ke gateway Baileys Sendora.
+            Kelola nomor WhatsApp yang terhubung ke Sendora WhatsApp Gateway Engine.
           </p>
         </div>
 

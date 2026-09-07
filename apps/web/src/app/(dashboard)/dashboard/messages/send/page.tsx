@@ -256,7 +256,7 @@ export default function SendMessageTesterPage() {
             <ul className="list-disc list-inside space-y-0.5 text-[11px]">
               <li>Spintax otomatis dirandomize menjadi variasi unik per pesan sebelum dikirim.</li>
               <li>Simulasi mengetik ("composing presence") proporsional dengan panjang teks.</li>
-              <li>Pemeriksaan otomatis status koneksi Baileys socket.</li>
+              <li>Pemeriksaan otomatis status koneksi Sendora WhatsApp Engine.</li>
             </ul>
           </div>
 

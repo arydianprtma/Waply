@@ -435,7 +435,7 @@ export default function AdminAccountPage() {
                   Peringatan Gateway Engine Error / Disconnect
                 </span>
                 <span className="text-[11px] text-slate-500">
-                  Kirim email jika terdeteksi kegagalan koneksi engine WhatsApp Baileys
+                  Kirim email jika terdeteksi kegagalan koneksi Sendora WhatsApp Engine
                 </span>
               </div>
             </label>

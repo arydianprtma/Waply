@@ -688,7 +688,7 @@ async def handle_sendora_webhook(request: Request):
                 </div>
                 <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl space-y-1">
                   <span className="font-extrabold text-emerald-900 block">2. Gateway Mendeteksi</span>
-                  <p className="text-emerald-800">Sendora Gateway menangkap event WhatsApp Baileys secara instan (&lt; 200ms).</p>
+                  <p className="text-emerald-800">Sendora Gateway menangkap event pesan WhatsApp secara instan (&lt; 200ms).</p>
                 </div>
                 <div className="p-3.5 bg-sky-50 border border-sky-200 rounded-xl space-y-1">
                   <span className="font-extrabold text-sky-900 block">3. Dispatcher HTTP POST</span>

@@ -73,7 +73,7 @@ export function AccountLockedScreen({ user }: AccountLockedScreenProps) {
           <div className="space-y-0.5">
             <span className="font-bold block">Semua Fitur Telah Dikunci:</span>
             <p className="text-rose-800 text-[11px] leading-relaxed">
-              Koneksi WhatsApp Gateway Baileys, pengiriman pesan broadcast massal, otomasi auto-reply, manajemen kontak, dan akses REST API Key telah diblokir secara total demi keamanan sistem.
+              Koneksi Sendora WhatsApp Gateway, pengiriman pesan broadcast massal, otomasi auto-reply, manajemen kontak, dan akses REST API Key telah diblokir secara total demi keamanan sistem.
             </p>
           </div>
         </div>

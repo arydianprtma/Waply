@@ -393,7 +393,7 @@ export default function AdminSettingsPage() {
               <div className="form-control md:col-span-2">
                 <label className="label py-1">
                   <span className="label-text font-bold text-xs text-slate-700">Gateway Engine Base URL</span>
-                  <span className="label-text-alt text-slate-400">Endpoint internal/eksternal gateway Baileys</span>
+                  <span className="label-text-alt text-slate-400">Endpoint internal/eksternal Sendora Gateway Service</span>
                 </label>
                 <input
                   type="text"

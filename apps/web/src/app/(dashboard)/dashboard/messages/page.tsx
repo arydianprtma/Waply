@@ -207,7 +207,7 @@ export default function MessagesPage() {
                       {new Date(m.createdAt).toLocaleString("id-ID")}
                     </td>
                     <td className="font-medium text-base-content">
-                      {m.device?.phoneNumber ? `+${m.device.phoneNumber}` : m.device?.name || "Baileys"}
+                      {m.device?.phoneNumber ? `+${m.device.phoneNumber}` : m.device?.name || "Sendora Device"}
                     </td>
                     <td className="font-mono font-medium">+{m.recipient}</td>
                     <td className="max-w-md">
