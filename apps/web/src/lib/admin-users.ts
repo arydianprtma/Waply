@@ -125,8 +125,8 @@ export function registerOrSyncUser(user: {
       name: user.name || users[existingIdx].name,
       email: user.email,
       role: user.role || users[existingIdx].role,
-      planId: sub.planId || users[existingIdx].planId || "FREE",
-      planStatus: sub.status === "ACTIVE" ? "ACTIVE" : sub.planId === "FREE" ? "FREE" : "EXPIRED",
+      planId: users[existingIdx].planId || sub.planId || "FREE",
+      planStatus: users[existingIdx].planStatus || (sub.status === "ACTIVE" ? "ACTIVE" : "FREE"),
       lastLoginAt: new Date().toISOString(),
       registeredIp: updatedRegIp,
       lastLoginIp: updatedLastIp,
@@ -201,7 +201,7 @@ export function updateUserStatus(
   banReason?: string
 ): ManagedUser | null {
   const users = getAllManagedUsers();
-  const idx = users.findIndex((u) => u.id === userId || u.email === userId);
+  const idx = users.findIndex((u) => u.id === userId || u.email.toLowerCase() === userId.toLowerCase());
   if (idx === -1) return null;
 
   users[idx].status = status;
@@ -216,21 +216,31 @@ export function updateUserPlan(
   durationDays: number = 30
 ): ManagedUser | null {
   const users = getAllManagedUsers();
-  const idx = users.findIndex((u) => u.id === userId || u.email === userId);
+  const idx = users.findIndex(
+    (u) =>
+      u.id === userId ||
+      u.email.toLowerCase() === userId.toLowerCase() ||
+      (userId.includes("@") && u.email.toLowerCase() === userId.toLowerCase())
+  );
   if (idx === -1) return null;
 
   const now = new Date();
   const endDate = new Date(now);
   endDate.setDate(endDate.getDate() + durationDays);
 
-  saveSubscription({
+  const subData: Subscription = {
     userId: users[idx].id,
     planId: planId as PlanId,
     status: planId === "FREE" ? "FREE" : "ACTIVE",
     startDate: planId === "FREE" ? null : now.toISOString(),
     endDate: planId === "FREE" ? null : endDate.toISOString(),
     updatedAt: now.toISOString(),
-  });
+  };
+
+  saveSubscription(subData);
+  if (users[idx].email && users[idx].email.toLowerCase() !== users[idx].id.toLowerCase()) {
+    saveSubscription({ ...subData, userId: users[idx].email.toLowerCase() });
+  }
 
   users[idx].planId = planId;
   users[idx].planStatus = planId === "FREE" ? "FREE" : "ACTIVE";

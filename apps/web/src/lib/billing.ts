@@ -106,15 +106,57 @@ export const PLANS: Record<string, Plan> = new Proxy(DEFAULT_PLANS, {
 
 // ─── Subscription CRUD ────────────────────────────────────────────────────────
 
-export function getSubscription(userId: string): Subscription {
+function getAllSubscriptions(): Record<string, Subscription> {
   ensureDataDir();
   try {
     if (fs.existsSync(SUBSCRIPTION_FILE)) {
-      return JSON.parse(fs.readFileSync(SUBSCRIPTION_FILE, "utf-8")) as Subscription;
+      const raw = JSON.parse(fs.readFileSync(SUBSCRIPTION_FILE, "utf-8"));
+      if (raw && typeof raw === "object") {
+        if (raw.userId && raw.planId) {
+          // Single legacy object format -> convert to map
+          return { [raw.userId]: raw as Subscription };
+        }
+        return raw as Record<string, Subscription>;
+      }
     }
   } catch {}
+  return {};
+}
+
+export function getSubscription(userId: string): Subscription {
+  ensureDataDir();
+  const cleanId = userId ? userId.trim() : "";
+  const all = getAllSubscriptions();
+
+  if (cleanId && all[cleanId]) {
+    return all[cleanId];
+  }
+
+  // Fallback: Check users_registry.json for user's assigned plan
+  try {
+    const usersFile = path.join(DATA_DIR, "users_registry.json");
+    if (fs.existsSync(usersFile)) {
+      const users: any[] = JSON.parse(fs.readFileSync(usersFile, "utf-8"));
+      const found = users.find(
+        (u) =>
+          u.id === cleanId ||
+          (cleanId.includes("@") && u.email?.toLowerCase() === cleanId.toLowerCase())
+      );
+      if (found) {
+        return {
+          userId: found.id,
+          planId: (found.planId as PlanId) || "FREE",
+          status: (found.planStatus as SubscriptionStatus) || (found.planId === "FREE" ? "FREE" : "ACTIVE"),
+          startDate: null,
+          endDate: null,
+          updatedAt: new Date().toISOString(),
+        };
+      }
+    }
+  } catch {}
+
   return {
-    userId,
+    userId: cleanId || "anonymous",
     planId: "FREE",
     status: "FREE",
     startDate: null,
@@ -125,7 +167,11 @@ export function getSubscription(userId: string): Subscription {
 
 export function saveSubscription(data: Subscription): void {
   ensureDataDir();
-  fs.writeFileSync(SUBSCRIPTION_FILE, JSON.stringify(data, null, 2));
+  const all = getAllSubscriptions();
+  if (data.userId) {
+    all[data.userId] = data;
+    fs.writeFileSync(SUBSCRIPTION_FILE, JSON.stringify(all, null, 2));
+  }
 }
 
 export function activateSubscription(userId: string, planId: PlanId): Subscription {

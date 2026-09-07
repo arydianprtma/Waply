@@ -49,6 +49,7 @@ export default function AdminUsersPage() {
   const [planModalOpen, setPlanModalOpen] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState("STARTER");
   const [planDurationDays, setPlanDurationDays] = useState(30);
+  const [availablePlans, setAvailablePlans] = useState<Record<string, any>>({});
 
   // IP Ban Modal
   const [banIpModalOpen, setBanIpModalOpen] = useState(false);
@@ -57,6 +58,17 @@ export default function AdminUsersPage() {
 
   const [actionLoading, setActionLoading] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/billing/plans")
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success && json.data) {
+          setAvailablePlans(json.data);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -1053,9 +1065,21 @@ export default function AdminUsersPage() {
                     onChange={(e) => setSelectedPlanId(e.target.value)}
                   >
                     <option value="FREE">FREE TRIAL (100 Pesan, 1 Device)</option>
-                    <option value="STARTER">STARTER (5.000 Pesan, 2 Devices)</option>
-                    <option value="BUSINESS">BUSINESS (25.000 Pesan, 5 Devices)</option>
-                    <option value="PRO">PRO (100.000 Pesan, 10 Devices)</option>
+                    {Object.values(availablePlans)
+                      .filter((p: any) => p.id !== "FREE")
+                      .map((p: any) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name || p.id} ({p.isUnlimitedMessages ? "Unlimited" : p.monthlyMessages?.toLocaleString()} Pesan, {p.maxDevices} Devices)
+                        </option>
+                      ))}
+                    {/* Fallback default options if availablePlans is not loaded yet */}
+                    {!availablePlans["STARTER"] && !availablePlans["DAILY_STARTER"] && (
+                      <>
+                        <option value="STARTER">STARTER (5.000 Pesan, 2 Devices)</option>
+                        <option value="BUSINESS">BUSINESS (25.000 Pesan, 5 Devices)</option>
+                        <option value="PRO">PRO (100.000 Pesan, 10 Devices)</option>
+                      </>
+                    )}
                   </select>
                 </div>
 
