@@ -1,4 +1,4 @@
-﻿import fs from "fs";
+import fs from "fs";
 import path from "path";
 import { getSubscription, getAllPlans } from "./billing";
 import { DEFAULT_PLANS } from "./billing-types";
@@ -9,6 +9,7 @@ const USER_DEVICES_FILE = path.join(DATA_DIR, "user_devices.json");
 export interface UserDeviceRecord {
   id: string; // sessionId, e.g. dev_123456
   userId: string;
+  userEmail?: string;
   name: string;
   createdAt: string;
 }
@@ -66,12 +67,17 @@ export function getUserDeviceLimit(userId: string): {
 }
 
 /**
- * Get session IDs belonging to a user
+ * Get session IDs belonging to a user (matching either userId or userEmail)
  */
-export function getUserSessionIds(userId: string): string[] {
+export function getUserSessionIds(userId: string, userEmail?: string): string[] {
   const records = getAllUserDeviceRecords();
+  const cleanEmail = userEmail?.trim().toLowerCase();
   return Object.values(records)
-    .filter((r) => r.userId === userId)
+    .filter((r) => {
+      if (r.userId === userId) return true;
+      if (cleanEmail && r.userEmail && r.userEmail.toLowerCase() === cleanEmail) return true;
+      return false;
+    })
     .map((r) => r.id);
 }
 
@@ -82,10 +88,11 @@ export function registerUserDevice(
   userId: string,
   sessionId: string,
   deviceName: string,
-  userRole?: string
+  userRole?: string,
+  userEmail?: string
 ): { success: boolean; error?: string } {
   const limit = getUserDeviceLimit(userId);
-  const existing = getUserSessionIds(userId);
+  const existing = getUserSessionIds(userId, userEmail);
 
   // If user reached device limit:
   if (userRole !== "admin" && existing.length >= limit.maxDevices) {
@@ -99,6 +106,7 @@ export function registerUserDevice(
   records[sessionId] = {
     id: sessionId,
     userId,
+    userEmail: userEmail?.trim().toLowerCase(),
     name: deviceName,
     createdAt: new Date().toISOString(),
   };

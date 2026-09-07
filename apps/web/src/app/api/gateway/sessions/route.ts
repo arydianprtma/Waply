@@ -17,19 +17,16 @@ export async function GET() {
     const allSessions = Array.isArray(data.data) ? data.data : [];
 
     const limitInfo = getUserDeviceLimit(user.id);
-    const userSessionIds = getUserSessionIds(user.id);
+    const userSessionIds = getUserSessionIds(user.id, user.email);
 
     // Filter sessions:
-    // If regular user, only show sessions registered to this user (or if none mapped yet and admin created, return mapped)
-    let userSessions = allSessions;
-    if (user.role !== "admin") {
-      // If user has specific mapped sessions, filter by them
-      if (userSessionIds.length > 0) {
-        userSessions = allSessions.filter((s: any) => userSessionIds.includes(s.id));
-      } else {
-        // Fallback for first session or existing unmapped
-        userSessions = allSessions.slice(0, limitInfo.maxDevices);
-      }
+    // If admin, show all sessions on gateway.
+    // If regular user, STRICTLY only show sessions registered to this user (never fallback to other users' sessions!)
+    let userSessions: any[] = [];
+    if (user.role === "admin") {
+      userSessions = allSessions;
+    } else {
+      userSessions = allSessions.filter((s: any) => userSessionIds.includes(s.id));
     }
 
     const currentCount = userSessions.length;
@@ -67,7 +64,7 @@ export async function POST(request: Request) {
     const gwData = await gwRes.json().catch(() => ({}));
     const allGwSessions = Array.isArray(gwData.data) ? gwData.data : [];
 
-    const userSessionIds = getUserSessionIds(user.id);
+    const userSessionIds = getUserSessionIds(user.id, user.email);
     const liveUserSessions = user.role === "admin"
       ? allGwSessions
       : allGwSessions.filter((s: any) => userSessionIds.includes(s.id));
@@ -94,7 +91,7 @@ export async function POST(request: Request) {
     const data = await res.json();
 
     if (data.success && body.id) {
-      registerUserDevice(user.id, body.id, body.name || "WhatsApp Device", user.role);
+      registerUserDevice(user.id, body.id, body.name || "WhatsApp Device", user.role, user.email);
     }
 
     return NextResponse.json(data, { status: res.status });
