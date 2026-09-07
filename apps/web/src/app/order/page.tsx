@@ -50,6 +50,7 @@ import {
   getPlanDetailedFeatureList,
 } from "@/lib/billing-types";
 import { ModalPortal } from "@/components/ui/ModalPortal";
+import { SendoraLogo } from "@/components/brand/SendoraLogo";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 
 type PaymentMethodOption = "qris" | "bca_va" | "mandiri_va" | "bri_va" | "bni_va" | "gopay" | "snap";
@@ -522,17 +523,7 @@ function OrderContent() {
       {/* Top Navigation Bar */}
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 text-white flex items-center justify-center font-black shadow-md shadow-emerald-500/20 group-hover:scale-105 transition-transform">
-              S
-            </div>
-            <div>
-              <span className="font-extrabold text-lg tracking-tight text-slate-900">Sendora</span>
-              <span className="text-[10px] ml-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">
-                Gateway & API
-              </span>
-            </div>
-          </Link>
+          <SendoraLogo href="/" size="md" />
 
           <div className="flex items-center gap-4 text-xs font-semibold">
             <Link href="/" className="text-slate-600 hover:text-slate-900 hidden sm:inline">
@@ -601,7 +592,7 @@ function OrderContent() {
                   </span>
                 </div>
 
-                <div className="p-6 space-y-5">
+                <div className="p-4 sm:p-6 space-y-5">
                   {/* STATE 1: Loading Session */}
                   {isLoadingUser ? (
                     <div className="py-8 px-4 text-center space-y-3 bg-slate-50/60 rounded-2xl border border-slate-200/70 animate-pulse">
@@ -630,16 +621,16 @@ function OrderContent() {
                           <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
                             {(customerName || customerEmail || "U")[0].toUpperCase()}
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="text-xs font-black text-slate-900">
+                              <span className="text-xs font-black text-slate-900 truncate">
                                 {customerName || "Sendora User"}
                               </span>
-                              <span className="text-[10px] bg-emerald-600 text-white font-black px-2 py-0.5 rounded-full shadow-2xs">
+                              <span className="text-[10px] bg-emerald-600 text-white font-black px-2 py-0.5 rounded-full shadow-2xs shrink-0">
                                 Akun Terhubung
                               </span>
                             </div>
-                            <span className="text-xs text-slate-600 font-mono">
+                            <span className="text-xs text-slate-600 font-mono truncate block">
                               {customerEmail}
                             </span>
                           </div>
@@ -648,7 +639,7 @@ function OrderContent() {
                         <button
                           type="button"
                           onClick={handleSwitchAccount}
-                          className="self-start sm:self-auto text-[11px] font-bold text-emerald-700 hover:text-emerald-900 bg-white/80 hover:bg-white border border-emerald-200 px-3 py-1.5 rounded-xl transition-all shadow-2xs flex items-center gap-1.5"
+                          className="self-stretch sm:self-auto justify-center text-[11px] font-bold text-emerald-700 hover:text-emerald-900 bg-white/80 hover:bg-white border border-emerald-200 px-3 py-1.5 rounded-xl transition-all shadow-2xs flex items-center gap-1.5 shrink-0"
                         >
                           <LogOut className="w-3 h-3" />
                           Ganti / Daftar Akun Lain
@@ -659,8 +650,9 @@ function OrderContent() {
                         {/* Nama Lengkap */}
                         <div className="space-y-1.5">
                           <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                            <User className="w-3.5 h-3.5 text-slate-400" />
-                            Nama Lengkap <span className="text-rose-500">*</span>
+                            <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <span>Nama Lengkap</span>
+                            <span className="text-rose-500">*</span>
                           </label>
                           <input
                             type="text"
@@ -674,15 +666,16 @@ function OrderContent() {
 
                         {/* Email */}
                         <div className="space-y-1.5">
-                          <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
-                            <span className="flex items-center gap-1.5">
-                              <Mail className="w-3.5 h-3.5 text-slate-400" />
-                              Alamat Email <span className="text-rose-500">*</span>
-                            </span>
-                            <span className="text-[10px] text-emerald-600 font-bold">
+                          <div className="flex items-center justify-between gap-2">
+                            <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                              <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                              <span>Alamat Email</span>
+                              <span className="text-rose-500">*</span>
+                            </label>
+                            <span className="text-[10px] text-emerald-600 font-bold shrink-0">
                               Terverifikasi
                             </span>
-                          </label>
+                          </div>
                           <input
                             type="email"
                             required
@@ -696,15 +689,16 @@ function OrderContent() {
 
                       {/* Optional WhatsApp / Phone Number */}
                       <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
-                          <span className="flex items-center gap-1.5">
-                            <Phone className="w-3.5 h-3.5 text-slate-400" />
-                            Nomor WhatsApp / Telepon <span className="text-[10px] text-slate-400 font-normal">(Opsional)</span>
-                          </span>
-                          <span className="text-[10px] text-slate-400 font-normal">
+                        <div className="flex items-center justify-between gap-2">
+                          <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                            <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <span>Nomor WhatsApp / HP</span>
+                            <span className="text-[10px] text-slate-400 font-normal">(Opsional)</span>
+                          </label>
+                          <span className="text-[10px] text-slate-400 font-normal hidden sm:inline shrink-0">
                             Kontak bantuan & support
                           </span>
-                        </label>
+                        </div>
                         <div className="relative">
                           <input
                             type="text"
@@ -723,31 +717,31 @@ function OrderContent() {
                     /* STATE 3: Guest / New User (Register + Checkout Sekaligus) */
                     <div className="space-y-4">
                       {/* Register Banner */}
-                      <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-50/80 via-indigo-50/50 to-slate-50 border border-blue-200/80 text-blue-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in">
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
+                      <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-blue-50/90 via-indigo-50/60 to-slate-50 border border-blue-200/80 text-blue-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in">
+                        <div className="flex items-start sm:items-center gap-3">
+                          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0 mt-0.5 sm:mt-0">
                             <UserPlus className="w-4 h-4" />
                           </div>
-                          <div>
-                            <div className="flex items-center gap-2">
+                          <div className="space-y-0.5 min-w-0">
+                            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                               <span className="text-xs font-black text-slate-900">
-                                1-Step Checkout & Buat Akun Sekaligus
+                                1-Step Checkout & Buat Akun
                               </span>
-                              <span className="text-[10px] bg-blue-600 text-white font-black px-2 py-0.5 rounded-full shadow-2xs">
+                              <span className="text-[10px] bg-blue-600 text-white font-black px-2 py-0.5 rounded-full shadow-2xs shrink-0">
                                 Akun Baru
                               </span>
                             </div>
-                            <span className="text-xs text-slate-600">
+                            <p className="text-[11px] sm:text-xs text-slate-600 leading-snug">
                               Lengkapi formulir & buat password untuk aktivasi akun instan Anda.
-                            </span>
+                            </p>
                           </div>
                         </div>
 
                         <Link
                           href={`/login?redirectTo=${encodeURIComponent("/order" + (selectedPlanId ? `?plan=${selectedPlanId}` : ""))}`}
-                          className="self-start sm:self-auto text-[11px] font-bold text-blue-700 hover:text-blue-900 bg-white border border-blue-200 px-3 py-1.5 rounded-xl transition-all shadow-2xs hover:shadow-xs flex items-center gap-1.5"
+                          className="self-stretch sm:self-auto justify-center text-[11px] font-bold text-blue-700 hover:text-blue-900 bg-white border border-blue-200 px-3 py-1.5 rounded-xl transition-all shadow-2xs hover:shadow-xs flex items-center gap-1.5 shrink-0 text-center"
                         >
-                          <UserCheck className="w-3 h-3" />
+                          <UserCheck className="w-3.5 h-3.5" />
                           Sudah Punya Akun? Masuk
                         </Link>
                       </div>
@@ -756,8 +750,9 @@ function OrderContent() {
                         {/* Nama Lengkap */}
                         <div className="space-y-1.5">
                           <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                            <User className="w-3.5 h-3.5 text-slate-400" />
-                            Nama Lengkap / Bisnis <span className="text-rose-500">*</span>
+                            <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <span>Nama Lengkap / Bisnis</span>
+                            <span className="text-rose-500">*</span>
                           </label>
                           <input
                             type="text"
@@ -771,15 +766,16 @@ function OrderContent() {
 
                         {/* Email */}
                         <div className="space-y-1.5">
-                          <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
-                            <span className="flex items-center gap-1.5">
-                              <Mail className="w-3.5 h-3.5 text-slate-400" />
-                              Alamat Email <span className="text-rose-500">*</span>
-                            </span>
-                            <span className="text-[10px] text-slate-400 font-normal">
+                          <div className="flex items-center justify-between gap-2">
+                            <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                              <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                              <span>Alamat Email</span>
+                              <span className="text-rose-500">*</span>
+                            </label>
+                            <span className="text-[10px] text-slate-400 font-normal shrink-0">
                               Username akun Anda
                             </span>
-                          </label>
+                          </div>
                           <input
                             type="email"
                             required
@@ -795,15 +791,16 @@ function OrderContent() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                         {/* Buat Password */}
                         <div className="space-y-1.5">
-                          <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
-                            <span className="flex items-center gap-1.5">
-                              <Lock className="w-3.5 h-3.5 text-slate-400" />
-                              Buat Password Baru <span className="text-rose-500">*</span>
-                            </span>
-                            <span className="text-[10px] text-slate-400 font-normal">
+                          <div className="flex items-center justify-between gap-2">
+                            <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                              <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                              <span>Buat Password Baru</span>
+                              <span className="text-rose-500">*</span>
+                            </label>
+                            <span className="text-[10px] text-slate-400 font-normal shrink-0">
                               Min. 6 karakter
                             </span>
-                          </label>
+                          </div>
                           <div className="relative">
                             <input
                               type={showPassword ? "text" : "password"}
@@ -812,12 +809,14 @@ function OrderContent() {
                               placeholder="••••••••"
                               value={customerPassword}
                               onChange={(e) => setCustomerPassword(e.target.value)}
-                              className="input input-bordered input-sm w-full rounded-xl text-xs pr-9"
+                              className="input input-bordered input-sm w-full rounded-xl text-xs pl-3 pr-9"
                             />
                             <button
                               type="button"
                               onClick={() => setShowPassword(!showPassword)}
-                              className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 transition-colors"
+                              className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 transition-colors p-0.5 focus:outline-none"
+                              aria-label={showPassword ? "Sembunyikan password" : "Lihat password"}
+                              tabIndex={-1}
                             >
                               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                             </button>
@@ -826,17 +825,18 @@ function OrderContent() {
 
                         {/* Konfirmasi Password */}
                         <div className="space-y-1.5">
-                          <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
-                            <span className="flex items-center gap-1.5">
-                              <KeyRound className="w-3.5 h-3.5 text-slate-400" />
-                              Konfirmasi Password <span className="text-rose-500">*</span>
-                            </span>
+                          <div className="flex items-center justify-between gap-2">
+                            <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                              <KeyRound className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                              <span>Konfirmasi Password</span>
+                              <span className="text-rose-500">*</span>
+                            </label>
                             {customerPassword && customerConfirmPassword && (
-                              <span className={`text-[10px] font-bold ${customerPassword === customerConfirmPassword ? "text-emerald-600" : "text-rose-500"}`}>
+                              <span className={`text-[10px] font-bold shrink-0 ${customerPassword === customerConfirmPassword ? "text-emerald-600" : "text-rose-500"}`}>
                                 {customerPassword === customerConfirmPassword ? "Cocok" : "Tidak cocok"}
                               </span>
                             )}
-                          </label>
+                          </div>
                           <div className="relative">
                             <input
                               type={showConfirmPassword ? "text" : "password"}
@@ -845,7 +845,7 @@ function OrderContent() {
                               placeholder="••••••••"
                               value={customerConfirmPassword}
                               onChange={(e) => setCustomerConfirmPassword(e.target.value)}
-                              className={`input input-bordered input-sm w-full rounded-xl text-xs pr-9 ${
+                              className={`input input-bordered input-sm w-full rounded-xl text-xs pl-3 pr-9 ${
                                 customerConfirmPassword && customerPassword !== customerConfirmPassword
                                   ? "border-rose-400 focus:border-rose-500"
                                   : ""
@@ -854,7 +854,9 @@ function OrderContent() {
                             <button
                               type="button"
                               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                              className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 transition-colors"
+                              className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 transition-colors p-0.5 focus:outline-none"
+                              aria-label={showConfirmPassword ? "Sembunyikan password" : "Lihat password"}
+                              tabIndex={-1}
                             >
                               {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                             </button>
@@ -864,15 +866,16 @@ function OrderContent() {
 
                       {/* Optional WhatsApp / Phone Number */}
                       <div className="space-y-1.5 pt-1">
-                        <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
-                          <span className="flex items-center gap-1.5">
-                            <Phone className="w-3.5 h-3.5 text-slate-400" />
-                            Nomor WhatsApp / Telepon <span className="text-[10px] text-slate-400 font-normal">(Opsional)</span>
-                          </span>
-                          <span className="text-[10px] text-slate-400 font-normal">
+                        <div className="flex items-center justify-between gap-2">
+                          <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                            <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <span>Nomor WhatsApp / HP</span>
+                            <span className="text-[10px] text-slate-400 font-normal">(Opsional)</span>
+                          </label>
+                          <span className="text-[10px] text-slate-400 font-normal hidden sm:inline shrink-0">
                             Kontak bantuan & support
                           </span>
-                        </label>
+                        </div>
                         <div className="relative">
                           <input
                             type="text"
@@ -882,7 +885,7 @@ function OrderContent() {
                             className="input input-bordered input-sm w-full rounded-xl text-xs font-mono"
                           />
                         </div>
-                        <p className="text-[11px] text-slate-400">
+                        <p className="text-[11px] text-slate-400 leading-relaxed">
                           Setelah pembayaran, Anda dapat langsung login ke Dashboard menggunakan email & password di atas.
                         </p>
                       </div>
@@ -893,19 +896,19 @@ function OrderContent() {
 
               {/* SECTION 2: Pilihan Metode Pembayaran (Custom Sendora UI Options) */}
               <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
+                <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between gap-2 flex-wrap">
                   <div className="flex items-center gap-2">
-                    <CreditCard className="w-4 h-4 text-emerald-600" />
+                    <CreditCard className="w-4 h-4 text-emerald-600 shrink-0" />
                     <h2 className="font-extrabold text-sm text-slate-900">
                       2. Pilih Metode Pembayaran
                     </h2>
                   </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 shrink-0">
                     Midtrans Powered
                   </span>
                 </div>
 
-                <div className="p-6 space-y-4">
+                <div className="p-4 sm:p-6 space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {/* QRIS Option (Recommended) */}
                     <button
@@ -1054,19 +1057,19 @@ function OrderContent() {
 
               {/* SECTION 3: Pemilihan Paket Layanan (Plan Tier Switcher) */}
               <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
+                <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between gap-2 flex-wrap">
                   <div className="flex items-center gap-2">
-                    <Layers className="w-4 h-4 text-primary" />
+                    <Layers className="w-4 h-4 text-primary shrink-0" />
                     <h2 className="font-extrabold text-sm text-slate-900">
                       3. Pilih Paket Layanan Sendora
                     </h2>
                   </div>
-                  <span className="text-[11px] text-primary font-bold">
+                  <span className="text-[11px] text-primary font-bold shrink-0">
                     Cloud Hosted Ready
                   </span>
                 </div>
 
-                <div className="p-6">
+                <div className="p-4 sm:p-6">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                     {[
                       { id: "STARTER", name: "Starter", price: 49000, devices: 2, messages: "5.000" },
@@ -1115,19 +1118,19 @@ function OrderContent() {
 
               {/* SECTION 4: Pilihan Durasi Berlangganan (Billing Cycle) */}
               <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
+                <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between gap-2 flex-wrap">
                   <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-emerald-600" />
+                    <Clock className="w-4 h-4 text-emerald-600 shrink-0" />
                     <h2 className="font-extrabold text-sm text-slate-900">
                       4. Pilih Durasi Berlangganan
                     </h2>
                   </div>
-                  <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                  <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full shrink-0">
                     Hemat s/d 20%
                   </span>
                 </div>
 
-                <div className="p-6 space-y-3">
+                <div className="p-4 sm:p-6 space-y-3">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                     {/* 1 Bulan */}
                     <button
@@ -1200,15 +1203,15 @@ function OrderContent() {
               </div>
 
               {/* SECTION 5: Fitur Layanan yang Didapatkan */}
-              <div className="bg-white rounded-3xl border border-slate-200 shadow-xs p-6 space-y-4">
-                <div className="flex items-center justify-between">
+              <div className="bg-white rounded-3xl border border-slate-200 shadow-xs p-4 sm:p-6 space-y-4">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-amber-500" />
+                    <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
                     <h3 className="font-extrabold text-sm text-slate-900">
                       Fitur & Akses Paket {currentPlan.name}
                     </h3>
                   </div>
-                  <span className="text-xs text-slate-400 font-medium">Akses Penuh</span>
+                  <span className="text-xs text-slate-400 font-medium shrink-0">Akses Penuh</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
@@ -1310,7 +1313,7 @@ function OrderContent() {
             </div>
 
             {/* Order Summary Card */}
-            <div className="bg-white rounded-3xl border border-slate-200 shadow-md p-6 space-y-5">
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-md p-4 sm:p-6 space-y-5">
               <div className="border-b border-slate-100 pb-3">
                 <h3 className="text-base font-extrabold text-slate-900">Ringkasan Pesanan</h3>
                 <p className="text-xs text-slate-400 mt-0.5">Rincian tagihan langganan Anda</p>
