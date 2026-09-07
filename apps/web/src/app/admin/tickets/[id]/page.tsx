@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import type { SupportTicket, TicketCategory, TicketPriority, TicketStatus } from "@/lib/support-tickets";
 import { useUserSession } from "@/lib/use-user-session";
+import { useAdminTickets } from "@/lib/admin-tickets-context";
 
 const CATEGORY_LABELS: Record<TicketCategory, string> = {
   TECHNICAL: "Kendala Teknis & Gateway",
@@ -57,6 +58,7 @@ export default function AdminTicketDetailPage() {
   const ticketId = params?.id as string;
   const router = useRouter();
   const { user } = useUserSession();
+  const { markTicketLocallyAsRead } = useAdminTickets();
 
   const [ticket, setTicket] = useState<SupportTicket | null>(null);
   const [loading, setLoading] = useState(true);
@@ -88,13 +90,14 @@ export default function AdminTicketDetailPage() {
       const json = await res.json();
       if (json.success && json.data) {
         setTicket(json.data);
+        markTicketLocallyAsRead(ticketId);
       }
     } catch {
       // ignore
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [ticketId]);
+  }, [ticketId, markTicketLocallyAsRead]);
 
   useEffect(() => {
     fetchTicketDetail();

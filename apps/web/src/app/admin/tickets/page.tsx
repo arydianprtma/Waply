@@ -308,6 +308,13 @@ export default function AdminTicketsPage() {
                         )}
                       </button>
 
+                      {ticket.unreadByAdmin && ticket.status !== "RESOLVED" && ticket.status !== "CLOSED" && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-500 text-white shadow-xs animate-pulse">
+                          <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                          Baru
+                        </span>
+                      )}
+
                       <span
                         className={`inline-flex px-2 py-0.5 rounded-md text-[10px] font-extrabold border ${categoryColor.bg} ${categoryColor.text} ${categoryColor.border}`}
                       >

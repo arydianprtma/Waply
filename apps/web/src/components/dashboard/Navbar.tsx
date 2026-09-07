@@ -68,7 +68,7 @@ export function Navbar() {
         const data = await res.json();
         if (data.success && Array.isArray(data.data)) {
           const unread = data.data.filter(
-            (t: any) => t.unreadByAdmin === true || (t.status === "OPEN" && t.messages.length > 0)
+            (t: any) => t.unreadByAdmin === true && t.status !== "RESOLVED" && t.status !== "CLOSED"
           ).length;
           setAdminTicketUnreadCount(unread);
         }
