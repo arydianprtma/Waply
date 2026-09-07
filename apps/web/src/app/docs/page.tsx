@@ -585,21 +585,53 @@ async def handle_sendora_webhook(request: Request):
               <Flame className="w-5 h-5 text-amber-500" /> 4. Warmup Device & Panduan Anti-Ban
             </h2>
             <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
-              Nomor WhatsApp baru atau nomor yang baru saja didaftarkan sangat rentan diblokir oleh algoritma WhatsApp jika langsung mengirim ribuan pesan. Gunakan fitur <b>Device Warmup</b> (`/dashboard/devices/warmup`) untuk membangun reputasi nomor secara bertahap:
+              Nomor WhatsApp baru atau nomor yang baru saja didaftarkan sangat rentan diblokir oleh algoritma WhatsApp jika langsung mengirim ribuan pesan. Gunakan fitur <Link href="/dashboard/devices/warmup" className="text-emerald-700 font-semibold underline decoration-emerald-300 underline-offset-2 hover:text-emerald-800">Device Warmup</Link> untuk membangun reputasi nomor secara bertahap:
             </p>
 
-            <div className="space-y-2 text-xs">
-              <div className="p-3 bg-white border border-slate-200 rounded-xl space-y-1">
-                <span className="font-bold text-emerald-800">Minggu ke-1 (Fase Pengenalan):</span>
-                <p className="text-slate-600">Maksimal 20 - 50 pesan per hari. Utamakan kontak yang sudah saling menyimpan nomor.</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-1">
+              <div className="p-4 bg-white border border-slate-200/90 rounded-2xl space-y-2.5 shadow-xs relative overflow-hidden">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
+                    Minggu ke-1
+                  </span>
+                  <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Fase Pengenalan</span>
+                </div>
+                <div>
+                  <div className="text-lg font-bold text-slate-900 tracking-tight">20 - 50 <span className="text-xs font-normal text-slate-500">pesan / hari</span></div>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Fokus interaksi 2 arah dengan kontak yang sudah saling menyimpan nomor kontak. Hindari broadcast ke nomor asing.
+                </p>
               </div>
-              <div className="p-3 bg-white border border-slate-200 rounded-xl space-y-1">
-                <span className="font-bold text-sky-800">Minggu ke-2 (Fase Peningkatan):</span>
-                <p className="text-slate-600">Meningkat ke 100 - 200 pesan per hari dengan Spintax variatif dan delay 5-10 detik.</p>
+
+              <div className="p-4 bg-white border border-slate-200/90 rounded-2xl space-y-2.5 shadow-xs relative overflow-hidden">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-sky-700 bg-sky-50 border border-sky-200 px-2 py-0.5 rounded-md">
+                    Minggu ke-2
+                  </span>
+                  <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Fase Peningkatan</span>
+                </div>
+                <div>
+                  <div className="text-lg font-bold text-slate-900 tracking-tight">100 - 200 <span className="text-xs font-normal text-slate-500">pesan / hari</span></div>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Mulai kirim ke pelanggan umum. Wajib aktifkan <span className="font-semibold text-slate-800">Spintax Engine</span> dan beri jeda delay 5-10 detik.
+                </p>
               </div>
-              <div className="p-3 bg-white border border-slate-200 rounded-xl space-y-1">
-                <span className="font-bold text-indigo-800">Minggu ke-3+ (Fase Normal / Broadcast Massal):</span>
-                <p className="text-slate-600">Nomor siap digunakan untuk kampanye broadcast ribuan penerima dengan batch throttling.</p>
+
+              <div className="p-4 bg-white border border-slate-200/90 rounded-2xl space-y-2.5 shadow-xs relative overflow-hidden">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                    Minggu ke-3+
+                  </span>
+                  <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Fase Skala Penuh</span>
+                </div>
+                <div>
+                  <div className="text-lg font-bold text-slate-900 tracking-tight">1.000+ <span className="text-xs font-normal text-slate-500">pesan / hari</span></div>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Nomor telah memiliki reputasi kuat. Kampanye massal aman dengan sistem <span className="font-semibold text-slate-800">Batch Throttling</span> Sendora.
+                </p>
               </div>
             </div>
           </section>
@@ -711,7 +743,7 @@ async def handle_sendora_webhook(request: Request):
               </div>
               <div className="p-3.5 bg-white border border-slate-200 rounded-xl space-y-1">
                 <span className="font-bold text-slate-900 block">Auto Blacklist Filter</span>
-                <p className="text-slate-600 text-[11px]">Nomor yang terdaftar di Blacklist dilewati otomatis (`SKIPPED_BLACKLIST`) tanpa gagal.</p>
+                <p className="text-slate-600 text-[11px]">Nomor yang terdaftar di Blacklist dilewati otomatis (<code className="bg-slate-100 text-slate-800 px-1 py-0.5 rounded font-mono font-bold">SKIPPED_BLACKLIST</code>) tanpa gagal.</p>
               </div>
               <div className="p-3.5 bg-white border border-slate-200 rounded-xl space-y-1">
                 <span className="font-bold text-slate-900 block">Real-time Controls</span>
@@ -765,10 +797,10 @@ async def handle_sendora_webhook(request: Request):
               <Users className="w-5 h-5 text-emerald-600" /> 8. Buku Kontak & Segmentasi Grup
             </h2>
             <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
-              Kelola database pelanggan Anda di menu <b>Contacts</b> (`/dashboard/contacts`):
+              Kelola database pelanggan Anda di menu <Link href="/dashboard/contacts" className="text-emerald-700 font-semibold underline decoration-emerald-300 underline-offset-2 hover:text-emerald-800">Buku Kontak</Link>:
             </p>
             <ul className="list-disc list-inside text-xs sm:text-sm text-slate-700 space-y-1.5">
-              <li><b>Import Bulk (CSV/Excel)</b>: Masukkan ratusan nomor sekaligus via endpoint `/api/contacts/import`.</li>
+              <li><b>Import Bulk (CSV/Excel)</b>: Masukkan ratusan nomor sekaligus via endpoint <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-xs">/api/contacts/import</code>.</li>
               <li><b>Grup Kontak</b>: Segmentasikan pelanggan menjadi grup seperti Pelanggan VIP, Leads Baru, Reseller.</li>
               <li><b>Custom Variables</b>: Tambahkan variabel dinamis per kontak (kota, saldo, invoice, resi).</li>
             </ul>
@@ -780,7 +812,7 @@ async def handle_sendora_webhook(request: Request):
               <FileText className="w-5 h-5 text-emerald-600" /> 9. Pustaka Template Pesan
             </h2>
             <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
-              Simpan format pesan siap pakai di menu <b>Templates</b> (`/dashboard/templates`) untuk efisiensi tim customer service dan pengiriman broadcast:
+              Simpan format pesan siap pakai di menu <Link href="/dashboard/templates" className="text-emerald-700 font-semibold underline decoration-emerald-300 underline-offset-2 hover:text-emerald-800">Templates</Link> untuk efisiensi tim customer service dan pengiriman broadcast:
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
               <div className="p-3 bg-white border border-slate-200 rounded-xl text-center font-semibold text-slate-800">
@@ -804,7 +836,7 @@ async def handle_sendora_webhook(request: Request):
               <Bot className="w-5 h-5 text-emerald-600" /> 10. Auto-Reply & Bot Otomatisasi
             </h2>
             <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
-              Atur respon chat instan otomatis di menu <b>Auto Reply</b> (`/dashboard/automation`). Mendukung 5 tipe pencocokan kata kunci:
+              Atur respon chat instan otomatis di menu <Link href="/dashboard/automation" className="text-emerald-700 font-semibold underline decoration-emerald-300 underline-offset-2 hover:text-emerald-800">Auto Reply</Link>. Mendukung 5 tipe pencocokan kata kunci:
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
               <div className="p-3 bg-white border border-slate-200 rounded-xl space-y-0.5">
@@ -832,7 +864,7 @@ async def handle_sendora_webhook(request: Request):
               <Ban className="w-5 h-5 text-rose-600" /> 11. Blacklist & Auto Opt-Out DND
             </h2>
             <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
-              Patuhi privasi pelanggan dan hindari blokir nomor dengan manajemen Blacklist (`/dashboard/blacklist`):
+              Patuhi privasi pelanggan dan hindari blokir nomor dengan manajemen <Link href="/dashboard/blacklist" className="text-emerald-700 font-semibold underline decoration-emerald-300 underline-offset-2 hover:text-emerald-800">Blacklist</Link>:
             </p>
             <div className="p-4 bg-rose-50/70 border border-rose-200 rounded-2xl text-xs space-y-2 text-rose-950">
               <span className="font-bold text-rose-900 flex items-center gap-1.5">
@@ -904,7 +936,7 @@ async def handle_sendora_webhook(request: Request):
               <CreditCard className="w-5 h-5 text-emerald-600" /> 13. Billing, Paket Langganan & Voucher
             </h2>
             <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
-              Kelola status paket langganan dan upgrade kuota di menu <b>Billing</b> (`/dashboard/billing`):
+              Kelola status paket langganan dan upgrade kuota di menu <Link href="/dashboard/billing" className="text-emerald-700 font-semibold underline decoration-emerald-300 underline-offset-2 hover:text-emerald-800">Billing & Paket</Link>:
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
               <div className="p-3.5 bg-white border border-slate-200 rounded-xl space-y-1">
@@ -928,7 +960,7 @@ async def handle_sendora_webhook(request: Request):
               <LifeBuoy className="w-5 h-5 text-emerald-600" /> 14. Pusat Bantuan (Support Tickets)
             </h2>
             <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
-              Jika mengalami kendala teknis atau pertanyaan seputar gateway, buat tiket bantuan di menu <b>Bantuan & Support</b> (`/dashboard/support`). Tim teknis Sendora akan membalas langsung di room chat tiket Anda.
+              Jika mengalami kendala teknis atau pertanyaan seputar gateway, buat tiket bantuan di menu <Link href="/dashboard/support" className="text-emerald-700 font-semibold underline decoration-emerald-300 underline-offset-2 hover:text-emerald-800">Bantuan & Support</Link>. Tim teknis Sendora akan membalas langsung di room chat tiket Anda.
             </p>
           </section>
 
