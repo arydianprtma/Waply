@@ -15,6 +15,8 @@ export async function GET(req: NextRequest) {
   try {
     const user = await getSessionUser();
     const url = new URL(req.url);
+    const scope = url.searchParams.get("scope");
+
     if (user.role === "admin" && scope !== "user") {
       const tickets = getAllTickets();
       return NextResponse.json({

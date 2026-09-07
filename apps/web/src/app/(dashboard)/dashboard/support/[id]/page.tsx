@@ -55,10 +55,17 @@ export default function UserTicketDetailPage() {
   const [copiedId, setCopiedId] = useState(false);
   const [statusUpdating, setStatusUpdating] = useState(false);
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+  const prevMsgCountRef = useRef<number>(0);
+  const isInitialLoadedRef = useRef<boolean>(false);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  const scrollToBottom = (smooth = true) => {
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTo({
+        top: chatScrollRef.current.scrollHeight,
+        behavior: smooth ? "smooth" : "auto",
+      });
+    }
   };
 
   const fetchTicketDetail = useCallback(async (silent = false) => {
@@ -91,9 +98,22 @@ export default function UserTicketDetailPage() {
     return () => clearInterval(interval);
   }, [ticketId, fetchTicketDetail]);
 
-  // Scroll on messages change
+  // Smart internal scroll: only scroll when new messages arrive or on first load
   useEffect(() => {
-    scrollToBottom();
+    if (!ticket?.messages) return;
+    const currentCount = ticket.messages.length;
+
+    if (!isInitialLoadedRef.current && currentCount > 0) {
+      isInitialLoadedRef.current = true;
+      prevMsgCountRef.current = currentCount;
+      setTimeout(() => scrollToBottom(false), 50);
+      return;
+    }
+
+    if (currentCount > prevMsgCountRef.current) {
+      prevMsgCountRef.current = currentCount;
+      setTimeout(() => scrollToBottom(true), 50);
+    }
   }, [ticket?.messages]);
 
   const handleSendReply = async (e?: React.FormEvent) => {
@@ -113,7 +133,7 @@ export default function UserTicketDetailPage() {
       const json = await res.json();
       if (json.success && json.data) {
         setTicket(json.data);
-        setTimeout(scrollToBottom, 50);
+        setTimeout(() => scrollToBottom(true), 50);
       }
     } catch (err) {
       console.error("Gagal mengirim balasan:", err);
@@ -246,7 +266,7 @@ export default function UserTicketDetailPage() {
       {/* Main Content: Chat Messenger + Sticky Info Sidebar */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-5 items-start">
         {/* Chat Room Area (3 Cols) */}
-        <div className="lg:col-span-3 flex flex-col h-[calc(100vh-14rem)] min-h-[520px] max-h-[760px] bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="lg:col-span-3 flex flex-col h-[560px] bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
           {/* Chat Header Status (Pinned at top of card) */}
           <div className="px-5 sm:px-6 py-3 bg-slate-50/90 border-b border-slate-200 flex items-center justify-between text-xs shrink-0">
             <div className="flex items-center gap-2 text-slate-600">
@@ -259,7 +279,7 @@ export default function UserTicketDetailPage() {
           </div>
 
           {/* Messages Stream */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/30">
+          <div ref={chatScrollRef} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-slate-50/30">
             {ticket.messages.map((msg, idx) => {
               const isUser = msg.senderRole === "user";
               return (
@@ -307,7 +327,6 @@ export default function UserTicketDetailPage() {
                 </div>
               );
             })}
-            <div ref={messagesEndRef} />
           </div>
 
           {/* Chat Reply Input Bar */}
