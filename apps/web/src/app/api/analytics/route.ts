@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/auth-user";
+import { getSubscription, getAllPlans } from "@/lib/billing";
+import { DEFAULT_PLANS } from "@/lib/billing-types";
+import { getUserSessionIds } from "@/lib/user-devices";
 import fs from "fs";
 import path from "path";
 
@@ -25,7 +28,7 @@ function getLast7Days(): string[] {
 
 export async function GET() {
   try {
-    await getAuthUser();
+    const user = await getAuthUser();
 
     // Read all local storage files
     const contacts = readJson<any[]>("contacts.json", []);
@@ -84,6 +87,22 @@ export async function GET() {
       .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
       .slice(0, 6);
 
+    // User subscription & quota info
+    const sub = getSubscription(user.id);
+    const planId = sub?.planId || "FREE";
+    const allPlans = getAllPlans();
+    const plan = allPlans[planId] || DEFAULT_PLANS[planId] || DEFAULT_PLANS.FREE;
+
+    const maxMessages = typeof plan?.monthlyMessages === "number" ? plan.monthlyMessages : 100;
+    const isUnlimitedMessages = maxMessages === -1;
+    const usedMessages = totalMessages;
+    const remainingMessages = isUnlimitedMessages ? -1 : Math.max(0, maxMessages - usedMessages);
+
+    const maxDevices = typeof plan?.maxDevices === "number" ? plan.maxDevices : 1;
+    const userSessions = getUserSessionIds(user.id);
+    const usedDevices = user.role === "admin" ? Math.min(1, maxDevices) : userSessions.length;
+    const remainingDevices = Math.max(0, maxDevices - usedDevices);
+
     return NextResponse.json({
       success: true,
       data: {
@@ -98,6 +117,17 @@ export async function GET() {
         totalWebhookLogs,
         messageTrend,
         recentActivity,
+        quota: {
+          planId,
+          planName: plan?.name || "Free Trial",
+          maxMessages,
+          isUnlimitedMessages,
+          usedMessages,
+          remainingMessages,
+          maxDevices,
+          usedDevices,
+          remainingDevices,
+        },
       },
     });
   } catch (error: any) {
