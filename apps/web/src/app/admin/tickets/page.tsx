@@ -67,7 +67,7 @@ export default function AdminTicketsPage() {
   const fetchTickets = useCallback(async (silent = false) => {
     try {
       if (!silent) setLoading(true);
-      const res = await fetch("/api/tickets");
+      const res = await fetch("/api/tickets?scope=all");
       const json = await res.json();
       if (json.success) {
         setTickets(json.data || []);
@@ -81,6 +81,14 @@ export default function AdminTicketsPage() {
 
   useEffect(() => {
     fetchTickets();
+  }, [fetchTickets]);
+
+  // Live Auto Polling for new incoming tickets every 3 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchTickets(true);
+    }, 3000);
+    return () => clearInterval(interval);
   }, [fetchTickets]);
 
   const copyTicketId = (e: React.MouseEvent, id: string) => {
