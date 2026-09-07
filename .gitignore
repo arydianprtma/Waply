@@ -58,3 +58,12 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# AI Agent folders & skills
+.agents/
+.claude/
+.codex/
+.cursor/
+.gemini/
+.opencode/
+

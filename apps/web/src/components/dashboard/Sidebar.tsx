@@ -92,7 +92,7 @@ export function Sidebar() {
     {
       title: "Developers & API",
       items: [
-        { name: "API Docs", href: "/docs", icon: Code2, badge: "v1.0", accessKey: "apiDocs" },
+        { name: "API Docs", href: "/docs", icon: Code2, badge: "v1.1.2", accessKey: "apiDocs" },
         { name: "API Keys", href: "/dashboard/api-keys", icon: KeyRound, accessKey: "apiKeys" },
         { name: "Webhooks", href: "/dashboard/webhooks", icon: Webhook, accessKey: "webhooks" },
       ],
@@ -132,7 +132,7 @@ export function Sidebar() {
     <div className="flex flex-col h-full justify-between select-none">
       {/* Brand Header */}
       <div className="h-16 px-5 border-b border-base-200 flex items-center justify-between shrink-0">
-        <SendoraLogo href="/dashboard" size="md" badge="v1.0" />
+        <SendoraLogo href="/dashboard" size="md" badge="v1.1.2" />
         {isMobile && (
           <button
             onClick={closeNav}
