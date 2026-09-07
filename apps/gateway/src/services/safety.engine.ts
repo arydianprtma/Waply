@@ -21,17 +21,17 @@ export class SafetyEngine {
     textLength = 20
   ): Promise<void> {
     try {
-      // Hitung durasi mengetik: ~40ms per karakter, dibatasi min 1.5s dan max 4s
-      const typingDuration = Math.min(Math.max(textLength * 40, 1500), 4000);
+      // Hitung durasi mengetik cepat & alami: ~15ms per karakter, dibatasi min 600ms dan max 1.5s
+      const typingDuration = Math.min(Math.max(textLength * 15, 600), 1500);
 
       logger.debug({ jid, typingDuration }, "SafetyEngine: Simulating typing...");
-      await socket.sendPresenceUpdate("composing", jid);
+      await socket.sendPresenceUpdate("composing", jid).catch(() => {});
 
       // Tunggu durasi pengetikan
       await new Promise((resolve) => setTimeout(resolve, typingDuration));
 
       // Hentikan status pengetikan
-      await socket.sendPresenceUpdate("paused", jid);
+      await socket.sendPresenceUpdate("paused", jid).catch(() => {});
     } catch (err) {
       logger.warn({ err, jid }, "SafetyEngine: Failed to update presence state, continuing send");
     }

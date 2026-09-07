@@ -72,9 +72,21 @@ export default function SendMessageTesterPage() {
     setPreviewSamples(samples);
   };
 
+  const formatNormalizedPhone = (raw: string) => {
+    let clean = raw.replace(/\D/g, "");
+    if (clean.startsWith("0")) {
+      clean = "62" + clean.slice(1);
+    } else if (clean.startsWith("8")) {
+      clean = "62" + clean;
+    }
+    return clean;
+  };
+
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedDevice || !recipient || !message) return;
+
+    const normalizedRecipient = formatNormalizedPhone(recipient);
 
     setLoading(true);
     setResult(null);
@@ -84,7 +96,7 @@ export default function SendMessageTesterPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          to: recipient,
+          to: normalizedRecipient,
           message: message,
         }),
       });
@@ -192,11 +204,16 @@ export default function SendMessageTesterPage() {
               onChange={(e) => setRecipient(e.target.value)}
               required
             />
-            <label className="label">
-              <span className="label-text-alt text-base-content/50">
-                Gunakan format internasional tanpa spasi atau simbol plus (e.g. 62812...)
+            <div className="flex items-center justify-between mt-1 px-1">
+              <span className="text-xs text-base-content/60">
+                Mendukung format: <code className="font-mono bg-base-200 px-1 py-0.5 rounded">08...</code>, <code className="font-mono bg-base-200 px-1 py-0.5 rounded">+62...</code>, atau <code className="font-mono bg-base-200 px-1 py-0.5 rounded">628...</code>
               </span>
-            </label>
+              {recipient.trim().length > 3 && (
+                <span className="badge badge-success badge-sm font-mono text-[11px] font-bold text-white">
+                  Target: +{formatNormalizedPhone(recipient)}
+                </span>
+              )}
+            </div>
           </div>
 
           <div className="form-control">

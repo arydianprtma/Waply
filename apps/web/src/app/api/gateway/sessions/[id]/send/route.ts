@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { fetchGateway } from "@/lib/gateway-client";
 import { requireActiveUser } from "@/lib/auth-user";
 import { applyWatermarkIfFree } from "@/lib/watermark";
+import { sanitizePhoneNumber } from "@/lib/sanitizer";
 
 export async function POST(
   request: Request,
@@ -18,8 +19,11 @@ export async function POST(
       outgoingMessage = finalMessage;
     }
 
+    const normalizedTo = body.to ? sanitizePhoneNumber(body.to) : body.to;
+
     const payload = {
       ...body,
+      to: normalizedTo,
       message: outgoingMessage,
     };
 
