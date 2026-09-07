@@ -560,16 +560,16 @@ export default function AdminSettingsPage() {
               <textarea
                 rows={3}
                 className="textarea textarea-bordered font-mono text-xs leading-relaxed"
-                value={settings.watermarkConfig?.text ?? "\n\n—\n⚡ ```Sendora.com```"}
+                value={settings.watermarkConfig?.text ?? "\n\n—\n ```Sendora.com```"}
                 onChange={(e) => updateWatermark("text", e.target.value)}
-                placeholder="\n\n—\n⚡ ```Sendora.com```"
+                placeholder="\n\n—\n ```Sendora.com```"
               />
             </div>
 
             {/* Live WhatsApp Message Preview */}
             <div className="p-5 rounded-2xl bg-slate-900 text-slate-100 border border-slate-800 space-y-3">
               <div className="flex items-center justify-between text-xs text-emerald-400 font-bold border-b border-slate-800 pb-2">
-                <span>📱 Simulasi Pesan Masuk di WhatsApp Penerima (Contoh: Sistem Absensi):</span>
+                <span>Simulasi Pesan Masuk di WhatsApp Penerima (Contoh: Sistem Absensi):</span>
                 <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full">Paket Free Client</span>
               </div>
 
@@ -578,7 +578,7 @@ export default function AdminSettingsPage() {
                   {`Nama : Ahmad Fauzi\nKelas : XII RPL 1\nAbsensi : Hadir\nJam : 07:15 WIB`}
                   <span className="text-emerald-400 font-mono font-bold block mt-2">
                     {settings.watermarkConfig?.enabled
-                      ? (settings.watermarkConfig?.text || "\n\n—\n⚡ ```Sendora.com```")
+                      ? (settings.watermarkConfig?.text || "\n\n—\n```Sendora.com```")
                       : ""}
                   </span>
                 </div>
@@ -586,8 +586,28 @@ export default function AdminSettingsPage() {
               </div>
 
               <p className="text-[11px] text-slate-400 italic">
-                * Keterangan: Jika klien meng-upgrade akun ke <strong>Paket Pro</strong>, teks <span className="text-emerald-400">"{settings.watermarkConfig?.text?.trim() || "⚡ ```Sendora.com```"}"</span> di atas akan otomatis hilang 100%.
+                * Keterangan: Jika klien meng-upgrade akun ke <strong>Paket Pro</strong>, teks <span className="text-emerald-400">"{settings.watermarkConfig?.text?.trim() || " ```Sendora.com```"}"</span> di atas akan otomatis hilang 100%.
               </p>
+            </div>
+
+            {/* Direct Save Button for Watermark Tab */}
+            <div className="flex justify-end pt-2">
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className={`btn btn-sm gap-2 rounded-xl font-bold shadow-md ${
+                  saved ? "btn-success text-white" : "btn-primary shadow-emerald-600/25"
+                }`}
+              >
+                {saving ? (
+                  <span className="loading loading-spinner loading-xs" />
+                ) : saved ? (
+                  <CheckCircle2 className="w-4 h-4" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                {saved ? "Perubahan Disimpan!" : "Simpan Pengaturan Watermark"}
+              </button>
             </div>
           </div>
         </div>

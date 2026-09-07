@@ -13,15 +13,10 @@ export function applyWatermarkIfFree(
   userRole?: string
 ): { finalMessage: string; isWatermarked: boolean } {
   try {
-    // Admin is always white-labeled
-    if (userRole === "admin" || userId === "admin" || userId === "usr_admin_default") {
-      return { finalMessage: message, isWatermarked: false };
-    }
-
     const settings = getAdminSettings();
     const config = settings.watermarkConfig || {
       enabled: true,
-      text: "\n\n—\n```Sendora.com```",
+      text: "\n\n—\n ```Sendora.com```",
       applyToFreeOnly: true,
     };
 
@@ -50,7 +45,7 @@ export function applyWatermarkIfFree(
     }
 
     // Append watermark
-    const watermarkText = config.text || "\n\n—\n⚡ ```Sendora.com```";
+    const watermarkText = config.text || "\n\n—\n ```Sendora.com```";
     const finalMessage = `${message.trimEnd()}${watermarkText}`;
 
     return {

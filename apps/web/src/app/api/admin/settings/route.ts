@@ -118,6 +118,7 @@ export async function POST(req: NextRequest) {
     const updated = saveAdminSettings({
       systemProfile: body.systemProfile,
       gatewayConfig: body.gatewayConfig,
+      watermarkConfig: body.watermarkConfig,
       paymentConfig: {
         ...body.paymentConfig,
         serverKey,
