@@ -182,9 +182,9 @@ export default function UserTicketDetailPage() {
   const isResolvedOrClosed = ticket.status === "RESOLVED" || ticket.status === "CLOSED";
 
   return (
-    <div className="max-w-6xl mx-auto space-y-5 animate-in fade-in duration-300 pb-16">
-      {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
+    <div className="max-w-6xl mx-auto space-y-4 sm:space-y-5 animate-in fade-in duration-300 pb-12">
+      {/* Sticky Header Bar */}
+      <div className="sticky -top-3.5 sm:-top-6 lg:-top-8 z-30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-white/95 backdrop-blur-md p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-sm transition-all">
         <div className="space-y-1">
           <Link
             href="/dashboard/support"
@@ -194,7 +194,7 @@ export default function UserTicketDetailPage() {
             <span>Kembali ke Daftar Tiket</span>
           </Link>
           <div className="flex flex-wrap items-center gap-2.5">
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+            <h1 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight">
               {ticket.subject}
             </h1>
             <span
@@ -209,7 +209,7 @@ export default function UserTicketDetailPage() {
           <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 pt-0.5">
             <button
               onClick={copyTicketId}
-              className="inline-flex items-center gap-1 font-mono font-bold text-slate-700 hover:text-primary transition-colors bg-slate-100 px-2 py-0.5 rounded-md"
+              className="inline-flex items-center gap-1 font-mono font-bold text-slate-700 hover:text-primary transition-colors bg-slate-100 px-2 py-0.5 rounded-md cursor-pointer"
             >
               <span>{ticket.id}</span>
               {copiedId ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3 text-slate-400" />}
@@ -220,7 +220,7 @@ export default function UserTicketDetailPage() {
         </div>
 
         {/* Header Actions */}
-        <div className="flex items-center gap-2.5 self-start sm:self-center">
+        <div className="flex items-center gap-2.5 self-start sm:self-center shrink-0">
           {ticket.status !== "RESOLVED" && ticket.status !== "CLOSED" ? (
             <button
               onClick={() => handleToggleStatus("RESOLVED")}
@@ -243,12 +243,12 @@ export default function UserTicketDetailPage() {
         </div>
       </div>
 
-      {/* Main Content: Chat Messenger + Info Sidebar */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
+      {/* Main Content: Chat Messenger + Sticky Info Sidebar */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-5 items-start">
         {/* Chat Room Area (3 Cols) */}
-        <div className="lg:col-span-3 flex flex-col h-[650px] bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-          {/* Chat Header Status */}
-          <div className="px-6 py-3.5 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between text-xs">
+        <div className="lg:col-span-3 flex flex-col h-[calc(100vh-14rem)] min-h-[520px] max-h-[760px] bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+          {/* Chat Header Status (Pinned at top of card) */}
+          <div className="px-5 sm:px-6 py-3 bg-slate-50/90 border-b border-slate-200 flex items-center justify-between text-xs shrink-0">
             <div className="flex items-center gap-2 text-slate-600">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span className="font-bold">Ruang Komunikasi Customer Support</span>
@@ -357,8 +357,8 @@ export default function UserTicketDetailPage() {
           </div>
         </div>
 
-        {/* Right Info Sidebar (1 Col) */}
-        <div className="space-y-4">
+        {/* Right Info Sidebar (1 Col - Sticky on Desktop) */}
+        <div className="lg:col-span-1 space-y-4 lg:sticky lg:top-16">
           {/* Metadata Card */}
           <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm space-y-4 text-xs">
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">
