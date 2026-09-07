@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { CheckCircle2, X, Zap, Calendar, Sparkles } from "lucide-react";
+import { CheckCircle2, X, Zap, Calendar } from "lucide-react";
 import { Plan, getPlanDetailedFeatureList } from "@/lib/billing-types";
 
 interface LandingPricingProps {
@@ -29,10 +29,10 @@ export default function LandingPricing({ plans }: LandingPricingProps) {
   });
 
   return (
-    <div className="space-y-8 sm:space-y-10">
-      {/* Crisp Segmented Control Tabs (antislop-ui compliant) */}
+    <div className="space-y-6 sm:space-y-10">
+      {/* Responsive Segmented Control Tabs (2x2 grid on mobile, inline row on tablet/desktop) */}
       <div className="flex justify-center w-full px-2">
-        <div className="inline-flex p-1 rounded-xl bg-slate-100 border border-slate-200 max-w-full overflow-x-auto">
+        <div className="grid grid-cols-2 sm:inline-flex sm:flex-row gap-1 p-1 bg-slate-100 rounded-xl border border-slate-200 w-full max-w-sm sm:w-auto">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -41,7 +41,7 @@ export default function LandingPricing({ plans }: LandingPricingProps) {
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 select-none shrink-0 cursor-pointer min-h-[36px] ${
+                className={`w-full sm:w-auto justify-center px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 select-none shrink-0 cursor-pointer min-h-[38px] ${
                   isActive
                     ? "bg-white text-slate-900 shadow-xs border border-slate-200"
                     : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
@@ -49,7 +49,7 @@ export default function LandingPricing({ plans }: LandingPricingProps) {
               >
                 {Icon && (
                   <Icon
-                    className={`w-3.5 h-3.5 ${
+                    className={`w-3.5 h-3.5 shrink-0 ${
                       isActive ? "text-slate-800" : "text-slate-500"
                     }`}
                   />
@@ -57,7 +57,7 @@ export default function LandingPricing({ plans }: LandingPricingProps) {
                 <span>{tab.label}</span>
                 {tab.badge && (
                   <span
-                    className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold tracking-tight ml-0.5 ${
+                    className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold tracking-tight ml-0.5 shrink-0 ${
                       isActive
                         ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                         : "bg-emerald-50/80 text-emerald-700 border border-emerald-200/80"
