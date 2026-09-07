@@ -63,15 +63,14 @@ export async function getSessionUser(): Promise<SessionUser> {
         demoName ||
         (role === "admin" ? "Sendora Admin" : email.split("@")[0] || "Sendora User");
 
-      const managed =
-        dbUser ||
-        registerOrSyncUser({
-          id: userId,
-          email,
-          name,
-          role,
-          ipAddress: clientIp,
-        });
+      // Always sync to update lastLoginIp with the latest client IP
+      const managed = registerOrSyncUser({
+        id: dbUser?.id || userId,
+        email: dbUser?.email || email,
+        name: dbUser?.name || name,
+        role: dbUser?.role || role,
+        ipAddress: clientIp,
+      });
 
       return {
         id: managed.id,
@@ -91,7 +90,7 @@ export async function getSessionUser(): Promise<SessionUser> {
       return DEFAULT_DEMO_USER;
     }
 
-    // Try Supabase auth with strict 200ms timeout to avoid hanging on slow network
+    // Try Supabase auth
     try {
       const supabasePromise = (async () => {
         const supabase = await createClient();
@@ -99,7 +98,7 @@ export async function getSessionUser(): Promise<SessionUser> {
         return authUser;
       })();
 
-      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 200));
+      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 1000));
       const authUser: any = await Promise.race([supabasePromise, timeoutPromise]);
 
       if (authUser && authUser.email) {

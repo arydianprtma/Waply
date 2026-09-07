@@ -108,17 +108,28 @@ export function registerOrSyncUser(user: {
   const cleanIp = user.ipAddress && user.ipAddress.trim() ? user.ipAddress.trim() : null;
 
   if (existingIdx >= 0) {
+    const prevRegIp = users[existingIdx].registeredIp;
+    const isPrevRegLocal = !prevRegIp || prevRegIp === "127.0.0.1" || prevRegIp === "::1";
+    const updatedRegIp =
+      cleanIp && cleanIp !== "127.0.0.1" && isPrevRegLocal
+        ? cleanIp
+        : prevRegIp || cleanIp || "127.0.0.1";
+    const updatedLastIp =
+      cleanIp && cleanIp !== "127.0.0.1"
+        ? cleanIp
+        : cleanIp || users[existingIdx].lastLoginIp || "127.0.0.1";
+
     users[existingIdx] = {
       ...users[existingIdx],
-      id: user.id,
+      id: user.id || users[existingIdx].id,
       name: user.name || users[existingIdx].name,
       email: user.email,
       role: user.role || users[existingIdx].role,
       planId: sub.planId || users[existingIdx].planId || "FREE",
       planStatus: sub.status === "ACTIVE" ? "ACTIVE" : sub.planId === "FREE" ? "FREE" : "EXPIRED",
       lastLoginAt: new Date().toISOString(),
-      registeredIp: users[existingIdx].registeredIp || cleanIp,
-      lastLoginIp: cleanIp || users[existingIdx].lastLoginIp || "127.0.0.1",
+      registeredIp: updatedRegIp,
+      lastLoginIp: updatedLastIp,
     };
     saveManagedUsers(users);
     return users[existingIdx];
