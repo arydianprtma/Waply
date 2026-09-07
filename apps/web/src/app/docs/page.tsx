@@ -652,8 +652,23 @@ async def handle_sendora_webhook(request: Request):
             </div>
 
             <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
-              Endpoint utama untuk mengirim pesan WhatsApp transaksional (OTP, notifikasi pesanan, invoice tagihan) ke nomor pelanggan.
+              Endpoint utama untuk mengirim pesan WhatsApp transaksional (OTP, notifikasi pesanan, invoice tagihan) ke nomor pelanggan secara otomatis.
             </p>
+
+            {/* Architecture Explainer Box for Devs */}
+            <div className="p-4 bg-emerald-50/80 border border-emerald-200 rounded-2xl text-xs space-y-2 text-emerald-950">
+              <span className="font-bold text-emerald-900 flex items-center gap-1.5">
+                <Info className="w-4 h-4 text-emerald-600 shrink-0" /> Konsep Pengirim vs Penerima untuk Developer:
+              </span>
+              <ul className="list-disc list-inside space-y-1 text-slate-700 leading-relaxed pl-1">
+                <li>
+                  <b className="text-slate-900">Nomor Pengirim (WhatsApp Anda):</b> <b>Tidak perlu ditulis di kode</b>. Nomor pengirim otomatis ditentukan dari akun WhatsApp yang telah Anda scan di menu <Link href="/dashboard/devices" className="text-emerald-700 font-semibold underline decoration-emerald-300 hover:text-emerald-800">Devices</Link>. Cukup gunakan <code className="bg-white px-1.5 py-0.5 rounded border border-emerald-200 font-bold font-mono">deviceId: "auto_rotate"</code>.
+                </li>
+                <li>
+                  <b className="text-slate-900">Nomor Penerima (<code className="font-mono text-emerald-800 font-bold">to</code>):</b> <b>Wajib diisi</b> dengan nomor WhatsApp pelanggan Anda secara dinamis dari database/aplikasi Anda (format internasional diawali <code className="bg-white px-1.5 py-0.5 rounded border border-emerald-200 font-mono font-bold">628...</code>).
+                </li>
+              </ul>
+            </div>
 
             {/* Code Snippet Tabs */}
             <div className="bg-slate-50 p-4 sm:p-5 border border-slate-200 rounded-2xl">
@@ -744,6 +759,58 @@ async def handle_sendora_webhook(request: Request):
                     </tr>
                   </tbody>
                 </table>
+              </div>
+            </div>
+
+            {/* Real-world Use Cases Guide */}
+            <div className="space-y-3 pt-2">
+              <h3 className="text-xs sm:text-sm font-bold text-slate-900">
+                Contoh Kasus Integrasi Nyata:
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                <div className="p-4 bg-white border border-slate-200/90 rounded-2xl space-y-2 shadow-xs">
+                  <span className="text-xs font-bold text-emerald-800 block">
+                    1. Pengiriman Kode OTP Login
+                  </span>
+                  <p className="text-[11px] text-slate-600 leading-relaxed">
+                    Kirim kode 6-digit ke nomor yang diinput user saat login:
+                  </p>
+                  <div className="bg-slate-900 text-slate-200 p-3 rounded-xl font-mono text-[11px] overflow-x-auto">
+                    <pre>{`// Node.js Express Controller
+const res = await axios.post(
+  "${originUrl}/api/v1/messages/send",
+  {
+    to: req.body.phone, // Dinamis dari form
+    message: "Kode OTP Anda: *{{otp}}*. Rahasiakan kode ini.",
+    deviceId: "auto_rotate",
+    variables: { otp: "492810" }
+  },
+  { headers: { Authorization: "Bearer " + API_KEY } }
+);`}</pre>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-white border border-slate-200/90 rounded-2xl space-y-2 shadow-xs">
+                  <span className="text-xs font-bold text-sky-800 block">
+                    2. Notifikasi Invoice / Pesanan Masuk
+                  </span>
+                  <p className="text-[11px] text-slate-600 leading-relaxed">
+                    Kirim tagihan setelah checkout dari database toko:
+                  </p>
+                  <div className="bg-slate-900 text-slate-200 p-3 rounded-xl font-mono text-[11px] overflow-x-auto">
+                    <pre>{`// PHP / Laravel Controller
+Http::withToken($apiKey)->post("${originUrl}/api/v1/messages/send", [
+  "to" => $order->customer_phone, // Dinamis
+  "message" => "Halo {{name}}, tagihan Rp {{total}} untuk pesanan #{{inv}} sudah terbit.",
+  "deviceId" => "auto_rotate",
+  "variables" => [
+    "name" => $order->customer_name,
+    "total" => "150.000",
+    "inv" => (string)$order->id
+  ]
+]);`}</pre>
+                  </div>
+                </div>
               </div>
             </div>
           </section>

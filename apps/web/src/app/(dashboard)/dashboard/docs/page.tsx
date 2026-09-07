@@ -444,6 +444,15 @@ curl -X POST ${originUrl}/api/webhooks \\
 
         {/* Code Snippet Tabs */}
         <div className="bg-slate-50 p-4 sm:p-5 border-b border-slate-100">
+          {activeTab === "send" && (
+            <div className="mb-3.5 p-3 bg-emerald-50/90 border border-emerald-200 rounded-xl text-xs text-slate-700 flex items-start gap-2 shadow-2xs">
+              <Info className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+              <div className="leading-relaxed">
+                <b className="text-slate-900">Tips Integrasi:</b> Nomor pengirim otomatis dihandle oleh gateway (<code className="bg-white px-1.5 py-0.5 rounded border border-emerald-200 font-mono font-bold text-slate-900">"deviceId": "auto_rotate"</code>). Nilai parameter <code className="bg-white px-1.5 py-0.5 rounded border border-emerald-200 font-mono font-bold text-slate-900">"to"</code> adalah nomor WhatsApp penerima (pelanggan Anda) yang diisi dinamis dari aplikasi.
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center justify-between gap-2 mb-3">
             <div className="flex flex-wrap gap-1">
               {(["curl", "nodejs", "python", "php"] as CodeLang[]).map((lang) => (
