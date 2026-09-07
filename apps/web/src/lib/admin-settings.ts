@@ -73,7 +73,7 @@ export function getDefaultAdminSettings(): AdminSystemSettings {
     },
     watermarkConfig: {
       enabled: true,
-      text: "\n\n—\n⚡ ```Sendora.com```",
+      text: "\n\n—\n`Sendora.com`",
       applyToFreeOnly: true,
     },
     paymentConfig: {
