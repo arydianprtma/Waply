@@ -13,16 +13,6 @@ let cachedBillingData: BillingData | null = null;
 let fetchPromise: Promise<BillingData | null> | null = null;
 const listeners = new Set<(data: BillingData | null) => void>();
 
-// Read initial cache from localStorage or sessionStorage instantly
-if (typeof window !== "undefined") {
-  try {
-    const raw = localStorage.getItem("sendora_billing_cache") || sessionStorage.getItem("sendora_billing_cache");
-    if (raw) {
-      cachedBillingData = JSON.parse(raw);
-    }
-  } catch {}
-}
-
 export function getCachedBillingData(): BillingData | null {
   return cachedBillingData;
 }
@@ -72,9 +62,26 @@ export async function fetchBillingData(force = false): Promise<BillingData | nul
 }
 
 export function useBillingPlan() {
-  const [data, setData] = useState<BillingData | null>(cachedBillingData);
+  const [data, setData] = useState<BillingData | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
+    if (cachedBillingData) {
+      setData(cachedBillingData);
+    } else {
+      try {
+        const raw =
+          localStorage.getItem("sendora_billing_cache") ||
+          sessionStorage.getItem("sendora_billing_cache");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          cachedBillingData = parsed;
+          setData(parsed);
+        }
+      } catch {}
+    }
+
     const handler = (newData: BillingData | null) => setData(newData);
     listeners.add(handler);
 
@@ -102,7 +109,7 @@ export function useBillingPlan() {
     currentPlanName,
     isExpired,
     hasFeature,
-    isLoading: false, // Cache/defaults are always synchronously available!
-    refresh: () => fetchBillingData(true),
+    isMounted,
+    refreshBilling: () => fetchBillingData(true),
   };
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -51,9 +52,14 @@ export function Sidebar() {
   const pathname = usePathname();
   const { user } = useUserSession();
   const { isOpen, closeNav } = useMobileNav();
-  const userRole = user?.role || (typeof document !== "undefined" ? document.cookie.match(/sendora_user_role=([^;]+)/)?.[1] : null);
-
   const { planAccess } = useBillingPlan();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const userRole = user?.role;
 
   const handleLogout = async () => {
     await performLogout("/login");
@@ -110,7 +116,7 @@ export function Sidebar() {
         { name: "Bantuan & CS", href: "/dashboard/support", icon: Headphones, badge: "Helpdesk" },
       ],
     },
-    ...(userRole === "admin"
+    ...(mounted && userRole === "admin"
       ? [
           {
             title: "Administration",
@@ -152,8 +158,10 @@ export function Sidebar() {
                 const isActive = pathname === item.href;
                 const Icon = item.icon;
                 const isSupportPage = item.href === "/dashboard/support";
-                const isAccountSuspendedOrBanned = (user?.status === "BANNED" || user?.status === "SUSPENDED") && !isSupportPage;
-                const isPlanLocked = Boolean(item.accessKey && planAccess[item.accessKey] === false);
+                const isAccountSuspendedOrBanned = Boolean(
+                  mounted && (user?.status === "BANNED" || user?.status === "SUSPENDED") && !isSupportPage
+                );
+                const isPlanLocked = Boolean(mounted && item.accessKey && planAccess[item.accessKey] === false);
                 const isLocked = isAccountSuspendedOrBanned || isPlanLocked;
 
                 return (
@@ -248,23 +256,23 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Desktop Sidebar (Permanent on lg screens) */}
-      <aside className="hidden lg:flex flex-col w-64 bg-base-100 border-r border-base-200 h-screen sticky top-0 shrink-0">
+      {/* Desktop Sidebar (Permanent) */}
+      <aside className="hidden lg:block w-64 h-full bg-base-100 border-r border-base-200 shrink-0 z-30">
         {renderNavContent(false)}
       </aside>
 
-      {/* Mobile / Tablet Off-Canvas Drawer Overlay */}
+      {/* Mobile Drawer (Overlay Modal Backdrop) */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden animate-in fade-in duration-200">
-          {/* Backdrop with blur */}
+        <div className="fixed inset-0 z-50 lg:hidden flex">
+          {/* Backdrop Blur */}
           <div
-            className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity"
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300 animate-in fade-in"
             onClick={closeNav}
             aria-hidden="true"
           />
 
-          {/* Drawer Panel */}
-          <div className="fixed top-0 left-0 bottom-0 w-[280px] sm:w-80 bg-base-100 shadow-2xl z-50 border-r border-base-200 animate-in slide-in-from-left duration-300 flex flex-col">
+          {/* Sliding Drawer Container */}
+          <div className="relative w-4/5 max-w-xs h-full bg-base-100 shadow-2xl z-10 flex flex-col transform transition-transform duration-300 ease-out animate-in slide-in-from-left">
             {renderNavContent(true)}
           </div>
         </div>

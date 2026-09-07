@@ -12,14 +12,6 @@ export interface CachedUser {
 }
 
 let cachedUser: CachedUser | null = null;
-
-if (typeof window !== "undefined") {
-  try {
-    const raw = sessionStorage.getItem("sendora_user_session");
-    if (raw) cachedUser = JSON.parse(raw);
-  } catch {}
-}
-
 let fetchPromise: Promise<CachedUser | null> | null = null;
 const listeners = new Set<(u: CachedUser | null) => void>();
 
@@ -61,9 +53,24 @@ export function fetchUserSession(): Promise<CachedUser | null> {
 }
 
 export function useUserSession() {
-  const [user, setUser] = useState<CachedUser | null>(cachedUser);
+  const [user, setUser] = useState<CachedUser | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
+    if (cachedUser) {
+      setUser(cachedUser);
+    } else {
+      try {
+        const raw = sessionStorage.getItem("sendora_user_session");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          cachedUser = parsed;
+          setUser(parsed);
+        }
+      } catch {}
+    }
+
     const handler = (u: CachedUser | null) => setUser(u);
     listeners.add(handler);
     fetchUserSession();
@@ -72,5 +79,5 @@ export function useUserSession() {
     };
   }, []);
 
-  return { user, isLoading: !cachedUser && !user };
+  return { user, isLoading: !cachedUser && !user, isMounted };
 }
