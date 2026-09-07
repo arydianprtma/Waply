@@ -133,31 +133,32 @@ export default function DevicesPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
           <button
             onClick={fetchSessions}
             disabled={loading}
-            className="btn btn-ghost btn-sm gap-2 text-slate-600 hover:text-slate-900"
+            className="btn btn-ghost btn-sm gap-1.5 text-slate-600 hover:text-slate-900 px-2.5"
+            title="Muat ulang daftar device"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-            Refresh
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+            <span className="text-xs">Refresh</span>
           </button>
 
           {isLimitReached ? (
             <Link
               href="/dashboard/billing"
-              className="btn btn-outline btn-sm md:btn-md border-slate-300 hover:border-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 gap-2 font-semibold"
+              className="btn btn-outline btn-sm gap-1.5 border-slate-300 hover:border-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 font-semibold text-xs"
             >
               <span>Tambah Slot Device</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           ) : null}
 
           <button
             onClick={handleOpenConnect}
-            className="btn btn-primary btn-sm md:btn-md gap-2 shadow-sm shadow-primary/20"
+            className="btn btn-primary btn-sm gap-1.5 shadow-sm shadow-primary/20 text-xs"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5" />
             Connect WhatsApp Baru
           </button>
         </div>

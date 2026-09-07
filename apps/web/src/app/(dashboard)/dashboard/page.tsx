@@ -183,31 +183,32 @@ export default function DashboardOverviewPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Dashboard Overview</h1>
-          <p className="text-sm text-base-content/60 mt-1">
+          <p className="text-xs sm:text-sm text-base-content/60 mt-1">
             Pantau performa gateway, aktivitas pesan, sisa kuota, dan status device Anda.
           </p>
         </div>
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
           <button
             onClick={() => fetchAnalytics()}
             disabled={loading}
-            className="btn btn-ghost btn-sm gap-2"
+            className="btn btn-ghost btn-sm gap-1.5 px-2.5"
+            title="Muat ulang data"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-            Refresh
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+            <span className="text-xs">Refresh</span>
           </button>
           <Link
             href="/dashboard/devices"
-            className="btn btn-primary btn-sm md:btn-md gap-2 shadow-sm shadow-primary/20"
+            className="btn btn-primary btn-sm gap-1.5 shadow-sm shadow-primary/20 text-xs"
           >
-            <Smartphone className="w-4 h-4" />
+            <Smartphone className="w-3.5 h-3.5" />
             Connect Device
           </Link>
           <Link
             href="/dashboard/messages/send"
-            className="btn btn-outline btn-sm md:btn-md gap-2"
+            className="btn btn-outline btn-sm gap-1.5 text-xs"
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-3.5 h-3.5" />
             Kirim Pesan
           </Link>
         </div>
@@ -215,7 +216,7 @@ export default function DashboardOverviewPage() {
 
       {/* Quota & Subscription Status Card */}
       {data.quota && (
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-sm">
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 shadow-sm">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             {/* Left: Plan details */}
             <div className="space-y-1.5 max-w-sm">
@@ -342,7 +343,7 @@ export default function DashboardOverviewPage() {
           return (
             <div
               key={card.label}
-              className="bg-white border border-slate-200/80 shadow-sm p-6 rounded-2xl transition-all hover:shadow-md"
+              className="bg-white border border-slate-200/80 shadow-sm p-4 sm:p-6 rounded-2xl transition-all hover:shadow-md"
             >
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
