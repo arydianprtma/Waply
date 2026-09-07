@@ -22,6 +22,7 @@ import {
   Code2,
   Lock,
   X,
+  Headphones,
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -101,6 +102,12 @@ export function Sidebar() {
       items: [
         { name: "Subscription & Billing", href: "/dashboard/billing", icon: CreditCard },
         { name: "Settings", href: "/dashboard/settings", icon: Settings },
+      ],
+    },
+    {
+      title: "Help & Support",
+      items: [
+        { name: "Bantuan & CS", href: "/dashboard/support", icon: Headphones, badge: "Helpdesk" },
       ],
     },
     ...(userRole === "admin"

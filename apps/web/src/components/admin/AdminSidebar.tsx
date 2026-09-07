@@ -15,6 +15,7 @@ import {
   UserCog,
   Megaphone,
   Ticket,
+  Headphones,
   X,
 } from "lucide-react";
 import clsx from "clsx";
@@ -48,6 +49,7 @@ export function AdminSidebar() {
       title: "SaaS & Pengguna",
       items: [
         { name: "Manajemen User", href: "/admin/users", icon: Users, badge: "Users" },
+        { name: "Tiket Bantuan & CS", href: "/admin/tickets", icon: Headphones, badge: "CS" },
         { name: "Pengumuman", href: "/admin/announcements", icon: Megaphone, badge: "Broadcast" },
         { name: "Layanan & Paket", href: "/admin/plans", icon: Layers, badge: "Plans" },
         { name: "Voucher & Promo", href: "/admin/vouchers", icon: Ticket, badge: "Promo" },

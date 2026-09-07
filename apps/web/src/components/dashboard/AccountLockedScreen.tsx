@@ -28,19 +28,40 @@ export function AccountLockedScreen({ user }: AccountLockedScreenProps) {
   const [message, setMessage] = useState("");
   const [ticketSubmitted, setTicketSubmitted] = useState(false);
   const [ticketNumber, setTicketNumber] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleLogout = async () => {
     await performLogout("/login");
   };
 
-  const handleOpenTicket = (e: React.FormEvent) => {
+  const handleOpenTicket = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim()) return;
 
-    // Generate reference ticket ID
-    const randomTicket = `TKT-${Math.floor(100000 + Math.random() * 900000)}`;
-    setTicketNumber(randomTicket);
-    setTicketSubmitted(true);
+    try {
+      setIsSubmitting(true);
+      const res = await fetch("/api/tickets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subject: `[${topic}] Banding Akun ${user.email}`,
+          category: "APPEAL",
+          priority: "HIGH",
+          message: `Permohonan Banding Akun:\nStatus: ${user.status}\nAlasan Admin: ${user.banReason || "Tidak tercantum"}\n\nPesan:\n${message}`,
+        }),
+      });
+      const json = await res.json();
+      if (json.success && json.data) {
+        setTicketNumber(json.data.id);
+      } else {
+        setTicketNumber(`TKT-${Math.floor(100000 + Math.random() * 900000)}`);
+      }
+    } catch {
+      setTicketNumber(`TKT-${Math.floor(100000 + Math.random() * 900000)}`);
+    } finally {
+      setIsSubmitting(false);
+      setTicketSubmitted(true);
+    }
   };
 
   const supportEmail = "support@sendora.id";
