@@ -47,59 +47,78 @@ export function normalizePhoneNumber(phone: string): string {
 // GROUPS
 // ----------------------------------------------------
 
-export function getLocalGroups(userId: string): ContactGroup[] {
+function readAllGroups(): ContactGroup[] {
   ensureStorageDir();
   try {
     if (!fs.existsSync(LOCAL_GROUPS_FILE)) {
-      const defaultGroups: ContactGroup[] = [
-        { id: "grp_pelanggan_vip", userId, name: "Pelanggan VIP", color: "#10b981", createdAt: new Date().toISOString() },
-        { id: "grp_leads_baru", userId, name: "Leads Baru", color: "#0ea5e9", createdAt: new Date().toISOString() },
-        { id: "grp_reseller", userId, name: "Reseller / Agen", color: "#8b5cf6", createdAt: new Date().toISOString() },
-      ];
-      fs.writeFileSync(LOCAL_GROUPS_FILE, JSON.stringify(defaultGroups, null, 2));
-      return defaultGroups;
+      return [];
     }
     const data = fs.readFileSync(LOCAL_GROUPS_FILE, "utf-8");
-    const groups: ContactGroup[] = JSON.parse(data || "[]");
-    return groups.filter((g) => g.userId === userId || userId === "demo-user-local-id");
+    return JSON.parse(data || "[]");
   } catch {
     return [];
   }
 }
 
-export function saveLocalGroups(groups: ContactGroup[]) {
+function writeAllGroups(groups: ContactGroup[]) {
   ensureStorageDir();
   fs.writeFileSync(LOCAL_GROUPS_FILE, JSON.stringify(groups, null, 2));
 }
 
+export function getLocalGroups(userId: string): ContactGroup[] {
+  const groups = readAllGroups();
+  const userGroups = groups.filter((g) => g.userId === userId);
+  
+  if (userGroups.length === 0 && groups.length === 0 && userId) {
+    // Seed initial default groups only for the first installation
+    const defaultGroups: ContactGroup[] = [
+      { id: `grp_vip_${userId.slice(0, 6)}`, userId, name: "Pelanggan VIP", color: "#10b981", createdAt: new Date().toISOString() },
+      { id: `grp_leads_${userId.slice(0, 6)}`, userId, name: "Leads Baru", color: "#0ea5e9", createdAt: new Date().toISOString() },
+      { id: `grp_reseller_${userId.slice(0, 6)}`, userId, name: "Reseller / Agen", color: "#8b5cf6", createdAt: new Date().toISOString() },
+    ];
+    writeAllGroups(defaultGroups);
+    return defaultGroups;
+  }
+  return userGroups;
+}
+
+export function saveLocalGroups(userId: string, userGroups: ContactGroup[]) {
+  const allGroups = readAllGroups().filter((g) => g.userId !== userId);
+  writeAllGroups([...allGroups, ...userGroups]);
+}
+
 export function createGroup(userId: string, name: string, color = "#10b981"): ContactGroup {
-  const groups = getLocalGroups(userId);
+  const allGroups = readAllGroups();
   const newGroup: ContactGroup = {
-    id: `grp_${Date.now()}`,
+    id: `grp_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
     userId,
     name: name.trim(),
     color,
     createdAt: new Date().toISOString(),
   };
-  groups.push(newGroup);
-  saveLocalGroups(groups);
+  allGroups.push(newGroup);
+  writeAllGroups(allGroups);
   return newGroup;
 }
 
 export function deleteGroup(userId: string, groupId: string): boolean {
-  const groups = getLocalGroups(userId);
-  const filtered = groups.filter((g) => g.id !== groupId);
-  saveLocalGroups(filtered);
+  const allGroups = readAllGroups();
+  const filtered = allGroups.filter((g) => !(g.id === groupId && g.userId === userId));
+  writeAllGroups(filtered);
 
-  // Unassign group from contacts
-  const contacts = getLocalContacts(userId);
-  contacts.forEach((c) => {
-    if (c.groupId === groupId) {
+  // Unassign group from contacts belonging to this user
+  const allContacts = readAllContacts();
+  let changed = false;
+  allContacts.forEach((c) => {
+    if (c.userId === userId && c.groupId === groupId) {
       c.groupId = null;
       c.groupName = undefined;
+      changed = true;
     }
   });
-  saveLocalContacts(contacts);
+  if (changed) {
+    writeAllContacts(allContacts);
+  }
   return true;
 }
 
@@ -107,62 +126,32 @@ export function deleteGroup(userId: string, groupId: string): boolean {
 // CONTACTS
 // ----------------------------------------------------
 
-export function getLocalContacts(userId: string): Contact[] {
+function readAllContacts(): Contact[] {
   ensureStorageDir();
   try {
     if (!fs.existsSync(LOCAL_CONTACTS_FILE)) {
-      const defaultContacts: Contact[] = [
-        {
-          id: "cnt_1",
-          userId,
-          name: "Budi Santoso",
-          phoneNumber: "6281234567890",
-          groupId: "grp_pelanggan_vip",
-          groupName: "Pelanggan VIP",
-          customVariables: { kota: "Jakarta", saldo: 500000 },
-          notes: "Pelanggan setia sejak 2025",
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-        {
-          id: "cnt_2",
-          userId,
-          name: "Siti Rahmawati",
-          phoneNumber: "6285712345678",
-          groupId: "grp_leads_baru",
-          groupName: "Leads Baru",
-          customVariables: { kota: "Surabaya", minat: "Paket Pro" },
-          notes: "Follow up hari Senin",
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-        {
-          id: "cnt_3",
-          userId,
-          name: "Ahmad Fauzi",
-          phoneNumber: "6289698765432",
-          groupId: "grp_reseller",
-          groupName: "Reseller / Agen",
-          customVariables: { kota: "Bandung", tier: "Gold" },
-          notes: "Reseller wilayah Jawa Barat",
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-      ];
-      fs.writeFileSync(LOCAL_CONTACTS_FILE, JSON.stringify(defaultContacts, null, 2));
-      return defaultContacts;
+      return [];
     }
     const data = fs.readFileSync(LOCAL_CONTACTS_FILE, "utf-8");
-    const contacts: Contact[] = JSON.parse(data || "[]");
-    return contacts.filter((c) => c.userId === userId || userId === "demo-user-local-id");
+    return JSON.parse(data || "[]");
   } catch {
     return [];
   }
 }
 
-export function saveLocalContacts(contacts: Contact[]) {
+function writeAllContacts(contacts: Contact[]) {
   ensureStorageDir();
   fs.writeFileSync(LOCAL_CONTACTS_FILE, JSON.stringify(contacts, null, 2));
+}
+
+export function getLocalContacts(userId: string): Contact[] {
+  const contacts = readAllContacts();
+  return contacts.filter((c) => c.userId === userId);
+}
+
+export function saveLocalContacts(userId: string, userContacts: Contact[]) {
+  const allContacts = readAllContacts().filter((c) => c.userId !== userId);
+  writeAllContacts([...allContacts, ...userContacts]);
 }
 
 export function createContact(
@@ -180,16 +169,16 @@ export function createContact(
     return { success: false, error: "Nomor WhatsApp tidak valid" };
   }
 
-  const contacts = getLocalContacts(userId);
-  if (contacts.some((c) => c.phoneNumber === phoneNumber)) {
-    return { success: false, error: `Nomor +${phoneNumber} sudah terdaftar dalam kontak` };
+  const userContacts = getLocalContacts(userId);
+  if (userContacts.some((c) => c.phoneNumber === phoneNumber)) {
+    return { success: false, error: `Nomor +${phoneNumber} sudah terdaftar dalam kontak Anda` };
   }
 
   const groups = getLocalGroups(userId);
   const matchedGroup = groups.find((g) => g.id === data.groupId);
 
   const newContact: Contact = {
-    id: `cnt_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+    id: `cnt_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
     userId,
     name: data.name.trim() || `Kontak +${phoneNumber}`,
     phoneNumber,
@@ -201,8 +190,9 @@ export function createContact(
     updatedAt: new Date().toISOString(),
   };
 
-  contacts.unshift(newContact);
-  saveLocalContacts(contacts);
+  const allContacts = readAllContacts();
+  allContacts.unshift(newContact);
+  writeAllContacts(allContacts);
 
   return { success: true, contact: newContact };
 }
@@ -212,8 +202,8 @@ export function updateContact(
   id: string,
   data: Partial<Contact>
 ): { success: boolean; contact?: Contact; error?: string } {
-  const contacts = getLocalContacts(userId);
-  const index = contacts.findIndex((c) => c.id === id);
+  const allContacts = readAllContacts();
+  const index = allContacts.findIndex((c) => c.id === id && c.userId === userId);
   if (index === -1) {
     return { success: false, error: "Kontak tidak ditemukan" };
   }
@@ -223,27 +213,28 @@ export function updateContact(
   }
 
   const groups = getLocalGroups(userId);
-  let groupName = contacts[index].groupName;
+  let groupName = allContacts[index].groupName;
   if (data.groupId !== undefined) {
     const matched = groups.find((g) => g.id === data.groupId);
     groupName = matched?.name;
   }
 
-  contacts[index] = {
-    ...contacts[index],
+  allContacts[index] = {
+    ...allContacts[index],
     ...data,
     groupName,
     updatedAt: new Date().toISOString(),
   };
 
-  saveLocalContacts(contacts);
-  return { success: true, contact: contacts[index] };
+  writeAllContacts(allContacts);
+  return { success: true, contact: allContacts[index] };
 }
 
 export function deleteContact(userId: string, id: string): boolean {
-  const contacts = getLocalContacts(userId);
-  const filtered = contacts.filter((c) => c.id !== id);
-  saveLocalContacts(filtered);
+  const allContacts = readAllContacts();
+  const filtered = allContacts.filter((c) => !(c.id === id && c.userId === userId));
+  if (filtered.length === allContacts.length) return false;
+  writeAllContacts(filtered);
   return true;
 }
 
@@ -257,13 +248,15 @@ export function importContactsBulk(
     notes?: string;
   }>
 ): { imported: number; skipped: number; errors: string[] } {
-  const contacts = getLocalContacts(userId);
+  const allContacts = readAllContacts();
+  const userContacts = allContacts.filter((c) => c.userId === userId);
   const groups = getLocalGroups(userId);
-  const existingPhones = new Set(contacts.map((c) => c.phoneNumber));
+  const existingPhones = new Set(userContacts.map((c) => c.phoneNumber));
 
   let imported = 0;
   let skipped = 0;
   const errors: string[] = [];
+  const newContactsToAdd: Contact[] = [];
 
   for (const item of items) {
     if (!item.phoneNumber) {
@@ -297,7 +290,7 @@ export function importContactsBulk(
     }
 
     const newContact: Contact = {
-      id: `cnt_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+      id: `cnt_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       userId,
       name: item.name?.trim() || `Kontak +${normalized}`,
       phoneNumber: normalized,
@@ -309,11 +302,13 @@ export function importContactsBulk(
       updatedAt: new Date().toISOString(),
     };
 
-    contacts.unshift(newContact);
+    newContactsToAdd.unshift(newContact);
     existingPhones.add(normalized);
     imported++;
   }
 
-  saveLocalContacts(contacts);
+  if (newContactsToAdd.length > 0) {
+    writeAllContacts([...newContactsToAdd, ...allContacts]);
+  }
   return { imported, skipped, errors };
 }

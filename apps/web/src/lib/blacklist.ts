@@ -4,7 +4,7 @@ import path from "path";
 const LOCAL_STORAGE_DIR = path.join(process.cwd(), ".sendora-data");
 const LOCAL_BLACKLIST_FILE = path.join(LOCAL_STORAGE_DIR, "blacklist.json");
 
-export function getLocalBlacklist(): any[] {
+export function getLocalBlacklist(userId?: string): any[] {
   try {
     if (!fs.existsSync(LOCAL_STORAGE_DIR)) {
       fs.mkdirSync(LOCAL_STORAGE_DIR, { recursive: true });
@@ -14,7 +14,11 @@ export function getLocalBlacklist(): any[] {
       return [];
     }
     const data = fs.readFileSync(LOCAL_BLACKLIST_FILE, "utf-8");
-    return JSON.parse(data || "[]");
+    const list = JSON.parse(data || "[]");
+    if (userId) {
+      return list.filter((item: any) => item.userId === userId);
+    }
+    return list;
   } catch {
     return [];
   }
@@ -22,12 +26,8 @@ export function getLocalBlacklist(): any[] {
 
 export function isBlacklisted(userId: string, phoneNumber: string): boolean {
   const clean = phoneNumber.replace(/\D/g, "");
-  const list = getLocalBlacklist();
-  return list.some(
-    (item: any) =>
-      (item.userId === userId || item.userId === "admin-default-user") &&
-      item.phoneNumber.replace(/\D/g, "") === clean
-  );
+  const list = getLocalBlacklist(userId);
+  return list.some((item: any) => item.phoneNumber.replace(/\D/g, "") === clean);
 }
 
 export function addToBlacklist(
@@ -39,20 +39,20 @@ export function addToBlacklist(
     if (!fs.existsSync(LOCAL_STORAGE_DIR)) {
       fs.mkdirSync(LOCAL_STORAGE_DIR, { recursive: true });
     }
-    const list = getLocalBlacklist();
+    const all = getLocalBlacklist();
     const clean = phoneNumber.replace(/\D/g, "");
-    const alreadyExists = list.some(
-      (item: any) => item.phoneNumber.replace(/\D/g, "") === clean
+    const alreadyExists = all.some(
+      (item: any) => item.userId === userId && item.phoneNumber.replace(/\D/g, "") === clean
     );
     if (!alreadyExists) {
-      list.unshift({
+      all.unshift({
         id: `bl_${Date.now()}`,
         userId,
         phoneNumber: clean,
         reason,
         createdAt: new Date().toISOString(),
       });
-      fs.writeFileSync(LOCAL_BLACKLIST_FILE, JSON.stringify(list, null, 2));
+      fs.writeFileSync(LOCAL_BLACKLIST_FILE, JSON.stringify(all, null, 2));
     }
   } catch (err) {
     console.error("[Blacklist] Failed to add to blacklist:", err);

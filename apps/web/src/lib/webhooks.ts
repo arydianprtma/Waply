@@ -79,7 +79,7 @@ export function getWebhooks(userId: string): WebhookConfig[] {
   try {
     const data = fs.readFileSync(WEBHOOKS_FILE, "utf-8");
     const webhooks: WebhookConfig[] = JSON.parse(data);
-    return webhooks.filter((w) => w.userId === userId || w.userId === "admin-default-user");
+    return webhooks.filter((w) => w.userId === userId);
   } catch {
     return [];
   }
@@ -120,7 +120,7 @@ export function updateWebhook(
   const raw = fs.readFileSync(WEBHOOKS_FILE, "utf-8");
   const webhooks: WebhookConfig[] = JSON.parse(raw);
 
-  const idx = webhooks.findIndex((w) => w.id === id);
+  const idx = webhooks.findIndex((w) => w.id === id && w.userId === userId);
   if (idx === -1) return null;
 
   webhooks[idx] = {
@@ -138,7 +138,7 @@ export function deleteWebhook(id: string, userId: string): boolean {
   const raw = fs.readFileSync(WEBHOOKS_FILE, "utf-8");
   const webhooks: WebhookConfig[] = JSON.parse(raw);
 
-  const filtered = webhooks.filter((w) => w.id !== id);
+  const filtered = webhooks.filter((w) => !(w.id === id && w.userId === userId));
   if (filtered.length === webhooks.length) return false;
 
   fs.writeFileSync(WEBHOOKS_FILE, JSON.stringify(filtered, null, 2));
@@ -151,7 +151,7 @@ export function getWebhookLogs(userId: string, limit = 50): WebhookLog[] {
     const data = fs.readFileSync(LOGS_FILE, "utf-8");
     const logs: WebhookLog[] = JSON.parse(data);
     return logs
-      .filter((l) => l.userId === userId || l.userId === "admin-default-user")
+      .filter((l) => l.userId === userId)
       .slice(0, limit);
   } catch {
     return [];

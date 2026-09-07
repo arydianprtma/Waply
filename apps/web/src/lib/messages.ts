@@ -40,7 +40,7 @@ export function getStoredMessages(userId?: string): StoredMessage[] {
     const raw = fs.readFileSync(MESSAGES_FILE, "utf-8");
     const list: StoredMessage[] = JSON.parse(raw || "[]");
     if (!userId) return list;
-    return list.filter((m) => m.userId === userId || m.userId === "demo-user-local-id");
+    return list.filter((m) => m.userId === userId);
   } catch {
     return [];
   }

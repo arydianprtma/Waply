@@ -130,7 +130,7 @@ export function updateTemplate(
   const raw = fs.readFileSync(TEMPLATES_FILE, "utf-8");
   const tpls: MessageTemplate[] = JSON.parse(raw);
 
-  const idx = tpls.findIndex((t) => t.id === id);
+  const idx = tpls.findIndex((t) => t.id === id && (t.userId === userId || t.userId === "admin-default-user"));
   if (idx === -1) return null;
 
   tpls[idx] = {
@@ -150,7 +150,7 @@ export function deleteTemplate(id: string, userId: string): boolean {
   ensureDataDir();
   const raw = fs.readFileSync(TEMPLATES_FILE, "utf-8");
   const tpls: MessageTemplate[] = JSON.parse(raw);
-  const filtered = tpls.filter((t) => t.id !== id);
+  const filtered = tpls.filter((t) => !(t.id === id && (t.userId === userId || t.userId === "admin-default-user")));
   if (filtered.length === tpls.length) return false;
   fs.writeFileSync(TEMPLATES_FILE, JSON.stringify(filtered, null, 2));
   return true;

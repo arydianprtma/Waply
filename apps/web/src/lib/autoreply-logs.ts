@@ -27,7 +27,7 @@ export function getAutoReplyLogs(userId: string, limit = 100): AutoReplyLog[] {
   try {
     const all: AutoReplyLog[] = JSON.parse(fs.readFileSync(LOGS_FILE, "utf-8"));
     return all
-      .filter((l) => l.userId === userId || l.userId === "admin-default-user")
+      .filter((l) => l.userId === userId)
       .slice(0, limit);
   } catch {
     return [];

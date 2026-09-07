@@ -16,7 +16,7 @@ interface LocalBlacklistItem {
 const LOCAL_STORAGE_DIR = path.join(process.cwd(), ".sendora-data");
 const LOCAL_BLACKLIST_FILE = path.join(LOCAL_STORAGE_DIR, "blacklist.json");
 
-function getLocalBlacklist(): LocalBlacklistItem[] {
+function getLocalBlacklist(userId?: string): LocalBlacklistItem[] {
   try {
     if (!fs.existsSync(LOCAL_STORAGE_DIR)) {
       fs.mkdirSync(LOCAL_STORAGE_DIR, { recursive: true });
@@ -26,7 +26,11 @@ function getLocalBlacklist(): LocalBlacklistItem[] {
       return [];
     }
     const data = fs.readFileSync(LOCAL_BLACKLIST_FILE, "utf-8");
-    return JSON.parse(data || "[]");
+    const list = JSON.parse(data || "[]");
+    if (userId) {
+      return list.filter((item: any) => item.userId === userId);
+    }
+    return list;
   } catch {
     return [];
   }
@@ -64,7 +68,7 @@ export async function GET() {
       return NextResponse.json({ success: true, data: blacklist });
     } catch (dbErr) {
       console.warn("DB offline, loading local blacklist:", (dbErr as Error).message);
-      const local = getLocalBlacklist();
+      const local = getLocalBlacklist(user.id);
       return NextResponse.json({ success: true, data: local });
     }
   } catch (error: any) {
@@ -110,8 +114,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, data: item });
     } catch (dbErr) {
       console.warn("DB offline, saving to local blacklist:", (dbErr as Error).message);
-      const items = getLocalBlacklist();
-      if (items.some((i) => i.phoneNumber === phoneNumber)) {
+      const allItems = getLocalBlacklist();
+      if (allItems.some((i) => i.userId === user.id && i.phoneNumber === phoneNumber)) {
         return NextResponse.json(
           { success: false, error: "This phone number is already blacklisted" },
           { status: 400 }
@@ -119,7 +123,7 @@ export async function POST(request: Request) {
       }
 
       const newItem: LocalBlacklistItem = {
-        id: `bl_${Date.now()}`,
+        id: `bl_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
         userId: user.id,
         phoneNumber,
         reason: body.reason || "MANUAL_BLOCK",
@@ -127,8 +131,8 @@ export async function POST(request: Request) {
         createdAt: new Date().toISOString(),
       };
 
-      items.unshift(newItem);
-      saveLocalBlacklist(items);
+      allItems.unshift(newItem);
+      saveLocalBlacklist(allItems);
       return NextResponse.json({ success: true, data: newItem });
     }
   } catch (error: any) {

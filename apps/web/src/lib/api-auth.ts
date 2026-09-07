@@ -135,7 +135,7 @@ export async function listApiKeys(userId: string) {
   if (!process.env.DATABASE_URL) {
     const localKeys = getLocalKeys();
     return localKeys
-      .filter((k) => k.userId === userId || userId === "demo-user-local-id")
+      .filter((k) => k.userId === userId)
       .map(({ keyHash, ...rest }) => rest);
   }
 
@@ -156,7 +156,7 @@ export async function listApiKeys(userId: string) {
   } catch (err) {
     const localKeys = getLocalKeys();
     return localKeys
-      .filter((k) => k.userId === userId || userId === "demo-user-local-id")
+      .filter((k) => k.userId === userId)
       .map(({ keyHash, ...rest }) => rest);
   }
 }
@@ -167,17 +167,20 @@ export async function listApiKeys(userId: string) {
 export async function deleteApiKey(id: string, userId: string) {
   if (id.startsWith("key_") || !process.env.DATABASE_URL) {
     const keys = getLocalKeys();
-    const updated = keys.filter((k) => k.id !== id);
+    const updated = keys.filter((k) => !(k.id === id && k.userId === userId));
     saveLocalKeys(updated);
     return true;
   }
 
   try {
-    await prisma.apiKey.delete({ where: { id } });
+    await prisma.apiKey.deleteMany({ where: { id, userId } });
+    const keys = getLocalKeys();
+    const updated = keys.filter((k) => !(k.id === id && k.userId === userId));
+    saveLocalKeys(updated);
     return true;
   } catch {
     const keys = getLocalKeys();
-    const updated = keys.filter((k) => k.id !== id);
+    const updated = keys.filter((k) => !(k.id === id && k.userId === userId));
     saveLocalKeys(updated);
     return true;
   }

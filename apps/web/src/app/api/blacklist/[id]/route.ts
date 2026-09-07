@@ -7,12 +7,12 @@ import { getSessionUser } from "@/lib/auth-user";
 const LOCAL_STORAGE_DIR = path.join(process.cwd(), ".sendora-data");
 const LOCAL_BLACKLIST_FILE = path.join(LOCAL_STORAGE_DIR, "blacklist.json");
 
-function deleteFromLocalBlacklist(id: string) {
+function deleteFromLocalBlacklist(id: string, userId: string) {
   try {
     if (fs.existsSync(LOCAL_BLACKLIST_FILE)) {
       const data = fs.readFileSync(LOCAL_BLACKLIST_FILE, "utf-8");
       const list = JSON.parse(data || "[]");
-      const updated = list.filter((item: any) => item.id !== id);
+      const updated = list.filter((item: any) => !(item.id === id && item.userId === userId));
       fs.writeFileSync(LOCAL_BLACKLIST_FILE, JSON.stringify(updated, null, 2));
     }
   } catch (err) {
@@ -29,17 +29,18 @@ export async function DELETE(
     const user = await getSessionUser();
 
     if (id.startsWith("bl_") || !process.env.DATABASE_URL) {
-      deleteFromLocalBlacklist(id);
+      deleteFromLocalBlacklist(id, user.id);
       return NextResponse.json({ success: true, message: "Removed from blacklist" });
     }
 
     try {
-      await prisma.blacklist.delete({
-        where: { id },
+      await prisma.blacklist.deleteMany({
+        where: { id, userId: user.id },
       });
+      deleteFromLocalBlacklist(id, user.id);
       return NextResponse.json({ success: true, message: "Removed from blacklist" });
     } catch {
-      deleteFromLocalBlacklist(id);
+      deleteFromLocalBlacklist(id, user.id);
       return NextResponse.json({ success: true, message: "Removed from blacklist" });
     }
   } catch (error: any) {

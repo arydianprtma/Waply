@@ -67,7 +67,7 @@ export function getAutoReplyRules(userId: string): AutoReplyRule[] {
   try {
     const data = fs.readFileSync(AUTOREPLY_FILE, "utf-8");
     const rules: AutoReplyRule[] = JSON.parse(data);
-    return rules.filter((r) => r.userId === userId || r.userId === "admin-default-user");
+    return rules.filter((r) => r.userId === userId);
   } catch {
     return [];
   }
@@ -109,7 +109,7 @@ export function updateAutoReplyRule(
   const raw = fs.readFileSync(AUTOREPLY_FILE, "utf-8");
   const rules: AutoReplyRule[] = JSON.parse(raw);
 
-  const idx = rules.findIndex((r) => r.id === id);
+  const idx = rules.findIndex((r) => r.id === id && r.userId === userId);
   if (idx === -1) return null;
 
   rules[idx] = {
@@ -127,7 +127,7 @@ export function deleteAutoReplyRule(id: string, userId: string): boolean {
   const raw = fs.readFileSync(AUTOREPLY_FILE, "utf-8");
   const rules: AutoReplyRule[] = JSON.parse(raw);
 
-  const filtered = rules.filter((r) => r.id !== id);
+  const filtered = rules.filter((r) => !(r.id === id && r.userId === userId));
   if (filtered.length === rules.length) return false;
 
   fs.writeFileSync(AUTOREPLY_FILE, JSON.stringify(filtered, null, 2));

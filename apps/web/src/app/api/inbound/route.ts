@@ -3,6 +3,7 @@ import { findMatchingRule, incrementRuleTrigger } from "@/lib/autoreply";
 import { dispatchWebhookEvent } from "@/lib/webhooks";
 import { isBlacklisted, addToBlacklist } from "@/lib/blacklist";
 import { saveAutoReplyLog } from "@/lib/autoreply-logs";
+import { getAllUserDeviceRecords } from "@/lib/user-devices";
 
 const GATEWAY_URL = process.env.GATEWAY_URL || "http://localhost:3002";
 
@@ -24,7 +25,8 @@ export async function POST(req: NextRequest) {
     }
 
     const cleanSender = sender.replace(/\D/g, "");
-    const userId = "admin-default-user";
+    const deviceRecords = getAllUserDeviceRecords();
+    const userId = (deviceId && deviceRecords[deviceId]?.userId) || "admin-default-user";
 
     // 1. Dispatch Inbound Webhook event `message.received`
     dispatchWebhookEvent(userId, "message.received", {

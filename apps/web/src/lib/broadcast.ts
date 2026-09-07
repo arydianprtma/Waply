@@ -55,70 +55,41 @@ function ensureStorageDir() {
   }
 }
 
-export function getLocalCampaigns(userId: string): BroadcastCampaign[] {
+function readAllCampaigns(): BroadcastCampaign[] {
   ensureStorageDir();
   try {
     if (!fs.existsSync(LOCAL_CAMPAIGNS_FILE)) {
-      const defaultCampaigns: BroadcastCampaign[] = [
-        {
-          id: "cmp_demo_1",
-          userId,
-          name: "Promo Weekend Diskon 25%",
-          messageTemplate: "{Halo|Hai|Selamat siang} {{name}}, nikmati promo diskon 25% spesial akhir pekan dengan kode SENDORA25!",
-          status: "COMPLETED",
-          totalRecipients: 3,
-          sentCount: 3,
-          failedCount: 0,
-          skippedCount: 0,
-          batchSize: 10,
-          batchDelaySec: 30,
-          minDelaySec: 4,
-          maxDelaySec: 8,
-          recipients: [
-            {
-              id: "rcp_1",
-              phoneNumber: "6281234567890",
-              name: "Budi Santoso",
-              renderedMessage: "Selamat siang Budi Santoso, nikmati promo diskon 25% spesial akhir pekan dengan kode SENDORA25!",
-              status: "SENT",
-              sentAt: new Date(Date.now() - 3600000).toISOString(),
-            },
-            {
-              id: "rcp_2",
-              phoneNumber: "6285712345678",
-              name: "Siti Rahmawati",
-              renderedMessage: "Hai Siti Rahmawati, nikmati promo diskon 25% spesial akhir pekan dengan kode SENDORA25!",
-              status: "SENT",
-              sentAt: new Date(Date.now() - 3500000).toISOString(),
-            },
-            {
-              id: "rcp_3",
-              phoneNumber: "6289698765432",
-              name: "Ahmad Fauzi",
-              renderedMessage: "Halo Ahmad Fauzi, nikmati promo diskon 25% spesial akhir pekan dengan kode SENDORA25!",
-              status: "SENT",
-              sentAt: new Date(Date.now() - 3400000).toISOString(),
-            },
-          ],
-          createdAt: new Date(Date.now() - 7200000).toISOString(),
-          updatedAt: new Date(Date.now() - 3400000).toISOString(),
-          completedAt: new Date(Date.now() - 3400000).toISOString(),
-        },
-      ];
-      fs.writeFileSync(LOCAL_CAMPAIGNS_FILE, JSON.stringify(defaultCampaigns, null, 2));
-      return defaultCampaigns;
+      return [];
     }
     const data = fs.readFileSync(LOCAL_CAMPAIGNS_FILE, "utf-8");
-    const list: BroadcastCampaign[] = JSON.parse(data || "[]");
-    return list.filter((c) => c.userId === userId || userId === "demo-user-local-id");
+    return JSON.parse(data || "[]");
   } catch {
     return [];
   }
 }
 
-export function saveLocalCampaigns(campaigns: BroadcastCampaign[]) {
+function writeAllCampaigns(campaigns: BroadcastCampaign[]) {
   ensureStorageDir();
   fs.writeFileSync(LOCAL_CAMPAIGNS_FILE, JSON.stringify(campaigns, null, 2));
+}
+
+export function getLocalCampaigns(userId: string): BroadcastCampaign[] {
+  const campaigns = readAllCampaigns();
+  return campaigns.filter((c) => c.userId === userId);
+}
+
+export function saveLocalCampaigns(campaigns: BroadcastCampaign[]) {
+  const allCampaigns = readAllCampaigns();
+  const campaignMap = new Map(campaigns.map((c) => [c.id, c]));
+  const updatedAll = allCampaigns.map((c) => campaignMap.get(c.id) || c);
+  
+  // Add any new campaigns
+  for (const c of campaigns) {
+    if (!allCampaigns.some((existing) => existing.id === c.id)) {
+      updatedAll.unshift(c);
+    }
+  }
+  writeAllCampaigns(updatedAll);
 }
 
 export function getCampaignById(userId: string, campaignId: string): BroadcastCampaign | null {
@@ -139,15 +110,15 @@ export function createBroadcastCampaign(
     maxDelaySec?: number;
   }
 ): BroadcastCampaign {
-  const campaigns = getLocalCampaigns(userId);
-
   // Blacklist check
   let blacklistedPhones = new Set<string>();
   try {
     const blFile = path.join(LOCAL_STORAGE_DIR, "blacklist.json");
     if (fs.existsSync(blFile)) {
       const blItems = JSON.parse(fs.readFileSync(blFile, "utf-8") || "[]");
-      blItems.forEach((b: any) => blacklistedPhones.add(b.phoneNumber));
+      blItems
+        .filter((b: any) => b.userId === userId)
+        .forEach((b: any) => blacklistedPhones.add(b.phoneNumber));
     }
   } catch {}
 
@@ -167,7 +138,7 @@ export function createBroadcastCampaign(
   const skippedCount = formattedRecipients.filter((r) => r.status === "SKIPPED_BLACKLIST").length;
 
   const newCampaign: BroadcastCampaign = {
-    id: `cmp_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+    id: `cmp_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
     userId,
     name: payload.name.trim() || `Broadcast ${new Date().toLocaleDateString("id-ID")}`,
     deviceId: payload.deviceId,
@@ -186,8 +157,10 @@ export function createBroadcastCampaign(
     updatedAt: new Date().toISOString(),
   };
 
-  campaigns.unshift(newCampaign);
-  saveLocalCampaigns(campaigns);
+  const allCampaigns = readAllCampaigns();
+  allCampaigns.unshift(newCampaign);
+  writeAllCampaigns(allCampaigns);
+
   return newCampaign;
 }
 
@@ -199,9 +172,10 @@ export function deleteBroadcastCampaign(userId: string, campaignId: string): boo
     activeRunners.delete(campaignId);
   }
 
-  const campaigns = getLocalCampaigns(userId);
-  const filtered = campaigns.filter((c) => c.id !== campaignId);
-  saveLocalCampaigns(filtered);
+  const allCampaigns = readAllCampaigns();
+  const filtered = allCampaigns.filter((c) => !(c.id === campaignId && c.userId === userId));
+  if (filtered.length === allCampaigns.length) return false;
+  writeAllCampaigns(filtered);
   return true;
 }
 

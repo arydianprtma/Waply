@@ -50,7 +50,7 @@ export async function GET(request: Request) {
     }
 
     // Local storage fallback
-    let localMessages = getStoredMessages(user.role === "admin" ? undefined : user.id);
+    let localMessages = getStoredMessages(user.id);
     if (status && status !== "ALL") {
       localMessages = localMessages.filter((m) => m.status === status);
     }

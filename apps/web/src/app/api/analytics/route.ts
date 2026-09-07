@@ -52,15 +52,21 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const range = searchParams.get("range") || "7d";
 
-    // Read all local storage files
-    const contacts = readJson<any[]>("contacts.json", []);
-    const broadcasts = readJson<any[]>("broadcast-campaigns.json", []);
-    const autoreplies = readJson<any[]>("autoreply.json", []);
-    const webhookLogs = readJson<any[]>("webhook_logs.json", []);
-    const templates = readJson<any[]>("templates.json", []);
+    // Read all local storage files and filter strictly by user.id
+    const rawContacts = readJson<any[]>("contacts.json", []);
+    const rawBroadcasts = readJson<any[]>("broadcast-campaigns.json", []);
+    const rawAutoreplies = readJson<any[]>("autoreply.json", []);
+    const rawWebhookLogs = readJson<any[]>("webhook_logs.json", []);
+    const rawTemplates = readJson<any[]>("templates.json", []);
+
+    const contacts = rawContacts.filter((c: any) => c.userId === user.id);
+    const broadcasts = rawBroadcasts.filter((b: any) => b.userId === user.id);
+    const autoreplies = rawAutoreplies.filter((r: any) => r.userId === user.id);
+    const webhookLogs = rawWebhookLogs.filter((l: any) => l.userId === user.id);
+    const templates = rawTemplates.filter((t: any) => t.userId === user.id || t.userId === "admin-default-user");
 
     // Get user-specific stored messages
-    const userMessages = getStoredMessages(user.role === "admin" ? undefined : user.id);
+    const userMessages = getStoredMessages(user.id);
     const sentMessages = userMessages.filter((m) => m.status === "SENT");
 
     const totalContacts = contacts.length;
@@ -87,7 +93,7 @@ export async function GET(request: Request) {
         (m.sentAt || m.createdAt || "").startsWith(day)
       ).length;
       const inbound = webhookLogs.filter((l: any) =>
-        (l.deliveredAt || "").startsWith(day)
+        (l.deliveredAt || l.createdAt || "").startsWith(day)
       ).length;
       return {
         date: day,
