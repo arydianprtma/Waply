@@ -229,14 +229,21 @@ export function updateTicketStatus(
   const index = all.findIndex((t) => t.id.toUpperCase() === ticketId.toUpperCase());
   if (index === -1) return null;
 
+  // Tiket yang sudah ditutup/selesai tidak dapat dibuka kembali
+  if (
+    (all[index].status === "RESOLVED" || all[index].status === "CLOSED") &&
+    status !== "RESOLVED" &&
+    status !== "CLOSED"
+  ) {
+    return all[index];
+  }
+
   const now = new Date().toISOString();
   all[index].status = status;
   all[index].updatedAt = now;
 
   if (status === "RESOLVED" || status === "CLOSED") {
     all[index].resolvedAt = now;
-  } else {
-    all[index].resolvedAt = null;
   }
 
   saveTickets(all);

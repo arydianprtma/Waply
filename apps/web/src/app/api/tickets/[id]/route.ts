@@ -71,8 +71,19 @@ export async function PATCH(
 
     // Status change
     if (body.status) {
+      if (
+        (ticket.status === "RESOLVED" || ticket.status === "CLOSED") &&
+        body.status !== "RESOLVED" &&
+        body.status !== "CLOSED"
+      ) {
+        return NextResponse.json({
+          success: false,
+          error: "Tiket yang sudah selesai atau ditutup tidak dapat dibuka kembali.",
+        }, { status: 400 });
+      }
+
       // Non-admin can only resolve or close their own ticket
-      if (!isAdmin && body.status !== "RESOLVED" && body.status !== "CLOSED" && body.status !== "OPEN") {
+      if (!isAdmin && body.status !== "RESOLVED" && body.status !== "CLOSED") {
         return NextResponse.json({ success: false, error: "Status tidak valid" }, { status: 400 });
       }
       updated = updateTicketStatus(id, body.status as TicketStatus) || updated;

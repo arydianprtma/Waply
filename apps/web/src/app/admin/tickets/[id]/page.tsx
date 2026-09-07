@@ -318,7 +318,7 @@ export default function AdminTicketDetailPage() {
 
         {/* Action Controls */}
         <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-center shrink-0">
-          {ticket.status !== "RESOLVED" ? (
+          {ticket.status !== "RESOLVED" && ticket.status !== "CLOSED" ? (
             <button
               onClick={() => handleUpdateStatus("RESOLVED")}
               disabled={updatingStatus}
@@ -328,14 +328,10 @@ export default function AdminTicketDetailPage() {
               <span>Tandai Selesai</span>
             </button>
           ) : (
-            <button
-              onClick={() => handleUpdateStatus("IN_PROGRESS")}
-              disabled={updatingStatus}
-              className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-              <span>Buka Kembali</span>
-            </button>
+            <div className="px-3.5 py-1.5 rounded-xl bg-slate-100 text-slate-600 border border-slate-200 text-xs font-bold flex items-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span>Tiket Selesai</span>
+            </div>
           )}
 
           <button
@@ -449,23 +445,12 @@ export default function AdminTicketDetailPage() {
                   </div>
                   <div className="space-y-0.5 flex-1">
                     <h4 className="text-xs font-black text-slate-900">
-                      Tiket Berstatus Selesai ({ticket.status})
+                      Tiket Telah Selesai ({ticket.status})
                     </h4>
                     <p className="text-[11px] text-slate-500 leading-relaxed">
-                      Sesi obrolan dinonaktifkan. Data riwayat tiket ini akan otomatis dihapus permanen dari database dalam <strong>7 hari</strong> setelah selesai. Klik tombol di bawah jika ingin membuka kembali percakapan.
+                      Sesi obrolan dinonaktifkan secara permanen. Data riwayat tiket ini akan otomatis dihapus dari database dalam <strong>7 hari</strong> setelah selesai.
                     </p>
                   </div>
-                </div>
-
-                <div className="flex justify-end pt-1 border-t border-slate-200/70">
-                  <button
-                    onClick={() => handleUpdateStatus("IN_PROGRESS")}
-                    disabled={updatingStatus}
-                    className="px-4 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
-                  >
-                    <RefreshCw className="w-3.5 h-3.5" />
-                    <span>Buka Kembali untuk Menanggapi</span>
-                  </button>
                 </div>
               </div>
             ) : (
@@ -518,14 +503,19 @@ export default function AdminTicketDetailPage() {
               <select
                 value={ticket.status}
                 onChange={(e) => handleUpdateStatus(e.target.value as TicketStatus)}
-                disabled={updatingStatus}
-                className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer"
+                disabled={updatingStatus || ticket.status === "RESOLVED" || ticket.status === "CLOSED"}
+                className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-800 disabled:bg-slate-100 disabled:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer"
               >
                 <option value="OPEN">Menunggu Respon (OPEN)</option>
                 <option value="IN_PROGRESS">Sedang Ditangani (IN_PROGRESS)</option>
                 <option value="RESOLVED">Selesai (RESOLVED)</option>
                 <option value="CLOSED">Ditutup (CLOSED)</option>
               </select>
+              {(ticket.status === "RESOLVED" || ticket.status === "CLOSED") && (
+                <p className="text-[10px] text-slate-400 mt-1">
+                  * Status tiket yang telah selesai / ditutup tidak dapat diubah kembali.
+                </p>
+              )}
             </div>
 
             {/* Priority Select */}

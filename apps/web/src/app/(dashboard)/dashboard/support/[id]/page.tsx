@@ -265,7 +265,7 @@ export default function UserTicketDetailPage() {
 
         {/* Header Actions */}
         <div className="flex items-center gap-2.5 self-start sm:self-center shrink-0">
-          {ticket.status !== "RESOLVED" && ticket.status !== "CLOSED" ? (
+          {!isResolvedOrClosed ? (
             <button
               onClick={() => handleToggleStatus("RESOLVED")}
               disabled={statusUpdating}
@@ -275,14 +275,10 @@ export default function UserTicketDetailPage() {
               <span>Tandai Selesai</span>
             </button>
           ) : (
-            <button
-              onClick={() => handleToggleStatus("OPEN")}
-              disabled={statusUpdating}
-              className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300 text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-              <span>Buka Kembali Tiket</span>
-            </button>
+            <div className="px-3.5 py-2 rounded-xl bg-slate-100 text-slate-600 border border-slate-200 text-xs font-bold flex items-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span>Tiket Selesai</span>
+            </div>
           )}
         </div>
       </div>
@@ -370,23 +366,21 @@ export default function UserTicketDetailPage() {
                   </div>
                   <div className="space-y-0.5 flex-1">
                     <h4 className="text-xs font-black text-slate-900">
-                      Sesi Percakapan Tiket Telah Selesai
+                      Sesi Percakapan Tiket Telah Ditutup Permanen
                     </h4>
                     <p className="text-[11px] text-slate-500 leading-relaxed">
-                      Kendala telah ditandai selesai dan sesi chat dinonaktifkan. Seluruh riwayat obrolan tiket ini akan otomatis dibersihkan dari database dalam <strong>7 hari</strong> untuk menghemat ruang penyimpanan.
+                      Kendala telah ditandai selesai dan sesi obrolan dinonaktifkan permanen. Seluruh riwayat obrolan tiket ini akan otomatis dibersihkan dari database dalam <strong>7 hari</strong> untuk menghemat ruang penyimpanan.
                     </p>
                   </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-200/70 justify-end">
-                  <button
-                    onClick={() => handleToggleStatus("OPEN")}
-                    disabled={statusUpdating}
-                    className="px-3.5 py-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                  <Link
+                    href="/dashboard/support"
+                    className="px-3.5 py-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs"
                   >
-                    <RefreshCw className="w-3.5 h-3.5" />
-                    <span>Buka Kembali Tiket Ini</span>
-                  </button>
+                    <span>Kembali ke Tiket Saya</span>
+                  </Link>
                   <Link
                     href="/dashboard/support/new"
                     className="px-4 py-1.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 transition-all flex items-center gap-1.5 shadow-xs"
