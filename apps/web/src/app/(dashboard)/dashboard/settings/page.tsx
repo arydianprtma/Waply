@@ -95,7 +95,7 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
   const [showUserId, setShowUserId] = useState(false);
-  const [activeTab, setActiveTab] = useState<"profile" | "security" | "workingHours" | "notif" | "danger">("profile");
+  const [activeTab, setActiveTab] = useState<"profile" | "security" | "notif" | "danger">("profile");
   const [resetConfirm, setResetConfirm] = useState(false);
   const [resetDone, setResetDone] = useState<string[] | null>(null);
   const [resetting, setResetting] = useState(false);
@@ -228,7 +228,6 @@ export default function SettingsPage() {
   const tabs = [
     { key: "profile", label: "Profil", icon: User },
     { key: "security", label: "Keamanan", icon: ShieldCheck },
-    { key: "workingHours", label: "Jam Kerja", icon: Clock },
     { key: "notif", label: "Notifikasi", icon: Bell },
     { key: "danger", label: "Danger Zone", icon: AlertTriangle },
   ] as const;
@@ -247,7 +246,7 @@ export default function SettingsPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Pengaturan Akun</h1>
         <p className="text-sm text-base-content/60 mt-1">
-          Kelola profil akun, keamanan & ganti password, jadwal jam kerja, dan preferensi notifikasi.
+          Kelola profil akun, keamanan & ganti password, dan preferensi notifikasi.
         </p>
       </div>
 
@@ -734,117 +733,6 @@ export default function SettingsPage() {
         </ModalPortal>
       )}
 
-
-      {/* Tab: Working Hours */}
-      {activeTab === "workingHours" && (
-        <div className="card bg-base-100 border border-base-200 shadow-sm p-6 rounded-2xl space-y-5">
-          <h3 className="font-bold text-base flex items-center gap-2">
-            <Clock className="w-4 h-4 text-primary" /> Jam Kerja & Waktu Operasional
-          </h3>
-          <p className="text-xs text-base-content/60">
-            Batasi jam pengiriman otomatis (broadcast & auto-reply) agar tidak mengirim pesan di tengah malam dan terhindar dari report spam pelanggan.
-          </p>
-
-          <div className="space-y-4">
-            <label className="label cursor-pointer justify-start gap-4 py-3 rounded-xl hover:bg-base-200/50 px-3 border border-base-200">
-              <input
-                type="checkbox"
-                className="toggle toggle-primary toggle-sm"
-                checked={settings.workingHours.enabled}
-                onChange={(e) => update("workingHours", "enabled", e.target.checked)}
-              />
-              <div>
-                <span className="label-text font-medium text-sm block">Aktifkan Pembatasan Jam Kerja</span>
-                <span className="text-xs text-base-content/50">
-                  Pesan broadcast di luar jam ini akan ditahan (PAUSED) hingga jam operasional berikutnya
-                </span>
-              </div>
-            </label>
-
-            {settings.workingHours.enabled && (
-              <div className="p-4 bg-base-200/40 rounded-xl space-y-4 border border-base-200">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="form-control">
-                    <label className="label py-1">
-                      <span className="label-text font-medium text-xs">Jam Mulai (Buka)</span>
-                    </label>
-                    <input
-                      type="time"
-                      className="input input-bordered input-sm font-mono"
-                      value={settings.workingHours.startTime}
-                      onChange={(e) => update("workingHours", "startTime", e.target.value)}
-                    />
-                  </div>
-
-                  <div className="form-control">
-                    <label className="label py-1">
-                      <span className="label-text font-medium text-xs">Jam Selesai (Tutup)</span>
-                    </label>
-                    <input
-                      type="time"
-                      className="input input-bordered input-sm font-mono"
-                      value={settings.workingHours.endTime}
-                      onChange={(e) => update("workingHours", "endTime", e.target.value)}
-                    />
-                  </div>
-
-                  <div className="form-control">
-                    <label className="label py-1">
-                      <span className="label-text font-medium text-xs">Zona Waktu</span>
-                    </label>
-                    <select
-                      className="select select-bordered select-sm"
-                      value={settings.workingHours.timezone}
-                      onChange={(e) => update("workingHours", "timezone", e.target.value)}
-                    >
-                      <option value="Asia/Jakarta">WIB (Asia/Jakarta)</option>
-                      <option value="Asia/Makassar">WITA (Asia/Makassar)</option>
-                      <option value="Asia/Jayapura">WIT (Asia/Jayapura)</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="label py-1">
-                    <span className="label-text font-medium text-xs">Hari Aktif Pengiriman</span>
-                  </label>
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {[
-                      { day: 1, label: "Sen" },
-                      { day: 2, label: "Sel" },
-                      { day: 3, label: "Rab" },
-                      { day: 4, label: "Kam" },
-                      { day: 5, label: "Jum" },
-                      { day: 6, label: "Sab" },
-                      { day: 7, label: "Min" },
-                    ].map(({ day, label }) => {
-                      const isSelected = settings.workingHours.daysOfWeek.includes(day);
-                      return (
-                        <button
-                          key={day}
-                          type="button"
-                          onClick={() => {
-                            const newDays = isSelected
-                              ? settings.workingHours.daysOfWeek.filter((d) => d !== day)
-                              : [...settings.workingHours.daysOfWeek, day];
-                            update("workingHours", "daysOfWeek", newDays);
-                          }}
-                          className={`btn btn-xs rounded-lg ${
-                            isSelected ? "btn-primary" : "btn-outline border-base-300"
-                          }`}
-                        >
-                          {label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          <SaveButton onSave={handleSave} saving={saving} saved={saved} />
-        </div>
-      )}
 
       {/* Tab: Notifications */}
       {activeTab === "notif" && (
