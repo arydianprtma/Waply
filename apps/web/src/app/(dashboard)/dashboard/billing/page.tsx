@@ -597,21 +597,8 @@ function BillingContent() {
             })}
           </div>
         </div>
-
-          {/* Sandbox Notice */}
-          <div className="alert gap-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl">
-            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-            <div className="text-xs">
-              <p className="font-semibold">Mode Sandbox Aktif</p>
-              <p className="mt-0.5">
-                Gunakan kartu test Midtrans: <code className="bg-amber-100 px-1 rounded">4811 1111 1111 1114</code> •
-                Exp: <code className="bg-amber-100 px-1 rounded">01/25</code> •
-                CVV: <code className="bg-amber-100 px-1 rounded">123</code>
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+      </div>
+    )}
 
       {/* ── Tab: Addons ──────────────────────────────────────────────── */}
       {activeTab === "addons" && (
