@@ -1115,7 +1115,10 @@ export default function AdminUsersPage() {
                       <option value={7}>7 Hari (1 Minggu)</option>
                       <option value={30}>30 Hari (1 Bulan)</option>
                       <option value={90}>90 Hari (3 Bulan)</option>
+                      <option value={180}>180 Hari (6 Bulan)</option>
                       <option value={365}>365 Hari (1 Tahun)</option>
+                      <option value={730}>730 Hari (2 Tahun)</option>
+                      <option value={1095}>1095 Hari (3 Tahun)</option>
                     </select>
                   </div>
                 )}

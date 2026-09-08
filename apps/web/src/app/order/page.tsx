@@ -270,12 +270,21 @@ function OrderContent() {
   
   const planPeriod = currentPlan.period || "month";
   const effectiveDurationMonths: number =
-    planPeriod === "year" ? 12 : planPeriod === "day" || planPeriod === "week" ? 1 : durationMonths;
+    planPeriod === "year"
+      ? durationMonths === 24 || durationMonths === 36
+        ? durationMonths
+        : 12
+      : planPeriod === "day" || planPeriod === "week"
+      ? 1
+      : durationMonths;
 
   // Price calculations
   let basePrice = currentPlan.price;
 
-  if (planPeriod === "month") {
+  if (planPeriod === "year") {
+    const years = Math.max(1, Math.round(effectiveDurationMonths / 12));
+    basePrice = currentPlan.price * years;
+  } else if (planPeriod === "month") {
     basePrice = currentPlan.price * durationMonths;
   } else {
     basePrice = currentPlan.price;
@@ -1259,24 +1268,39 @@ function OrderContent() {
                       </div>
                     </div>
                   ) : planPeriod === "year" ? (
-                    <div className="p-4 rounded-2xl border bg-emerald-50/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs flex items-center justify-between flex-wrap gap-3">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-sm text-slate-900">12 Bulan (1 Tahun Penuh)</span>
-                          <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-600 text-white">
-                            PAKET TAHUNAN
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-500 mt-1">
-                          Periode aktif 365 hari penuh tanpa perpanjangan bulanan.
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-base font-black text-slate-900">
-                          {formatIDR(currentPlan.price)}
-                        </div>
-                        <span className="text-[11px] text-slate-400 font-normal">/ tahun</span>
-                      </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                      {[
+                        { months: 12, label: "1 Tahun (12 Bulan)", sub: "Durasi 1 Tahun Penuh", multiplier: 1 },
+                        { months: 24, label: "2 Tahun (24 Bulan)", sub: "Durasi 2 Tahun Penuh", multiplier: 2 },
+                        { months: 36, label: "3 Tahun (36 Bulan)", sub: "Durasi 3 Tahun Penuh", multiplier: 3 },
+                      ].map((item) => {
+                        const isSelected = effectiveDurationMonths === item.months;
+                        return (
+                          <button
+                            key={item.months}
+                            type="button"
+                            onClick={() => setDurationMonths(item.months)}
+                            className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all ${
+                              isSelected
+                                ? "bg-emerald-50/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs"
+                                : "bg-white border-slate-200 hover:border-slate-300"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="font-bold text-xs text-slate-900">{item.label}</span>
+                              <div
+                                className={`w-3.5 h-3.5 rounded-full border ${
+                                  isSelected ? "border-emerald-600 bg-emerald-600" : "border-slate-300"
+                                }`}
+                              />
+                            </div>
+                            <div className="text-sm font-black text-slate-900">
+                              {formatIDR(currentPlan.price * item.multiplier)}
+                            </div>
+                            <span className="text-[10px] text-slate-400">{item.sub}</span>
+                          </button>
+                        );
+                      })}
                     </div>
                   ) : planPeriod === "day" ? (
                     <div className="p-4 rounded-2xl border bg-emerald-50/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs flex items-center justify-between flex-wrap gap-3">
@@ -1485,17 +1509,17 @@ function OrderContent() {
                 <div className="flex items-center justify-between text-slate-600">
                   <span>Durasi Langganan:</span>
                   <span className="font-bold">
-                    {planPeriod === "year"
-                      ? "12 Bulan (1 Tahun)"
-                      : planPeriod === "day"
+                    {planPeriod === "day"
                       ? "1 Hari (24 Jam)"
                       : planPeriod === "week"
                       ? "1 Minggu (7 Hari)"
-                      : durationMonths === 24
+                      : effectiveDurationMonths === 36
+                      ? "36 Bulan (3 Tahun)"
+                      : effectiveDurationMonths === 24
                       ? "24 Bulan (2 Tahun)"
-                      : durationMonths === 12
+                      : effectiveDurationMonths === 12
                       ? "12 Bulan (1 Tahun)"
-                      : `${durationMonths} Bulan`}
+                      : `${effectiveDurationMonths} Bulan`}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-slate-600">
@@ -1504,7 +1528,15 @@ function OrderContent() {
                 </div>
                 <div className="flex items-center justify-between text-slate-600">
                   <span>
-                    Harga {planPeriod === "month" ? `(${durationMonths} bln)` : `(${planPeriod === "year" ? "1 thn" : planPeriod === "day" ? "1 hr" : "1 mgg"})`}:
+                    Harga{" "}
+                    {planPeriod === "year"
+                      ? `(${Math.max(1, Math.round(effectiveDurationMonths / 12))} thn)`
+                      : planPeriod === "month"
+                      ? `(${durationMonths} bln)`
+                      : planPeriod === "day"
+                      ? "(1 hr)"
+                      : "(1 mgg)"}
+                    :
                   </span>
                   <span>{formatIDR(basePrice)}</span>
                 </div>
@@ -1751,11 +1783,13 @@ function OrderContent() {
                           <span className="text-slate-400">Paket Layanan:</span>
                           <strong className="text-primary font-bold">
                             Sendora {currentPlan.name} (
-                              {durationMonths === 24
+                              {effectiveDurationMonths === 36
+                                ? "3 Tahun"
+                                : effectiveDurationMonths === 24
                                 ? "2 Tahun"
-                                : durationMonths === 12
+                                : effectiveDurationMonths === 12
                                 ? "1 Tahun"
-                                : `${durationMonths} Bulan`}
+                                : `${effectiveDurationMonths} Bulan`}
                             )
                           </strong>
                         </div>

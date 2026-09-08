@@ -48,10 +48,14 @@ export async function POST(req: NextRequest) {
     });
 
     // Base price & duration calculation
-    const isFixedPeriod = plan.period && plan.period !== "month";
+    const isYearly = plan.period === "year";
+    const isFixedPeriod = plan.period && plan.period !== "month" && !isYearly;
     let baseAmount = plan.price;
 
-    if (!isFixedPeriod) {
+    if (isYearly) {
+      const years = Math.max(1, Math.round(durationMonths / 12));
+      baseAmount = plan.price * years;
+    } else if (!isFixedPeriod) {
       baseAmount = plan.price * durationMonths;
     }
 
@@ -75,7 +79,13 @@ export async function POST(req: NextRequest) {
     const finalAmount = Math.max(1000, totalAfterDuration - couponDiscount);
     const orderId = generateOrderId(planId);
     const durationLabel =
-      durationMonths === 24 ? "2 Tahun" : durationMonths === 12 ? "1 Tahun" : `${durationMonths} Bulan`;
+      durationMonths === 36
+        ? "3 Tahun"
+        : durationMonths === 24
+        ? "2 Tahun"
+        : durationMonths === 12
+        ? "1 Tahun"
+        : `${durationMonths} Bulan`;
 
     // Charge directly via Midtrans Core API
     const chargeResult = await chargeMidtransCoreApi({
