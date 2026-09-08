@@ -35,6 +35,7 @@ import {
   getPlanDiscountStatus,
 } from "@/lib/billing-types";
 import { ModalPortal } from "@/components/ui/ModalPortal";
+import { PromoCountdownTimer } from "@/components/ui/PromoCountdownTimer";
 
 const DEFAULT_ACCESS: PlanFeatureAccess = {
   devices: true,
@@ -534,16 +535,7 @@ export default function AdminPlansPage() {
                         {(() => {
                           const status = getPlanDiscountStatus(p, nowMs);
                           if (status.hasSchedule && status.hasTimer && status.isDiscountActive) {
-                            return (
-                              <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold border ${
-                                status.isUrgentCountdown
-                                  ? "bg-rose-50 text-rose-700 border-rose-200"
-                                  : "bg-slate-50 text-slate-700 border-slate-200"
-                              }`}>
-                                <Timer className={`w-3 h-3 ${status.isUrgentCountdown ? "text-rose-600" : "text-slate-500"}`} />
-                                <span>Sisa {status.countdownFormatted}</span>
-                              </span>
-                            );
+                            return <PromoCountdownTimer status={status} variant="badge" />;
                           }
                           if (status.hasSchedule && status.isUpcoming) {
                             return (
@@ -1125,21 +1117,15 @@ export default function AdminPlansPage() {
                               )}
 
                               {tempStatus.isDiscountActive && (
-                                <div className="flex items-center justify-between w-full gap-2">
+                                <div className="flex items-center justify-between w-full gap-2 flex-wrap">
                                   <div className="flex items-center gap-1.5 text-[11px] text-slate-700">
-                                    <Timer className={`w-3.5 h-3.5 shrink-0 ${tempStatus.isUrgentCountdown ? "text-rose-600 animate-pulse" : "text-emerald-600"}`} />
+                                    <Clock className="w-3.5 h-3.5 shrink-0 text-slate-500" />
                                     <span>
-                                      {tempStatus.isUrgentCountdown ? "Sisa waktu promo:" : `Berakhir: ${tempStatus.endDateFormatted}`}
+                                      Berakhir: <strong>{tempStatus.endDateFormatted}</strong>
                                     </span>
                                   </div>
                                   {tempStatus.hasTimer && (
-                                    <span className={`font-mono font-bold text-[11px] px-2 py-0.5 rounded border ${
-                                      tempStatus.isUrgentCountdown
-                                        ? "bg-rose-50 border-rose-200 text-rose-700"
-                                        : "bg-slate-50 border-slate-200 text-slate-700"
-                                    }`}>
-                                      {tempStatus.countdownFormatted}
-                                    </span>
+                                    <PromoCountdownTimer status={tempStatus} variant="badge" />
                                   )}
                                 </div>
                               )}

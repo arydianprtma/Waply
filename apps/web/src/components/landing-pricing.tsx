@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { CheckCircle2, X, Zap, Calendar, Sparkles, Layers, PackageX, Timer } from "lucide-react";
 import { Plan, getPlanDetailedFeatureList, getPlanDiscountStatus } from "@/lib/billing-types";
+import { PromoCountdownTimer } from "@/components/ui/PromoCountdownTimer";
 
 interface LandingPricingProps {
   plans: Plan[];
@@ -138,20 +139,17 @@ export default function LandingPricing({ plans }: LandingPricingProps) {
                     : "border border-slate-200 hover:shadow-md"
                 }`}
               >
-                {discStatus.hasTimer && discStatus.isDiscountActive ? (
-                  <div className={`badge absolute -top-3.5 right-5 font-mono font-bold shadow-2xs text-[10px] flex items-center gap-1.5 px-2.5 py-2 rounded-full border ${
-                    discStatus.isUrgentCountdown
-                      ? "bg-rose-50 text-rose-700 border-rose-200"
-                      : "bg-slate-50 text-slate-700 border-slate-200"
-                  }`}>
-                    <Timer className={`w-3.5 h-3.5 ${discStatus.isUrgentCountdown ? "text-rose-600" : "text-slate-500"}`} />
-                    <span>Sisa {discStatus.countdownFormatted}</span>
-                  </div>
-                ) : plan.isPopular ? (
-                  <div className="badge badge-primary absolute -top-3 right-5 font-bold shadow-xs text-xs">
+                {plan.isPopular && (
+                  <div className="badge badge-primary absolute -top-3.5 left-6 font-bold shadow-xs text-xs">
                     Paling Populer
                   </div>
-                ) : null}
+                )}
+
+                {discStatus.hasTimer && discStatus.isDiscountActive && (
+                  <div className="absolute -top-3.5 right-5">
+                    <PromoCountdownTimer status={discStatus} variant="badge" />
+                  </div>
+                )}
 
                 <div>
                   <div className="flex items-center justify-between gap-2 min-h-[28px]">

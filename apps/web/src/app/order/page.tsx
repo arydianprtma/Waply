@@ -55,6 +55,7 @@ import {
 import { AddonItem } from "@/lib/addon-types";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import { SendoraLogo } from "@/components/brand/SendoraLogo";
+import { PromoCountdownTimer } from "@/components/ui/PromoCountdownTimer";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 
 type PaymentMethodOption = "qris" | "bca_va" | "mandiri_va" | "bri_va" | "bni_va" | "gopay" | "snap";
@@ -1864,22 +1865,8 @@ function OrderContent() {
                     )}
 
                     {currentPlanDiscount.hasTimer && currentPlanDiscount.isDiscountActive && (
-                      <div className={`p-2.5 rounded-xl border text-xs flex items-center justify-between gap-2 shadow-2xs ${
-                        currentPlanDiscount.isUrgentCountdown
-                          ? "bg-rose-50 border-rose-200 text-rose-900 font-medium"
-                          : "bg-slate-50 border-slate-200 text-slate-800 font-medium"
-                      }`}>
-                        <div className="flex items-center gap-1.5 font-bold">
-                          <Timer className={`w-3.5 h-3.5 ${currentPlanDiscount.isUrgentCountdown ? "text-rose-600" : "text-slate-500"}`} />
-                          <span>{currentPlanDiscount.isUrgentCountdown ? "Sisa Waktu Promo:" : "Batas Promo:"}</span>
-                        </div>
-                        <span className={`font-mono font-bold text-xs px-2 py-0.5 rounded border ${
-                          currentPlanDiscount.isUrgentCountdown
-                            ? "bg-white border-rose-200 text-rose-700"
-                            : "bg-white border-slate-200 text-slate-700"
-                        }`}>
-                          {currentPlanDiscount.countdownFormatted}
-                        </span>
+                      <div className="pt-1">
+                        <PromoCountdownTimer status={currentPlanDiscount} variant="card" />
                       </div>
                     )}
                   </>

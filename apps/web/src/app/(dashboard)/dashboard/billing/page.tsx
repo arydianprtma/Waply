@@ -33,6 +33,7 @@ import {
 } from "@/lib/billing-types";
 import { AddonItem, UserAddon } from "@/lib/addon-types";
 import { setCachedBillingData } from "@/lib/use-billing-plan";
+import { PromoCountdownTimer } from "@/components/ui/PromoCountdownTimer";
 
 // Plan display order
 const PLAN_ORDER: PlanId[] = ["FREE", "STARTER", "BUSINESS", "PRO"];
@@ -528,22 +529,17 @@ function BillingContent() {
                       return (
                         <div className="min-h-[54px] flex flex-col justify-end">
                           {discStatus.isDiscountActive && discStatus.originalPrice && discStatus.originalPrice > discStatus.effectivePrice && (
-                            <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-                              <span className="text-xs text-base-content/40 line-through font-semibold">
-                                {formatIDR(discStatus.originalPrice)}
-                              </span>
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-900 tracking-tight">
-                                {discStatus.discountBadge || `HEMAT ${discStatus.discountPercent}%`}
-                              </span>
-                              {discStatus.hasTimer && (
-                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold border ${
-                                  discStatus.isUrgentCountdown
-                                    ? "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-900"
-                                    : "bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
-                                }`}>
-                                  <Timer className={`w-3 h-3 ${discStatus.isUrgentCountdown ? "text-rose-600 dark:text-rose-400" : "text-slate-500"}`} />
-                                  <span>Sisa {discStatus.countdownFormatted}</span>
+                            <div className="flex flex-col gap-1 mb-2">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-xs text-base-content/40 line-through font-semibold">
+                                  {formatIDR(discStatus.originalPrice)}
                                 </span>
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-900 tracking-tight">
+                                  {discStatus.discountBadge || `HEMAT ${discStatus.discountPercent}%`}
+                                </span>
+                              </div>
+                              {discStatus.hasTimer && (
+                                <PromoCountdownTimer status={discStatus} variant="badge" />
                               )}
                             </div>
                           )}
