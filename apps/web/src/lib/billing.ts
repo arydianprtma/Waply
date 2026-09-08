@@ -187,7 +187,11 @@ export function saveSubscription(data: Subscription): void {
   }
 }
 
-export function activateSubscription(userId: string, planId: PlanId): Subscription {
+export function activateSubscription(
+  userId: string,
+  planId: PlanId,
+  durationMonths: number = 1
+): Subscription {
   const allPlans = getAllPlans();
   const plan = allPlans[planId] || DEFAULT_PLANS[planId];
   const period = plan?.period || "month";
@@ -202,8 +206,13 @@ export function activateSubscription(userId: string, planId: PlanId): Subscripti
   } else if (period === "year") {
     endDate.setDate(endDate.getDate() + 365);
   } else {
-    // "month" / default
-    endDate.setDate(endDate.getDate() + 30);
+    // "month" / default: multiply 30 days or 365 for 12 months
+    const months = typeof durationMonths === "number" && durationMonths > 0 ? durationMonths : 1;
+    if (months === 12) {
+      endDate.setDate(endDate.getDate() + 365);
+    } else {
+      endDate.setDate(endDate.getDate() + (30 * months));
+    }
   }
 
   const sub: Subscription = {
@@ -215,6 +224,26 @@ export function activateSubscription(userId: string, planId: PlanId): Subscripti
     updatedAt: now.toISOString(),
   };
   saveSubscription(sub);
+
+  // Also sync user in users_registry.json if present
+  try {
+    const usersFile = path.join(DATA_DIR, "users_registry.json");
+    if (fs.existsSync(usersFile)) {
+      const users: any[] = JSON.parse(fs.readFileSync(usersFile, "utf-8"));
+      const idx = users.findIndex(
+        (u) =>
+          u.id === userId ||
+          (userId.includes("@") && u.email?.toLowerCase() === userId.toLowerCase())
+      );
+      if (idx !== -1) {
+        users[idx].planId = planId;
+        users[idx].subscriptionStatus = "ACTIVE";
+        users[idx].endDate = endDate.toISOString();
+        fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
+      }
+    }
+  } catch {}
+
   return sub;
 }
 

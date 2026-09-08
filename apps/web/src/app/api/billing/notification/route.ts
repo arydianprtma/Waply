@@ -66,7 +66,11 @@ export async function POST(req: NextRequest) {
 
     // 5. Activate subscription if paid
     if (invoiceStatus === "PAID") {
-      activateSubscription(invoice.userId, invoice.planId as PlanId);
+      activateSubscription(
+        invoice.userId,
+        invoice.planId as PlanId,
+        invoice.durationMonths || 1
+      );
       console.log(
         `[Billing] Subscription activated: user=${invoice.userId} plan=${invoice.planId}`
       );

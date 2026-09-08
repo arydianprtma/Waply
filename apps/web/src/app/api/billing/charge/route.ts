@@ -133,6 +133,7 @@ export async function POST(req: NextRequest) {
       customerName,
       customerEmail,
       customerPhone,
+      durationMonths,
     });
 
     // Send Email Invoice Notification (Non-blocking)

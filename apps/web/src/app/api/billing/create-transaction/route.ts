@@ -95,6 +95,10 @@ export async function POST(req: NextRequest) {
       snapToken: snap.token,
       midtransTransactionId: null,
       paidAt: null,
+      customerName,
+      customerEmail,
+      customerPhone,
+      durationMonths,
     });
 
     return NextResponse.json({

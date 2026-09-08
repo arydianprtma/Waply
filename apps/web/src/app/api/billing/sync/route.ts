@@ -45,7 +45,11 @@ export async function POST(req: NextRequest) {
     });
 
     if (invoiceStatus === "PAID") {
-      activateSubscription(invoice.userId, invoice.planId as PlanId);
+      activateSubscription(
+        invoice.userId,
+        invoice.planId as PlanId,
+        invoice.durationMonths || 1
+      );
 
       // Send Email Invoice Paid Notification (Non-blocking)
       if (invoice.customerEmail) {

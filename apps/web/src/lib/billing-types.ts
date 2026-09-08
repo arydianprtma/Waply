@@ -560,4 +560,5 @@ export interface Invoice {
   customerName?: string | null;
   customerEmail?: string | null;
   customerPhone?: string | null;
+  durationMonths?: number;
 }
