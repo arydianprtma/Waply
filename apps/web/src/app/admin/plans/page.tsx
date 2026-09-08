@@ -276,9 +276,11 @@ export default function AdminPlansPage() {
       });
       const json = await res.json();
       if (json.success) {
-        showToast(json.message);
+        showToast(json.message || "Paket berhasil disimpan");
         setModalOpen(false);
         fetchPlans();
+      } else {
+        showToast(json.error || "Gagal menyimpan paket");
       }
     } finally {
       setSaving(false);
@@ -288,14 +290,21 @@ export default function AdminPlansPage() {
   const handleToggleActive = async (plan: Plan) => {
     const updated = { ...plan, isActive: !plan.isActive };
     try {
-      await fetch("/api/admin/plans", {
+      const res = await fetch("/api/admin/plans", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updated),
       });
-      showToast(`Status paket ${plan.name} diperbarui`);
-      fetchPlans();
-    } catch {}
+      const json = await res.json();
+      if (json.success) {
+        showToast(`Status paket ${plan.name} diperbarui`);
+        fetchPlans();
+      } else {
+        showToast(json.error || "Gagal memperbarui status paket");
+      }
+    } catch {
+      showToast("Terjadi kesalahan saat memperbarui paket");
+    }
   };
 
   return (

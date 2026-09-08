@@ -100,17 +100,18 @@ export const planSchema = z.object({
     .max(100, "Nama Paket maksimal 100 karakter")
     .transform((val) => sanitizeText(val, 100)),
   price: z.coerce.number().min(0, "Harga tidak boleh negatif"),
-  period: z.enum(["month", "year", "week", "day"]).default("month"),
+  period: z.enum(["month", "year", "week", "day"]).default("month").optional(),
   maxDevices: z.coerce.number().int().min(1, "Minimal 1 device"),
-  monthlyMessages: z.coerce.number().int().min(0, "Pesan bulanan tidak boleh negatif"),
-  originalPrice: z.coerce.number().optional(),
-  discountPercent: z.coerce.number().optional(),
-  discountBadge: z.string().optional(),
-  watermarkEnabled: z.boolean().optional(),
-  features: z.union([z.array(z.string()), z.string()]).optional(),
-  access: z.record(z.string(), z.boolean()).optional(),
-  isPopular: z.boolean().optional(),
-  isActive: z.boolean().optional(),
+  monthlyMessages: z.coerce.number().int().min(-1, "Pesan bulanan minimal -1 (unlimited)"),
+  originalPrice: z.coerce.number().min(0).optional().nullable(),
+  discountPercent: z.coerce.number().min(0).max(100).optional().nullable(),
+  discountBadge: z.string().optional().nullable(),
+  watermarkEnabled: z.boolean().optional().nullable(),
+  features: z.union([z.array(z.string()), z.string()]).optional().nullable(),
+  access: z.record(z.string(), z.boolean()).optional().nullable(),
+  isPopular: z.boolean().optional().nullable(),
+  isActive: z.boolean().optional().nullable(),
+  createdAt: z.string().optional().nullable(),
 });
 
 // 7. Admin Voucher Schema

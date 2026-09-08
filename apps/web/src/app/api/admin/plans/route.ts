@@ -52,12 +52,12 @@ export async function POST(req: NextRequest) {
       id,
       name,
       price,
-      originalPrice: typeof originalPrice === "number" ? originalPrice : undefined,
-      discountPercent: typeof discountPercent === "number" ? discountPercent : undefined,
+      originalPrice: typeof originalPrice === "number" && originalPrice > 0 ? originalPrice : undefined,
+      discountPercent: typeof discountPercent === "number" && discountPercent > 0 ? discountPercent : undefined,
       discountBadge: discountBadge || undefined,
       period: (period as any) || "month",
-      maxDevices: maxDevices || 1,
-      monthlyMessages: monthlyMessages || 1000,
+      maxDevices: typeof maxDevices === "number" ? maxDevices : 1,
+      monthlyMessages: typeof monthlyMessages === "number" ? monthlyMessages : 1000,
       features: Array.isArray(features) ? features : (typeof features === "string" ? features.split("\n").filter(Boolean) : []),
       access: {
         devices: true,
@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
       isPopular: Boolean(isPopular),
       isActive: isActive !== false,
       watermarkEnabled: typeof watermarkEnabled === "boolean" ? watermarkEnabled : (id === "FREE" || price === 0),
-      createdAt: new Date().toISOString(),
+      createdAt: validation.data.createdAt || new Date().toISOString(),
     };
 
     const saved = saveCustomPlan(planData);
