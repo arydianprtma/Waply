@@ -35,11 +35,15 @@ export function saveUserDeviceRecords(records: Record<string, UserDeviceRecord>)
   fs.writeFileSync(USER_DEVICES_FILE, JSON.stringify(records, null, 2));
 }
 
+import { getUserAddonTotals } from "./addons";
+
 /**
- * Get device quota limit for a user based on their active subscription plan
+ * Get device quota limit for a user based on their active subscription plan + active addons
  */
 export function getUserDeviceLimit(userId: string): {
   maxDevices: number;
+  baseDevices: number;
+  extraDevices: number;
   planId: string;
   planName: string;
 } {
@@ -49,17 +53,25 @@ export function getUserDeviceLimit(userId: string): {
     const allPlans = getAllPlans();
     const plan = allPlans[planId] || DEFAULT_PLANS[planId];
 
-    const maxDevices = typeof plan?.maxDevices === "number" && plan.maxDevices > 0 ? plan.maxDevices : 1;
+    const baseDevices = typeof plan?.maxDevices === "number" && plan.maxDevices > 0 ? plan.maxDevices : 1;
     const planName = plan?.name || (planId === "FREE" ? "Free Trial" : planId);
+
+    // Calculate extra devices from active device addons
+    const { extraDevices } = getUserAddonTotals(userId);
+    const maxDevices = baseDevices + extraDevices;
 
     return {
       maxDevices,
+      baseDevices,
+      extraDevices,
       planId,
       planName,
     };
   } catch {
     return {
       maxDevices: 1,
+      baseDevices: 1,
+      extraDevices: 0,
       planId: "FREE",
       planName: "Free Trial",
     };

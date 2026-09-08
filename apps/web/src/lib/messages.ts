@@ -3,6 +3,7 @@ import path from "path";
 import { prisma } from "@sendora/database";
 import { getSubscription, getAllPlans } from "./billing";
 import { DEFAULT_PLANS } from "./billing-types";
+import { getUserAddonTotals } from "./addons";
 
 export interface StoredMessage {
   id: string;
@@ -141,10 +142,9 @@ export function canUserSendMessage(
   const sub = getSubscription(userId);
   const planId = sub?.planId || "FREE";
   const allPlans = getAllPlans();
-  const plan = allPlans[planId] || DEFAULT_PLANS[planId] || DEFAULT_PLANS.FREE;
-
-  const maxMessages = typeof plan?.monthlyMessages === "number" ? plan.monthlyMessages : 100;
-  const isUnlimited = maxMessages === -1;
+  const plan = allPlans[planId] || DEFAULT_PLANS[planId];
+  const baseMessages = typeof plan?.monthlyMessages === "number" ? plan.monthlyMessages : 100;
+  const isUnlimited = baseMessages === -1;
 
   if (isUnlimited) {
     return {
@@ -155,6 +155,10 @@ export function canUserSendMessage(
       isUnlimited: true,
     };
   }
+
+  // Calculate extra message quota from active addons
+  const { extraMessages } = getUserAddonTotals(userId);
+  const maxMessages = baseMessages + extraMessages;
 
   // Count user's sent messages (status SENT)
   const userMessages = getStoredMessages(userId).filter((m) => m.status === "SENT");

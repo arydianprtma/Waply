@@ -3,6 +3,7 @@ import { getAuthUser } from "@/lib/auth-user";
 import { getSubscription, getAllPlans } from "@/lib/billing";
 import { DEFAULT_PLANS } from "@/lib/billing-types";
 import { getUserSessionIds } from "@/lib/user-devices";
+import { getUserAddonTotals } from "@/lib/addons";
 import fs from "fs";
 import path from "path";
 
@@ -137,12 +138,16 @@ export async function GET(request: Request) {
     const allPlans = getAllPlans();
     const plan = allPlans[planId] || DEFAULT_PLANS[planId] || DEFAULT_PLANS.FREE;
 
-    const maxMessages = typeof plan?.monthlyMessages === "number" ? plan.monthlyMessages : 100;
-    const isUnlimitedMessages = maxMessages === -1;
+    const { extraDevices, extraMessages, activeAddons } = getUserAddonTotals(user.id);
+
+    const baseMessages = typeof plan?.monthlyMessages === "number" ? plan.monthlyMessages : 100;
+    const isUnlimitedMessages = baseMessages === -1;
+    const maxMessages = isUnlimitedMessages ? -1 : baseMessages + extraMessages;
     const usedMessages = totalMessages;
     const remainingMessages = isUnlimitedMessages ? -1 : Math.max(0, maxMessages - usedMessages);
 
-    const maxDevices = typeof plan?.maxDevices === "number" ? plan.maxDevices : 1;
+    const baseDevices = typeof plan?.maxDevices === "number" ? plan.maxDevices : 1;
+    const maxDevices = baseDevices + extraDevices;
     const userSessions = getUserSessionIds(user.id);
     const usedDevices = user.role === "admin" ? Math.min(1, maxDevices) : userSessions.length;
     const remainingDevices = Math.max(0, maxDevices - usedDevices);

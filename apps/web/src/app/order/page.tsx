@@ -42,6 +42,7 @@ import {
   KeyRound,
   LogOut,
   Loader2,
+  PlusCircle,
 } from "lucide-react";
 import {
   type Plan,
@@ -49,6 +50,7 @@ import {
   DEFAULT_PLANS,
   getPlanDetailedFeatureList,
 } from "@/lib/billing-types";
+import { AddonItem } from "@/lib/addon-types";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import { SendoraLogo } from "@/components/brand/SendoraLogo";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
@@ -123,6 +125,8 @@ function OrderContent() {
   // Order & Modal State
   const [loading, setLoading] = useState(false);
   const [plans, setPlans] = useState<Record<string, Plan>>(DEFAULT_PLANS);
+  const [availableAddons, setAvailableAddons] = useState<AddonItem[]>([]);
+  const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<"NEW" | "RENEW" | "ADDON_DEVICE" | "ADDON_QUOTA" | "INVOICES">("NEW");
   
   // Custom Payment Modal State
@@ -217,6 +221,24 @@ function OrderContent() {
         setIsLoadingUser(false);
       });
 
+    // Fetch addons catalog
+    fetch("/api/addons")
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success && Array.isArray(json.data?.catalog)) {
+          setAvailableAddons(json.data.catalog);
+          const addonParam = searchParams.get("addon") || searchParams.get("addons");
+          if (addonParam) {
+            const requested = addonParam.split(",").map((s) => s.trim().toUpperCase());
+            const valid = json.data.catalog.filter((a: any) => requested.includes(a.id.toUpperCase())).map((a: any) => a.id);
+            if (valid.length > 0) {
+              setSelectedAddonIds(valid);
+            }
+          }
+        }
+      })
+      .catch(() => {});
+
     // Load Midtrans Snap.js script in case fallback is chosen
     if (typeof window !== "undefined" && !window.snap) {
       const script = document.createElement("script");
@@ -290,8 +312,13 @@ function OrderContent() {
     basePrice = currentPlan.price;
   }
 
+  const addonsTotal = selectedAddonIds.reduce((sum, id) => {
+    const item = availableAddons.find((a) => a.id === id);
+    return sum + (item ? item.price : 0);
+  }, 0);
+
   const durationDiscount = 0;
-  const subtotalAfterDuration = basePrice;
+  const subtotalAfterDuration = basePrice + addonsTotal;
 
   // Dynamic Voucher discount calculation
   let couponDiscount = 0;
@@ -448,6 +475,7 @@ function OrderContent() {
           body: JSON.stringify({
             planId: selectedPlanId,
             durationMonths: effectiveDurationMonths,
+            selectedAddonIds,
             customerName: cleanName,
             customerEmail: cleanEmail,
             customerPhone: cleanPhone,
@@ -517,6 +545,7 @@ function OrderContent() {
         body: JSON.stringify({
           planId: selectedPlanId,
           durationMonths: effectiveDurationMonths,
+          selectedAddonIds,
           paymentType,
           bank,
           customerName: cleanName,
@@ -1383,6 +1412,125 @@ function OrderContent() {
                 </div>
               </div>
 
+              {/* SECTION: Tambah Addon Ekstra (Opsional) */}
+              {currentPlan.price > 0 && availableAddons.length > 0 && (
+                <div className="bg-white rounded-3xl border border-slate-200 shadow-xs p-4 sm:p-6 space-y-4">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <PlusCircle className="w-4 h-4 text-primary shrink-0" />
+                      <h3 className="font-extrabold text-sm text-slate-900">
+                        Tambah Addon Ekstra (Opsional)
+                      </h3>
+                    </div>
+                    <span className="text-xs text-slate-400 font-medium shrink-0">
+                      Perangkat & Kuota Tambahan
+                    </span>
+                  </div>
+
+                  <div className="space-y-4">
+                    {/* Device Addons */}
+                    {availableAddons.some((a) => a.type === "DEVICE") && (
+                      <div className="space-y-2">
+                        <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                          <Smartphone className="w-3.5 h-3.5 text-slate-400" />
+                          Tambah Slot Device WhatsApp
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          {availableAddons
+                            .filter((a) => a.type === "DEVICE")
+                            .map((addon) => {
+                              const isSelected = selectedAddonIds.includes(addon.id);
+                              return (
+                                <button
+                                  key={addon.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedAddonIds((prev) =>
+                                      prev.includes(addon.id)
+                                        ? prev.filter((id) => id !== addon.id)
+                                        : [...prev, addon.id]
+                                    );
+                                  }}
+                                  className={`p-3.5 rounded-2xl border text-left transition-all relative ${
+                                    isSelected
+                                      ? "bg-emerald-50/50 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs"
+                                      : "bg-white border-slate-200 hover:border-slate-300"
+                                  }`}
+                                >
+                                  {addon.badge && (
+                                    <span className="absolute top-2.5 right-2.5 px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-100 text-emerald-800">
+                                      {addon.badge}
+                                    </span>
+                                  )}
+                                  <div className="flex items-center justify-between mb-1 pr-12">
+                                    <span className="font-bold text-xs text-slate-900">{addon.name}</span>
+                                  </div>
+                                  <div className="text-sm font-black text-slate-900">
+                                    + {formatIDR(addon.price)}
+                                  </div>
+                                  <p className="text-[10px] text-slate-400 mt-0.5 line-clamp-1">
+                                    {addon.description || `+${addon.amount} Device WhatsApp`}
+                                  </p>
+                                </button>
+                              );
+                            })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Message Quota Addons */}
+                    {availableAddons.some((a) => a.type === "MESSAGES") && (
+                      <div className="space-y-2">
+                        <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                          <MessageSquare className="w-3.5 h-3.5 text-slate-400" />
+                          Tambah Kuota Pesan Chat
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                          {availableAddons
+                            .filter((a) => a.type === "MESSAGES")
+                            .map((addon) => {
+                              const isSelected = selectedAddonIds.includes(addon.id);
+                              return (
+                                <button
+                                  key={addon.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedAddonIds((prev) =>
+                                      prev.includes(addon.id)
+                                        ? prev.filter((id) => id !== addon.id)
+                                        : [...prev, addon.id]
+                                    );
+                                  }}
+                                  className={`p-3.5 rounded-2xl border text-left transition-all relative ${
+                                    isSelected
+                                      ? "bg-emerald-50/50 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs"
+                                      : "bg-white border-slate-200 hover:border-slate-300"
+                                  }`}
+                                >
+                                  {addon.badge && (
+                                    <span className="absolute top-2.5 right-2.5 px-1.5 py-0.5 rounded text-[9px] font-black bg-blue-100 text-blue-800">
+                                      {addon.badge}
+                                    </span>
+                                  )}
+                                  <div className="flex items-center justify-between mb-1 pr-12">
+                                    <span className="font-bold text-xs text-slate-900">{addon.name}</span>
+                                  </div>
+                                  <div className="text-sm font-black text-slate-900">
+                                    + {formatIDR(addon.price)}
+                                  </div>
+                                  <p className="text-[10px] text-slate-400 mt-0.5 line-clamp-1">
+                                    {addon.description || `+${addon.amount.toLocaleString("id-ID")} Pesan`}
+                                  </p>
+                                </button>
+                              );
+                            })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* SECTION 5: Fitur Layanan yang Didapatkan */}
               <div className="bg-white rounded-3xl border border-slate-200 shadow-xs p-4 sm:p-6 space-y-4">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -1540,6 +1688,27 @@ function OrderContent() {
                   </span>
                   <span>{formatIDR(basePrice)}</span>
                 </div>
+
+                {addonsTotal > 0 && (
+                  <div className="space-y-1.5 py-1.5 border-y border-dashed border-slate-200">
+                    <div className="flex items-center justify-between text-slate-800 font-bold text-xs">
+                      <span>Addon Tambahan ({selectedAddonIds.length}):</span>
+                      <span className="text-emerald-600">+ {formatIDR(addonsTotal)}</span>
+                    </div>
+                    <div className="space-y-1 pl-2 text-[11px] text-slate-500">
+                      {selectedAddonIds.map((id) => {
+                        const item = availableAddons.find((a) => a.id === id);
+                        if (!item) return null;
+                        return (
+                          <div key={id} className="flex items-center justify-between">
+                            <span className="truncate max-w-[150px]">• {item.name}</span>
+                            <span className="font-mono text-slate-600">+{formatIDR(item.price)}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 {durationDiscount > 0 && (
                   <div className="flex items-center justify-between text-emerald-600 font-bold">

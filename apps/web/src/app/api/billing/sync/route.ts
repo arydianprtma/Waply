@@ -9,6 +9,7 @@ import {
   sendEmailInvoiceNotification,
   PlanId,
 } from "@/lib/billing";
+import { activateUserAddonsFromInvoice } from "@/lib/addons";
 
 export async function POST(req: NextRequest) {
   try {
@@ -50,6 +51,14 @@ export async function POST(req: NextRequest) {
         invoice.planId as PlanId,
         invoice.durationMonths || 1
       );
+
+      if (invoice.selectedAddonIds && invoice.selectedAddonIds.length > 0) {
+        activateUserAddonsFromInvoice(
+          invoice.userId,
+          invoice.selectedAddonIds,
+          orderId
+        );
+      }
 
       // Send Email Invoice Paid Notification (Non-blocking)
       if (invoice.customerEmail) {

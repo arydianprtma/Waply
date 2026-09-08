@@ -14,6 +14,13 @@ import {
   Shield,
   ChevronRight,
   X,
+  PlusCircle,
+  Smartphone,
+  MessageSquare,
+  PackagePlus,
+  ShoppingBag,
+  ArrowRight,
+  Check,
 } from "lucide-react";
 import {
   type PlanId,
@@ -22,6 +29,7 @@ import {
   type Invoice,
   getPlanDetailedFeatureList,
 } from "@/lib/billing-types";
+import { AddonItem, UserAddon } from "@/lib/addon-types";
 import { setCachedBillingData } from "@/lib/use-billing-plan";
 
 // Plan display order
@@ -112,8 +120,12 @@ function BillingContent() {
   const [snapLoaded, setSnapLoaded] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"subscription" | "invoices">("subscription");
+  const [activeTab, setActiveTab] = useState<"subscription" | "addons" | "invoices">("subscription");
   const [selectedPeriodTab, setSelectedPeriodTab] = useState<"day" | "month" | "year" | "all">("month");
+  const [addonsCatalog, setAddonsCatalog] = useState<AddonItem[]>([]);
+  const [userAddonTotals, setUserAddonTotals] = useState<{ extraDevices: number; extraMessages: number }>({ extraDevices: 0, extraMessages: 0 });
+  const [userAddons, setUserAddons] = useState<UserAddon[]>([]);
+  const [addonCategoryFilter, setAddonCategoryFilter] = useState<"ALL" | "DEVICE" | "MESSAGES">("ALL");
 
   const periodTabsList: { id: "day" | "month" | "year" | "all"; label: string; badge?: string }[] = [
     { id: "day", label: "Harian" },
@@ -152,9 +164,10 @@ function BillingContent() {
 
   const fetchStatus = useCallback(async () => {
     try {
-      const [statusRes, plansRes] = await Promise.all([
+      const [statusRes, plansRes, addonsRes] = await Promise.all([
         fetch("/api/billing/status"),
         fetch("/api/billing/plans").catch(() => null),
+        fetch("/api/addons").catch(() => null),
       ]);
       const statusJson = await statusRes.json();
       if (statusJson.success) {
@@ -165,6 +178,14 @@ function BillingContent() {
         const plansJson = await plansRes.json();
         if (plansJson.success && plansJson.data) {
           setAllPlans(plansJson.data);
+        }
+      }
+      if (addonsRes && addonsRes.ok) {
+        const addonsJson = await addonsRes.json();
+        if (addonsJson.success && addonsJson.data) {
+          setAddonsCatalog(addonsJson.data.catalog || []);
+          setUserAddons(addonsJson.data.userAddons || []);
+          setUserAddonTotals(addonsJson.data.totals || { extraDevices: 0, extraMessages: 0 });
         }
       }
     } catch {
@@ -255,6 +276,7 @@ function BillingContent() {
       <div className="flex gap-1 p-1 bg-base-200/60 rounded-2xl w-fit">
         {[
           { key: "subscription", label: "Paket & Upgrade", icon: Sparkles },
+          { key: "addons", label: "Addon & Top-Up", icon: PlusCircle, badge: addonsCatalog.length > 0 ? `${addonsCatalog.length}` : undefined },
           { key: "invoices", label: "Riwayat Invoice", icon: Receipt },
         ].map((t) => {
           const Icon = t.icon;
@@ -268,6 +290,9 @@ function BillingContent() {
             >
               <Icon className="w-3.5 h-3.5" />
               {t.label}
+              {t.badge && (
+                <span className="badge badge-xs badge-info font-mono">{t.badge}</span>
+              )}
             </button>
           );
         })}
@@ -323,18 +348,61 @@ function BillingContent() {
                 </div>
 
                 <div className="flex flex-wrap gap-4 text-sm text-center">
-                  <div className="bg-base-200/60 rounded-xl px-4 py-2">
-                    <p className="font-bold text-lg">{billingData?.plan.maxDevices || 1}</p>
-                    <p className="text-xs text-base-content/50">Device</p>
-                  </div>
-                  <div className="bg-base-200/60 rounded-xl px-4 py-2">
-                    <p className="font-bold text-lg">
-                      {(billingData?.plan.monthlyMessages || 100).toLocaleString("id-ID")}
+                  <div className="bg-base-200/60 rounded-xl px-4 py-2 text-left">
+                    <p className="font-bold text-lg text-center">
+                      {(billingData?.plan.maxDevices || 1) + userAddonTotals.extraDevices}
                     </p>
-                    <p className="text-xs text-base-content/50">Pesan / bln</p>
+                    <p className="text-xs text-base-content/50 text-center">Total Device Slot</p>
+                    {userAddonTotals.extraDevices > 0 && (
+                      <p className="text-[10px] text-emerald-600 font-semibold text-center mt-0.5">
+                        (+{userAddonTotals.extraDevices} Addon aktif)
+                      </p>
+                    )}
+                  </div>
+                  <div className="bg-base-200/60 rounded-xl px-4 py-2 text-left">
+                    <p className="font-bold text-lg text-center">
+                      {((billingData?.plan.monthlyMessages || 100) + userAddonTotals.extraMessages).toLocaleString("id-ID")}
+                    </p>
+                    <p className="text-xs text-base-content/50 text-center">Total Kuota Pesan</p>
+                    {userAddonTotals.extraMessages > 0 && (
+                      <p className="text-[10px] text-indigo-600 font-semibold text-center mt-0.5">
+                        (+{userAddonTotals.extraMessages.toLocaleString("id-ID")} Addon)
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
+
+              {/* Active Addons mini-badge list */}
+              {userAddons.filter((a) => a.status === "ACTIVE").length > 0 && (
+                <div className="mt-5 pt-4 border-t border-base-200/80 flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-semibold text-base-content/60 flex items-center gap-1 mr-1">
+                    <PlusCircle className="w-3.5 h-3.5 text-primary" /> Addon Aktif:
+                  </span>
+                  {userAddons.filter((a) => a.status === "ACTIVE").map((addon) => (
+                    <span
+                      key={addon.id}
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border ${
+                        addon.type === "DEVICE"
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60"
+                          : "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800/60"
+                      }`}
+                    >
+                      {addon.type === "DEVICE" ? (
+                        <Smartphone className="w-3 h-3 text-emerald-600" />
+                      ) : (
+                        <MessageSquare className="w-3 h-3 text-indigo-600" />
+                      )}
+                      <span>{addon.name}</span>
+                      {addon.expiresAt && (
+                        <span className="text-[10px] opacity-75">
+                          (s/d {new Date(addon.expiresAt).toLocaleDateString("id-ID", { day: "numeric", month: "short" })})
+                        </span>
+                      )}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -517,6 +585,204 @@ function BillingContent() {
               </p>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ── Tab: Addons ──────────────────────────────────────────────── */}
+      {activeTab === "addons" && (
+        <div className="space-y-6">
+          {/* Header Banner & Summary */}
+          <div className="card bg-gradient-to-br from-indigo-900 via-slate-900 to-slate-950 text-white p-6 md:p-8 rounded-2xl shadow-xl border border-white/10 relative overflow-hidden">
+            <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="max-w-xl">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 mb-3">
+                  <PackagePlus className="w-3.5 h-3.5" />
+                  Katalog Addon & Top-Up Ekstra
+                </span>
+                <h2 className="text-xl md:text-2xl font-black tracking-tight text-white">
+                  Tingkatkan Kapasitas Sesuai Kebutuhan
+                </h2>
+                <p className="text-xs md:text-sm text-slate-300 mt-1.5 leading-relaxed">
+                  Tambah slot koneksi perangkat WhatsApp atau kuota kirim pesan kapan saja tanpa harus mengubah paket langganan utama Anda.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10 text-center min-w-[120px]">
+                  <p className="text-2xl font-black text-emerald-400">+{userAddonTotals.extraDevices}</p>
+                  <p className="text-xs text-slate-300">Slot Device Aktif</p>
+                </div>
+                <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10 text-center min-w-[140px]">
+                  <p className="text-2xl font-black text-indigo-400">+{userAddonTotals.extraMessages.toLocaleString("id-ID")}</p>
+                  <p className="text-xs text-slate-300">Kuota Pesan Ekstra</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Filter Category */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="font-bold text-base text-base-content">Pilih Addon Ekstra</h3>
+              <p className="text-xs text-base-content/60">Pilih opsi slot perangkat atau paket kuota pesan.</p>
+            </div>
+
+            <div className="flex gap-1.5 p-1 bg-base-200/80 rounded-xl border border-base-300/60">
+              {[
+                { id: "ALL", label: "Semua Addon" },
+                { id: "DEVICE", label: "Tambah Device" },
+                { id: "MESSAGES", label: "Tambah Kuota Pesan" },
+              ].map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => setAddonCategoryFilter(c.id as any)}
+                  className={`btn btn-xs rounded-lg font-bold px-3 transition-all ${
+                    addonCategoryFilter === c.id
+                      ? "btn-primary shadow-xs"
+                      : "btn-ghost text-base-content/70 hover:text-base-content"
+                  }`}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Addon Catalog Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {addonsCatalog
+              .filter((a) => {
+                if (!a.isActive) return false;
+                if (addonCategoryFilter === "ALL") return true;
+                return a.type === addonCategoryFilter;
+              })
+              .map((addon) => {
+                const isDev = addon.type === "DEVICE";
+                return (
+                  <div
+                    key={addon.id}
+                    className="card bg-base-100 border-2 border-base-200 hover:border-primary/50 transition-all shadow-sm hover:shadow-md p-5 rounded-2xl flex flex-col justify-between relative group"
+                  >
+                    {addon.badge && (
+                      <span className="absolute -top-3 right-4 inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-xs">
+                        {addon.badge}
+                      </span>
+                    )}
+
+                    <div>
+                      <div className="flex items-center gap-3 mb-3">
+                        <div
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                            isDev
+                              ? "bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-950/50 dark:border-emerald-800"
+                              : "bg-indigo-50 text-indigo-600 border border-indigo-200 dark:bg-indigo-950/50 dark:border-indigo-800"
+                          }`}
+                        >
+                          {isDev ? <Smartphone className="w-5 h-5" /> : <MessageSquare className="w-5 h-5" />}
+                        </div>
+                        <div>
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                              isDev ? "bg-emerald-500/10 text-emerald-600" : "bg-indigo-500/10 text-indigo-600"
+                            }`}
+                          >
+                            {isDev ? "Slot Device" : "Kuota Pesan"}
+                          </span>
+                          <h4 className="text-sm font-bold text-base-content mt-0.5">{addon.name}</h4>
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-base-content/60 min-h-[32px] line-clamp-2">
+                        {addon.description || (isDev ? `Tambahan ${addon.amount} slot perangkat WhatsApp.` : `Top-up kuota ${addon.amount.toLocaleString("id-ID")} pesan.`)}
+                      </p>
+
+                      <div className="mt-4 pt-3 border-t border-base-200/80">
+                        <div className="text-xl font-black text-base-content">
+                          {formatIDR(addon.price)}
+                          <span className="text-xs font-normal text-base-content/50"> / addon</span>
+                        </div>
+                        <p className="text-[11px] text-base-content/50 mt-0.5">
+                          {isDev ? `+${addon.amount} WhatsApp Session` : `+${addon.amount.toLocaleString("id-ID")} Pesan WhatsApp`}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => router.push(`/order?plan=${currentPlanId}&addon=${addon.id}`)}
+                      className="btn btn-sm btn-primary w-full mt-4 gap-2 rounded-xl group-hover:shadow-md group-hover:shadow-primary/20"
+                    >
+                      <ShoppingBag className="w-3.5 h-3.5" />
+                      Beli / Top-Up Addon
+                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                    </button>
+                  </div>
+                );
+              })}
+          </div>
+
+          {/* Active Addons Details Table */}
+          {userAddons.length > 0 && (
+            <div className="card bg-base-100 border border-base-200 shadow-sm rounded-2xl overflow-hidden mt-8">
+              <div className="px-6 py-4 border-b border-base-200 flex items-center justify-between">
+                <div>
+                  <h3 className="font-bold text-sm text-base-content">Daftar Addon Anda</h3>
+                  <p className="text-xs text-base-content/50">Riwayat addon dan top-up yang terpasang pada akun Anda</p>
+                </div>
+                <span className="badge badge-primary badge-sm font-bold">
+                  {userAddons.filter((a) => a.status === "ACTIVE").length} Aktif
+                </span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="table table-sm w-full">
+                  <thead>
+                    <tr className="bg-base-200/40 text-xs">
+                      <th>Nama Addon</th>
+                      <th>Tipe</th>
+                      <th>Kapasitas</th>
+                      <th>Harga</th>
+                      <th>Tanggal Aktif</th>
+                      <th>Masa Berlaku</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {userAddons.map((ua) => (
+                      <tr key={ua.id} className="hover:bg-base-200/30">
+                        <td className="font-bold text-xs">{ua.name}</td>
+                        <td>
+                          <span
+                            className={`badge badge-xs font-semibold ${
+                              ua.type === "DEVICE" ? "badge-success text-white" : "badge-info text-white"
+                            }`}
+                          >
+                            {ua.type}
+                          </span>
+                        </td>
+                        <td className="font-bold text-xs">
+                          {ua.type === "DEVICE" ? `+${ua.amount} Device` : `+${ua.amount.toLocaleString("id-ID")} Pesan`}
+                        </td>
+                        <td className="text-xs">{formatIDR(ua.pricePaid || 0)}</td>
+                        <td className="text-xs text-base-content/60">{formatDate(ua.activatedAt)}</td>
+                        <td className="text-xs text-base-content/60">
+                          {ua.expiresAt ? formatDate(ua.expiresAt) : "Permanen / Sesuai Langganan"}
+                        </td>
+                        <td>
+                          <span
+                            className={`badge badge-xs font-bold ${
+                              ua.status === "ACTIVE" ? "badge-success text-white" : "badge-ghost opacity-60"
+                            }`}
+                          >
+                            {ua.status === "ACTIVE" ? "Aktif" : "Expired"}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

@@ -561,4 +561,6 @@ export interface Invoice {
   customerEmail?: string | null;
   customerPhone?: string | null;
   durationMonths?: number;
+  selectedAddonIds?: string[];
+  addonsAmount?: number;
 }

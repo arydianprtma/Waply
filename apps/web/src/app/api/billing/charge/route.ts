@@ -10,6 +10,7 @@ import {
   createInvoice,
   sendEmailInvoiceNotification,
 } from "@/lib/billing";
+import { getAllAddons } from "@/lib/addons";
 import { validateVoucher, recordVoucherUsage } from "@/lib/vouchers";
 
 export async function POST(req: NextRequest) {
@@ -59,7 +60,17 @@ export async function POST(req: NextRequest) {
       baseAmount = plan.price * durationMonths;
     }
 
-    let totalAfterDuration = baseAmount;
+    // Addons calculation
+    const selectedAddonIds: string[] = Array.isArray(body.selectedAddonIds) ? body.selectedAddonIds : [];
+    const allAddons = getAllAddons();
+    let addonsAmount = 0;
+    for (const addId of selectedAddonIds) {
+      if (allAddons[addId] && allAddons[addId].isActive) {
+        addonsAmount += allAddons[addId].price;
+      }
+    }
+
+    let totalAfterDuration = baseAmount + addonsAmount;
 
     // Apply voucher validation
     let couponDiscount = 0;
@@ -145,6 +156,8 @@ export async function POST(req: NextRequest) {
       customerEmail,
       customerPhone,
       durationMonths,
+      selectedAddonIds,
+      addonsAmount,
     });
 
     // Send Email Invoice Notification (Non-blocking)

@@ -16,6 +16,7 @@ import {
   Megaphone,
   Ticket,
   Headphones,
+  PlusCircle,
   X,
 } from "lucide-react";
 import clsx from "clsx";
@@ -62,6 +63,7 @@ export function AdminSidebar() {
         },
         { name: "Pengumuman", href: "/admin/announcements", icon: Megaphone, badge: "Broadcast" },
         { name: "Layanan & Paket", href: "/admin/plans", icon: Layers, badge: "Plans" },
+        { name: "Addon & Top-Up", href: "/admin/addons", icon: PlusCircle, badge: "Addon" },
         { name: "Voucher & Promo", href: "/admin/vouchers", icon: Ticket, badge: "Promo" },
       ],
     },

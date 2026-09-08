@@ -8,6 +8,7 @@ import {
   sendEmailInvoiceNotification,
   PlanId,
 } from "@/lib/billing";
+import { activateUserAddonsFromInvoice } from "@/lib/addons";
 
 // Midtrans sends notification to this endpoint after payment
 export async function POST(req: NextRequest) {
@@ -71,8 +72,16 @@ export async function POST(req: NextRequest) {
         invoice.planId as PlanId,
         invoice.durationMonths || 1
       );
+
+      if (invoice.selectedAddonIds && invoice.selectedAddonIds.length > 0) {
+        activateUserAddonsFromInvoice(
+          invoice.userId,
+          invoice.selectedAddonIds,
+          order_id
+        );
+      }
       console.log(
-        `[Billing] Subscription activated: user=${invoice.userId} plan=${invoice.planId}`
+        `[Billing] Subscription & Addons activated: user=${invoice.userId} plan=${invoice.planId}`
       );
 
       // Send Email receipt notification
