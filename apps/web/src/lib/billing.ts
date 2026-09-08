@@ -31,20 +31,28 @@ function ensureDataDir() {
 export function getAllPlans(): Record<string, Plan> {
   ensureDataDir();
   try {
-    if (fs.existsSync(PLANS_FILE)) {
-      const custom: Record<string, Plan> = JSON.parse(fs.readFileSync(PLANS_FILE, "utf-8"));
-      return { ...DEFAULT_PLANS, ...custom };
+    if (!fs.existsSync(PLANS_FILE)) {
+      // First-time init: persist DEFAULT_PLANS to plans.json
+      fs.writeFileSync(PLANS_FILE, JSON.stringify(DEFAULT_PLANS, null, 2));
+      return DEFAULT_PLANS;
     }
-  } catch {}
-  return DEFAULT_PLANS;
+    const stored: Record<string, Plan> = JSON.parse(fs.readFileSync(PLANS_FILE, "utf-8") || "{}");
+    if (stored && typeof stored === "object" && Object.keys(stored).length > 0) {
+      return stored;
+    }
+    return DEFAULT_PLANS;
+  } catch {
+    return DEFAULT_PLANS;
+  }
 }
 
 export function saveCustomPlan(plan: Plan): Plan {
   ensureDataDir();
   const all = getAllPlans();
+  const cleanId = plan.id.toUpperCase().replace(/\s+/g, "_");
   const updatedPlan: Plan = {
     ...plan,
-    id: plan.id.toUpperCase().replace(/\s+/g, "_"),
+    id: cleanId,
     createdAt: plan.createdAt || new Date().toISOString(),
     isActive: plan.isActive ?? true,
     period: plan.period || "month",
@@ -63,7 +71,7 @@ export function saveCustomPlan(plan: Plan): Plan {
       webhooks: true,
     },
   };
-  all[updatedPlan.id] = updatedPlan;
+  all[cleanId] = updatedPlan;
   fs.writeFileSync(PLANS_FILE, JSON.stringify(all, null, 2));
   return updatedPlan;
 }
@@ -71,22 +79,25 @@ export function saveCustomPlan(plan: Plan): Plan {
 export function deleteCustomPlan(planId: string): boolean {
   ensureDataDir();
   try {
-    if (fs.existsSync(PLANS_FILE)) {
-      const all: Record<string, Plan> = JSON.parse(fs.readFileSync(PLANS_FILE, "utf-8"));
-      if (all[planId]) {
-        delete all[planId];
-        fs.writeFileSync(PLANS_FILE, JSON.stringify(all, null, 2));
-        return true;
-      }
+    const all = getAllPlans();
+    const cleanId = planId.trim().toUpperCase();
+    const targetKey = Object.keys(all).find((k) => k.toUpperCase() === cleanId) || planId;
+
+    if (all[targetKey]) {
+      delete all[targetKey];
+      fs.writeFileSync(PLANS_FILE, JSON.stringify(all, null, 2));
+      return true;
     }
-  } catch {}
+  } catch (err) {
+    console.error("Failed to delete plan:", err);
+  }
   return false;
 }
 
-export const PLANS: Record<string, Plan> = new Proxy(DEFAULT_PLANS, {
+export const PLANS: Record<string, Plan> = new Proxy({} as Record<string, Plan>, {
   get(target, prop: string) {
     const dynamic = getAllPlans();
-    return dynamic[prop] || target[prop];
+    return dynamic[prop] || DEFAULT_PLANS[prop];
   },
   ownKeys() {
     return Object.keys(getAllPlans());

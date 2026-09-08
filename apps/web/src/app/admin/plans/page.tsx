@@ -64,8 +64,9 @@ export default function AdminPlansPage() {
     if (!targetDeletePlan) return;
     setDeleting(true);
     try {
-      const res = await fetch(`/api/admin/plans?id=${targetDeletePlan.id}`, {
+      const res = await fetch(`/api/admin/plans?id=${encodeURIComponent(targetDeletePlan.id)}`, {
         method: "DELETE",
+        cache: "no-store",
       });
       const json = await res.json();
       if (json.success) {
@@ -75,7 +76,7 @@ export default function AdminPlansPage() {
         if (editingId === targetDeletePlan.id) {
           setModalOpen(false);
         }
-        fetchPlans();
+        await fetchPlans();
       } else {
         showToast(`Gagal menghapus: ${json.error || "Terjadi kesalahan"}`);
       }
@@ -125,7 +126,7 @@ export default function AdminPlansPage() {
   const fetchPlans = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/admin/plans");
+      const res = await fetch("/api/admin/plans", { cache: "no-store" });
       const json = await res.json();
       if (json.success) {
         setPlans(json.data);
