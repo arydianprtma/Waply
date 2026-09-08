@@ -368,15 +368,21 @@ function BillingContent() {
                     )}
                   </div>
                   <div className="bg-base-200/60 rounded-xl px-4 py-2 text-left">
-                    <p className="font-bold text-lg text-center">
-                      {((billingData?.plan.monthlyMessages || 100) + userAddonTotals.extraMessages).toLocaleString("id-ID")}
+                    <p className={`font-bold text-lg text-center ${billingData?.plan.monthlyMessages === -1 ? "text-emerald-600" : ""}`}>
+                      {billingData?.plan.monthlyMessages === -1
+                        ? "Unlimited"
+                        : ((billingData?.plan.monthlyMessages || 100) + userAddonTotals.extraMessages).toLocaleString("id-ID")}
                     </p>
                     <p className="text-xs text-base-content/50 text-center">Total Kuota Pesan</p>
-                    {userAddonTotals.extraMessages > 0 && (
+                    {billingData?.plan.monthlyMessages === -1 ? (
+                      <p className="text-[10px] text-emerald-600 font-semibold text-center mt-0.5">
+                        (Tanpa Batas Pesan)
+                      </p>
+                    ) : userAddonTotals.extraMessages > 0 ? (
                       <p className="text-[10px] text-indigo-600 font-semibold text-center mt-0.5">
                         (+{userAddonTotals.extraMessages.toLocaleString("id-ID")} Addon)
                       </p>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               </div>
