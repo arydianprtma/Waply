@@ -68,17 +68,42 @@ export async function GET() {
         { status: 403 }
       );
     }
+
+    let dbList: any[] = [];
     try {
-      const blacklist = await prisma.blacklist.findMany({
-        where: { userId: user.id },
+      dbList = await prisma.blacklist.findMany({
+        where: {
+          OR: [
+            { userId: user.id },
+            { userId: "admin-default-user" },
+            ...(user.role === "admin" ? [{ userId: "admin-master-sendora-01" }] : []),
+          ],
+        },
         orderBy: { createdAt: "desc" },
       });
-      return NextResponse.json({ success: true, data: blacklist });
     } catch (dbErr) {
-      console.warn("DB offline, loading local blacklist:", (dbErr as Error).message);
-      const local = getLocalBlacklist(user.id);
-      return NextResponse.json({ success: true, data: local });
+      // DB might be offline, fallback to local list
     }
+
+    const localList = getLocalBlacklist(user.id);
+
+    // Merge DB list & Local list deduplicating by clean phoneNumber
+    const mergedMap = new Map<string, any>();
+    for (const item of [...dbList, ...localList]) {
+      const cleanPhone = item.phoneNumber ? item.phoneNumber.replace(/\D/g, "") : "";
+      if (cleanPhone && !mergedMap.has(cleanPhone)) {
+        mergedMap.set(cleanPhone, {
+          ...item,
+          phoneNumber: cleanPhone,
+        });
+      }
+    }
+
+    const result = Array.from(mergedMap.values()).sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+
+    return NextResponse.json({ success: true, data: result });
   } catch (error: any) {
     return NextResponse.json({ success: true, data: [] });
   }

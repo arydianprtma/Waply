@@ -1,10 +1,20 @@
 import fs from "fs";
 import path from "path";
+import { prisma } from "@sendora/database";
 
 const LOCAL_STORAGE_DIR = path.join(process.cwd(), ".sendora-data");
 const LOCAL_BLACKLIST_FILE = path.join(LOCAL_STORAGE_DIR, "blacklist.json");
 
-export function getLocalBlacklist(userId?: string): any[] {
+export interface BlacklistItem {
+  id: string;
+  userId: string;
+  phoneNumber: string;
+  reason: string;
+  notes?: string | null;
+  createdAt: string;
+}
+
+export function getLocalBlacklist(userId?: string): BlacklistItem[] {
   try {
     if (!fs.existsSync(LOCAL_STORAGE_DIR)) {
       fs.mkdirSync(LOCAL_STORAGE_DIR, { recursive: true });
@@ -14,9 +24,18 @@ export function getLocalBlacklist(userId?: string): any[] {
       return [];
     }
     const data = fs.readFileSync(LOCAL_BLACKLIST_FILE, "utf-8");
-    const list = JSON.parse(data || "[]");
+    const list: BlacklistItem[] = JSON.parse(data || "[]");
     if (userId) {
-      return list.filter((item: any) => item.userId === userId);
+      return list.filter((item: any) => {
+        if (item.userId === userId) return true;
+        if (
+          (userId === "admin-master-sendora-01" || userId === "admin-default-user") &&
+          (item.userId === "admin-master-sendora-01" || item.userId === "admin-default-user")
+        ) {
+          return true;
+        }
+        return false;
+      });
     }
     return list;
   } catch {
@@ -30,31 +49,58 @@ export function isBlacklisted(userId: string, phoneNumber: string): boolean {
   return list.some((item: any) => item.phoneNumber.replace(/\D/g, "") === clean);
 }
 
-export function addToBlacklist(
+export async function addToBlacklist(
   userId: string,
   phoneNumber: string,
-  reason: "UNSUBSCRIBE_KEYWORD" | "MANUAL" = "UNSUBSCRIBE_KEYWORD"
-): void {
+  reason: "UNSUBSCRIBE_KEYWORD" | "MANUAL" = "UNSUBSCRIBE_KEYWORD",
+  notes?: string
+): Promise<void> {
+  const clean = phoneNumber.replace(/\D/g, "");
+  if (!clean) return;
+
+  // 1. Save to Local JSON File (Fast sync backup)
   try {
     if (!fs.existsSync(LOCAL_STORAGE_DIR)) {
       fs.mkdirSync(LOCAL_STORAGE_DIR, { recursive: true });
     }
     const all = getLocalBlacklist();
-    const clean = phoneNumber.replace(/\D/g, "");
     const alreadyExists = all.some(
-      (item: any) => item.userId === userId && item.phoneNumber.replace(/\D/g, "") === clean
+      (item: any) =>
+        (item.userId === userId || item.userId === "admin-master-sendora-01" || item.userId === "admin-default-user") &&
+        item.phoneNumber.replace(/\D/g, "") === clean
     );
     if (!alreadyExists) {
       all.unshift({
-        id: `bl_${Date.now()}`,
+        id: `bl_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
         userId,
         phoneNumber: clean,
         reason,
+        notes: notes || (reason === "UNSUBSCRIBE_KEYWORD" ? "Auto Opt-Out dari balasan STOP pelanggan" : null),
         createdAt: new Date().toISOString(),
       });
       fs.writeFileSync(LOCAL_BLACKLIST_FILE, JSON.stringify(all, null, 2));
     }
   } catch (err) {
-    console.error("[Blacklist] Failed to add to blacklist:", err);
+    console.error("[Blacklist] Failed to save to local blacklist file:", err);
+  }
+
+  // 2. Save to Database via Prisma (if online)
+  try {
+    const existing = await prisma.blacklist.findFirst({
+      where: { userId, phoneNumber: clean },
+    });
+    if (!existing) {
+      await prisma.blacklist.create({
+        data: {
+          userId,
+          phoneNumber: clean,
+          reason,
+          notes: notes || (reason === "UNSUBSCRIBE_KEYWORD" ? "Auto Opt-Out dari balasan STOP pelanggan" : null),
+        },
+      });
+    }
+  } catch {
+    // Database might be offline / sqlite / fallback mode
   }
 }
+

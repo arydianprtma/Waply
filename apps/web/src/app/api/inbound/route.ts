@@ -45,7 +45,13 @@ export async function POST(req: NextRequest) {
 
     // 2. Auto Opt-Out Safety Guard (Global Engine): If message is STOP/BERHENTI → add to blacklist silently to protect client WhatsApp number
     if (isOptOutMessage(text)) {
-      addToBlacklist(userId, cleanSender, "UNSUBSCRIBE_KEYWORD");
+      await addToBlacklist(userId, cleanSender, "UNSUBSCRIBE_KEYWORD");
+      if (userId !== "admin-master-sendora-01") {
+        await addToBlacklist("admin-master-sendora-01", cleanSender, "UNSUBSCRIBE_KEYWORD");
+      }
+      if (userId !== "admin-default-user") {
+        await addToBlacklist("admin-default-user", cleanSender, "UNSUBSCRIBE_KEYWORD");
+      }
       console.log(`[Inbound] Auto opt-out: ${cleanSender} added to blacklist (keyword: "${text}")`);
 
       // Dispatch webhook event for opt-out
