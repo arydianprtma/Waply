@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
       timestamp: timestamp || new Date().toISOString(),
     }).catch(() => {});
 
-    // 2. Auto Opt-Out Safety Guard (Global Engine): If message is STOP/BERHENTI → add to blacklist silently to protect client WhatsApp number
+    // 2. Auto Opt-Out Safety Guard (Global Engine): If message is STOP/BERHENTI → add to blacklist and send confirmation notification
     if (isOptOutMessage(text)) {
       await addToBlacklist(userId, cleanSender, "UNSUBSCRIBE_KEYWORD");
       if (userId !== "admin-master-sendora-01") {
@@ -54,6 +54,36 @@ export async function POST(req: NextRequest) {
       }
       console.log(`[Inbound] Auto opt-out: ${cleanSender} added to blacklist (keyword: "${text}")`);
 
+      // Kirim pesan balasan konfirmasi Opt-Out resmi ke pelanggan
+      const optOutNotice = `Permintaan berhenti berlangganan Anda telah berhasil diproses. Nomor Anda telah dinonaktifkan dan Anda tidak akan menerima pesan promosi lagi dari kami. Terima kasih.`;
+
+      if (deviceId) {
+        try {
+          await fetch(`${GATEWAY_URL}/api/sessions/${deviceId}/send`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              to: cleanSender,
+              message: optOutNotice,
+            }),
+          });
+        } catch (err) {
+          console.error("Failed to send opt-out confirmation message:", err);
+        }
+      }
+
+      // Simpan log otomatis
+      saveAutoReplyLog({
+        userId,
+        ruleId: "opt_out_auto_notice",
+        ruleName: "Konfirmasi Auto Opt-Out (STOP)",
+        sender: cleanSender,
+        inboundText: text,
+        replyText: optOutNotice,
+        deviceId: deviceId || "unknown",
+        success: true,
+      });
+
       // Dispatch webhook event for opt-out
       dispatchWebhookEvent(userId, "message.opt_out", {
         sender: cleanSender,
@@ -63,8 +93,9 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        autoReply: false,
-        reason: "Opt-out keyword detected — sender added to blacklist",
+        autoReply: true,
+        autoReplyText: optOutNotice,
+        reason: "Opt-out keyword detected — sender added to blacklist and confirmation sent",
       });
     }
 
