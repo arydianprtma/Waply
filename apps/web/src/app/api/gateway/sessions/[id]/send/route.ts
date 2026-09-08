@@ -4,6 +4,7 @@ import { requireActiveUser } from "@/lib/auth-user";
 import { applyWatermarkIfFree } from "@/lib/watermark";
 import { sanitizePhoneNumber } from "@/lib/sanitizer";
 import { canUserSendMessage, recordSentMessage } from "@/lib/messages";
+import { isBlacklisted } from "@/lib/blacklist";
 
 export async function POST(
   request: Request,
@@ -14,7 +15,21 @@ export async function POST(
     const { id } = await params;
     const body = await request.json();
 
-    // Quota Enforcement
+    const normalizedTo = body.to ? sanitizePhoneNumber(body.to) : body.to;
+
+    // 1. Blacklist / DND Safety Guard: Block sending if recipient requested Opt-Out
+    if (normalizedTo && (isBlacklisted(user.id, normalizedTo) || isBlacklisted("admin-master-sendora-01", normalizedTo) || isBlacklisted("admin-default-user", normalizedTo))) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Nomor tujuan (${normalizedTo}) berada dalam daftar Blacklist / DND (telah Opt-Out). Pengiriman diblokir untuk melindungi reputasi akun WhatsApp Anda.`,
+          isBlacklisted: true,
+        },
+        { status: 400 }
+      );
+    }
+
+    // 2. Quota Enforcement
     const quotaCheck = canUserSendMessage(user.id, user.role);
     if (!quotaCheck.allowed) {
       return NextResponse.json(
@@ -31,8 +46,6 @@ export async function POST(
       const { finalMessage } = applyWatermarkIfFree(user.id, outgoingMessage, user.role);
       outgoingMessage = finalMessage;
     }
-
-    const normalizedTo = body.to ? sanitizePhoneNumber(body.to) : body.to;
 
     const payload = {
       ...body,

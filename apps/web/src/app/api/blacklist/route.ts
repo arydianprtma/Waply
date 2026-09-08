@@ -71,7 +71,7 @@ export async function GET() {
 
     let dbList: any[] = [];
     try {
-      dbList = await prisma.blacklist.findMany({
+      const dbPromise = prisma.blacklist.findMany({
         where: {
           OR: [
             { userId: user.id },
@@ -81,8 +81,12 @@ export async function GET() {
         },
         orderBy: { createdAt: "desc" },
       });
-    } catch (dbErr) {
-      // DB might be offline, fallback to local list
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("DB timeout")), 1000)
+      );
+      dbList = await Promise.race([dbPromise, timeoutPromise]);
+    } catch {
+      // DB offline / timeout, will use local blacklist fast
     }
 
     const localList = getLocalBlacklist(user.id);

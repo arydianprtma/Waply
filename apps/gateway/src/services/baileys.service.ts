@@ -42,6 +42,7 @@ export class BaileysInstance {
   private maxReconnectAttempts = 5;
   private msgStore = new Map<string, proto.IMessage>();
   private recentRecipients = new Map<string, string>(); // name/jid to phone number mapping
+  private lastRecipientPhone = "";
 
   constructor(id: string, name = "WhatsApp Device") {
     this.id = id;
@@ -196,8 +197,9 @@ export class BaileysInstance {
             resolvedPhone = msg.key.participant.split("@")[0];
           } else if (this.recentRecipients.has(rawSender)) {
             resolvedPhone = this.recentRecipients.get(rawSender)!;
-          } else if (senderName && this.recentRecipients.has(senderName)) {
-            resolvedPhone = this.recentRecipients.get(senderName)!;
+          } else if (this.lastRecipientPhone) {
+            resolvedPhone = this.lastRecipientPhone;
+            this.recentRecipients.set(rawSender, this.lastRecipientPhone);
           } else {
             resolvedPhone = rawSender.split("@")[0];
           }
@@ -255,6 +257,7 @@ export class BaileysInstance {
     const formattedJid = `${cleanNumber}@s.whatsapp.net`;
 
     // Cache recent recipient
+    this.lastRecipientPhone = cleanNumber;
     this.recentRecipients.set(cleanNumber, cleanNumber);
     this.recentRecipients.set(formattedJid, cleanNumber);
 
