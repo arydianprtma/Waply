@@ -267,26 +267,30 @@ function OrderContent() {
     activePlansList[0] ||
     DEFAULT_PLANS[selectedPlanId] ||
     DEFAULT_PLANS.STARTER;
-  const monthlyPrice = currentPlan.price;
+  
+  const planPeriod = currentPlan.period || "month";
+  const effectiveDurationMonths: 1 | 3 | 12 =
+    planPeriod === "year" ? 12 : planPeriod === "day" || planPeriod === "week" ? 1 : durationMonths;
 
   // Price calculations
-  let basePrice = monthlyPrice * durationMonths;
+  let basePrice = currentPlan.price;
   let durationDiscount = 0;
 
-  if (durationMonths === 3) {
-    durationDiscount = Math.round(basePrice * 0.05); // 5% discount
-  } else if (durationMonths === 12) {
-    const yearlyKey = `YEARLY_${selectedPlanId}`;
-    if (plans[yearlyKey] || DEFAULT_PLANS[yearlyKey]) {
-      const yPlan = plans[yearlyKey] || DEFAULT_PLANS[yearlyKey];
-      basePrice = yPlan.price;
-      durationDiscount = (monthlyPrice * 12) - yPlan.price;
-    } else {
+  if (planPeriod === "month") {
+    const monthlyPrice = currentPlan.price;
+    basePrice = monthlyPrice * durationMonths;
+
+    if (durationMonths === 3) {
+      durationDiscount = Math.round(basePrice * 0.05); // 5% discount
+    } else if (durationMonths === 12) {
       durationDiscount = Math.round(basePrice * 0.20); // 20% discount
     }
+  } else {
+    basePrice = currentPlan.price;
+    durationDiscount = 0;
   }
 
-  const subtotalAfterDuration = basePrice - (durationMonths === 12 && plans[`YEARLY_${selectedPlanId}`] ? 0 : durationDiscount);
+  const subtotalAfterDuration = basePrice - durationDiscount;
 
   // Dynamic Voucher discount calculation
   let couponDiscount = 0;
@@ -435,7 +439,7 @@ function OrderContent() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             planId: selectedPlanId,
-            durationMonths,
+            durationMonths: effectiveDurationMonths,
             customerName: cleanName,
             customerEmail: cleanEmail,
             customerPhone: cleanPhone,
@@ -504,7 +508,7 @@ function OrderContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           planId: selectedPlanId,
-          durationMonths,
+          durationMonths: effectiveDurationMonths,
           paymentType,
           bank,
           customerName: cleanName,
@@ -1202,83 +1206,147 @@ function OrderContent() {
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-emerald-600 shrink-0" />
                     <h2 className="font-extrabold text-sm text-slate-900">
-                      4. Pilih Durasi Berlangganan
+                      4. Durasi Berlangganan
                     </h2>
                   </div>
-                  <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full shrink-0">
-                    Hemat s/d 20%
-                  </span>
+                  {planPeriod === "month" ? (
+                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full shrink-0">
+                      Hemat s/d 20%
+                    </span>
+                  ) : (
+                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full shrink-0">
+                      Paket {planPeriod === "year" ? "Tahunan (365 Hari)" : planPeriod === "day" ? "Harian (1 Hari)" : "Mingguan (7 Hari)"}
+                    </span>
+                  )}
                 </div>
 
                 <div className="p-4 sm:p-6 space-y-3">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-                    {/* 1 Bulan */}
-                    <button
-                      type="button"
-                      onClick={() => setDurationMonths(1)}
-                      className={`p-4 rounded-2xl border text-left transition-all ${
-                        durationMonths === 1
-                          ? "bg-emerald-50/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs"
-                          : "bg-white border-slate-200 hover:border-slate-300"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="font-bold text-xs text-slate-900">1 Bulan</span>
-                        <div className={`w-3.5 h-3.5 rounded-full border ${durationMonths === 1 ? "border-emerald-600 bg-emerald-600" : "border-slate-300"}`} />
+                  {planPeriod === "year" ? (
+                    <div className="p-4 rounded-2xl border bg-emerald-50/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs flex items-center justify-between flex-wrap gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-sm text-slate-900">12 Bulan (1 Tahun Penuh)</span>
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-600 text-white">
+                            PAKET TAHUNAN
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Periode aktif 365 hari penuh tanpa perpanjangan bulanan.
+                        </p>
                       </div>
-                      <div className="text-sm font-black text-slate-900">
-                        {formatIDR(monthlyPrice)}
+                      <div className="text-right">
+                        <div className="text-base font-black text-slate-900">
+                          {formatIDR(currentPlan.price)}
+                        </div>
+                        <span className="text-[11px] text-slate-400 font-normal">/ tahun</span>
                       </div>
-                      <span className="text-[10px] text-slate-400">Harga Standar</span>
-                    </button>
+                    </div>
+                  ) : planPeriod === "day" ? (
+                    <div className="p-4 rounded-2xl border bg-emerald-50/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs flex items-center justify-between flex-wrap gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-sm text-slate-900">1 Hari (24 Jam)</span>
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-primary text-white">
+                            PAKET HARIAN
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Periode aktif 1 hari (24 jam) sejak aktivasi.
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-base font-black text-slate-900">
+                          {formatIDR(currentPlan.price)}
+                        </div>
+                        <span className="text-[11px] text-slate-400 font-normal">/ hari</span>
+                      </div>
+                    </div>
+                  ) : planPeriod === "week" ? (
+                    <div className="p-4 rounded-2xl border bg-emerald-50/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs flex items-center justify-between flex-wrap gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-sm text-slate-900">1 Minggu (7 Hari)</span>
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-primary text-white">
+                            PAKET MINGGUAN
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Periode aktif 7 hari penuh sejak aktivasi.
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-base font-black text-slate-900">
+                          {formatIDR(currentPlan.price)}
+                        </div>
+                        <span className="text-[11px] text-slate-400 font-normal">/ minggu</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                      {/* 1 Bulan */}
+                      <button
+                        type="button"
+                        onClick={() => setDurationMonths(1)}
+                        className={`p-4 rounded-2xl border text-left transition-all ${
+                          durationMonths === 1
+                            ? "bg-emerald-50/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs"
+                            : "bg-white border-slate-200 hover:border-slate-300"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-bold text-xs text-slate-900">1 Bulan</span>
+                          <div className={`w-3.5 h-3.5 rounded-full border ${durationMonths === 1 ? "border-emerald-600 bg-emerald-600" : "border-slate-300"}`} />
+                        </div>
+                        <div className="text-sm font-black text-slate-900">
+                          {formatIDR(currentPlan.price)}
+                        </div>
+                        <span className="text-[10px] text-slate-400">Harga Standar</span>
+                      </button>
 
-                    {/* 3 Bulan */}
-                    <button
-                      type="button"
-                      onClick={() => setDurationMonths(3)}
-                      className={`p-4 rounded-2xl border text-left transition-all ${
-                        durationMonths === 3
-                          ? "bg-emerald-50/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs"
-                          : "bg-white border-slate-200 hover:border-slate-300"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="font-bold text-xs text-slate-900">3 Bulan</span>
-                        <div className={`w-3.5 h-3.5 rounded-full border ${durationMonths === 3 ? "border-emerald-600 bg-emerald-600" : "border-slate-300"}`} />
-                      </div>
-                      <div className="text-sm font-black text-slate-900">
-                        {formatIDR(Math.round(monthlyPrice * 3 * 0.95))}
-                      </div>
-                      <span className="text-[10px] font-bold text-emerald-600">Diskon 5% Hemat</span>
-                    </button>
+                      {/* 3 Bulan */}
+                      <button
+                        type="button"
+                        onClick={() => setDurationMonths(3)}
+                        className={`p-4 rounded-2xl border text-left transition-all ${
+                          durationMonths === 3
+                            ? "bg-emerald-50/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs"
+                            : "bg-white border-slate-200 hover:border-slate-300"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-bold text-xs text-slate-900">3 Bulan</span>
+                          <div className={`w-3.5 h-3.5 rounded-full border ${durationMonths === 3 ? "border-emerald-600 bg-emerald-600" : "border-slate-300"}`} />
+                        </div>
+                        <div className="text-sm font-black text-slate-900">
+                          {formatIDR(Math.round(currentPlan.price * 3 * 0.95))}
+                        </div>
+                        <span className="text-[10px] font-bold text-emerald-600">Diskon 5% Hemat</span>
+                      </button>
 
-                    {/* 12 Bulan (1 Tahun) */}
-                    <button
-                      type="button"
-                      onClick={() => setDurationMonths(12)}
-                      className={`p-4 rounded-2xl border text-left transition-all relative ${
-                        durationMonths === 12
-                          ? "bg-emerald-50/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs"
-                          : "bg-white border-slate-200 hover:border-slate-300"
-                      }`}
-                    >
-                      <span className="absolute -top-2.5 right-3 px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-600 text-white shadow-xs">
-                        HEMAT 20%
-                      </span>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="font-bold text-xs text-slate-900">12 Bulan (1 Tahun)</span>
-                        <div className={`w-3.5 h-3.5 rounded-full border ${durationMonths === 12 ? "border-emerald-600 bg-emerald-600" : "border-slate-300"}`} />
-                      </div>
-                      <div className="text-sm font-black text-slate-900">
-                        {formatIDR(
-                          plans[`YEARLY_${selectedPlanId}`]?.price ||
-                          DEFAULT_PLANS[`YEARLY_${selectedPlanId}`]?.price ||
-                          Math.round(monthlyPrice * 12 * 0.8)
-                        )}
-                      </div>
-                      <span className="text-[10px] font-bold text-emerald-600">Paling Hemat</span>
-                    </button>
-                  </div>
+                      {/* 12 Bulan (1 Tahun) */}
+                      <button
+                        type="button"
+                        onClick={() => setDurationMonths(12)}
+                        className={`p-4 rounded-2xl border text-left transition-all relative ${
+                          durationMonths === 12
+                            ? "bg-emerald-50/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs"
+                            : "bg-white border-slate-200 hover:border-slate-300"
+                        }`}
+                      >
+                        <span className="absolute -top-2.5 right-3 px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-600 text-white shadow-xs">
+                          HEMAT 20%
+                        </span>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-bold text-xs text-slate-900">12 Bulan (1 Tahun)</span>
+                          <div className={`w-3.5 h-3.5 rounded-full border ${durationMonths === 12 ? "border-emerald-600 bg-emerald-600" : "border-slate-300"}`} />
+                        </div>
+                        <div className="text-sm font-black text-slate-900">
+                          {formatIDR(Math.round(currentPlan.price * 12 * 0.80))}
+                        </div>
+                        <span className="text-[10px] font-bold text-emerald-600">Paling Hemat</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1408,7 +1476,15 @@ function OrderContent() {
                 <div className="flex items-center justify-between text-slate-600">
                   <span>Durasi Langganan:</span>
                   <span className="font-bold">
-                    {durationMonths === 12 ? "12 Bulan (1 Tahun)" : `${durationMonths} Bulan`}
+                    {planPeriod === "year"
+                      ? "12 Bulan (1 Tahun)"
+                      : planPeriod === "day"
+                      ? "1 Hari (24 Jam)"
+                      : planPeriod === "week"
+                      ? "1 Minggu (7 Hari)"
+                      : durationMonths === 12
+                      ? "12 Bulan (1 Tahun)"
+                      : `${durationMonths} Bulan`}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-slate-600">
@@ -1416,8 +1492,10 @@ function OrderContent() {
                   <span className="font-bold text-slate-900 uppercase">{selectedMethod.replace("_", " ")}</span>
                 </div>
                 <div className="flex items-center justify-between text-slate-600">
-                  <span>Harga Normal ({durationMonths} bln):</span>
-                  <span>{formatIDR(monthlyPrice * durationMonths)}</span>
+                  <span>
+                    Harga {planPeriod === "month" ? `(${durationMonths} bln)` : `(${planPeriod === "year" ? "1 thn" : planPeriod === "day" ? "1 hr" : "1 mgg"})`}:
+                  </span>
+                  <span>{formatIDR(basePrice)}</span>
                 </div>
 
                 {durationDiscount > 0 && (

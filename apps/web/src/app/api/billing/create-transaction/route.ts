@@ -45,26 +45,31 @@ export async function POST(req: NextRequest) {
     });
 
     // Base price calculation based on duration
-    const monthlyPrice = plan.price;
-    let baseAmount = monthlyPrice * durationMonths;
+    const isFixedPeriod = plan.period && plan.period !== "month";
+    let baseAmount = plan.price;
     let durationDiscount = 0;
 
-    if (durationMonths === 3) {
-      // 5% discount for 3 months
-      durationDiscount = Math.round(baseAmount * 0.05);
-    } else if (durationMonths === 12) {
-      // ~20% discount for 1 year
-      const yearlyPlanKey = `YEARLY_${planId}`;
-      if (PLANS[yearlyPlanKey] || DEFAULT_PLANS[yearlyPlanKey]) {
-        const yearlyPlan = PLANS[yearlyPlanKey] || DEFAULT_PLANS[yearlyPlanKey];
-        baseAmount = yearlyPlan.price;
-        durationDiscount = (monthlyPrice * 12) - yearlyPlan.price;
-      } else {
-        durationDiscount = Math.round(baseAmount * 0.20);
+    if (!isFixedPeriod) {
+      const monthlyPrice = plan.price;
+      baseAmount = monthlyPrice * durationMonths;
+
+      if (durationMonths === 3) {
+        // 5% discount for 3 months
+        durationDiscount = Math.round(baseAmount * 0.05);
+      } else if (durationMonths === 12) {
+        // ~20% discount for 1 year
+        const yearlyPlanKey = `YEARLY_${planId}`;
+        if (PLANS[yearlyPlanKey]) {
+          const yearlyPlan = PLANS[yearlyPlanKey];
+          baseAmount = yearlyPlan.price;
+          durationDiscount = (monthlyPrice * 12) - yearlyPlan.price;
+        } else {
+          durationDiscount = Math.round(baseAmount * 0.20);
+        }
       }
     }
 
-    let totalAfterDuration = baseAmount - (durationMonths === 12 && durationDiscount > 0 && PLANS[`YEARLY_${planId}`] ? 0 : durationDiscount);
+    let totalAfterDuration = baseAmount - durationDiscount;
 
     // Apply voucher validation
     let couponDiscount = 0;
