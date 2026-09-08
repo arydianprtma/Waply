@@ -69,7 +69,11 @@ export default function DevicesPage() {
 
   useEffect(() => {
     fetchSessions();
-    const interval = setInterval(fetchSessions, 5000);
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        fetchSessions();
+      }
+    }, 10000);
     return () => clearInterval(interval);
   }, []);
 

@@ -89,24 +89,27 @@ export async function addToBlacklist(
     console.error("[Blacklist] Failed to save to local blacklist file:", err);
   }
 
-  // 2. Save to Database via Prisma (if online)
-  try {
-    const existing = await prisma.blacklist.findFirst({
-      where: { userId, phoneNumber: clean },
-    });
-    if (!existing) {
-      await prisma.blacklist.create({
-        data: {
-          userId,
-          phoneNumber: clean,
-          reason,
-          notes: notes || (reason === "UNSUBSCRIBE_KEYWORD" ? "Auto Opt-Out dari balasan STOP pelanggan" : null),
-        },
-      });
-    }
-  } catch {
-    // Database might be offline / sqlite / fallback mode
-  }
+  // 2. Save to Database via Prisma (if online, non-blocking with fast timeout)
+  Promise.race([
+    (async () => {
+      try {
+        const existing = await prisma.blacklist.findFirst({
+          where: { userId, phoneNumber: clean },
+        });
+        if (!existing) {
+          await prisma.blacklist.create({
+            data: {
+              userId,
+              phoneNumber: clean,
+              reason,
+              notes: notes || (reason === "UNSUBSCRIBE_KEYWORD" ? "Auto Opt-Out dari balasan STOP pelanggan" : null),
+            },
+          });
+        }
+      } catch {}
+    })(),
+    new Promise((_, reject) => setTimeout(() => reject(new Error("DB timeout")), 200)),
+  ]).catch(() => {});
 }
 
 export async function removeFromBlacklist(idOrPhone: string, userId?: string): Promise<void> {
@@ -137,22 +140,25 @@ export async function removeFromBlacklist(idOrPhone: string, userId?: string): P
     console.error("[Blacklist] Failed to remove from local blacklist:", err);
   }
 
-  // 2. Remove from Prisma DB
-  try {
-    if (cleanPhone) {
-      await prisma.blacklist.deleteMany({
-        where: {
-          OR: [{ id: idOrPhone }, { phoneNumber: cleanPhone }],
-        },
-      });
-    } else {
-      await prisma.blacklist.deleteMany({
-        where: { id: idOrPhone },
-      });
-    }
-  } catch {
-    // DB fallback
-  }
+  // 2. Remove from Prisma DB (non-blocking with fast timeout)
+  Promise.race([
+    (async () => {
+      try {
+        if (cleanPhone) {
+          await prisma.blacklist.deleteMany({
+            where: {
+              OR: [{ id: idOrPhone }, { phoneNumber: cleanPhone }],
+            },
+          });
+        } else {
+          await prisma.blacklist.deleteMany({
+            where: { id: idOrPhone },
+          });
+        }
+      } catch {}
+    })(),
+    new Promise((_, reject) => setTimeout(() => reject(new Error("DB timeout")), 200)),
+  ]).catch(() => {});
 }
 
 

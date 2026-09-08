@@ -80,14 +80,22 @@ export function Navbar() {
 
   useEffect(() => {
     fetchAnnouncements();
-    const interval = setInterval(fetchAnnouncements, 60000); // Check every 60s
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        fetchAnnouncements();
+      }
+    }, 60000); // Check every 60s
     return () => clearInterval(interval);
   }, [fetchAnnouncements]);
 
   useEffect(() => {
     if (currentUser?.role === "admin") {
       fetchAdminTickets();
-      const interval = setInterval(fetchAdminTickets, 10000); // Check every 10s
+      const interval = setInterval(() => {
+        if (document.visibilityState === "visible") {
+          fetchAdminTickets();
+        }
+      }, 20000); // Check every 20s
       return () => clearInterval(interval);
     }
   }, [currentUser?.role, fetchAdminTickets]);
