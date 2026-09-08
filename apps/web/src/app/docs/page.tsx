@@ -500,8 +500,8 @@ async def handle_sendora_webhook(request: Request):
 
       {/* Docs Body with Interactive Sticky Sidebar */}
       <div className="max-w-7xl mx-auto w-full px-4 md:px-8 py-8 md:py-10 flex-1 flex flex-col md:flex-row gap-8 lg:gap-10">
-        {/* Left Sticky Sidebar (ScrollSpy Highlight) */}
-        <aside className="w-full md:w-72 flex-shrink-0">
+        {/* Left Sticky Sidebar (ScrollSpy Highlight - Hidden on Mobile) */}
+        <aside className="hidden md:block md:w-72 flex-shrink-0">
           <div className="sticky top-24 space-y-4">
             <div className="px-4 py-3 bg-white rounded-2xl border border-slate-200/90 flex items-center justify-between shadow-xs">
               <span className="text-xs font-bold text-slate-900 flex items-center gap-2">
