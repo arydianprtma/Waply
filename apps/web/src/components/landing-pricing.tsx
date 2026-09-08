@@ -14,10 +14,40 @@ type PeriodTab = "month" | "day" | "year" | "all";
 export default function LandingPricing({ plans }: LandingPricingProps) {
   const [activeTab, setActiveTab] = useState<PeriodTab>("month");
 
+  // Calculate highest discount for each tab dynamically from plans
+  const getTabDiscountBadge = (tabId: PeriodTab): string | undefined => {
+    if (tabId === "all") return undefined;
+    const periodPlans = plans.filter(
+      (p) => p.isActive !== false && p.id !== "FREE" && (p.period || "month") === tabId
+    );
+    if (periodPlans.length === 0) return undefined;
+
+    let maxPercent = 0;
+    let badgeText = "";
+
+    for (const p of periodPlans) {
+      if (p.discountPercent && p.discountPercent > maxPercent) {
+        maxPercent = p.discountPercent;
+        badgeText = p.discountBadge || `Hemat ${maxPercent}%`;
+      } else if (p.originalPrice && p.originalPrice > p.price) {
+        const pct = Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100);
+        if (pct > maxPercent) {
+          maxPercent = pct;
+          badgeText = p.discountBadge || `Hemat ${pct}%`;
+        }
+      }
+    }
+
+    if (maxPercent > 0) {
+      return badgeText || `Hemat ${maxPercent}%`;
+    }
+    return undefined;
+  };
+
   const tabs: { id: PeriodTab; label: string; icon: React.ElementType; badge?: string }[] = [
-    { id: "month", label: "Bulanan", icon: Calendar },
-    { id: "day", label: "Harian", icon: Zap },
-    { id: "year", label: "Tahunan", icon: Sparkles, badge: "Hemat 20%" },
+    { id: "month", label: "Bulanan", icon: Calendar, badge: getTabDiscountBadge("month") },
+    { id: "day", label: "Harian", icon: Zap, badge: getTabDiscountBadge("day") },
+    { id: "year", label: "Tahunan", icon: Sparkles, badge: getTabDiscountBadge("year") },
     { id: "all", label: "Semua", icon: Layers },
   ];
 
