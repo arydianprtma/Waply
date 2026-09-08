@@ -663,8 +663,8 @@ export default function AdminPlansPage() {
       {/* MODAL: Form Buat / Edit Layanan */}
       {modalOpen && (
         <ModalPortal>
-          <div className="fixed inset-0 z-[99999] bg-black/60 flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 space-y-5 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150 my-auto relative z-10">
+          <div className="fixed inset-0 z-[99999] bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+            <div className="bg-white rounded-2xl sm:rounded-3xl max-w-xl w-full p-4 sm:p-6 shadow-2xl border border-slate-200 space-y-4 sm:space-y-5 max-h-[92vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150 my-auto relative z-10">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2 font-bold text-base text-slate-900">
                 <Layers className="w-5 h-5 text-primary" />
@@ -826,12 +826,16 @@ export default function AdminPlansPage() {
               </div>
 
               {/* ── Diskon & Promo Settings ─────────────────────────────── */}
-              <div className="p-3.5 rounded-2xl bg-rose-50/70 border border-rose-200/80 space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-2 cursor-pointer">
+              <div className={`p-4 rounded-2xl border transition-all space-y-3.5 ${
+                formData.hasDiscount
+                  ? "bg-slate-50/90 border-slate-300/80 shadow-xs"
+                  : "bg-slate-50/50 border-slate-200"
+              }`}>
+                <div className="flex items-center justify-between gap-2">
+                  <label className="flex items-center gap-2.5 cursor-pointer select-none">
                     <input
                       type="checkbox"
-                      className="checkbox checkbox-error checkbox-xs"
+                      className="checkbox checkbox-primary checkbox-sm rounded-md"
                       checked={formData.hasDiscount}
                       onChange={(e) => {
                         const checked = e.target.checked;
@@ -848,24 +852,29 @@ export default function AdminPlansPage() {
                         });
                       }}
                     />
-                    <span className="text-xs font-bold text-rose-950 flex items-center gap-1.5">
-                      <Flame className="w-3.5 h-3.5 text-rose-600" /> Aktifkan Diskon / Harga Coret Promo
-                    </span>
+                    <div>
+                      <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                        <Flame className="w-3.5 h-3.5 text-rose-500" /> Diskon & Harga Coret Promo
+                      </span>
+                      <p className="text-[11px] text-slate-500 font-normal">
+                        Tampilkan harga coret dan countdown waktu promo
+                      </p>
+                    </div>
                   </label>
                   {formData.hasDiscount && formData.discountPercent > 0 && (
-                    <span className="badge badge-error text-white font-bold text-[10px]">
+                    <span className="badge badge-sm bg-rose-50 border-rose-200 text-rose-700 font-bold text-[11px] px-2 py-0.5">
                       Hemat {formData.discountPercent}%
                     </span>
                   )}
                 </div>
 
                 {formData.hasDiscount && (
-                  <div className="space-y-3 pt-1 border-t border-rose-200/60">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="space-y-3.5 pt-2 border-t border-slate-200">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       {/* Harga Asli */}
                       <div className="form-control">
-                        <label className="label py-0.5">
-                          <span className="label-text font-bold text-[11px] text-rose-900">
+                        <label className="label py-1">
+                          <span className="label-text font-bold text-[11px] text-slate-700">
                             Harga Normal (Coret)
                           </span>
                         </label>
@@ -873,7 +882,7 @@ export default function AdminPlansPage() {
                           type="number"
                           min={0}
                           step={1}
-                          className="input input-bordered input-xs bg-white text-xs"
+                          className="input input-bordered input-sm bg-white text-xs"
                           placeholder="Misal: 79000"
                           value={!formData.originalPrice || formData.originalPrice === 0 ? "" : formData.originalPrice}
                           onChange={(e) => {
@@ -892,8 +901,8 @@ export default function AdminPlansPage() {
 
                       {/* Diskon % */}
                       <div className="form-control">
-                        <div className="flex items-center justify-between py-0.5">
-                          <label className="label-text font-bold text-[11px] text-rose-900">
+                        <div className="flex items-center justify-between py-1">
+                          <label className="label-text font-bold text-[11px] text-slate-700">
                             Diskon (%)
                           </label>
                           <div className="flex items-center gap-1">
@@ -918,7 +927,7 @@ export default function AdminPlansPage() {
                                     discountBadge: `DISKON ${finalDisc}%`,
                                   });
                                 }}
-                                className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-rose-200/80 hover:bg-rose-300 text-rose-900 cursor-pointer transition-colors"
+                                className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-100 text-slate-700 transition-colors shadow-2xs cursor-pointer"
                               >
                                 {preset}%
                               </button>
@@ -930,7 +939,7 @@ export default function AdminPlansPage() {
                           min={0}
                           max={100}
                           step={1}
-                          className="input input-bordered input-xs bg-white text-xs"
+                          className="input input-bordered input-sm bg-white text-xs"
                           placeholder="0"
                           value={!formData.discountPercent || formData.discountPercent === 0 ? "" : formData.discountPercent}
                           onChange={(e) => {
@@ -958,13 +967,13 @@ export default function AdminPlansPage() {
 
                       {/* Teks Badge */}
                       <div className="form-control">
-                        <label className="label py-0.5">
-                          <span className="label-text font-bold text-[11px] text-rose-900">Teks Badge Promo</span>
+                        <label className="label py-1">
+                          <span className="label-text font-bold text-[11px] text-slate-700">Teks Badge Promo</span>
                         </label>
                         <input
                           type="text"
-                          className="input input-bordered input-xs bg-white text-xs"
-                          placeholder="Contoh: DISKON 10% / FLASH SALE"
+                          className="input input-bordered input-sm bg-white text-xs"
+                          placeholder="Misal: PROMO SPESIAL"
                           value={formData.discountBadge}
                           onChange={(e) => setFormData({ ...formData, discountBadge: e.target.value })}
                         />
@@ -972,12 +981,12 @@ export default function AdminPlansPage() {
                     </div>
 
                     {/* Jadwal Masa Berlaku Promo & Countdown Setting */}
-                    <div className="pt-2.5 border-t border-rose-200/70 space-y-2.5">
+                    <div className="pt-3 border-t border-slate-200 space-y-2.5">
                       <div className="flex items-center justify-between flex-wrap gap-1">
-                        <span className="text-[11px] font-bold text-rose-950 flex items-center gap-1.5">
-                          <Timer className="w-3.5 h-3.5 text-rose-600" /> Jadwal & Masa Berlaku Diskon (Otomatis Countdown)
+                        <span className="text-[11px] font-bold text-slate-800 flex items-center gap-1.5">
+                          <Timer className="w-3.5 h-3.5 text-slate-500" /> Jadwal & Masa Berlaku Diskon
                         </span>
-                        <span className="text-[10px] text-rose-700 font-medium">
+                        <span className="text-[10px] text-slate-500 font-medium">
                           Otomatis countdown saat sisa &le; 24 jam
                         </span>
                       </div>
@@ -986,11 +995,11 @@ export default function AdminPlansPage() {
                         {/* Tanggal Mulai */}
                         <div className="form-control">
                           <label className="label py-0.5">
-                            <span className="label-text font-bold text-[10px] text-rose-900">Tanggal & Waktu Mulai</span>
+                            <span className="label-text font-semibold text-[10px] text-slate-600">Tanggal Mulai (Opsional)</span>
                           </label>
                           <input
                             type="datetime-local"
-                            className="input input-bordered input-xs bg-white text-xs font-mono"
+                            className="input input-bordered input-sm bg-white text-xs font-mono"
                             value={formData.discountStartDate || ""}
                             onChange={(e) => setFormData({ ...formData, discountStartDate: e.target.value || null })}
                           />
@@ -999,11 +1008,11 @@ export default function AdminPlansPage() {
                         {/* Tanggal Berakhir */}
                         <div className="form-control">
                           <label className="label py-0.5">
-                            <span className="label-text font-bold text-[10px] text-rose-900">Tanggal & Waktu Berakhir</span>
+                            <span className="label-text font-semibold text-[10px] text-slate-600">Tanggal Berakhir (Batas Promo)</span>
                           </label>
                           <input
                             type="datetime-local"
-                            className="input input-bordered input-xs bg-white text-xs font-mono"
+                            className="input input-bordered input-sm bg-white text-xs font-mono"
                             value={formData.discountEndDate || ""}
                             onChange={(e) => setFormData({ ...formData, discountEndDate: e.target.value || null })}
                           />
@@ -1012,7 +1021,7 @@ export default function AdminPlansPage() {
 
                       {/* Quick Date Presets */}
                       <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
-                        <span className="text-[10px] text-rose-800 font-bold">Preset Berakhir:</span>
+                        <span className="text-[10px] text-slate-500 font-semibold">Preset durasi:</span>
                         {[
                           { label: "+24 Jam (1 Hari)", hours: 24 },
                           { label: "+48 Jam (2 Hari)", hours: 48 },
@@ -1037,7 +1046,7 @@ export default function AdminPlansPage() {
                                 discountEndDate: formatLocal(end),
                               });
                             }}
-                            className="px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-200/70 hover:bg-rose-300 text-rose-950 transition-colors cursor-pointer"
+                            className="px-2 py-0.5 rounded-lg text-[10px] font-medium bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-100 text-slate-700 transition-colors shadow-2xs cursor-pointer"
                           >
                             {preset.label}
                           </button>
@@ -1046,105 +1055,98 @@ export default function AdminPlansPage() {
                           <button
                             type="button"
                             onClick={() => setFormData({ ...formData, discountStartDate: null, discountEndDate: null })}
-                            className="px-2 py-0.5 rounded text-[10px] font-bold text-rose-700 hover:text-rose-900 underline ml-auto cursor-pointer"
+                            className="px-2 py-0.5 rounded text-[10px] font-medium text-slate-500 hover:text-rose-600 transition-colors ml-auto cursor-pointer"
                           >
-                            Hapus Batas Waktu
+                            Reset Jadwal
                           </button>
                         )}
                       </div>
-
-                      {/* Live Schedule Status Alert */}
-                      {(() => {
-                        const tempStatus = getPlanDiscountStatus(
-                          {
-                            price: formData.price,
-                            originalPrice: formData.originalPrice,
-                            discountPercent: formData.discountPercent,
-                            discountBadge: formData.discountBadge,
-                            discountStartDate: formData.discountStartDate,
-                            discountEndDate: formData.discountEndDate,
-                          },
-                          nowMs
-                        );
-
-                        if (!tempStatus.hasSchedule) {
-                          return (
-                            <p className="text-[10px] text-slate-500 italic">
-                              * Tanpa jadwal tanggal, diskon akan selalu aktif terus-menerus.
-                            </p>
-                          );
-                        }
-
-                        if (tempStatus.isUpcoming) {
-                          return (
-                            <div className="p-2 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 text-[11px] flex items-center gap-2">
-                              <Clock className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                              <span>
-                                <strong>Promo Terjadwal:</strong> Diskon akan mulai aktif pada <strong>{tempStatus.startDateFormatted}</strong>.
-                              </span>
-                            </div>
-                          );
-                        }
-
-                        if (tempStatus.isExpired) {
-                          return (
-                            <div className="p-2 rounded-xl bg-slate-100 border border-slate-300 text-slate-700 text-[11px] flex items-center gap-2">
-                              <Hourglass className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                              <span>
-                                <strong>Promo Telah Berakhir:</strong> Batas waktu promo ({tempStatus.endDateFormatted}) sudah lewat. Sistem otomatis mengembalikan ke harga normal <strong>Rp {formData.originalPrice.toLocaleString("id-ID")}</strong>.
-                              </span>
-                            </div>
-                          );
-                        }
-
-                        if (tempStatus.isDiscountActive && tempStatus.hasTimer) {
-                          return (
-                            <div className={`p-2 rounded-xl border text-[11px] flex items-center justify-between gap-2 ${
-                              tempStatus.isUrgentCountdown
-                                ? "bg-rose-100 border-rose-300 text-rose-950 font-medium"
-                                : "bg-emerald-50 border-emerald-200 text-emerald-950"
-                            }`}>
-                              <div className="flex items-center gap-2">
-                                <Timer className={`w-3.5 h-3.5 ${tempStatus.isUrgentCountdown ? "text-rose-600 animate-pulse" : "text-emerald-600"}`} />
-                                <span>
-                                  {tempStatus.isUrgentCountdown ? (
-                                    <strong>⚡ Mode Countdown Mendesak (&le; 24 Jam):</strong>
-                                  ) : (
-                                    <strong>🟢 Diskon Aktif:</strong>
-                                  )}{" "}
-                                  Berakhir sampai {tempStatus.endDateFormatted}
-                                </span>
-                              </div>
-                              <span className="font-mono font-black text-xs px-2 py-0.5 rounded bg-white border shadow-2xs">
-                                {tempStatus.countdownFormatted}
-                              </span>
-                            </div>
-                          );
-                        }
-
-                        return null;
-                      })()}
                     </div>
 
-                    {/* Live Preview Box */}
-                    {formData.originalPrice > 0 && formData.originalPrice > formData.price && (
-                      <div className="p-2.5 rounded-xl bg-white border border-rose-200 text-xs flex flex-wrap items-center justify-between gap-2 shadow-2xs">
-                        <div className="flex items-center gap-2">
-                          <span className="line-through text-slate-400 font-semibold text-xs">
-                            Rp {formData.originalPrice.toLocaleString("id-ID")}
-                          </span>
-                          <span className="badge badge-sm badge-error text-white font-bold text-[10px]">
-                            {formData.discountBadge || `HEMAT ${formData.discountPercent}%`}
-                          </span>
-                          <span className="font-extrabold text-slate-900 text-sm">
-                            ➡️ Rp {formData.price.toLocaleString("id-ID")}
-                          </span>
+                    {/* Unified Live Preview & Status Card */}
+                    {(() => {
+                      const tempStatus = getPlanDiscountStatus(
+                        {
+                          price: formData.price,
+                          originalPrice: formData.originalPrice,
+                          discountPercent: formData.discountPercent,
+                          discountBadge: formData.discountBadge,
+                          discountStartDate: formData.discountStartDate,
+                          discountEndDate: formData.discountEndDate,
+                        },
+                        nowMs
+                      );
+
+                      const hasValidDiscount = formData.originalPrice > 0 && formData.originalPrice > formData.price;
+
+                      return (
+                        <div className="rounded-xl bg-white border border-slate-200 p-3 shadow-2xs space-y-2">
+                          {/* Price comparison row */}
+                          {hasValidDiscount ? (
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="line-through text-slate-400 font-medium text-xs">
+                                  Rp {formData.originalPrice.toLocaleString("id-ID")}
+                                </span>
+                                <span className="badge badge-sm bg-rose-50 border-rose-200 text-rose-700 font-bold text-[10px]">
+                                  {formData.discountBadge || `HEMAT ${formData.discountPercent}%`}
+                                </span>
+                                <span className="text-slate-400 text-xs">→</span>
+                                <span className="font-extrabold text-slate-900 text-sm">
+                                  Rp {formData.price.toLocaleString("id-ID")}
+                                </span>
+                              </div>
+                              <span className="text-[11px] text-emerald-600 font-semibold">
+                                Hemat Rp {(formData.originalPrice - formData.price).toLocaleString("id-ID")} ({formData.discountPercent}%)
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="text-[11px] text-slate-500">
+                              Masukkan <strong>Harga Normal (Coret)</strong> lebih tinggi dari harga paket untuk mengaktifkan diskon.
+                            </div>
+                          )}
+
+                          {/* Schedule status row */}
+                          {tempStatus.hasSchedule && (
+                            <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap text-xs">
+                              {tempStatus.isUpcoming && (
+                                <div className="flex items-center gap-1.5 text-blue-700 text-[11px]">
+                                  <Clock className="w-3.5 h-3.5 shrink-0" />
+                                  <span>Mulai aktif pada <strong>{tempStatus.startDateFormatted}</strong></span>
+                                </div>
+                              )}
+
+                              {tempStatus.isExpired && (
+                                <div className="flex items-center gap-1.5 text-slate-500 text-[11px]">
+                                  <Hourglass className="w-3.5 h-3.5 shrink-0" />
+                                  <span>Promo berakhir ({tempStatus.endDateFormatted}). Berlaku harga normal.</span>
+                                </div>
+                              )}
+
+                              {tempStatus.isDiscountActive && (
+                                <div className="flex items-center justify-between w-full gap-2">
+                                  <div className="flex items-center gap-1.5 text-[11px] text-slate-700">
+                                    <Timer className={`w-3.5 h-3.5 shrink-0 ${tempStatus.isUrgentCountdown ? "text-rose-600 animate-pulse" : "text-emerald-600"}`} />
+                                    <span>
+                                      {tempStatus.isUrgentCountdown ? "Sisa waktu promo:" : `Berakhir: ${tempStatus.endDateFormatted}`}
+                                    </span>
+                                  </div>
+                                  {tempStatus.hasTimer && (
+                                    <span className={`font-mono font-bold text-[11px] px-2 py-0.5 rounded border ${
+                                      tempStatus.isUrgentCountdown
+                                        ? "bg-rose-50 border-rose-200 text-rose-700"
+                                        : "bg-slate-50 border-slate-200 text-slate-700"
+                                    }`}>
+                                      {tempStatus.countdownFormatted}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
-                        <span className="text-[11px] text-emerald-600 font-bold">
-                          Hemat Rp {(formData.originalPrice - formData.price).toLocaleString("id-ID")} ({formData.discountPercent}%)
-                        </span>
-                      </div>
-                    )}
+                      );
+                    })()}
                   </div>
                 )}
               </div>
