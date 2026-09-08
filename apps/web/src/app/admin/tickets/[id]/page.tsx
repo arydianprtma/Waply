@@ -19,6 +19,9 @@ import {
   Phone,
   Mail,
   AlertCircle,
+  Sparkles,
+  UserCheck,
+  Headphones,
 } from "lucide-react";
 import type { SupportTicket, TicketCategory, TicketPriority, TicketStatus } from "@/lib/support-tickets";
 import { useUserSession } from "@/lib/use-user-session";
@@ -68,10 +71,31 @@ export default function AdminTicketDetailPage() {
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [updatingPriority, setUpdatingPriority] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [takingOver, setTakingOver] = useState(false);
 
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const prevMsgCountRef = useRef<number>(0);
   const isInitialLoadedRef = useRef<boolean>(false);
+
+  const handleTakeOver = async () => {
+    if (!ticket || takingOver) return;
+    try {
+      setTakingOver(true);
+      const res = await fetch(`/api/tickets/${ticket.id}/escalate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: "Admin mengambil alih tiket" }),
+      });
+      const json = await res.json();
+      if (json.success && json.data) {
+        setTicket(json.data);
+      }
+    } catch (err) {
+      console.error("Gagal mengambil alih tiket:", err);
+    } finally {
+      setTakingOver(false);
+    }
+  };
 
   const scrollToBottom = (smooth = true) => {
     if (chatScrollRef.current) {
@@ -353,15 +377,52 @@ export default function AdminTicketDetailPage() {
         {/* Chat Resolution Room (8-9 Cols on Desktop) */}
         <div className="lg:col-span-8 xl:col-span-9 flex flex-col h-[600px] bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
           {/* Chat Header Status (Pinned at top) */}
-          <div className="px-5 sm:px-6 py-3 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between text-xs shrink-0">
-            <div className="flex items-center gap-2 text-slate-700">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="font-bold">Ruang Resolusi Dukungan CS & Pengguna</span>
+          <div className="px-5 sm:px-6 py-2.5 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between text-xs shrink-0 flex-wrap gap-2">
+            <div className="flex items-center gap-2.5">
+              {ticket.handlingMode === "AI" ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 text-[11px] font-bold border border-purple-200">
+                  <Sparkles className="w-3.5 h-3.5 text-purple-600 animate-pulse" />
+                  <span>Mode AI Assistant Aktif</span>
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[11px] font-bold border border-blue-200">
+                  <UserCheck className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Ditangani CS Manusia / Admin</span>
+                </span>
+              )}
             </div>
-            <span className="text-[11px] text-slate-500 font-medium">
-              Live Auto-Polling 2 Detik
-            </span>
+
+            <div className="flex items-center gap-2">
+              {ticket.handlingMode === "AI" && ticket.status !== "RESOLVED" && ticket.status !== "CLOSED" && (
+                <button
+                  onClick={handleTakeOver}
+                  disabled={takingOver}
+                  className="px-3 py-1 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                >
+                  <Headphones className="w-3.5 h-3.5" />
+                  <span>{takingOver ? "Mengambil Alih..." : "Ambil Alih Tiket"}</span>
+                </button>
+              )}
+              <span className="text-[11px] text-slate-500 font-medium hidden sm:inline">
+                Live Polling 2s
+              </span>
+            </div>
           </div>
+
+          {/* Escalation Alert Banner if requested */}
+          {ticket.escalatedAt && (
+            <div className="mx-4 sm:mx-6 mt-3 p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between gap-3 text-xs text-amber-900 shrink-0">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                <span>
+                  <strong>Eskalasi:</strong> {ticket.escalationReason || "Klien meminta bantuan staf CS Manusia"}
+                </span>
+              </div>
+              <span className="text-[10px] text-amber-700 font-mono shrink-0">
+                {new Date(ticket.escalatedAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+              </span>
+            </div>
+          )}
 
           {/* Quick Preset Replies Toolbar (Pinned under chat header) */}
           <div className="px-5 py-2 bg-slate-100/80 border-b border-slate-200 flex items-center gap-2 overflow-x-auto text-xs no-scrollbar shrink-0">
@@ -384,6 +445,7 @@ export default function AdminTicketDetailPage() {
           <div ref={chatScrollRef} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-slate-50/30">
             {ticket.messages.map((msg, idx) => {
               const isAdmin = msg.senderRole === "admin" || msg.senderRole === "support";
+              const isAi = msg.senderRole === "ai";
               return (
                 <div
                   key={msg.id || idx}
@@ -395,10 +457,18 @@ export default function AdminTicketDetailPage() {
                     className={`w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-xs font-bold shadow-xs ${
                       isAdmin
                         ? "bg-slate-900 text-emerald-400"
+                        : isAi
+                        ? "bg-gradient-to-tr from-purple-600 to-indigo-600 text-white shadow-purple-200"
                         : "bg-primary text-white"
                     }`}
                   >
-                    {isAdmin ? <ShieldCheck className="w-4 h-4" /> : <User className="w-4 h-4" />}
+                    {isAdmin ? (
+                      <ShieldCheck className="w-4 h-4" />
+                    ) : isAi ? (
+                      <Sparkles className="w-4 h-4" />
+                    ) : (
+                      <User className="w-4 h-4" />
+                    )}
                   </div>
                   <div className="space-y-1">
                     <div
@@ -406,8 +476,22 @@ export default function AdminTicketDetailPage() {
                         isAdmin ? "justify-end" : "justify-start"
                       }`}
                     >
-                      <span className="text-[11px] font-bold text-slate-700">
-                        {isAdmin ? `${msg.senderName || "Admin CS"} (Anda)` : ticket.userName || ticket.userEmail}
+                      <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
+                        {isAdmin
+                          ? `${msg.senderName || "Admin CS"} (Anda)`
+                          : isAi
+                          ? "Sendora AI Assistant"
+                          : ticket.userName || ticket.userEmail}
+                        {isAi && (
+                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-purple-100 text-purple-700 font-extrabold border border-purple-200">
+                            AI
+                          </span>
+                        )}
+                        {isAdmin && (
+                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-700 font-extrabold border border-emerald-200">
+                            Admin
+                          </span>
+                        )}
                       </span>
                       <span className="text-[10px] text-slate-400 flex items-center gap-1">
                         {(msg as any).sending ? (
@@ -427,6 +511,8 @@ export default function AdminTicketDetailPage() {
                       className={`p-4 rounded-2xl text-xs leading-relaxed shadow-xs whitespace-pre-wrap ${
                         isAdmin
                           ? "bg-slate-900 text-slate-100 rounded-tr-none font-medium"
+                          : isAi
+                          ? "bg-white text-slate-800 border border-purple-200/90 rounded-tl-none font-medium"
                           : "bg-white text-slate-800 border border-slate-200 rounded-tl-none font-medium"
                       }`}
                     >

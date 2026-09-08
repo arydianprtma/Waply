@@ -16,6 +16,10 @@ import {
   ShieldCheck,
   User,
   CheckCheck,
+  Sparkles,
+  Headphones,
+  Bot,
+  UserCheck,
 } from "lucide-react";
 import type { SupportTicket, TicketCategory, TicketPriority, TicketStatus } from "@/lib/support-tickets";
 import { useUserSession } from "@/lib/use-user-session";
@@ -54,10 +58,31 @@ export default function UserTicketDetailPage() {
   const [sendingReply, setSendingReply] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
   const [statusUpdating, setStatusUpdating] = useState(false);
+  const [escalating, setEscalating] = useState(false);
 
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const prevMsgCountRef = useRef<number>(0);
   const isInitialLoadedRef = useRef<boolean>(false);
+
+  const handleEscalateToHuman = async () => {
+    if (!ticket || escalating) return;
+    try {
+      setEscalating(true);
+      const res = await fetch(`/api/tickets/${ticket.id}/escalate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: "Permintaan bantuan CS Manusia dari Klien" }),
+      });
+      const json = await res.json();
+      if (json.success && json.data) {
+        setTicket(json.data);
+      }
+    } catch (err) {
+      console.error("Gagal mengalihkan tiket ke CS:", err);
+    } finally {
+      setEscalating(false);
+    }
+  };
 
   const scrollToBottom = (smooth = true) => {
     if (chatScrollRef.current) {
@@ -288,20 +313,38 @@ export default function UserTicketDetailPage() {
         {/* Chat Room Area (8-9 Cols on Desktop) */}
         <div className="lg:col-span-8 xl:col-span-9 flex flex-col h-[600px] bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
           {/* Chat Header Status (Pinned at top of card) */}
-          <div className="px-5 sm:px-6 py-3 bg-slate-50/90 border-b border-slate-200 flex items-center justify-between text-xs shrink-0">
-            <div className="flex items-center gap-2 text-slate-600">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="font-bold">Ruang Komunikasi Customer Support</span>
+          <div className="px-4 sm:px-6 py-2.5 bg-slate-50/90 border-b border-slate-200 flex items-center justify-between gap-3 text-xs shrink-0 flex-wrap">
+            <div className="flex items-center gap-2">
+              {ticket.handlingMode === "AI" ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-50 text-purple-700 text-[11px] font-bold border border-purple-200">
+                  <Sparkles className="w-3.5 h-3.5 text-purple-600 animate-pulse" />
+                  <span>AI Assistant Aktif (Respon Instan)</span>
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-[11px] font-bold border border-blue-200">
+                  <UserCheck className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Ditangani Tim CS Manusia</span>
+                </span>
+              )}
             </div>
-            <span className="text-[11px] text-slate-600 font-medium">
-              Live Auto-Update Aktif
-            </span>
+
+            {ticket.handlingMode === "AI" && !isResolvedOrClosed && (
+              <button
+                onClick={handleEscalateToHuman}
+                disabled={escalating}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-300 text-xs font-bold transition-all shadow-2xs cursor-pointer disabled:opacity-50"
+              >
+                <Headphones className="w-3.5 h-3.5 text-primary" />
+                <span>{escalating ? "Mengalihkan..." : "Minta Bantuan CS Manusia"}</span>
+              </button>
+            )}
           </div>
 
           {/* Messages Stream */}
           <div ref={chatScrollRef} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-slate-50/30">
             {ticket.messages.map((msg, idx) => {
               const isUser = msg.senderRole === "user";
+              const isAi = msg.senderRole === "ai";
               return (
                 <div
                   key={msg.id || idx}
@@ -313,10 +356,18 @@ export default function UserTicketDetailPage() {
                     className={`w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-xs font-bold shadow-xs ${
                       isUser
                         ? "bg-primary text-white"
+                        : isAi
+                        ? "bg-gradient-to-tr from-purple-600 to-indigo-600 text-white shadow-purple-200"
                         : "bg-emerald-600 text-white"
                     }`}
                   >
-                    {isUser ? <User className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
+                    {isUser ? (
+                      <User className="w-4 h-4" />
+                    ) : isAi ? (
+                      <Sparkles className="w-4 h-4" />
+                    ) : (
+                      <ShieldCheck className="w-4 h-4" />
+                    )}
                   </div>
                   <div className="space-y-1">
                     <div
@@ -324,10 +375,22 @@ export default function UserTicketDetailPage() {
                         isUser ? "justify-end" : "justify-start"
                       }`}
                     >
-                      <span className="text-[11px] font-bold text-slate-700">
-                        {isUser ? "Anda" : msg.senderName || "Sendora Support"}
+                      <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
+                        {isUser
+                          ? "Anda"
+                          : msg.senderName || (isAi ? "Sendora AI" : "Sendora Support")}
+                        {isAi && (
+                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-purple-100 text-purple-700 font-extrabold border border-purple-200">
+                            AI
+                          </span>
+                        )}
+                        {!isUser && !isAi && (
+                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-700 font-extrabold border border-emerald-200">
+                            CS
+                          </span>
+                        )}
                       </span>
-                      <span className="text-[10px] text-slate-600 flex items-center gap-1">
+                      <span className="text-[10px] text-slate-500 flex items-center gap-1">
                         {(msg as any).sending ? (
                           <>
                             <RefreshCw className="w-2.5 h-2.5 animate-spin text-primary" />
@@ -345,6 +408,8 @@ export default function UserTicketDetailPage() {
                       className={`p-4 rounded-2xl text-xs leading-relaxed shadow-xs whitespace-pre-wrap ${
                         isUser
                           ? "bg-primary text-white rounded-tr-none font-medium"
+                          : isAi
+                          ? "bg-white text-slate-800 border border-purple-200/90 rounded-tl-none font-medium"
                           : "bg-white text-slate-800 border border-slate-200 rounded-tl-none font-medium"
                       }`}
                     >

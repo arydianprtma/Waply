@@ -4,10 +4,14 @@ import {
   getAllTickets,
   getUserTickets,
   createTicket,
+  replyToTicket,
+  escalateTicketToHuman,
+  getTicketById,
   CreateTicketInput,
   TicketCategory,
   TicketPriority,
 } from "@/lib/support-tickets";
+import { generateAiTicketResponse } from "@/lib/gemini-support";
 
 export const dynamic = "force-dynamic";
 
@@ -62,12 +66,39 @@ export async function POST(req: NextRequest) {
       message: message.trim(),
     };
 
-    const newTicket = createTicket(input);
+    let ticket = createTicket(input);
+
+    // AI First-Line Support Trigger
+    if (ticket.handlingMode === "AI") {
+      try {
+        const aiResult = await generateAiTicketResponse(ticket, input.message);
+        if (aiResult && aiResult.replyText) {
+          replyToTicket(ticket.id, {
+            senderId: "ai_assistant",
+            senderName: "Sendora AI Assistant",
+            senderEmail: "ai@sendora.id",
+            senderRole: "ai",
+            message: aiResult.replyText,
+          });
+
+          if (aiResult.shouldEscalate) {
+            escalateTicketToHuman(
+              ticket.id,
+              aiResult.escalationReason || "Deteksi eskalasi otomatis oleh AI"
+            );
+          }
+
+          ticket = getTicketById(ticket.id) || ticket;
+        }
+      } catch (aiErr) {
+        console.error("[Tickets API] AI response generation failed:", aiErr);
+      }
+    }
 
     return NextResponse.json({
       success: true,
       message: "Tiket bantuan berhasil dibuat",
-      data: newTicket,
+      data: ticket,
     });
   } catch (error: any) {
     console.error("[Tickets API] POST Error:", error);

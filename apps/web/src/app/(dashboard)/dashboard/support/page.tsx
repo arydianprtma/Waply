@@ -306,6 +306,13 @@ export default function UserSupportPage() {
                         )}
                       </button>
 
+                      {ticket.handlingMode === "AI" && ticket.status !== "RESOLVED" && ticket.status !== "CLOSED" && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                          <Sparkles className="w-2.5 h-2.5 text-purple-600" />
+                          AI
+                        </span>
+                      )}
+
                       <span
                         className={`inline-flex px-2 py-0.5 rounded-md text-[10px] font-extrabold border ${categoryColor.bg} ${categoryColor.text} ${categoryColor.border}`}
                       >
@@ -326,7 +333,11 @@ export default function UserSupportPage() {
                     {lastMsg && (
                       <p className="text-xs text-slate-500 line-clamp-1">
                         <strong className="text-slate-700">
-                          {lastMsg.senderRole === "user" ? "Anda: " : "CS: "}
+                          {lastMsg.senderRole === "user"
+                            ? "Anda: "
+                            : lastMsg.senderRole === "ai"
+                            ? "AI Assistant: "
+                            : "CS: "}
                         </strong>
                         {lastMsg.message}
                       </p>

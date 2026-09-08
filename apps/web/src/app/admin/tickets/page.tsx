@@ -315,6 +315,18 @@ export default function AdminTicketsPage() {
                         </span>
                       )}
 
+                      {ticket.handlingMode === "AI" ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                          <Sparkles className="w-2.5 h-2.5 text-purple-600" />
+                          AI
+                        </span>
+                      ) : ticket.escalatedAt ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                          <AlertCircle className="w-2.5 h-2.5 text-amber-600" />
+                          Butuh CS
+                        </span>
+                      ) : null}
+
                       <span
                         className={`inline-flex px-2 py-0.5 rounded-md text-[10px] font-extrabold border ${categoryColor.bg} ${categoryColor.text} ${categoryColor.border}`}
                       >
@@ -339,7 +351,11 @@ export default function AdminTicketsPage() {
                     {lastMsg && (
                       <p className="text-xs text-slate-500 line-clamp-1">
                         <strong className="text-slate-700">
-                          {lastMsg.senderRole === "admin" || lastMsg.senderRole === "support" ? "Admin: " : "User: "}
+                          {lastMsg.senderRole === "admin" || lastMsg.senderRole === "support"
+                            ? "Admin: "
+                            : lastMsg.senderRole === "ai"
+                            ? "AI Assistant: "
+                            : "User: "}
                         </strong>
                         {lastMsg.message}
                       </p>

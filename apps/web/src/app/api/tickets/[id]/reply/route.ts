@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth-user";
-import { getTicketById, replyToTicket } from "@/lib/support-tickets";
+import {
+  getTicketById,
+  replyToTicket,
+  escalateTicketToHuman,
+} from "@/lib/support-tickets";
+import { generateAiTicketResponse } from "@/lib/gemini-support";
 
 export const dynamic = "force-dynamic";
 
@@ -43,7 +48,7 @@ export async function POST(
     const senderRole = isAdmin ? "support" : "user";
     const senderName = isAdmin ? "Sendora Support Agent" : (user.name || "Sendora User");
 
-    const updated = replyToTicket(id, {
+    let updated = replyToTicket(id, {
       senderId: user.id,
       senderName,
       senderEmail: user.email,
@@ -53,6 +58,33 @@ export async function POST(
 
     if (!updated) {
       return NextResponse.json({ success: false, error: "Gagal mengirim balasan" }, { status: 500 });
+    }
+
+    // If client replied and ticket is currently in AI handling mode, trigger AI follow-up
+    if (!isAdmin && updated.handlingMode === "AI") {
+      try {
+        const aiResult = await generateAiTicketResponse(updated, message.trim());
+        if (aiResult && aiResult.replyText) {
+          replyToTicket(id, {
+            senderId: "ai_assistant",
+            senderName: "Sendora AI Assistant",
+            senderEmail: "ai@sendora.id",
+            senderRole: "ai",
+            message: aiResult.replyText,
+          });
+
+          if (aiResult.shouldEscalate) {
+            escalateTicketToHuman(
+              id,
+              aiResult.escalationReason || "Eskalasi otomatis oleh AI"
+            );
+          }
+
+          updated = getTicketById(id) || updated;
+        }
+      } catch (aiErr) {
+        console.error("[Ticket Reply API] AI follow-up response failed:", aiErr);
+      }
     }
 
     return NextResponse.json({

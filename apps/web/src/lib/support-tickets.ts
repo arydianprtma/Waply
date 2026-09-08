@@ -10,13 +10,15 @@ export type TicketCategory =
   | "FEATURE"
   | "OTHER";
 
+export type TicketHandlingMode = "AI" | "HUMAN";
+
 export interface TicketMessage {
   id: string;
   ticketId: string;
   senderId: string;
   senderName: string;
   senderEmail: string;
-  senderRole: "user" | "admin" | "support";
+  senderRole: "user" | "admin" | "support" | "ai";
   message: string;
   createdAt: string;
 }
@@ -31,6 +33,9 @@ export interface SupportTicket {
   category: TicketCategory;
   priority: TicketPriority;
   status: TicketStatus;
+  handlingMode?: TicketHandlingMode;
+  escalatedAt?: string | null;
+  escalationReason?: string | null;
   messages: TicketMessage[];
   createdAt: string;
   updatedAt: string;
@@ -148,6 +153,10 @@ export function createTicket(input: CreateTicketInput): SupportTicket {
     createdAt: now,
   };
 
+  const hasGeminiKey = Boolean(
+    process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY
+  );
+
   const newTicket: SupportTicket = {
     id: ticketId,
     userId: input.userId,
@@ -158,11 +167,12 @@ export function createTicket(input: CreateTicketInput): SupportTicket {
     category: input.category || "TECHNICAL",
     priority: input.priority || "MEDIUM",
     status: "OPEN",
+    handlingMode: hasGeminiKey ? "AI" : "HUMAN",
     messages: [initialMessage],
     createdAt: now,
     updatedAt: now,
     unreadByUser: false,
-    unreadByAdmin: true,
+    unreadByAdmin: !hasGeminiKey, // If AI handles it first, admin is not immediately alerted until escalated
   };
 
   all.unshift(newTicket);
@@ -176,7 +186,7 @@ export function replyToTicket(
     senderId: string;
     senderName: string;
     senderEmail: string;
-    senderRole: "user" | "admin" | "support";
+    senderRole: "user" | "admin" | "support" | "ai";
     message: string;
   }
 ): SupportTicket | null {
@@ -206,15 +216,53 @@ export function replyToTicket(
 
   // Update status and unread indicators
   if (reply.senderRole === "user") {
-    all[index].unreadByAdmin = true;
+    all[index].unreadByAdmin = all[index].handlingMode === "HUMAN";
     all[index].unreadByUser = false;
+  } else if (reply.senderRole === "ai") {
+    all[index].unreadByUser = true;
+    all[index].unreadByAdmin = false;
   } else {
-    // Admin or support replied
+    // Admin or human support replied -> Human Takeover
+    all[index].handlingMode = "HUMAN";
     if (all[index].status === "OPEN") {
       all[index].status = "IN_PROGRESS";
     }
     all[index].unreadByUser = true;
     all[index].unreadByAdmin = false;
+  }
+
+  saveTickets(all);
+  return all[index];
+}
+
+export function escalateTicketToHuman(
+  ticketId: string,
+  reason?: string,
+  customNotice?: string
+): SupportTicket | null {
+  const all = getAllTickets();
+  const index = all.findIndex((t) => t.id.toUpperCase() === ticketId.toUpperCase());
+  if (index === -1) return null;
+
+  const now = new Date().toISOString();
+  all[index].handlingMode = "HUMAN";
+  all[index].escalatedAt = now;
+  all[index].escalationReason = reason || "Permintaan eskalasi ke CS Manusia";
+  all[index].unreadByAdmin = true;
+  all[index].updatedAt = now;
+
+  if (customNotice) {
+    const noticeMsg: TicketMessage = {
+      id: `msg_${Date.now()}_notice`,
+      ticketId: all[index].id,
+      senderId: "system_ai",
+      senderName: "Sendora Assistant",
+      senderEmail: "ai@sendora.id",
+      senderRole: "ai",
+      message: customNotice,
+      createdAt: now,
+    };
+    all[index].messages.push(noticeMsg);
   }
 
   saveTickets(all);
