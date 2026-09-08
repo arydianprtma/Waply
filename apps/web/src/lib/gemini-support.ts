@@ -1,4 +1,4 @@
-import { TicketMessage, SupportTicket } from "./support-tickets";
+import type { TicketMessage, SupportTicket } from "./support-tickets";
 
 const SENDORA_KNOWLEDGE_BASE = `
 Anda adalah "Sendora AI Assistant", asisten AI resmi dari platform Sendora (WhatsApp Gateway & Customer Engagement Platform).
@@ -141,8 +141,14 @@ Berikan balasan terbaik Anda dalam format JSON tunggal yang valid:
 }
 `;
 
-    // Call Gemini API (using gemini-2.5-flash or gemini-1.5-flash)
-    const models = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-2.0-flash"];
+    // Call Gemini API (using available fast flash models)
+    const models = [
+      "gemini-flash-lite-latest",
+      "gemini-3.6-flash",
+      "gemini-3.5-flash",
+      "gemini-flash-latest",
+      "gemini-2.5-flash-lite",
+    ];
     let responseData: any = null;
     let selectedModel = models[0];
 
@@ -182,19 +188,26 @@ Berikan balasan terbaik Anda dalam format JSON tunggal yang valid:
 
     if (!responseData) {
       // Fallback if structured json endpoint failed: standard text prompt
-      const fallbackRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.3, maxOutputTokens: 1024 },
-          }),
+      for (const model of models) {
+        try {
+          const fallbackRes = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { temperature: 0.3, maxOutputTokens: 1024 },
+              }),
+            }
+          );
+          if (fallbackRes.ok) {
+            responseData = await fallbackRes.json();
+            break;
+          }
+        } catch {
+          // continue
         }
-      );
-      if (fallbackRes.ok) {
-        responseData = await fallbackRes.json();
       }
     }
 
