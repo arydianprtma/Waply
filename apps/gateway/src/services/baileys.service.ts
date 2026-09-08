@@ -4,6 +4,7 @@ import makeWASocket, {
   WASocket,
   fetchLatestBaileysVersion,
   makeCacheableSignalKeyStore,
+  proto,
 } from "@whiskeysockets/baileys";
 import { Boom } from "@hapi/boom";
 import QRCode from "qrcode";
@@ -39,6 +40,7 @@ export class BaileysInstance {
   private sessionsDir: string;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
+  private msgStore = new Map<string, proto.IMessage>();
 
   constructor(id: string, name = "WhatsApp Device") {
     this.id = id;
@@ -75,6 +77,12 @@ export class BaileysInstance {
         generateHighQualityLinkPreview: true,
         syncFullHistory: false,
         defaultQueryTimeoutMs: 60000,
+        getMessage: async (key) => {
+          if (key.id && this.msgStore.has(key.id)) {
+            return this.msgStore.get(key.id);
+          }
+          return undefined;
+        },
       });
 
       // Simpan credentials saat terupdate
@@ -158,6 +166,16 @@ export class BaileysInstance {
 
       // Listener pesan masuk (Inbound messages)
       this.socket.ev.on("messages.upsert", async ({ messages, type }) => {
+        for (const msg of messages) {
+          if (msg.key.id && msg.message) {
+            this.msgStore.set(msg.key.id, msg.message);
+            if (this.msgStore.size > 2000) {
+              const firstKey = this.msgStore.keys().next().value;
+              if (firstKey) this.msgStore.delete(firstKey);
+            }
+          }
+        }
+
         if (type !== "notify") return;
 
         for (const msg of messages) {
@@ -228,6 +246,14 @@ export class BaileysInstance {
 
     // 2. Kirim pesan via Baileys socket
     const result = await this.socket.sendMessage(formattedJid, { text });
+
+    if (result?.key?.id && result?.message) {
+      this.msgStore.set(result.key.id, result.message);
+      if (this.msgStore.size > 2000) {
+        const firstKey = this.msgStore.keys().next().value;
+        if (firstKey) this.msgStore.delete(firstKey);
+      }
+    }
 
     const messageId = result?.key?.id || `msg_${Date.now()}`;
     logger.info({ sessionId: this.id, messageId, recipient: cleanNumber }, "✅ Message sent successfully!");
