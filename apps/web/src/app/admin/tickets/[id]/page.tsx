@@ -22,6 +22,7 @@ import {
   Sparkles,
   UserCheck,
   Headphones,
+  Bot,
 } from "lucide-react";
 import type { SupportTicket, TicketCategory, TicketPriority, TicketStatus } from "@/lib/support-tickets";
 import { useUserSession } from "@/lib/use-user-session";
@@ -458,17 +459,11 @@ export default function AdminTicketDetailPage() {
                       isAdmin
                         ? "bg-slate-900 text-emerald-400"
                         : isAi
-                        ? "bg-gradient-to-tr from-purple-600 to-indigo-600 text-white shadow-purple-200"
+                        ? "bg-purple-600 text-white shadow-purple-200"
                         : "bg-primary text-white"
                     }`}
                   >
-                    {isAdmin ? (
-                      <ShieldCheck className="w-4 h-4" />
-                    ) : isAi ? (
-                      <Sparkles className="w-4 h-4" />
-                    ) : (
-                      <User className="w-4 h-4" />
-                    )}
+                    {isAi ? <Bot className="w-4 h-4" /> : <User className="w-4 h-4" />}
                   </div>
                   <div className="space-y-1">
                     <div

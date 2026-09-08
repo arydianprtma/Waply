@@ -357,17 +357,11 @@ export default function UserTicketDetailPage() {
                       isUser
                         ? "bg-primary text-white"
                         : isAi
-                        ? "bg-gradient-to-tr from-purple-600 to-indigo-600 text-white shadow-purple-200"
+                        ? "bg-purple-600 text-white shadow-purple-200"
                         : "bg-emerald-600 text-white"
                     }`}
                   >
-                    {isUser ? (
-                      <User className="w-4 h-4" />
-                    ) : isAi ? (
-                      <Sparkles className="w-4 h-4" />
-                    ) : (
-                      <ShieldCheck className="w-4 h-4" />
-                    )}
+                    {isAi ? <Bot className="w-4 h-4" /> : <User className="w-4 h-4" />}
                   </div>
                   <div className="space-y-1">
                     <div
