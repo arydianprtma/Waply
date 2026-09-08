@@ -24,9 +24,13 @@ export function validateCsrf(request: Request): { valid: boolean; error?: string
     return { valid: true };
   }
 
-  // 3. Exempt Payment Webhook routes (Midtrans / Tripay)
+  // 3. Exempt Webhook & Inbound Gateway routes
   const url = new URL(request.url);
-  if (url.pathname.includes("/api/billing/notification")) {
+  if (
+    url.pathname.includes("/api/billing/notification") ||
+    url.pathname.includes("/api/inbound") ||
+    url.pathname.startsWith("/api/v1/")
+  ) {
     return { valid: true };
   }
 

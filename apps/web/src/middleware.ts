@@ -17,7 +17,12 @@ export async function middleware(request: NextRequest) {
   }
 
   // 2. CSRF Protection for state-changing API endpoints
-  if (pathname.startsWith("/api/") && !pathname.startsWith("/api/v1/")) {
+  if (
+    pathname.startsWith("/api/") &&
+    !pathname.startsWith("/api/v1/") &&
+    !pathname.startsWith("/api/inbound") &&
+    !pathname.startsWith("/api/billing/notification")
+  ) {
     if (["POST", "PUT", "PATCH", "DELETE"].includes(request.method)) {
       const csrfRes = checkCsrfProtection(request);
       if (csrfRes) {
