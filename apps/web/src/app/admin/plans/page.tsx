@@ -13,6 +13,7 @@ import {
   MessageSquare,
   ShieldCheck,
   Check,
+  X,
   RefreshCw,
   Sparkles,
   Lock,
@@ -23,7 +24,7 @@ import {
   Users,
   Calendar,
 } from "lucide-react";
-import { Plan, PlanFeatureAccess, FEATURE_ACCESS_CATEGORIES } from "@/lib/billing-types";
+import { Plan, PlanFeatureAccess, FEATURE_ACCESS_CATEGORIES, DEFAULT_FREE_ACCESS } from "@/lib/billing-types";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 
 const DEFAULT_ACCESS: PlanFeatureAccess = {
@@ -40,6 +41,29 @@ const DEFAULT_ACCESS: PlanFeatureAccess = {
   apiKeys: true,
   webhooks: true,
 };
+
+function getPlanFeaturesWithStatus(plan: Plan) {
+  const access = plan.access || (plan.price === 0 || plan.id === "FREE" ? DEFAULT_FREE_ACCESS : DEFAULT_ACCESS);
+  const list: { label: string; included: boolean }[] = [];
+
+  FEATURE_ACCESS_CATEGORIES.forEach((cat) => {
+    cat.items.forEach((item) => {
+      let isIncluded = Boolean(access[item.key as keyof PlanFeatureAccess]);
+      if (item.key === "apiKeys" && access.apiAccess !== undefined) {
+        isIncluded = Boolean(access.apiKeys || access.apiAccess);
+      }
+      if (item.key === "contacts" && access.contactsUnlimited !== undefined) {
+        isIncluded = Boolean(access.contacts || access.contactsUnlimited);
+      }
+      list.push({
+        label: item.label,
+        included: isIncluded,
+      });
+    });
+  });
+
+  return list;
+}
 
 export default function AdminPlansPage() {
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -503,21 +527,25 @@ export default function AdminPlansPage() {
                       Fitur &amp; Kemampuan Paket:
                     </span>
                     <div className="space-y-1.5 text-xs">
-                      {p.features && p.features.length > 0 ? (
-                        p.features.slice(0, 6).map((feat, idx) => (
-                          <div key={idx} className="flex items-start gap-2 text-slate-700 leading-snug">
+                      {getPlanFeaturesWithStatus(p).map((feat, idx) => (
+                        <div
+                          key={idx}
+                          className={`flex items-start gap-2 leading-snug ${
+                            feat.included
+                              ? "text-slate-800 font-medium"
+                              : "text-slate-400 opacity-50"
+                          }`}
+                        >
+                          {feat.included ? (
                             <Check className="w-3.5 h-3.5 text-emerald-600 font-bold shrink-0 mt-0.5" />
-                            <span className="text-[11px] font-medium">{feat}</span>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-xs text-slate-400 italic">Belum ada rincian fitur.</p>
-                      )}
-                      {p.features && p.features.length > 6 && (
-                        <span className="text-[10px] text-slate-400 font-semibold pl-5 block">
-                          +{p.features.length - 6} fitur tambahan lainnya
-                        </span>
-                      )}
+                          ) : (
+                            <X className="w-3.5 h-3.5 text-slate-300 shrink-0 mt-0.5" />
+                          )}
+                          <span className={`text-[11px] ${feat.included ? "" : "line-through"}`}>
+                            {feat.label}
+                          </span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
