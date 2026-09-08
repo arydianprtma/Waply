@@ -528,21 +528,21 @@ function BillingContent() {
                       return (
                         <div className="min-h-[54px] flex flex-col justify-end">
                           {discStatus.isDiscountActive && discStatus.originalPrice && discStatus.originalPrice > discStatus.effectivePrice && (
-                            <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                            <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
                               <span className="text-xs text-base-content/40 line-through font-semibold">
                                 {formatIDR(discStatus.originalPrice)}
                               </span>
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black bg-rose-500 text-white shadow-xs tracking-wide">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-900 tracking-tight">
                                 {discStatus.discountBadge || `HEMAT ${discStatus.discountPercent}%`}
                               </span>
                               {discStatus.hasTimer && (
-                                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-extrabold ${
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold border ${
                                   discStatus.isUrgentCountdown
-                                    ? "bg-rose-600 text-white animate-pulse"
-                                    : "bg-amber-100 text-amber-900 border border-amber-300"
+                                    ? "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-900"
+                                    : "bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
                                 }`}>
-                                  <Timer className="w-2.5 h-2.5" />
-                                  <span>{discStatus.isUrgentCountdown ? `Sisa ${discStatus.countdownFormatted}` : discStatus.countdownFormatted}</span>
+                                  <Timer className={`w-3 h-3 ${discStatus.isUrgentCountdown ? "text-rose-600 dark:text-rose-400" : "text-slate-500"}`} />
+                                  <span>Sisa {discStatus.countdownFormatted}</span>
                                 </span>
                               )}
                             </div>

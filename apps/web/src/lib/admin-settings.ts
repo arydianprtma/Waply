@@ -150,7 +150,7 @@ export function saveAdminSettings(data: Partial<AdminSystemSettings>): AdminSyst
     watermarkConfig: {
       ...(current.watermarkConfig || {
         enabled: true,
-        text: "\n\n—\n⚡ *Sendora.com*",
+        text: "\n\n—\n*Sendora.com*",
         applyToFreeOnly: true,
       }),
       ...(data.watermarkConfig || {}),

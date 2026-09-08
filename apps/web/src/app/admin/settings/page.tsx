@@ -91,7 +91,7 @@ const DEFAULT_ADMIN_SETTINGS: AdminSystemSettings = {
   },
   watermarkConfig: {
     enabled: true,
-    text: "\n\n—\n⚡ *Sendora.com*",
+    text: "\n\n—\n*Sendora.com*",
     applyToFreeOnly: true,
   },
   paymentConfig: {
@@ -277,7 +277,7 @@ export default function AdminSettingsPage() {
       watermarkConfig: {
         ...(prev.watermarkConfig || {
           enabled: true,
-          text: "\n\n—\n⚡ *Sendora.com*",
+          text: "\n\n—\n*Sendora.com*",
           applyToFreeOnly: true,
         }),
         [field]: value,

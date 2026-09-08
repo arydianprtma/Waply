@@ -1864,16 +1864,20 @@ function OrderContent() {
                     )}
 
                     {currentPlanDiscount.hasTimer && currentPlanDiscount.isDiscountActive && (
-                      <div className={`p-2.5 rounded-2xl border text-xs flex items-center justify-between gap-2 shadow-2xs ${
+                      <div className={`p-2.5 rounded-xl border text-xs flex items-center justify-between gap-2 shadow-2xs ${
                         currentPlanDiscount.isUrgentCountdown
-                          ? "bg-rose-50 border-rose-200 text-rose-950 font-medium"
-                          : "bg-amber-50 border-amber-200 text-amber-950 font-medium"
+                          ? "bg-rose-50 border-rose-200 text-rose-900 font-medium"
+                          : "bg-slate-50 border-slate-200 text-slate-800 font-medium"
                       }`}>
                         <div className="flex items-center gap-1.5 font-bold">
-                          <Timer className={`w-4 h-4 ${currentPlanDiscount.isUrgentCountdown ? "text-rose-600 animate-pulse" : "text-amber-600"}`} />
-                          <span>{currentPlanDiscount.isUrgentCountdown ? "⚡ Flash Sale Berakhir:" : "⏳ Promo Berakhir:"}</span>
+                          <Timer className={`w-3.5 h-3.5 ${currentPlanDiscount.isUrgentCountdown ? "text-rose-600" : "text-slate-500"}`} />
+                          <span>{currentPlanDiscount.isUrgentCountdown ? "Sisa Waktu Promo:" : "Batas Promo:"}</span>
                         </div>
-                        <span className="font-mono font-black text-xs px-2 py-0.5 rounded-md bg-white border shadow-2xs">
+                        <span className={`font-mono font-bold text-xs px-2 py-0.5 rounded border ${
+                          currentPlanDiscount.isUrgentCountdown
+                            ? "bg-white border-rose-200 text-rose-700"
+                            : "bg-white border-slate-200 text-slate-700"
+                        }`}>
                           {currentPlanDiscount.countdownFormatted}
                         </span>
                       </div>

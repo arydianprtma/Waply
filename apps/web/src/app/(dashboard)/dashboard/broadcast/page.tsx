@@ -628,7 +628,7 @@ export default function BroadcastPage() {
                       value={selectedDeviceId}
                       onChange={(e) => setSelectedDeviceId(e.target.value)}
                     >
-                      <option value="auto_rotate">🔄 Auto-Rotate (Round-Robin Semua Device Aktif)</option>
+                      <option value="auto_rotate">Auto-Rotate (Round-Robin Semua Device Aktif)</option>
                       {devices.map((d) => (
                         <option key={d.id} value={d.id}>
                           {d.phoneNumber ? `+${d.phoneNumber}` : d.name} ({d.status})

@@ -535,13 +535,13 @@ export default function AdminPlansPage() {
                           const status = getPlanDiscountStatus(p, nowMs);
                           if (status.hasSchedule && status.hasTimer && status.isDiscountActive) {
                             return (
-                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
+                              <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold border ${
                                 status.isUrgentCountdown
-                                  ? "bg-rose-600 text-white animate-pulse shadow-2xs"
-                                  : "bg-amber-100 text-amber-900 border border-amber-300"
+                                  ? "bg-rose-50 text-rose-700 border-rose-200"
+                                  : "bg-slate-50 text-slate-700 border-slate-200"
                               }`}>
-                                <Timer className="w-3 h-3" />
-                                <span>{status.isUrgentCountdown ? `⚡ Sisa ${status.countdownFormatted}` : `⏳ ${status.countdownFormatted}`}</span>
+                                <Timer className={`w-3 h-3 ${status.isUrgentCountdown ? "text-rose-600" : "text-slate-500"}`} />
+                                <span>Sisa {status.countdownFormatted}</span>
                               </span>
                             );
                           }

@@ -515,10 +515,10 @@ export default function AdminUsersPage() {
                             }`}
                           >
                             {u.status === "ACTIVE"
-                              ? "● Aktif"
+                              ? "Aktif"
                               : u.status === "SUSPENDED"
-                              ? "○ Ditangguhkan"
-                              : "✕ Diblokir (Banned)"}
+                              ? "Ditangguhkan"
+                              : "Diblokir"}
                           </span>
                           {u.banReason && (
                             <p className="text-[10px] text-rose-600 mt-1 max-w-[160px] truncate" title={u.banReason}>
