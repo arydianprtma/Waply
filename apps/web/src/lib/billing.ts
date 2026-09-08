@@ -36,13 +36,14 @@ export function getAllPlans(): Record<string, Plan> {
       fs.writeFileSync(PLANS_FILE, JSON.stringify(DEFAULT_PLANS, null, 2));
       return DEFAULT_PLANS;
     }
-    const stored: Record<string, Plan> = JSON.parse(fs.readFileSync(PLANS_FILE, "utf-8") || "{}");
-    if (stored && typeof stored === "object" && Object.keys(stored).length > 0) {
+    const raw = fs.readFileSync(PLANS_FILE, "utf-8");
+    const stored: Record<string, Plan> = JSON.parse(raw || "{}");
+    if (stored && typeof stored === "object") {
       return stored;
     }
-    return DEFAULT_PLANS;
+    return {};
   } catch {
-    return DEFAULT_PLANS;
+    return {};
   }
 }
 
@@ -97,7 +98,7 @@ export function deleteCustomPlan(planId: string): boolean {
 export const PLANS: Record<string, Plan> = new Proxy({} as Record<string, Plan>, {
   get(target, prop: string) {
     const dynamic = getAllPlans();
-    return dynamic[prop] || DEFAULT_PLANS[prop];
+    return dynamic[prop];
   },
   ownKeys() {
     return Object.keys(getAllPlans());
