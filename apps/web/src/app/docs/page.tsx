@@ -1116,6 +1116,29 @@ async def handle_sendora_webhook(request: Request):
               </div>
             </div>
 
+            {/* Visual Screenshot Example Card */}
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 space-y-3 shadow-xs">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                  <Info className="w-4 h-4 text-emerald-600" />
+                  Contoh Pengaturan Shortcode & Variabel di Menu Templates:
+                </span>
+                <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-mono">
+                  Dashboard &gt; Templates
+                </span>
+              </div>
+              <div className="rounded-xl overflow-hidden border border-slate-200 bg-slate-50 flex justify-center p-1 sm:p-2">
+                <img
+                  src="/docs-template-shortcode.png"
+                  alt="Contoh Pengisian Shortcode Template Pesan di Dashboard Sendora"
+                  className="w-full max-w-2xl h-auto object-contain rounded-lg shadow-xs"
+                />
+              </div>
+              <p className="text-[11px] text-slate-600 leading-relaxed">
+                Kotak merah pada gambar di atas menunjukkan <b>Shortcode</b> (<code className="bg-slate-100 text-emerald-800 font-mono font-bold px-1.5 py-0.5 rounded border border-slate-200">tpl_order_notif</code>) yang digunakan sebagai nilai parameter <code className="bg-slate-100 text-slate-800 font-mono font-bold px-1.5 py-0.5 rounded border border-slate-200">"template"</code> pada payload JSON API di bawah ini.
+              </p>
+            </div>
+
             {/* Cara Kerja Pemanggilan Template */}
             <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-2xl space-y-2 text-xs text-emerald-950">
               <span className="font-bold text-emerald-900 flex items-center gap-1.5 text-sm">
