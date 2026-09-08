@@ -5,8 +5,7 @@ import { isBlacklisted, addToBlacklist, removeFromBlacklist } from "@/lib/blackl
 import { saveAutoReplyLog } from "@/lib/autoreply-logs";
 import { getAllUserDeviceRecords } from "@/lib/user-devices";
 import { getUserPlanAccess } from "@/lib/billing";
-
-const GATEWAY_URL = process.env.GATEWAY_URL || "http://localhost:3002";
+import { fetchGateway } from "@/lib/gateway-client";
 
 // Keywords that trigger auto opt-out → auto-blacklist
 const OPT_OUT_KEYWORDS = ["stop", "berhenti", "unsubscribe", "hentikan", "keluar", "off"];
@@ -27,7 +26,7 @@ function isOptInMessage(text: string): boolean {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { deviceId, sender, senderName, text, timestamp, messageId } = body;
+    const { deviceId, sender, rawSender, senderName, text, timestamp, messageId } = body;
 
     if (!sender || !text) {
       return NextResponse.json({ success: false, error: "Sender and text required" }, { status: 400 });
@@ -37,6 +36,7 @@ export async function POST(req: NextRequest) {
     const deviceRecords = getAllUserDeviceRecords();
     const userId = (deviceId && deviceRecords[deviceId]?.userId) || "admin-default-user";
     const userAccess = getUserPlanAccess(userId);
+    const targetRecipient = rawSender || cleanSender;
 
     // 1. Dispatch Inbound Webhook event `message.received`
     dispatchWebhookEvent(userId, "message.received", {
@@ -67,14 +67,16 @@ export async function POST(req: NextRequest) {
 
       if (deviceId) {
         try {
-          await fetch(`${GATEWAY_URL}/api/sessions/${deviceId}/send`, {
+          const sendRes = await fetchGateway(`/api/sessions/${deviceId}/send`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              to: cleanSender,
+              to: targetRecipient,
               message: optOutNotice,
             }),
           });
+          const sendJson = await sendRes.json().catch(() => ({}));
+          console.log(`[Inbound] Opt-out confirmation sent to ${targetRecipient}:`, sendJson);
         } catch (err) {
           console.error("Failed to send opt-out confirmation message:", err);
         }
@@ -117,14 +119,16 @@ export async function POST(req: NextRequest) {
 
       if (deviceId) {
         try {
-          await fetch(`${GATEWAY_URL}/api/sessions/${deviceId}/send`, {
+          const sendRes = await fetchGateway(`/api/sessions/${deviceId}/send`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              to: cleanSender,
+              to: targetRecipient,
               message: optInNotice,
             }),
           });
+          const sendJson = await sendRes.json().catch(() => ({}));
+          console.log(`[Inbound] Opt-in confirmation sent to ${targetRecipient}:`, sendJson);
         } catch (err) {
           console.error("Failed to send opt-in confirmation message:", err);
         }
@@ -182,15 +186,15 @@ export async function POST(req: NextRequest) {
 
         // Send auto-reply via Gateway
         try {
-          const replyRes = await fetch(`${GATEWAY_URL}/api/sessions/${deviceId}/messages/send`, {
+          const replyRes = await fetchGateway(`/api/sessions/${deviceId}/send`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              recipient: cleanSender,
+              to: targetRecipient,
               message: autoReplyText,
             }),
           });
-          const replyJson = await replyRes.json();
+          const replyJson = await replyRes.json().catch(() => ({}));
           if (replyJson.success) {
             autoReplySent = true;
           }

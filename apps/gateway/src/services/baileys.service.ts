@@ -258,14 +258,21 @@ export class BaileysInstance {
       throw new Error(`Device WhatsApp belum terhubung (Status: ${this.status})`);
     }
 
-    // Format nomor WhatsApp internasional (cth: 0851... / 851... -> 62851... -> 62851...@s.whatsapp.net)
-    let cleanNumber = recipientNumber.replace(/\D/g, "");
-    if (cleanNumber.startsWith("0")) {
-      cleanNumber = "62" + cleanNumber.slice(1);
-    } else if (cleanNumber.startsWith("8")) {
-      cleanNumber = "62" + cleanNumber;
+    // Format nomor WhatsApp internasional atau JID (@lid / @s.whatsapp.net)
+    let formattedJid = "";
+    let cleanNumber = "";
+    if (recipientNumber.includes("@lid") || recipientNumber.includes("@s.whatsapp.net") || recipientNumber.includes("@g.us")) {
+      formattedJid = recipientNumber;
+      cleanNumber = recipientNumber.split("@")[0];
+    } else {
+      cleanNumber = recipientNumber.replace(/\D/g, "");
+      if (cleanNumber.startsWith("0")) {
+        cleanNumber = "62" + cleanNumber.slice(1);
+      } else if (cleanNumber.startsWith("8")) {
+        cleanNumber = "62" + cleanNumber;
+      }
+      formattedJid = `${cleanNumber}@s.whatsapp.net`;
     }
-    const formattedJid = `${cleanNumber}@s.whatsapp.net`;
 
     // Cache recent recipient
     this.lastRecipientPhone = cleanNumber;
