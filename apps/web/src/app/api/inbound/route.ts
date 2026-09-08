@@ -43,8 +43,8 @@ export async function POST(req: NextRequest) {
       timestamp: timestamp || new Date().toISOString(),
     }).catch(() => {});
 
-    // 2. Auto Opt-Out: If message is STOP/BERHENTI and feature blacklistDnd is active in plan → add to blacklist silently
-    if (userAccess.blacklistDnd && isOptOutMessage(text)) {
+    // 2. Auto Opt-Out Safety Guard (Global Engine): If message is STOP/BERHENTI → add to blacklist silently to protect client WhatsApp number
+    if (isOptOutMessage(text)) {
       addToBlacklist(userId, cleanSender, "UNSUBSCRIBE_KEYWORD");
       console.log(`[Inbound] Auto opt-out: ${cleanSender} added to blacklist (keyword: "${text}")`);
 
@@ -62,16 +62,14 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 3. Check Blacklist / DND: Do not auto-reply if sender is blacklisted (if feature is active)
-    if (userAccess.blacklistDnd) {
-      const blacklisted = isBlacklisted(userId, cleanSender);
-      if (blacklisted) {
-        return NextResponse.json({
-          success: true,
-          autoReply: false,
-          reason: "Sender is blacklisted",
-        });
-      }
+    // 3. Check Blacklist / DND: Do not auto-reply if sender is blacklisted
+    const blacklisted = isBlacklisted(userId, cleanSender);
+    if (blacklisted) {
+      return NextResponse.json({
+        success: true,
+        autoReply: false,
+        reason: "Sender is blacklisted",
+      });
     }
 
     // 4. Evaluate Auto-Reply Rules (only if autoReply feature is enabled on user plan)
