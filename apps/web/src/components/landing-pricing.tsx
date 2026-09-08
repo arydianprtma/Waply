@@ -140,14 +140,8 @@ export default function LandingPricing({ plans }: LandingPricingProps) {
                 }`}
               >
                 {plan.isPopular && (
-                  <div className="badge badge-primary absolute -top-3.5 left-6 font-bold shadow-xs text-xs">
+                  <div className="badge badge-primary absolute -top-3.5 right-6 font-bold shadow-xs text-xs">
                     Paling Populer
-                  </div>
-                )}
-
-                {discStatus.hasTimer && discStatus.isDiscountActive && (
-                  <div className="absolute -top-3.5 right-5">
-                    <PromoCountdownTimer status={discStatus} variant="badge" />
                   </div>
                 )}
 
@@ -163,15 +157,22 @@ export default function LandingPricing({ plans }: LandingPricingProps) {
                   </div>
 
                   {/* Price Section */}
-                  <div className="mt-3 sm:mt-4 min-h-[52px] flex flex-col justify-end">
+                  <div className="mt-3 sm:mt-4 min-h-[52px] flex flex-col justify-end space-y-1.5">
                     {discStatus.isDiscountActive && discStatus.originalPrice && discStatus.originalPrice > discStatus.effectivePrice ? (
-                      <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-                        <span className="text-xs text-slate-400 line-through font-semibold">
-                          Rp{discStatus.originalPrice.toLocaleString("id-ID")}
-                        </span>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 tracking-tight shrink-0">
-                          {discStatus.discountBadge || `HEMAT ${discStatus.discountPercent}%`}
-                        </span>
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-xs text-slate-400 line-through font-semibold">
+                            Rp{discStatus.originalPrice.toLocaleString("id-ID")}
+                          </span>
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 tracking-tight shrink-0">
+                            {discStatus.discountBadge || `HEMAT ${discStatus.discountPercent}%`}
+                          </span>
+                        </div>
+                        {discStatus.hasTimer && (
+                          <div>
+                            <PromoCountdownTimer status={discStatus} variant="badge" />
+                          </div>
+                        )}
                       </div>
                     ) : null}
 
