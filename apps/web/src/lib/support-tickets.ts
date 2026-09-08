@@ -18,7 +18,7 @@ export interface TicketMessage {
   senderId: string;
   senderName: string;
   senderEmail: string;
-  senderRole: "user" | "admin" | "support" | "ai";
+  senderRole: "user" | "admin" | "support" | "ai" | "system";
   message: string;
   createdAt: string;
 }
@@ -109,7 +109,7 @@ export function getAllTickets(): SupportTicket[] {
 
     return active.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
   } catch (err) {
-    console.error("[SupportTickets] Error reading tickets file:", err);
+    console.error("Error reading support tickets:", err);
     return getDefaultTickets();
   }
 }
@@ -120,30 +120,33 @@ export function saveTickets(tickets: SupportTicket[]): boolean {
     fs.writeFileSync(TICKETS_FILE, JSON.stringify(tickets, null, 2), "utf8");
     return true;
   } catch (err) {
-    console.error("[SupportTickets] Error saving tickets file:", err);
+    console.error("Error saving support tickets:", err);
     return false;
   }
 }
 
-export function getUserTickets(userId: string, email?: string): SupportTicket[] {
+export function getUserTickets(userId: string, userEmail: string): SupportTicket[] {
   const all = getAllTickets();
   return all.filter(
-    (t) => t.userId === userId || (email && t.userEmail.toLowerCase() === email.toLowerCase())
+    (t) =>
+      t.userId === userId ||
+      t.userEmail.toLowerCase() === userEmail.toLowerCase()
   );
 }
 
-export function getTicketById(id: string): SupportTicket | null {
+export function getTicketById(ticketId: string): SupportTicket | null {
   const all = getAllTickets();
-  return all.find((t) => t.id.toUpperCase() === id.toUpperCase()) || null;
+  const ticket = all.find((t) => t.id.toUpperCase() === ticketId.toUpperCase());
+  return ticket || null;
 }
 
 export function createTicket(input: CreateTicketInput): SupportTicket {
   const all = getAllTickets();
-  const ticketId = `TKT-${Math.floor(100000 + Math.random() * 900000)}`;
   const now = new Date().toISOString();
+  const ticketId = `TKT-${Math.floor(100000 + Math.random() * 900000)}`;
 
   const initialMessage: TicketMessage = {
-    id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+    id: `msg_${Date.now()}_init`,
     ticketId,
     senderId: input.userId,
     senderName: input.userName,
@@ -186,7 +189,7 @@ export function replyToTicket(
     senderId: string;
     senderName: string;
     senderEmail: string;
-    senderRole: "user" | "admin" | "support" | "ai";
+    senderRole: "user" | "admin" | "support" | "ai" | "system";
     message: string;
   }
 ): SupportTicket | null {
@@ -200,6 +203,35 @@ export function replyToTicket(
   }
 
   const now = new Date().toISOString();
+
+  // If Admin / Human Support replies for the first time on an AI or escalated ticket, inject a system join notification
+  if (reply.senderRole === "admin" || reply.senderRole === "support") {
+    const hadAdminReply = all[index].messages.some(
+      (m) => m.senderRole === "admin" || m.senderRole === "support"
+    );
+
+    if (!hadAdminReply) {
+      const joinMsg: TicketMessage = {
+        id: `msg_${Date.now()}_join`,
+        ticketId: all[index].id,
+        senderId: "system",
+        senderName: "Sistem",
+        senderEmail: "system@sendora.id",
+        senderRole: "system",
+        message: `Admin (${reply.senderName || "Customer Support"}) telah bergabung ke ruang obrolan.`,
+        createdAt: new Date(Date.now() - 100).toISOString(),
+      };
+      all[index].messages.push(joinMsg);
+    }
+
+    all[index].handlingMode = "HUMAN";
+    if (all[index].status === "OPEN") {
+      all[index].status = "IN_PROGRESS";
+    }
+    all[index].unreadByUser = true;
+    all[index].unreadByAdmin = false;
+  }
+
   const newMsg: TicketMessage = {
     id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
     ticketId: all[index].id,
@@ -219,14 +251,6 @@ export function replyToTicket(
     all[index].unreadByAdmin = all[index].handlingMode === "HUMAN";
     all[index].unreadByUser = false;
   } else if (reply.senderRole === "ai") {
-    all[index].unreadByUser = true;
-    all[index].unreadByAdmin = false;
-  } else {
-    // Admin or human support replied -> Human Takeover
-    all[index].handlingMode = "HUMAN";
-    if (all[index].status === "OPEN") {
-      all[index].status = "IN_PROGRESS";
-    }
     all[index].unreadByUser = true;
     all[index].unreadByAdmin = false;
   }
@@ -251,19 +275,18 @@ export function escalateTicketToHuman(
   all[index].unreadByAdmin = true;
   all[index].updatedAt = now;
 
-  if (customNotice) {
-    const noticeMsg: TicketMessage = {
-      id: `msg_${Date.now()}_notice`,
-      ticketId: all[index].id,
-      senderId: "system_ai",
-      senderName: "Sendora Assistant",
-      senderEmail: "ai@sendora.id",
-      senderRole: "ai",
-      message: customNotice,
-      createdAt: now,
-    };
-    all[index].messages.push(noticeMsg);
-  }
+  // Append clean system handover message in the chat thread
+  const handoverMsg: TicketMessage = {
+    id: `msg_${Date.now()}_handover`,
+    ticketId: all[index].id,
+    senderId: "system",
+    senderName: "Sistem",
+    senderEmail: "system@sendora.id",
+    senderRole: "system",
+    message: customNotice || "Mohon tunggu, tiket telah dialihkan ke antrean CS dan Admin akan segera mengambil alih.",
+    createdAt: now,
+  };
+  all[index].messages.push(handoverMsg);
 
   saveTickets(all);
   return all[index];

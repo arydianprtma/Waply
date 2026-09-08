@@ -23,6 +23,7 @@ import {
   UserCheck,
   Headphones,
   Bot,
+  Info,
 } from "lucide-react";
 import type { SupportTicket, TicketCategory, TicketPriority, TicketStatus } from "@/lib/support-tickets";
 import { useUserSession } from "@/lib/use-user-session";
@@ -447,6 +448,25 @@ export default function AdminTicketDetailPage() {
             {ticket.messages.map((msg, idx) => {
               const isAdmin = msg.senderRole === "admin" || msg.senderRole === "support";
               const isAi = msg.senderRole === "ai";
+              const isSystem = msg.senderRole === "system";
+
+              if (isSystem) {
+                return (
+                  <div key={msg.id || idx} className="flex justify-center my-3 animate-in fade-in zoom-in-95 duration-200">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-slate-100/90 border border-slate-200/80 text-slate-600 text-xs shadow-2xs max-w-[90%] text-center">
+                      <Info className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                      <span className="font-medium text-slate-700 leading-snug">{msg.message}</span>
+                      <span className="text-[10px] text-slate-400 font-mono shrink-0 ml-1">
+                        {new Date(msg.createdAt).toLocaleTimeString("id-ID", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                );
+              }
+
               return (
                 <div
                   key={msg.id || idx}
