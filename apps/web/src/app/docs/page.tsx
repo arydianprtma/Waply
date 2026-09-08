@@ -607,81 +607,145 @@ async def handle_sendora_webhook(request: Request):
             </div>
 
             {/* Base URL & Endpoint Path Guide */}
-            <div className="p-4 rounded-xl bg-slate-900 text-white space-y-3.5 border border-slate-800 shadow-md">
-              <div className="flex items-center justify-between gap-2 flex-wrap">
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
-                  <Terminal className="w-3.5 h-3.5" /> Struktur Panggilan Base URL vs Endpoint Path
-                </span>
-                <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700">
-                  Full URL = [Base URL] + [Endpoint Path]
-                </span>
+            <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-4">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-200/80 flex items-center justify-center text-emerald-700 font-bold text-xs">
+                    URL
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">Struktur Base URL &amp; Direktori Endpoint</h3>
+                    <p className="text-xs text-slate-500 font-normal">Gabungkan Host Server dengan Endpoint Path tujuan</p>
+                  </div>
+                </div>
+                <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-[11px] font-mono border border-slate-200">
+                  <span className="font-semibold text-slate-900">Full URL</span> = Base URL + Endpoint Path
+                </div>
               </div>
-              <p className="text-xs text-slate-300 leading-relaxed font-normal">
-                Base URL adalah alamat host server utama Anda (<code className="text-emerald-300 font-mono font-semibold">{originUrl}</code>). Saat memanggil API di aplikasi Anda (seperti Axios, fetch, cURL, atau Guzzle PHP), sambungkan Base URL dengan <b>Endpoint Path</b> yang sesuai dengan fitur yang ingin dijalankan:
+
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
+                Base URL adalah alamat host domain utama server Anda (<code className="font-semibold text-emerald-700 bg-emerald-50/80 px-1.5 py-0.5 rounded border border-emerald-200/60 font-mono text-xs">{originUrl}</code>). Saat melakukan request dari aplikasi (Axios, cURL, Fetch, PHP), sambungkan Base URL dengan <b>Endpoint Path</b> fitur terkait:
               </p>
 
-              {/* Endpoint Directory Table */}
-              <div className="overflow-x-auto rounded-lg border border-slate-800 bg-slate-950/60 text-xs">
-                <table className="w-full text-left font-mono">
-                  <thead className="bg-slate-800/80 text-slate-400 border-b border-slate-800 text-[11px]">
+              {/* Desktop Table View (>= md screens) */}
+              <div className="hidden md:block overflow-hidden rounded-xl border border-slate-200 bg-white">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50/90 text-slate-600 border-b border-slate-200 font-semibold">
                     <tr>
-                      <th className="p-2.5 font-semibold">Method</th>
-                      <th className="p-2.5 font-semibold">Endpoint Path</th>
-                      <th className="p-2.5 font-semibold">Full URL Contoh</th>
-                      <th className="p-2.5 font-semibold">Fungsi</th>
+                      <th className="py-2.5 px-3 w-20">Method</th>
+                      <th className="py-2.5 px-3">Endpoint Path</th>
+                      <th className="py-2.5 px-3">Full URL Contoh</th>
+                      <th className="py-2.5 px-3">Fungsi Utama</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-850 text-slate-300 text-[11px]">
-                    <tr className="hover:bg-slate-800/40 transition-colors">
-                      <td className="p-2.5">
-                        <span className="px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold">POST</span>
+                  <tbody className="divide-y divide-slate-100 text-slate-700">
+                    <tr className="hover:bg-slate-50/60 transition-colors">
+                      <td className="py-2.5 px-3">
+                        <span className="inline-block px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[10px] font-mono">POST</span>
                       </td>
-                      <td className="p-2.5 text-emerald-300 font-semibold">/api/v1/messages/send</td>
-                      <td className="p-2.5 text-slate-400 truncate max-w-xs">{originUrl}/api/v1/messages/send</td>
-                      <td className="p-2.5 text-slate-300 font-sans">Kirim pesan teks/media/template</td>
+                      <td className="py-2.5 px-3 font-mono font-semibold text-slate-900">/api/v1/messages/send</td>
+                      <td className="py-2.5 px-3 font-mono text-slate-500 text-[11px] break-all">{originUrl}/api/v1/messages/send</td>
+                      <td className="py-2.5 px-3 text-slate-600 font-normal">Kirim pesan teks, media, atau template</td>
                     </tr>
-                    <tr className="hover:bg-slate-800/40 transition-colors">
-                      <td className="p-2.5">
-                        <span className="px-1.5 py-0.5 rounded bg-sky-950 text-sky-400 border border-sky-800 font-bold">GET</span>
+                    <tr className="hover:bg-slate-50/60 transition-colors">
+                      <td className="py-2.5 px-3">
+                        <span className="inline-block px-2 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200 font-bold text-[10px] font-mono">GET</span>
                       </td>
-                      <td className="p-2.5 text-sky-300 font-semibold">/api/v1/templates</td>
-                      <td className="p-2.5 text-slate-400 truncate max-w-xs">{originUrl}/api/v1/templates</td>
-                      <td className="p-2.5 text-slate-300 font-sans">Ambil daftar template shortcode</td>
+                      <td className="py-2.5 px-3 font-mono font-semibold text-slate-900">/api/v1/templates</td>
+                      <td className="py-2.5 px-3 font-mono text-slate-500 text-[11px] break-all">{originUrl}/api/v1/templates</td>
+                      <td className="py-2.5 px-3 text-slate-600 font-normal">Ambil daftar shortcode template milik akun</td>
                     </tr>
-                    <tr className="hover:bg-slate-800/40 transition-colors">
-                      <td className="p-2.5">
-                        <span className="px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold">POST</span>
+                    <tr className="hover:bg-slate-50/60 transition-colors">
+                      <td className="py-2.5 px-3">
+                        <span className="inline-block px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[10px] font-mono">POST</span>
                       </td>
-                      <td className="p-2.5 text-emerald-300 font-semibold">/api/broadcast</td>
-                      <td className="p-2.5 text-slate-400 truncate max-w-xs">{originUrl}/api/broadcast</td>
-                      <td className="p-2.5 text-slate-300 font-sans">Buat kampanye pesan massal</td>
+                      <td className="py-2.5 px-3 font-mono font-semibold text-slate-900">/api/broadcast</td>
+                      <td className="py-2.5 px-3 font-mono text-slate-500 text-[11px] break-all">{originUrl}/api/broadcast</td>
+                      <td className="py-2.5 px-3 text-slate-600 font-normal">Buat kampanye broadcast pesan massal</td>
                     </tr>
-                    <tr className="hover:bg-slate-800/40 transition-colors">
-                      <td className="p-2.5">
-                        <span className="px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold">POST</span>
+                    <tr className="hover:bg-slate-50/60 transition-colors">
+                      <td className="py-2.5 px-3">
+                        <span className="inline-block px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[10px] font-mono">POST</span>
                       </td>
-                      <td className="p-2.5 text-emerald-300 font-semibold">/api/broadcast/&#123;id&#125;/start</td>
-                      <td className="p-2.5 text-slate-400 truncate max-w-xs">{originUrl}/api/broadcast/&#123;id&#125;/start</td>
-                      <td className="p-2.5 text-slate-300 font-sans">Mulai pengiriman broadcast</td>
+                      <td className="py-2.5 px-3 font-mono font-semibold text-slate-900">/api/broadcast/&#123;id&#125;/start</td>
+                      <td className="py-2.5 px-3 font-mono text-slate-500 text-[11px] break-all">{originUrl}/api/broadcast/&#123;id&#125;/start</td>
+                      <td className="py-2.5 px-3 text-slate-600 font-normal">Mulai/jalankan pengiriman broadcast</td>
                     </tr>
-                    <tr className="hover:bg-slate-800/40 transition-colors">
-                      <td className="p-2.5">
-                        <span className="px-1.5 py-0.5 rounded bg-sky-950 text-sky-400 border border-sky-800 font-bold">GET</span>
+                    <tr className="hover:bg-slate-50/60 transition-colors">
+                      <td className="py-2.5 px-3">
+                        <span className="inline-block px-2 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200 font-bold text-[10px] font-mono">GET</span>
                       </td>
-                      <td className="p-2.5 text-sky-300 font-semibold">/api/contacts</td>
-                      <td className="p-2.5 text-slate-400 truncate max-w-xs">{originUrl}/api/contacts</td>
-                      <td className="p-2.5 text-slate-300 font-sans">Ambil atau simpan kontak buku telepon</td>
+                      <td className="py-2.5 px-3 font-mono font-semibold text-slate-900">/api/contacts</td>
+                      <td className="py-2.5 px-3 font-mono text-slate-500 text-[11px] break-all">{originUrl}/api/contacts</td>
+                      <td className="py-2.5 px-3 text-slate-600 font-normal">Ambil atau simpan data kontak penerima</td>
                     </tr>
-                    <tr className="hover:bg-slate-800/40 transition-colors">
-                      <td className="p-2.5">
-                        <span className="px-1.5 py-0.5 rounded bg-sky-950 text-sky-400 border border-sky-800 font-bold">GET</span>
+                    <tr className="hover:bg-slate-50/60 transition-colors">
+                      <td className="py-2.5 px-3">
+                        <span className="inline-block px-2 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200 font-bold text-[10px] font-mono">GET</span>
                       </td>
-                      <td className="p-2.5 text-sky-300 font-semibold">/api/gateway/sessions</td>
-                      <td className="p-2.5 text-slate-400 truncate max-w-xs">{originUrl}/api/gateway/sessions</td>
-                      <td className="p-2.5 text-slate-300 font-sans">Cek status device WhatsApp yang terhubung</td>
+                      <td className="py-2.5 px-3 font-mono font-semibold text-slate-900">/api/gateway/sessions</td>
+                      <td className="py-2.5 px-3 font-mono text-slate-500 text-[11px] break-all">{originUrl}/api/gateway/sessions</td>
+                      <td className="py-2.5 px-3 text-slate-600 font-normal">Cek status koneksi perangkat WhatsApp</td>
                     </tr>
                   </tbody>
                 </table>
+              </div>
+
+              {/* Mobile Reflow Card List (< md screens) */}
+              <div className="grid grid-cols-1 gap-2.5 md:hidden">
+                {[
+                  {
+                    method: "POST",
+                    methodColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+                    path: "/api/v1/messages/send",
+                    desc: "Kirim pesan teks, media, atau template",
+                  },
+                  {
+                    method: "GET",
+                    methodColor: "bg-sky-50 text-sky-700 border-sky-200",
+                    path: "/api/v1/templates",
+                    desc: "Ambil daftar shortcode template milik akun",
+                  },
+                  {
+                    method: "POST",
+                    methodColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+                    path: "/api/broadcast",
+                    desc: "Buat kampanye broadcast pesan massal",
+                  },
+                  {
+                    method: "POST",
+                    methodColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+                    path: "/api/broadcast/{id}/start",
+                    desc: "Mulai/jalankan pengiriman broadcast",
+                  },
+                  {
+                    method: "GET",
+                    methodColor: "bg-sky-50 text-sky-700 border-sky-200",
+                    path: "/api/contacts",
+                    desc: "Ambil atau simpan data kontak penerima",
+                  },
+                  {
+                    method: "GET",
+                    methodColor: "bg-sky-50 text-sky-700 border-sky-200",
+                    path: "/api/gateway/sessions",
+                    desc: "Cek status koneksi perangkat WhatsApp",
+                  },
+                ].map((ep) => (
+                  <div key={ep.path} className="p-3 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-1.5">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`px-1.5 py-0.5 rounded border text-[10px] font-mono font-bold ${ep.methodColor}`}>
+                        {ep.method}
+                      </span>
+                      <span className="font-mono text-xs font-bold text-slate-900 break-all">{ep.path}</span>
+                    </div>
+                    <p className="text-xs text-slate-600 font-normal leading-normal">{ep.desc}</p>
+                    <div className="pt-1">
+                      <code className="block text-[11px] font-mono text-slate-500 bg-white px-2 py-1 rounded border border-slate-200 break-all">
+                        {originUrl}{ep.path}
+                      </code>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </section>
