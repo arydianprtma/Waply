@@ -128,33 +128,32 @@ export class BaileysInstance {
         if (connection === "close") {
           const error = lastDisconnect?.error as Boom | undefined;
           const statusCode = error?.output?.statusCode;
-          const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+          const isLoggedOut = statusCode === DisconnectReason.loggedOut || statusCode === 401;
 
           this.qrCode = undefined;
           this.qrDataUrl = undefined;
+          this.status = "DISCONNECTED";
 
-          // Cek Circuit Breaker
-          if (SafetyEngine.isCriticalDisconnect(error)) {
-            this.status = "BANNED_DETECTED";
-            this.lastError = `Session logged out by WhatsApp (Code: ${statusCode})`;
-            logger.error(
-              { sessionId: this.id, error: this.lastError },
-              "Session logged out or banned. Stopping reconnect."
+          // Jika user logout manual dari menu Perangkat Tertaut di WhatsApp HP
+          if (isLoggedOut) {
+            this.lastError = "Sesi telah keluar dari perangkat (Logged Out)";
+            logger.info(
+              { sessionId: this.id, statusCode },
+              "Session logged out from device. Stopping auto-reconnect."
             );
             return;
           }
 
-          this.status = "DISCONNECTED";
           this.lastError = error?.message || "Connection closed";
 
-          if (shouldReconnect && this.reconnectAttempts < this.maxReconnectAttempts) {
+          if (this.reconnectAttempts < this.maxReconnectAttempts) {
             this.reconnectAttempts++;
-            const backoffMs = Math.min(this.reconnectAttempts * 3000, 15000);
+            const delay = Math.min(this.reconnectAttempts * 3000, 15000);
             logger.warn(
-              { sessionId: this.id, attempt: this.reconnectAttempts, backoffMs },
-              `⚠️ Connection closed. Reconnecting in ${backoffMs / 1000}s...`
+              { sessionId: this.id, attempt: this.reconnectAttempts, delay },
+              `WhatsApp disconnected. Reconnecting in ${delay / 1000}s...`
             );
-            setTimeout(() => this.initialize(), backoffMs);
+            setTimeout(() => this.initialize(), delay);
           } else {
             logger.error(
               { sessionId: this.id, attempts: this.reconnectAttempts },
