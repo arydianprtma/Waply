@@ -648,7 +648,25 @@ export default function AdminPlansPage() {
                     value={formData.price === 0 ? "" : formData.price}
                     onChange={(e) => {
                       const val = e.target.value.replace(/^0+(?=\d)/, "");
-                      setFormData({ ...formData, price: val === "" ? 0 : Number(val) });
+                      const newPrice = val === "" ? 0 : Number(val);
+                      let updatedOrig = formData.originalPrice;
+                      let updatedDisc = formData.discountPercent;
+
+                      if (formData.hasDiscount) {
+                        if (updatedOrig && updatedOrig > newPrice) {
+                          updatedDisc = Math.round(((updatedOrig - newPrice) / updatedOrig) * 100);
+                        } else if (updatedDisc > 0) {
+                          updatedOrig = Math.round(newPrice / (1 - updatedDisc / 100));
+                        }
+                      }
+
+                      setFormData({
+                        ...formData,
+                        price: newPrice,
+                        originalPrice: updatedOrig,
+                        discountPercent: updatedDisc,
+                        discountBadge: formData.hasDiscount && updatedDisc > 0 ? `DISKON ${updatedDisc}%` : formData.discountBadge,
+                      });
                     }}
                     required
                   />
@@ -741,14 +759,16 @@ export default function AdminPlansPage() {
                       checked={formData.hasDiscount}
                       onChange={(e) => {
                         const checked = e.target.checked;
-                        const orig = formData.originalPrice || Math.round(formData.price * 1.25);
-                        const disc = Math.max(1, Math.round(((orig - formData.price) / orig) * 100));
+                        const orig = formData.originalPrice && formData.originalPrice > formData.price
+                          ? formData.originalPrice
+                          : Math.round(formData.price * 1.25);
+                        const disc = orig > formData.price ? Math.round(((orig - formData.price) / orig) * 100) : 20;
                         setFormData({
                           ...formData,
                           hasDiscount: checked,
                           originalPrice: orig,
                           discountPercent: disc,
-                          discountBadge: checked ? `DISKON ${disc}%` : "",
+                          discountBadge: checked && disc > 0 ? `DISKON ${disc}%` : "",
                         });
                       }}
                     />
@@ -774,7 +794,7 @@ export default function AdminPlansPage() {
                         min={0}
                         step={1}
                         className="input input-bordered input-xs bg-white text-xs"
-                        placeholder="Misal: 199000"
+                        placeholder="Misal: 99999"
                         value={!formData.originalPrice || formData.originalPrice === 0 ? "" : formData.originalPrice}
                         onChange={(e) => {
                           const val = e.target.value.replace(/^0+(?=\d)/, "");
@@ -805,11 +825,20 @@ export default function AdminPlansPage() {
                         onChange={(e) => {
                           const val = e.target.value.replace(/^0+(?=\d)/, "");
                           const pct = val === "" ? 0 : Number(val);
-                          const orig = pct > 0 && pct < 100 ? Math.round(formData.price / (1 - pct / 100)) : formData.price;
+                          let updatedPrice = formData.price;
+                          let updatedOrig = formData.originalPrice;
+
+                          if (updatedOrig && updatedOrig > 0) {
+                            updatedPrice = Math.round(updatedOrig * (1 - pct / 100));
+                          } else if (formData.price > 0 && pct > 0 && pct < 100) {
+                            updatedOrig = Math.round(formData.price / (1 - pct / 100));
+                          }
+
                           setFormData({
                             ...formData,
                             discountPercent: pct,
-                            originalPrice: orig,
+                            price: updatedPrice,
+                            originalPrice: updatedOrig,
                             discountBadge: pct > 0 ? `DISKON ${pct}%` : "",
                           });
                         }}
