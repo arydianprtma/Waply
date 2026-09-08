@@ -405,9 +405,6 @@ export default function AdminTicketDetailPage() {
                   <span>{takingOver ? "Mengambil Alih..." : "Ambil Alih Tiket"}</span>
                 </button>
               )}
-              <span className="text-[11px] text-slate-500 font-medium hidden sm:inline">
-                Live Polling 2s
-              </span>
             </div>
           </div>
 
