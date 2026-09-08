@@ -177,11 +177,11 @@ function OrderContent() {
 
   // Load plans and user profile with dedicated loading state
   useEffect(() => {
-    fetch("/api/billing/plans")
+    fetch("/api/billing/plans", { cache: "no-store" })
       .then((r) => r.json())
       .then((json) => {
         if (json.success && json.data) {
-          setPlans((prev) => ({ ...prev, ...json.data }));
+          setPlans(json.data);
         }
       })
       .catch(() => {});
@@ -236,17 +236,37 @@ function OrderContent() {
     setCustomerConfirmPassword("");
   };
 
+  // Filter active paid plans for Section 3
+  const activePlansList = Object.values(plans).filter((p) => {
+    if (p.isActive === false) return false;
+    if (p.id === "FREE") return false;
+    if (p.id.startsWith("YEARLY_")) return false;
+    return true;
+  });
+
   useEffect(() => {
     if (rawPlanParam) {
       const clean = rawPlanParam.toUpperCase().replace(/\s+/g, "_");
-      if (plans[clean] || DEFAULT_PLANS[clean]) {
-        setSelectedPlanId(clean);
+      const matched = Object.keys(plans).find(
+        (k) => k.toUpperCase() === clean || plans[k]?.id?.toUpperCase() === clean
+      );
+      if (matched) {
+        setSelectedPlanId(matched);
+        return;
       }
+    }
+    if (activePlansList.length > 0 && !activePlansList.some((p) => p.id === selectedPlanId)) {
+      setSelectedPlanId(activePlansList[0].id);
     }
   }, [rawPlanParam, plans]);
 
   // Current active plan
-  const currentPlan = plans[selectedPlanId] || DEFAULT_PLANS[selectedPlanId] || DEFAULT_PLANS.STARTER;
+  const currentPlan =
+    plans[selectedPlanId] ||
+    activePlansList.find((p) => p.id === selectedPlanId) ||
+    activePlansList[0] ||
+    DEFAULT_PLANS[selectedPlanId] ||
+    DEFAULT_PLANS.STARTER;
   const monthlyPrice = currentPlan.price;
 
   // Price calculations
@@ -1076,49 +1096,103 @@ function OrderContent() {
                 </div>
 
                 <div className="p-4 sm:p-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-                    {[
-                      { id: "STARTER", name: "Starter", price: 49000, devices: 2, messages: "5.000" },
-                      { id: "BUSINESS", name: "Business", price: 149000, devices: 5, messages: "25.000", popular: true },
-                      { id: "PRO", name: "Pro", price: 299000, devices: 10, messages: "200.000" },
-                    ].map((p) => {
-                      const isSelected = selectedPlanId === p.id;
-                      return (
-                        <button
-                          key={p.id}
-                          type="button"
-                          onClick={() => setSelectedPlanId(p.id)}
-                          className={`p-4 rounded-2xl border text-left transition-all relative ${
-                            isSelected
-                              ? "bg-emerald-50/40 border-emerald-500 shadow-md ring-2 ring-emerald-500/20"
-                              : "bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/50"
-                          }`}
-                        >
-                          {p.popular && (
-                            <span className="absolute -top-2.5 right-3 px-2 py-0.5 rounded-full text-[9px] font-black bg-primary text-white shadow-xs">
-                              POPULER
-                            </span>
-                          )}
-                          <div className="flex items-center justify-between mb-1.5">
-                            <span className="font-black text-sm text-slate-900">{p.name}</span>
-                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                              isSelected ? "border-emerald-600 bg-emerald-600" : "border-slate-300"
-                            }`}>
-                              {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                  {activePlansList.length === 0 ? (
+                    <div className="p-6 text-center text-slate-500 text-sm">
+                      Memuat daftar paket layanan...
+                    </div>
+                  ) : (
+                    <div
+                      className={`grid grid-cols-1 gap-3.5 ${
+                        activePlansList.length === 1
+                          ? "sm:grid-cols-1 max-w-sm mx-auto"
+                          : activePlansList.length === 2
+                          ? "sm:grid-cols-2"
+                          : activePlansList.length === 4
+                          ? "sm:grid-cols-2 lg:grid-cols-4"
+                          : "sm:grid-cols-3"
+                      }`}
+                    >
+                      {activePlansList.map((p) => {
+                        const isSelected = selectedPlanId === p.id;
+                        const hasDiscount = Boolean(p.originalPrice && p.originalPrice > p.price);
+                        const periodSuffix =
+                          p.period === "day"
+                            ? "/ hr"
+                            : p.period === "week"
+                            ? "/ mgg"
+                            : p.period === "year"
+                            ? "/ thn"
+                            : "/ bln";
+                        const periodFull =
+                          p.period === "day"
+                            ? "hari"
+                            : p.period === "week"
+                            ? "minggu"
+                            : p.period === "year"
+                            ? "tahun"
+                            : "bulan";
+                        const msgLimit =
+                          p.monthlyMessages === -1
+                            ? "Unlimited"
+                            : `${p.monthlyMessages.toLocaleString("id-ID")}`;
+
+                        return (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onClick={() => setSelectedPlanId(p.id)}
+                            className={`p-4 rounded-2xl border text-left transition-all relative ${
+                              isSelected
+                                ? "bg-emerald-50/40 border-emerald-500 shadow-md ring-2 ring-emerald-500/20"
+                                : "bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/50"
+                            }`}
+                          >
+                            {p.isPopular && (
+                              <span className="absolute -top-2.5 right-3 px-2 py-0.5 rounded-full text-[9px] font-black bg-primary text-white shadow-xs">
+                                POPULER
+                              </span>
+                            )}
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="font-black text-sm text-slate-900">{p.name}</span>
+                              <div
+                                className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                                  isSelected ? "border-emerald-600 bg-emerald-600" : "border-slate-300"
+                                }`}
+                              >
+                                {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                              </div>
                             </div>
-                          </div>
-                          <div className="text-base font-black text-slate-900">
-                            {formatIDR(p.price)}
-                            <span className="text-[10px] text-slate-400 font-normal"> / bln</span>
-                          </div>
-                          <div className="text-[11px] text-slate-500 mt-2 space-y-0.5">
-                            <div>• {p.devices} Device WhatsApp</div>
-                            <div>• {p.messages} Pesan / bln</div>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
+
+                            {hasDiscount && (
+                              <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                                <span className="text-xs text-slate-400 line-through font-medium">
+                                  {formatIDR(p.originalPrice!)}
+                                </span>
+                                {p.discountBadge ? (
+                                  <span className="text-[10px] font-bold px-1.5 py-0.5 bg-rose-50 text-rose-600 border border-rose-200/60 rounded">
+                                    {p.discountBadge}
+                                  </span>
+                                ) : p.discountPercent ? (
+                                  <span className="text-[10px] font-bold px-1.5 py-0.5 bg-rose-50 text-rose-600 border border-rose-200/60 rounded">
+                                    -{p.discountPercent}%
+                                  </span>
+                                ) : null}
+                              </div>
+                            )}
+
+                            <div className="text-base font-black text-slate-900">
+                              {formatIDR(p.price)}
+                              <span className="text-[10px] text-slate-400 font-normal"> {periodSuffix}</span>
+                            </div>
+                            <div className="text-[11px] text-slate-500 mt-2 space-y-0.5">
+                              <div>• {p.maxDevices} Device WhatsApp</div>
+                              <div>• {msgLimit} Pesan / {periodFull}</div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
 
