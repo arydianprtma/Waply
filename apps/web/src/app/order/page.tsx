@@ -994,7 +994,7 @@ function OrderContent() {
                 </div>
 
                 <div className="p-4 sm:p-6 space-y-4">
-                  {currentPlan.price === 0 ? (
+                  {(!isAddonMode && currentPlan.price === 0) ? (
                     <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200 text-emerald-900 text-xs flex items-center gap-3">
                       <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
                       <div>
