@@ -2059,7 +2059,22 @@ function OrderContent() {
                         Pembayaran Berhasil!
                       </h4>
                       <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
-                        Terima kasih! Paket <strong className="text-slate-900">Sendora {currentPlan.name}</strong> Anda telah aktif. Kuota pesan & akses API gateway langsung dapat digunakan sekarang.
+                        {chargeData.orderId?.startsWith("SENDORA-ADDON") || isAddonMode ? (
+                          <>
+                            Terima kasih! Addon{" "}
+                            <strong className="text-slate-900">
+                              {selectedAddonIds
+                                .map((id) => availableAddons.find((a) => a.id === id)?.name)
+                                .filter(Boolean)
+                                .join(", ") || "Top-Up Kuota"}
+                            </strong>{" "}
+                            Anda telah aktif dan kuota langsung ditambahkan ke akun Anda.
+                          </>
+                        ) : (
+                          <>
+                            Terima kasih! Paket <strong className="text-slate-900">Sendora {currentPlan.name}</strong> Anda telah aktif. Kuota pesan & akses API gateway langsung dapat digunakan sekarang.
+                          </>
+                        )}
                       </p>
                     </div>
 
@@ -2085,17 +2100,26 @@ function OrderContent() {
                           <span className="font-mono font-bold text-slate-800">{chargeData.orderId}</span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-slate-400">Paket Layanan:</span>
-                          <strong className="text-primary font-bold">
-                            Sendora {currentPlan.name} (
-                              {effectiveDurationMonths === 36
-                                ? "3 Tahun"
-                                : effectiveDurationMonths === 24
-                                ? "2 Tahun"
-                                : effectiveDurationMonths === 12
-                                ? "1 Tahun"
-                                : `${effectiveDurationMonths} Bulan`}
-                            )
+                          <span className="text-slate-400">
+                            {chargeData.orderId?.startsWith("SENDORA-ADDON") || isAddonMode ? "Item Addon:" : "Paket Layanan:"}
+                          </span>
+                          <strong className="text-emerald-700 font-bold">
+                            {chargeData.orderId?.startsWith("SENDORA-ADDON") || isAddonMode ? (
+                              selectedAddonIds
+                                .map((id) => availableAddons.find((a) => a.id === id)?.name)
+                                .filter(Boolean)
+                                .join(", ") || "Top-Up Addon"
+                            ) : (
+                              `Sendora ${currentPlan.name} (${
+                                effectiveDurationMonths === 36
+                                  ? "3 Tahun"
+                                  : effectiveDurationMonths === 24
+                                  ? "2 Tahun"
+                                  : effectiveDurationMonths === 12
+                                  ? "1 Tahun"
+                                  : `${effectiveDurationMonths} Bulan`
+                              })`
+                            )}
                           </strong>
                         </div>
                         <div className="flex items-center justify-between">
@@ -2132,20 +2156,57 @@ function OrderContent() {
                     </div>
 
                     {/* Unlocked Benefits Quick Pills */}
-                    <div className="grid grid-cols-3 gap-2 text-[11px] font-bold">
-                      <div className="p-2 rounded-xl bg-slate-100/80 text-slate-700 border border-slate-200 flex flex-col items-center">
-                        <Smartphone className="w-3.5 h-3.5 text-emerald-600 mb-0.5" />
-                        <span>{currentPlan.maxDevices} Devices</span>
+                    {chargeData.orderId?.startsWith("SENDORA-ADDON") || isAddonMode ? (
+                      <div className="grid grid-cols-3 gap-2 text-[11px] font-bold">
+                        {(() => {
+                          const addedDev = selectedAddonIds.reduce((sum, id) => {
+                            const a = availableAddons.find((item) => item.id === id);
+                            return sum + (a?.type === "DEVICE" ? a.amount : 0);
+                          }, 0);
+                          const addedMsg = selectedAddonIds.reduce((sum, id) => {
+                            const a = availableAddons.find((item) => item.id === id);
+                            return sum + (a?.type === "MESSAGES" ? a.amount : 0);
+                          }, 0);
+
+                          return (
+                            <>
+                              <div className="p-2 rounded-xl bg-slate-100/80 text-slate-700 border border-slate-200 flex flex-col items-center">
+                                <Smartphone className="w-3.5 h-3.5 text-emerald-600 mb-0.5" />
+                                <span>{addedDev > 0 ? `+${addedDev} Device` : "Slot Perangkat"}</span>
+                              </div>
+                              <div className="p-2 rounded-xl bg-slate-100/80 text-slate-700 border border-slate-200 flex flex-col items-center">
+                                <MessageSquare className="w-3.5 h-3.5 text-sky-600 mb-0.5" />
+                                <span>{addedMsg > 0 ? `+${addedMsg.toLocaleString("id-ID")} Pesan` : "Kuota Pesan"}</span>
+                              </div>
+                              <div className="p-2 rounded-xl bg-slate-100/80 text-slate-700 border border-slate-200 flex flex-col items-center">
+                                <Zap className="w-3.5 h-3.5 text-amber-500 mb-0.5" />
+                                <span>Aktif Instan</span>
+                              </div>
+                            </>
+                          );
+                        })()}
                       </div>
-                      <div className="p-2 rounded-xl bg-slate-100/80 text-slate-700 border border-slate-200 flex flex-col items-center">
-                        <MessageSquare className="w-3.5 h-3.5 text-sky-600 mb-0.5" />
-                        <span>{currentPlan.monthlyMessages.toLocaleString("id-ID")} Pesan</span>
+                    ) : (
+                      <div className="grid grid-cols-3 gap-2 text-[11px] font-bold">
+                        <div className="p-2 rounded-xl bg-slate-100/80 text-slate-700 border border-slate-200 flex flex-col items-center">
+                          <Smartphone className="w-3.5 h-3.5 text-emerald-600 mb-0.5" />
+                          <span>{currentPlan.maxDevices} Devices</span>
+                        </div>
+                        <div className="p-2 rounded-xl bg-slate-100/80 text-slate-700 border border-slate-200 flex flex-col items-center">
+                          <MessageSquare className="w-3.5 h-3.5 text-sky-600 mb-0.5" />
+                          <span>
+                            {currentPlan.monthlyMessages === -1
+                              ? "Unlimited"
+                              : currentPlan.monthlyMessages.toLocaleString("id-ID")}{" "}
+                            Pesan
+                          </span>
+                        </div>
+                        <div className="p-2 rounded-xl bg-slate-100/80 text-slate-700 border border-slate-200 flex flex-col items-center">
+                          <Server className="w-3.5 h-3.5 text-primary mb-0.5" />
+                          <span>REST API Siap</span>
+                        </div>
                       </div>
-                      <div className="p-2 rounded-xl bg-slate-100/80 text-slate-700 border border-slate-200 flex flex-col items-center">
-                        <Server className="w-3.5 h-3.5 text-primary mb-0.5" />
-                        <span>REST API Siap</span>
-                      </div>
-                    </div>
+                    )}
 
                     {/* Action Buttons */}
                     <div className="pt-2 flex flex-col gap-2.5">
