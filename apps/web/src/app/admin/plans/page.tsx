@@ -829,16 +829,17 @@ export default function AdminPlansPage() {
                                   let newPrice = formData.price;
                                   let newOrig = formData.originalPrice;
                                   if (newOrig && newOrig > 0) {
-                                    newPrice = Math.round(newOrig * (1 - preset / 100));
+                                    newPrice = Math.round((newOrig * (1 - preset / 100)) / 100) * 100;
                                   } else if (newPrice > 0) {
-                                    newOrig = Math.round(newPrice / (1 - preset / 100));
+                                    newOrig = Math.round((newPrice / (1 - preset / 100)) / 1000) * 1000;
                                   }
+                                  const finalDisc = newOrig > newPrice ? Math.round(((newOrig - newPrice) / newOrig) * 100) : preset;
                                   setFormData({
                                     ...formData,
-                                    discountPercent: preset,
+                                    discountPercent: finalDisc,
                                     price: newPrice,
                                     originalPrice: newOrig,
-                                    discountBadge: `DISKON ${preset}%`,
+                                    discountBadge: `DISKON ${finalDisc}%`,
                                   });
                                 }}
                                 className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-rose-200/80 hover:bg-rose-300 text-rose-900 cursor-pointer transition-colors"
@@ -863,9 +864,9 @@ export default function AdminPlansPage() {
                             let newOrig = formData.originalPrice;
 
                             if (newOrig && newOrig > 0) {
-                              newPrice = Math.round(newOrig * (1 - pct / 100));
+                              newPrice = Math.round((newOrig * (1 - pct / 100)) / 100) * 100;
                             } else if (newPrice > 0 && pct > 0 && pct < 100) {
-                              newOrig = Math.round(newPrice / (1 - pct / 100));
+                              newOrig = Math.round((newPrice / (1 - pct / 100)) / 1000) * 1000;
                             }
 
                             setFormData({
