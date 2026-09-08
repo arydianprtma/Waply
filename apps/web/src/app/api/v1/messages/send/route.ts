@@ -10,6 +10,7 @@ import { sendMessageSchema, validateSchema } from "@/lib/validation-schemas";
 import { sanitizePhoneNumber, isValidPhoneNumber } from "@/lib/sanitizer";
 import { applyWatermarkIfFree } from "@/lib/watermark";
 import { canUserSendMessage, recordSentMessage } from "@/lib/messages";
+import { getUserPlanAccess } from "@/lib/billing";
 
 const GATEWAY_URL = process.env.GATEWAY_INTERNAL_URL || "http://localhost:3002";
 const GATEWAY_SECRET = process.env.GATEWAY_SECRET || "sendora_internal_gateway_token_key";
@@ -90,25 +91,28 @@ export async function POST(request: Request) {
       );
     }
 
-    // 4. Blacklist Check (DB + local fallback)
-    let isBlocked = isBlacklistedLocally(userId, recipient);
-    if (!isBlocked) {
-      try {
-        const bl = await prisma.blacklist.findFirst({
-          where: { userId, phoneNumber: recipient },
-        });
-        if (bl) isBlocked = true;
-      } catch {}
-    }
+    // 4. Blacklist Check (DB + local fallback) - only if blacklistDnd feature is enabled on user plan
+    const userAccess = getUserPlanAccess(userId);
+    if (userAccess.blacklistDnd) {
+      let isBlocked = isBlacklistedLocally(userId, recipient);
+      if (!isBlocked) {
+        try {
+          const bl = await prisma.blacklist.findFirst({
+            where: { userId, phoneNumber: recipient },
+          });
+          if (bl) isBlocked = true;
+        } catch {}
+      }
 
-    if (isBlocked) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: `Nomor penerima ${recipient} terdaftar di Blacklist / Do-Not-Disturb. Pesan dibatalkan.`,
-        },
-        { status: 400 }
-      );
+      if (isBlocked) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Nomor penerima ${recipient} terdaftar di Blacklist / Do-Not-Disturb. Pesan dibatalkan.`,
+          },
+          { status: 400 }
+        );
+      }
     }
 
     // 5. Find Device (Support Auto-Rotation Round-Robin & Fallback)

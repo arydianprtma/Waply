@@ -10,6 +10,7 @@ import {
   getPlanDisplayFeatures,
   Plan,
   DEFAULT_PLANS,
+  DEFAULT_FREE_ACCESS,
   SubscriptionStatus,
   InvoiceStatus,
   Subscription,
@@ -215,6 +216,33 @@ export function activateSubscription(userId: string, planId: PlanId): Subscripti
   };
   saveSubscription(sub);
   return sub;
+}
+
+export function getUserPlanAccess(userId: string): PlanFeatureAccess {
+  try {
+    const sub = getSubscription(userId);
+    const allPlans = getAllPlans();
+    const plan = allPlans[sub.planId] || DEFAULT_PLANS[sub.planId] || DEFAULT_PLANS["FREE"];
+    if (sub.status === "EXPIRED") {
+      return DEFAULT_FREE_ACCESS;
+    }
+    return plan?.access || (plan?.price === 0 || plan?.id === "FREE" ? DEFAULT_FREE_ACCESS : {
+      devices: true,
+      warmupHealth: true,
+      broadcast: true,
+      contacts: true,
+      sendMessage: true,
+      messageLogs: true,
+      templatesSpintax: true,
+      blacklistDnd: true,
+      autoReply: true,
+      apiDocs: true,
+      apiKeys: true,
+      webhooks: true,
+    });
+  } catch {
+    return DEFAULT_FREE_ACCESS;
+  }
 }
 
 // ─── Invoice CRUD ─────────────────────────────────────────────────────────────

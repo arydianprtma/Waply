@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { prisma } from "@sendora/database";
 import { getSessionUser } from "@/lib/auth-user";
+import { getUserPlanAccess } from "@/lib/billing";
 
 const LOCAL_STORAGE_DIR = path.join(process.cwd(), ".sendora-data");
 const LOCAL_BLACKLIST_FILE = path.join(LOCAL_STORAGE_DIR, "blacklist.json");
@@ -27,6 +28,14 @@ export async function DELETE(
   try {
     const { id } = await params;
     const user = await getSessionUser();
+    const userAccess = getUserPlanAccess(user.id);
+
+    if (!userAccess.blacklistDnd) {
+      return NextResponse.json(
+        { success: false, error: "Fitur Blacklist & DND tidak aktif pada paket langganan Anda." },
+        { status: 403 }
+      );
+    }
 
     if (id.startsWith("bl_") || !process.env.DATABASE_URL) {
       deleteFromLocalBlacklist(id, user.id);

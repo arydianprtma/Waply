@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { prisma } from "@sendora/database";
 import { getSessionUser } from "@/lib/auth-user";
+import { getUserPlanAccess } from "@/lib/billing";
 
 interface LocalBlacklistItem {
   id: string;
@@ -60,6 +61,13 @@ function normalizePhoneNumber(phone: string): string {
 export async function GET() {
   try {
     const user = await getSessionUser();
+    const userAccess = getUserPlanAccess(user.id);
+    if (!userAccess.blacklistDnd) {
+      return NextResponse.json(
+        { success: false, error: "Fitur Blacklist & DND tidak aktif pada paket langganan Anda.", data: [] },
+        { status: 403 }
+      );
+    }
     try {
       const blacklist = await prisma.blacklist.findMany({
         where: { userId: user.id },
@@ -79,6 +87,13 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const user = await getSessionUser();
+    const userAccess = getUserPlanAccess(user.id);
+    if (!userAccess.blacklistDnd) {
+      return NextResponse.json(
+        { success: false, error: "Fitur Blacklist & DND tidak aktif pada paket langganan Anda." },
+        { status: 403 }
+      );
+    }
     const body = await request.json().catch(() => ({}));
 
     if (!body.phoneNumber) {

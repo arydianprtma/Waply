@@ -4,6 +4,7 @@ import { dispatchWebhookEvent } from "@/lib/webhooks";
 import { isBlacklisted, addToBlacklist } from "@/lib/blacklist";
 import { saveAutoReplyLog } from "@/lib/autoreply-logs";
 import { getAllUserDeviceRecords } from "@/lib/user-devices";
+import { getUserPlanAccess } from "@/lib/billing";
 
 const GATEWAY_URL = process.env.GATEWAY_URL || "http://localhost:3002";
 
@@ -27,6 +28,7 @@ export async function POST(req: NextRequest) {
     const cleanSender = sender.replace(/\D/g, "");
     const deviceRecords = getAllUserDeviceRecords();
     const userId = (deviceId && deviceRecords[deviceId]?.userId) || "admin-default-user";
+    const userAccess = getUserPlanAccess(userId);
 
     // 1. Dispatch Inbound Webhook event `message.received`
     dispatchWebhookEvent(userId, "message.received", {
@@ -41,8 +43,8 @@ export async function POST(req: NextRequest) {
       timestamp: timestamp || new Date().toISOString(),
     }).catch(() => {});
 
-    // 2. Auto Opt-Out: If message is STOP/BERHENTI → add to blacklist silently
-    if (isOptOutMessage(text)) {
+    // 2. Auto Opt-Out: If message is STOP/BERHENTI and feature blacklistDnd is active in plan → add to blacklist silently
+    if (userAccess.blacklistDnd && isOptOutMessage(text)) {
       addToBlacklist(userId, cleanSender, "UNSUBSCRIBE_KEYWORD");
       console.log(`[Inbound] Auto opt-out: ${cleanSender} added to blacklist (keyword: "${text}")`);
 
@@ -60,61 +62,67 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 3. Check Blacklist / DND: Do not auto-reply if sender is blacklisted
-    const blacklisted = isBlacklisted(userId, cleanSender);
-    if (blacklisted) {
-      return NextResponse.json({
-        success: true,
-        autoReply: false,
-        reason: "Sender is blacklisted",
-      });
+    // 3. Check Blacklist / DND: Do not auto-reply if sender is blacklisted (if feature is active)
+    if (userAccess.blacklistDnd) {
+      const blacklisted = isBlacklisted(userId, cleanSender);
+      if (blacklisted) {
+        return NextResponse.json({
+          success: true,
+          autoReply: false,
+          reason: "Sender is blacklisted",
+        });
+      }
     }
 
-    // 4. Evaluate Auto-Reply Rules
-    const match = findMatchingRule(userId, text, deviceId);
+    // 4. Evaluate Auto-Reply Rules (only if autoReply feature is enabled on user plan)
     let autoReplySent = false;
     let autoReplyText = "";
+    let matchedRuleName: string | undefined;
 
-    if (match) {
-      autoReplyText = match.renderedReply.replace(/\{\{pushName\}\}/g, senderName || cleanSender);
-      incrementRuleTrigger(match.rule.id);
+    if (userAccess.autoReply) {
+      const match = findMatchingRule(userId, text, deviceId);
+      if (match) {
+        matchedRuleName = match.rule.name;
+        autoReplyText = match.renderedReply.replace(/\{\{pushName\}\}/g, senderName || cleanSender);
+        incrementRuleTrigger(match.rule.id);
 
-      // Send auto-reply via Gateway
-      try {
-        const replyRes = await fetch(`${GATEWAY_URL}/api/sessions/${deviceId}/messages/send`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            recipient: cleanSender,
-            message: autoReplyText,
-          }),
-        });
-        const replyJson = await replyRes.json();
-        if (replyJson.success) {
-          autoReplySent = true;
+        // Send auto-reply via Gateway
+        try {
+          const replyRes = await fetch(`${GATEWAY_URL}/api/sessions/${deviceId}/messages/send`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              recipient: cleanSender,
+              message: autoReplyText,
+            }),
+          });
+          const replyJson = await replyRes.json();
+          if (replyJson.success) {
+            autoReplySent = true;
+          }
+        } catch (err) {
+          console.error("Failed to send auto-reply via gateway:", err);
         }
-      } catch (err) {
-        console.error("Failed to send auto-reply via gateway:", err);
-      }
 
-      // 5. Save automation log
-      saveAutoReplyLog({
-        userId,
-        ruleId: match.rule.id,
-        ruleName: match.rule.name,
-        sender: cleanSender,
-        inboundText: text,
-        replyText: autoReplyText,
-        deviceId: deviceId || "unknown",
-        success: autoReplySent,
-      });
+        // 5. Save automation log
+        saveAutoReplyLog({
+          userId,
+          ruleId: match.rule.id,
+          ruleName: match.rule.name,
+          sender: cleanSender,
+          inboundText: text,
+          replyText: autoReplyText,
+          deviceId: deviceId || "unknown",
+          success: autoReplySent,
+        });
+      }
     }
 
     return NextResponse.json({
       success: true,
       autoReply: autoReplySent,
       autoReplyText: autoReplyText || undefined,
-      ruleName: match?.rule.name,
+      ruleName: matchedRuleName,
     });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
