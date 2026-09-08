@@ -274,23 +274,15 @@ function OrderContent() {
 
   // Price calculations
   let basePrice = currentPlan.price;
-  let durationDiscount = 0;
 
   if (planPeriod === "month") {
-    const monthlyPrice = currentPlan.price;
-    basePrice = monthlyPrice * durationMonths;
-
-    if (durationMonths === 3) {
-      durationDiscount = Math.round(basePrice * 0.05); // 5% discount
-    } else if (durationMonths === 12) {
-      durationDiscount = Math.round(basePrice * 0.20); // 20% discount
-    }
+    basePrice = currentPlan.price * durationMonths;
   } else {
     basePrice = currentPlan.price;
-    durationDiscount = 0;
   }
 
-  const subtotalAfterDuration = basePrice - durationDiscount;
+  const durationDiscount = 0;
+  const subtotalAfterDuration = basePrice;
 
   // Dynamic Voucher discount calculation
   let couponDiscount = 0;
@@ -1209,15 +1201,15 @@ function OrderContent() {
                       4. Durasi Berlangganan
                     </h2>
                   </div>
-                  {planPeriod === "month" ? (
-                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full shrink-0">
-                      Hemat s/d 20%
-                    </span>
-                  ) : (
-                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full shrink-0">
-                      Paket {planPeriod === "year" ? "Tahunan (365 Hari)" : planPeriod === "day" ? "Harian (1 Hari)" : "Mingguan (7 Hari)"}
-                    </span>
-                  )}
+                  <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full shrink-0">
+                    {planPeriod === "year"
+                      ? "Paket Tahunan (365 Hari)"
+                      : planPeriod === "day"
+                      ? "Paket Harian (1 Hari)"
+                      : planPeriod === "week"
+                      ? "Paket Mingguan (7 Hari)"
+                      : "Pilihan Durasi"}
+                  </span>
                 </div>
 
                 <div className="p-4 sm:p-6 space-y-3">
@@ -1298,9 +1290,9 @@ function OrderContent() {
                           <div className={`w-3.5 h-3.5 rounded-full border ${durationMonths === 1 ? "border-emerald-600 bg-emerald-600" : "border-slate-300"}`} />
                         </div>
                         <div className="text-sm font-black text-slate-900">
-                          {formatIDR(currentPlan.price)}
+                          {formatIDR(currentPlan.price * 1)}
                         </div>
-                        <span className="text-[10px] text-slate-400">Harga Standar</span>
+                        <span className="text-[10px] text-slate-400">Durasi 1 Bulan</span>
                       </button>
 
                       {/* 3 Bulan */}
@@ -1318,9 +1310,9 @@ function OrderContent() {
                           <div className={`w-3.5 h-3.5 rounded-full border ${durationMonths === 3 ? "border-emerald-600 bg-emerald-600" : "border-slate-300"}`} />
                         </div>
                         <div className="text-sm font-black text-slate-900">
-                          {formatIDR(Math.round(currentPlan.price * 3 * 0.95))}
+                          {formatIDR(currentPlan.price * 3)}
                         </div>
-                        <span className="text-[10px] font-bold text-emerald-600">Diskon 5% Hemat</span>
+                        <span className="text-[10px] text-slate-400">Durasi 3 Bulan</span>
                       </button>
 
                       {/* 12 Bulan (1 Tahun) */}
@@ -1333,17 +1325,14 @@ function OrderContent() {
                             : "bg-white border-slate-200 hover:border-slate-300"
                         }`}
                       >
-                        <span className="absolute -top-2.5 right-3 px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-600 text-white shadow-xs">
-                          HEMAT 20%
-                        </span>
                         <div className="flex items-center justify-between mb-1">
                           <span className="font-bold text-xs text-slate-900">12 Bulan (1 Tahun)</span>
                           <div className={`w-3.5 h-3.5 rounded-full border ${durationMonths === 12 ? "border-emerald-600 bg-emerald-600" : "border-slate-300"}`} />
                         </div>
                         <div className="text-sm font-black text-slate-900">
-                          {formatIDR(Math.round(currentPlan.price * 12 * 0.80))}
+                          {formatIDR(currentPlan.price * 12)}
                         </div>
-                        <span className="text-[10px] font-bold text-emerald-600">Paling Hemat</span>
+                        <span className="text-[10px] text-slate-400">Durasi 1 Tahun Penuh</span>
                       </button>
                     </div>
                   )}
