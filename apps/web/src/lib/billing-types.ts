@@ -175,6 +175,8 @@ export interface Plan {
   originalPrice?: number; // IDR, original price before discount (harga coret)
   discountPercent?: number; // e.g. 20 for 20%
   discountBadge?: string; // e.g. "DISKON 20%", "HEMAT 20%", "FLASH SALE"
+  discountStartDate?: string | null; // ISO datetime or YYYY-MM-DDTHH:mm
+  discountEndDate?: string | null; // ISO datetime or YYYY-MM-DDTHH:mm
   period?: "month" | "week" | "year" | "day";
   maxDevices: number;
   monthlyMessages: number; // -1 for unlimited
@@ -184,6 +186,165 @@ export interface Plan {
   isActive?: boolean;
   watermarkEnabled?: boolean;
   createdAt?: string;
+}
+
+export interface PlanDiscountStatus {
+  isDiscountActive: boolean;
+  effectivePrice: number;
+  originalPrice?: number;
+  discountPercent?: number;
+  discountBadge?: string;
+  hasSchedule: boolean;
+  hasTimer: boolean;
+  isUrgentCountdown: boolean; // Sisa waktu <= 24 jam (1 hari)
+  remainingMs: number;
+  remainingDays: number;
+  remainingHours: number;
+  remainingMinutes: number;
+  remainingSeconds: number;
+  countdownFormatted: string; // e.g. "23:59:45" or "2h 14j 20m"
+  isExpired: boolean;
+  isUpcoming: boolean;
+  startDateFormatted?: string;
+  endDateFormatted?: string;
+}
+
+export function getPlanDiscountStatus(
+  plan?: Partial<Plan> | null,
+  nowMs: number = Date.now()
+): PlanDiscountStatus {
+  const defaultPrice = typeof plan?.price === "number" ? plan.price : 0;
+  const original = typeof plan?.originalPrice === "number" ? plan.originalPrice : 0;
+  const hasDiscountConfig = Boolean(original > 0 && original > defaultPrice);
+
+  if (!plan || !hasDiscountConfig) {
+    return {
+      isDiscountActive: false,
+      effectivePrice: defaultPrice,
+      hasSchedule: false,
+      hasTimer: false,
+      isUrgentCountdown: false,
+      remainingMs: 0,
+      remainingDays: 0,
+      remainingHours: 0,
+      remainingMinutes: 0,
+      remainingSeconds: 0,
+      countdownFormatted: "",
+      isExpired: false,
+      isUpcoming: false,
+    };
+  }
+
+  const startMs = plan.discountStartDate ? new Date(plan.discountStartDate).getTime() : null;
+  const endMs = plan.discountEndDate ? new Date(plan.discountEndDate).getTime() : null;
+  const hasSchedule = Boolean(startMs || endMs);
+
+  const startDateFormatted = startMs
+    ? new Date(startMs).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })
+    : undefined;
+  const endDateFormatted = endMs
+    ? new Date(endMs).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })
+    : undefined;
+
+  // 1. Belum dimulai (Upcoming)
+  if (startMs && !isNaN(startMs) && nowMs < startMs) {
+    return {
+      isDiscountActive: false,
+      effectivePrice: original || defaultPrice,
+      originalPrice: original,
+      discountPercent: plan.discountPercent,
+      discountBadge: plan.discountBadge,
+      hasSchedule: true,
+      hasTimer: false,
+      isUrgentCountdown: false,
+      remainingMs: 0,
+      remainingDays: 0,
+      remainingHours: 0,
+      remainingMinutes: 0,
+      remainingSeconds: 0,
+      countdownFormatted: "",
+      isExpired: false,
+      isUpcoming: true,
+      startDateFormatted,
+      endDateFormatted,
+    };
+  }
+
+  // 2. Sudah berakhir (Expired)
+  if (endMs && !isNaN(endMs) && nowMs > endMs) {
+    return {
+      isDiscountActive: false,
+      effectivePrice: original || defaultPrice,
+      originalPrice: original,
+      discountPercent: plan.discountPercent,
+      discountBadge: plan.discountBadge,
+      hasSchedule: true,
+      hasTimer: false,
+      isUrgentCountdown: false,
+      remainingMs: 0,
+      remainingDays: 0,
+      remainingHours: 0,
+      remainingMinutes: 0,
+      remainingSeconds: 0,
+      countdownFormatted: "",
+      isExpired: true,
+      isUpcoming: false,
+      startDateFormatted,
+      endDateFormatted,
+    };
+  }
+
+  // 3. Diskon Aktif (Sedang Berjalan)
+  let hasTimer = false;
+  let isUrgentCountdown = false;
+  let remainingMs = 0;
+  let remainingDays = 0;
+  let remainingHours = 0;
+  let remainingMinutes = 0;
+  let remainingSeconds = 0;
+  let countdownFormatted = "";
+
+  if (endMs && !isNaN(endMs) && endMs > nowMs) {
+    hasTimer = true;
+    remainingMs = endMs - nowMs;
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    isUrgentCountdown = remainingMs <= oneDayMs;
+
+    const totalSec = Math.floor(remainingMs / 1000);
+    remainingDays = Math.floor(totalSec / 86400);
+    remainingHours = Math.floor((totalSec % 86400) / 3600);
+    remainingMinutes = Math.floor((totalSec % 3600) / 60);
+    remainingSeconds = totalSec % 60;
+
+    if (remainingDays > 0) {
+      countdownFormatted = `${remainingDays}h ${remainingHours.toString().padStart(2, "0")}:${remainingMinutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
+    } else {
+      countdownFormatted = `${remainingHours.toString().padStart(2, "0")}:${remainingMinutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
+    }
+  }
+
+  const calcPercent = original > defaultPrice ? Math.round(((original - defaultPrice) / original) * 100) : 0;
+
+  return {
+    isDiscountActive: true,
+    effectivePrice: defaultPrice,
+    originalPrice: original,
+    discountPercent: plan.discountPercent || calcPercent,
+    discountBadge: plan.discountBadge || (calcPercent > 0 ? `DISKON ${calcPercent}%` : undefined),
+    hasSchedule,
+    hasTimer,
+    isUrgentCountdown,
+    remainingMs,
+    remainingDays,
+    remainingHours,
+    remainingMinutes,
+    remainingSeconds,
+    countdownFormatted,
+    isExpired: false,
+    isUpcoming: false,
+    startDateFormatted,
+    endDateFormatted,
+  };
 }
 
 export function getPlanDisplayFeatures(plan: Partial<Plan>): string[] {

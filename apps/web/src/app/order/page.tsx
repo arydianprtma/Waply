@@ -43,12 +43,14 @@ import {
   LogOut,
   Loader2,
   PlusCircle,
+  Timer,
 } from "lucide-react";
 import {
   type Plan,
   type PlanId,
   DEFAULT_PLANS,
   getPlanDetailedFeatureList,
+  getPlanDiscountStatus,
 } from "@/lib/billing-types";
 import { AddonItem } from "@/lib/addon-types";
 import { ModalPortal } from "@/components/ui/ModalPortal";
@@ -150,6 +152,12 @@ function OrderContent() {
   const [syncChecking, setSyncChecking] = useState(false);
   const [syncNotice, setSyncNotice] = useState<{ type: "info" | "warning" | "error"; title: string; message: string } | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [nowMs, setNowMs] = useState<number>(Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -310,16 +318,21 @@ function OrderContent() {
 
   const isAddonMode = checkoutMode === "ADDON";
 
+  const currentPlanDiscount = getPlanDiscountStatus(currentPlan, nowMs);
+  const planUnitPrice = currentPlanDiscount.isDiscountActive
+    ? currentPlan.price
+    : (currentPlan.originalPrice || currentPlan.price);
+
   // Price calculations
   let basePrice = 0;
   if (!isAddonMode) {
     if (planPeriod === "year") {
       const years = Math.max(1, Math.round(effectiveDurationMonths / 12));
-      basePrice = currentPlan.price * years;
+      basePrice = planUnitPrice * years;
     } else if (planPeriod === "month") {
-      basePrice = currentPlan.price * durationMonths;
+      basePrice = planUnitPrice * durationMonths;
     } else {
-      basePrice = currentPlan.price;
+      basePrice = planUnitPrice;
     }
   }
 
@@ -1217,7 +1230,8 @@ function OrderContent() {
                         >
                           {activePlansList.map((p) => {
                             const isSelected = selectedPlanId === p.id;
-                            const hasDiscount = Boolean(p.originalPrice && p.originalPrice > p.price);
+                            const pDiscount = getPlanDiscountStatus(p, nowMs);
+                            const hasDiscount = pDiscount.isDiscountActive && Boolean(pDiscount.originalPrice && pDiscount.originalPrice > p.price);
                             const periodSuffix =
                               p.period === "day"
                                 ? "/ hr"
@@ -1250,11 +1264,21 @@ function OrderContent() {
                                     : "bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/50"
                                 }`}
                               >
-                                {p.isPopular && (
+                                {pDiscount.hasTimer && pDiscount.isDiscountActive ? (
+                                  <span className={`absolute -top-2.5 right-3 px-2.5 py-0.5 rounded-full text-[9px] font-black tracking-tight flex items-center gap-1 shadow-xs ${
+                                    pDiscount.isUrgentCountdown
+                                      ? "bg-rose-600 text-white animate-pulse"
+                                      : "bg-amber-500 text-white"
+                                  }`}>
+                                    <Timer className="w-2.5 h-2.5" />
+                                    <span>{pDiscount.isUrgentCountdown ? `SISA ${pDiscount.countdownFormatted}` : `PROMO ${pDiscount.countdownFormatted}`}</span>
+                                  </span>
+                                ) : p.isPopular ? (
                                   <span className="absolute -top-2.5 right-3 px-2 py-0.5 rounded-full text-[9px] font-black bg-primary text-white shadow-xs">
                                     POPULER
                                   </span>
-                                )}
+                                ) : null}
+
                                 <div className="flex items-center justify-between mb-1.5">
                                   <span className="font-black text-sm text-slate-900">{p.name}</span>
                                   <div
@@ -1269,22 +1293,22 @@ function OrderContent() {
                                 {hasDiscount && (
                                   <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                                     <span className="text-xs text-slate-400 line-through font-medium">
-                                      {formatIDR(p.originalPrice!)}
+                                      {formatIDR(pDiscount.originalPrice!)}
                                     </span>
-                                    {p.discountBadge ? (
+                                    {pDiscount.discountBadge ? (
                                       <span className="text-[10px] font-bold px-1.5 py-0.5 bg-rose-50 text-rose-600 border border-rose-200/60 rounded">
-                                        {p.discountBadge}
+                                        {pDiscount.discountBadge}
                                       </span>
-                                    ) : p.discountPercent ? (
+                                    ) : pDiscount.discountPercent ? (
                                       <span className="text-[10px] font-bold px-1.5 py-0.5 bg-rose-50 text-rose-600 border border-rose-200/60 rounded">
-                                        -{p.discountPercent}%
+                                        -{pDiscount.discountPercent}%
                                       </span>
                                     ) : null}
                                   </div>
                                 )}
 
                                 <div className="text-base font-black text-slate-900">
-                                  {formatIDR(p.price)}
+                                  {formatIDR(pDiscount.effectivePrice)}
                                   <span className="text-[10px] text-slate-400 font-normal"> {periodSuffix}</span>
                                 </div>
                                 <div className="text-[11px] text-slate-500 mt-2 space-y-0.5">
@@ -1836,6 +1860,22 @@ function OrderContent() {
                       <div className="flex items-center justify-between text-emerald-600 font-bold">
                         <span>Diskon Durasi ({durationMonths === 12 ? "20%" : "5%"}):</span>
                         <span>- {formatIDR(durationDiscount)}</span>
+                      </div>
+                    )}
+
+                    {currentPlanDiscount.hasTimer && currentPlanDiscount.isDiscountActive && (
+                      <div className={`p-2.5 rounded-2xl border text-xs flex items-center justify-between gap-2 shadow-2xs ${
+                        currentPlanDiscount.isUrgentCountdown
+                          ? "bg-rose-50 border-rose-200 text-rose-950 font-medium"
+                          : "bg-amber-50 border-amber-200 text-amber-950 font-medium"
+                      }`}>
+                        <div className="flex items-center gap-1.5 font-bold">
+                          <Timer className={`w-4 h-4 ${currentPlanDiscount.isUrgentCountdown ? "text-rose-600 animate-pulse" : "text-amber-600"}`} />
+                          <span>{currentPlanDiscount.isUrgentCountdown ? "⚡ Flash Sale Berakhir:" : "⏳ Promo Berakhir:"}</span>
+                        </div>
+                        <span className="font-mono font-black text-xs px-2 py-0.5 rounded-md bg-white border shadow-2xs">
+                          {currentPlanDiscount.countdownFormatted}
+                        </span>
                       </div>
                     )}
                   </>

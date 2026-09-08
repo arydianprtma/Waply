@@ -23,8 +23,17 @@ import {
   Flame,
   Users,
   Calendar,
+  Timer,
+  Clock,
+  Hourglass,
 } from "lucide-react";
-import { Plan, PlanFeatureAccess, FEATURE_ACCESS_CATEGORIES, DEFAULT_FREE_ACCESS } from "@/lib/billing-types";
+import { 
+  Plan, 
+  PlanFeatureAccess, 
+  FEATURE_ACCESS_CATEGORIES, 
+  DEFAULT_FREE_ACCESS,
+  getPlanDiscountStatus,
+} from "@/lib/billing-types";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 
 const DEFAULT_ACCESS: PlanFeatureAccess = {
@@ -43,19 +52,28 @@ const DEFAULT_ACCESS: PlanFeatureAccess = {
 };
 
 function getPlanFeaturesWithStatus(plan: Plan) {
-  const access = plan.access || (plan.price === 0 || plan.id === "FREE" ? DEFAULT_FREE_ACCESS : DEFAULT_ACCESS);
-  const list: { label: string; included: boolean }[] = [];
+  const currentAccess = plan.access || {
+    devices: true,
+    warmupHealth: true,
+    broadcast: true,
+    contacts: true,
+    sendMessage: true,
+    messageLogs: true,
+    templatesSpintax: true,
+    blacklistDnd: true,
+    autoReply: true,
+    apiDocs: true,
+    apiKeys: true,
+    webhooks: true,
+  };
+
+  const list: { key: string; label: string; included: boolean }[] = [];
 
   FEATURE_ACCESS_CATEGORIES.forEach((cat) => {
     cat.items.forEach((item) => {
-      let isIncluded = Boolean(access[item.key as keyof PlanFeatureAccess]);
-      if (item.key === "apiKeys" && access.apiAccess !== undefined) {
-        isIncluded = Boolean(access.apiKeys || access.apiAccess);
-      }
-      if (item.key === "contacts" && access.contactsUnlimited !== undefined) {
-        isIncluded = Boolean(access.contacts || access.contactsUnlimited);
-      }
+      const isIncluded = Boolean(currentAccess[item.key as keyof PlanFeatureAccess]);
       list.push({
+        key: item.key,
         label: item.label,
         included: isIncluded,
       });
@@ -69,15 +87,21 @@ export default function AdminPlansPage() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [nowMs, setNowMs] = useState<number>(Date.now());
   const [filterCategory, setFilterCategory] = useState<"all" | "day" | "month" | "year">("all");
 
-  // Form State
-  const [editingId, setEditingId] = useState<string | null>(null);
+  // Live 1-second interval for real-time countdown preview
+  useEffect(() => {
+    const timer = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [targetDeletePlan, setTargetDeletePlan] = useState<Plan | null>(null);
-  const [deleting, setDeleting] = useState(false);
 
   const handleOpenDelete = (p: Plan) => {
     setTargetDeletePlan(p);
@@ -102,7 +126,7 @@ export default function AdminPlansPage() {
         }
         await fetchPlans();
       } else {
-        showToast(`Gagal menghapus: ${json.error || "Terjadi kesalahan"}`);
+        showToast(`Gagal: ${json.error || "Gagal menghapus paket"}`);
       }
     } catch {
       showToast("Terjadi kesalahan saat menghapus paket");
@@ -119,6 +143,8 @@ export default function AdminPlansPage() {
     originalPrice: number;
     discountPercent: number;
     discountBadge: string;
+    discountStartDate: string | null;
+    discountEndDate: string | null;
     period: "month" | "week" | "year" | "day";
     maxDevices: number;
     monthlyMessages: number;
@@ -136,6 +162,8 @@ export default function AdminPlansPage() {
     originalPrice: 129000,
     discountPercent: 23,
     discountBadge: "DISKON 23%",
+    discountStartDate: null,
+    discountEndDate: null,
     period: "month",
     maxDevices: 3,
     monthlyMessages: 10000,
@@ -179,6 +207,8 @@ export default function AdminPlansPage() {
       originalPrice: 0,
       discountPercent: 0,
       discountBadge: "",
+      discountStartDate: null,
+      discountEndDate: null,
       period: "month",
       maxDevices: 3,
       monthlyMessages: 10000,
@@ -207,6 +237,8 @@ export default function AdminPlansPage() {
       originalPrice: hasDisc ? (p.originalPrice || 0) : 0,
       discountPercent: hasDisc ? (p.discountPercent || calcPercent) : 0,
       discountBadge: hasDisc ? (p.discountBadge || `DISKON ${calcPercent}%`) : "",
+      discountStartDate: p.discountStartDate || null,
+      discountEndDate: p.discountEndDate || null,
       period: p.period || "month",
       maxDevices: p.maxDevices,
       monthlyMessages: p.monthlyMessages,
@@ -259,6 +291,8 @@ export default function AdminPlansPage() {
         originalPrice: formData.hasDiscount ? formData.originalPrice : undefined,
         discountPercent: formData.hasDiscount ? formData.discountPercent : undefined,
         discountBadge: formData.hasDiscount && formData.discountBadge ? formData.discountBadge : undefined,
+        discountStartDate: formData.hasDiscount && formData.discountStartDate ? formData.discountStartDate : undefined,
+        discountEndDate: formData.hasDiscount && formData.discountEndDate ? formData.discountEndDate : undefined,
         period: formData.period,
         maxDevices: formData.maxDevices,
         monthlyMessages: formData.isUnlimitedMessages ? -1 : formData.monthlyMessages,
@@ -280,8 +314,10 @@ export default function AdminPlansPage() {
         setModalOpen(false);
         fetchPlans();
       } else {
-        showToast(json.error || "Gagal menyimpan paket");
+        showToast(`Gagal: ${json.error || "Gagal menyimpan paket"}`);
       }
+    } catch {
+      showToast("Terjadi kesalahan saat menyimpan paket");
     } finally {
       setSaving(false);
     }
@@ -486,7 +522,7 @@ export default function AdminPlansPage() {
                     </div>
 
                     {p.originalPrice && p.originalPrice > p.price && (
-                      <div className="mt-1 flex items-center gap-2">
+                      <div className="mt-1 flex flex-wrap items-center gap-1.5">
                         <span className="text-xs text-slate-400 line-through font-semibold">
                           Rp {p.originalPrice.toLocaleString("id-ID")}
                         </span>
@@ -495,6 +531,37 @@ export default function AdminPlansPage() {
                             Diskon {p.discountPercent}%
                           </span>
                         )}
+                        {(() => {
+                          const status = getPlanDiscountStatus(p, nowMs);
+                          if (status.hasSchedule && status.hasTimer && status.isDiscountActive) {
+                            return (
+                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
+                                status.isUrgentCountdown
+                                  ? "bg-rose-600 text-white animate-pulse shadow-2xs"
+                                  : "bg-amber-100 text-amber-900 border border-amber-300"
+                              }`}>
+                                <Timer className="w-3 h-3" />
+                                <span>{status.isUrgentCountdown ? `⚡ Sisa ${status.countdownFormatted}` : `⏳ ${status.countdownFormatted}`}</span>
+                              </span>
+                            );
+                          }
+                          if (status.hasSchedule && status.isUpcoming) {
+                            return (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                <Clock className="w-3 h-3" />
+                                <span>Terjadwal</span>
+                              </span>
+                            );
+                          }
+                          if (status.hasSchedule && status.isExpired) {
+                            return (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200">
+                                Expired
+                              </span>
+                            );
+                          }
+                          return null;
+                        })()}
                       </div>
                     )}
 
@@ -902,6 +969,161 @@ export default function AdminPlansPage() {
                           onChange={(e) => setFormData({ ...formData, discountBadge: e.target.value })}
                         />
                       </div>
+                    </div>
+
+                    {/* Jadwal Masa Berlaku Promo & Countdown Setting */}
+                    <div className="pt-2.5 border-t border-rose-200/70 space-y-2.5">
+                      <div className="flex items-center justify-between flex-wrap gap-1">
+                        <span className="text-[11px] font-bold text-rose-950 flex items-center gap-1.5">
+                          <Timer className="w-3.5 h-3.5 text-rose-600" /> Jadwal & Masa Berlaku Diskon (Otomatis Countdown)
+                        </span>
+                        <span className="text-[10px] text-rose-700 font-medium">
+                          Otomatis countdown saat sisa &le; 24 jam
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        {/* Tanggal Mulai */}
+                        <div className="form-control">
+                          <label className="label py-0.5">
+                            <span className="label-text font-bold text-[10px] text-rose-900">Tanggal & Waktu Mulai</span>
+                          </label>
+                          <input
+                            type="datetime-local"
+                            className="input input-bordered input-xs bg-white text-xs font-mono"
+                            value={formData.discountStartDate || ""}
+                            onChange={(e) => setFormData({ ...formData, discountStartDate: e.target.value || null })}
+                          />
+                        </div>
+
+                        {/* Tanggal Berakhir */}
+                        <div className="form-control">
+                          <label className="label py-0.5">
+                            <span className="label-text font-bold text-[10px] text-rose-900">Tanggal & Waktu Berakhir</span>
+                          </label>
+                          <input
+                            type="datetime-local"
+                            className="input input-bordered input-xs bg-white text-xs font-mono"
+                            value={formData.discountEndDate || ""}
+                            onChange={(e) => setFormData({ ...formData, discountEndDate: e.target.value || null })}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Quick Date Presets */}
+                      <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                        <span className="text-[10px] text-rose-800 font-bold">Preset Berakhir:</span>
+                        {[
+                          { label: "+24 Jam (1 Hari)", hours: 24 },
+                          { label: "+48 Jam (2 Hari)", hours: 48 },
+                          { label: "+3 Hari", hours: 72 },
+                          { label: "+7 Hari", hours: 168 },
+                          { label: "+14 Hari", hours: 336 },
+                          { label: "+30 Hari", hours: 720 },
+                        ].map((preset) => (
+                          <button
+                            key={preset.label}
+                            type="button"
+                            onClick={() => {
+                              const now = new Date();
+                              const end = new Date(Date.now() + preset.hours * 60 * 60 * 1000);
+                              const formatLocal = (d: Date) => {
+                                const pad = (n: number) => n.toString().padStart(2, "0");
+                                return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+                              };
+                              setFormData({
+                                ...formData,
+                                discountStartDate: formData.discountStartDate || formatLocal(now),
+                                discountEndDate: formatLocal(end),
+                              });
+                            }}
+                            className="px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-200/70 hover:bg-rose-300 text-rose-950 transition-colors cursor-pointer"
+                          >
+                            {preset.label}
+                          </button>
+                        ))}
+                        {(formData.discountStartDate || formData.discountEndDate) && (
+                          <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, discountStartDate: null, discountEndDate: null })}
+                            className="px-2 py-0.5 rounded text-[10px] font-bold text-rose-700 hover:text-rose-900 underline ml-auto cursor-pointer"
+                          >
+                            Hapus Batas Waktu
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Live Schedule Status Alert */}
+                      {(() => {
+                        const tempStatus = getPlanDiscountStatus(
+                          {
+                            price: formData.price,
+                            originalPrice: formData.originalPrice,
+                            discountPercent: formData.discountPercent,
+                            discountBadge: formData.discountBadge,
+                            discountStartDate: formData.discountStartDate,
+                            discountEndDate: formData.discountEndDate,
+                          },
+                          nowMs
+                        );
+
+                        if (!tempStatus.hasSchedule) {
+                          return (
+                            <p className="text-[10px] text-slate-500 italic">
+                              * Tanpa jadwal tanggal, diskon akan selalu aktif terus-menerus.
+                            </p>
+                          );
+                        }
+
+                        if (tempStatus.isUpcoming) {
+                          return (
+                            <div className="p-2 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 text-[11px] flex items-center gap-2">
+                              <Clock className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                              <span>
+                                <strong>Promo Terjadwal:</strong> Diskon akan mulai aktif pada <strong>{tempStatus.startDateFormatted}</strong>.
+                              </span>
+                            </div>
+                          );
+                        }
+
+                        if (tempStatus.isExpired) {
+                          return (
+                            <div className="p-2 rounded-xl bg-slate-100 border border-slate-300 text-slate-700 text-[11px] flex items-center gap-2">
+                              <Hourglass className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                              <span>
+                                <strong>Promo Telah Berakhir:</strong> Batas waktu promo ({tempStatus.endDateFormatted}) sudah lewat. Sistem otomatis mengembalikan ke harga normal <strong>Rp {formData.originalPrice.toLocaleString("id-ID")}</strong>.
+                              </span>
+                            </div>
+                          );
+                        }
+
+                        if (tempStatus.isDiscountActive && tempStatus.hasTimer) {
+                          return (
+                            <div className={`p-2 rounded-xl border text-[11px] flex items-center justify-between gap-2 ${
+                              tempStatus.isUrgentCountdown
+                                ? "bg-rose-100 border-rose-300 text-rose-950 font-medium"
+                                : "bg-emerald-50 border-emerald-200 text-emerald-950"
+                            }`}>
+                              <div className="flex items-center gap-2">
+                                <Timer className={`w-3.5 h-3.5 ${tempStatus.isUrgentCountdown ? "text-rose-600 animate-pulse" : "text-emerald-600"}`} />
+                                <span>
+                                  {tempStatus.isUrgentCountdown ? (
+                                    <strong>⚡ Mode Countdown Mendesak (&le; 24 Jam):</strong>
+                                  ) : (
+                                    <strong>🟢 Diskon Aktif:</strong>
+                                  )}{" "}
+                                  Berakhir sampai {tempStatus.endDateFormatted}
+                                </span>
+                              </div>
+                              <span className="font-mono font-black text-xs px-2 py-0.5 rounded bg-white border shadow-2xs">
+                                {tempStatus.countdownFormatted}
+                              </span>
+                            </div>
+                          );
+                        }
+
+                        return null;
+                      })()}
                     </div>
 
                     {/* Live Preview Box */}

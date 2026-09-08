@@ -108,6 +108,8 @@ export const planSchema = z.object({
   originalPrice: z.coerce.number().min(0).optional().nullable(),
   discountPercent: z.coerce.number().min(0).max(100).optional().nullable(),
   discountBadge: z.string().optional().nullable(),
+  discountStartDate: z.string().optional().nullable(),
+  discountEndDate: z.string().optional().nullable(),
   watermarkEnabled: z.boolean().optional().nullable(),
   features: z.union([z.array(z.string()), z.string()]).optional().nullable(),
   access: z.record(z.string(), z.boolean()).optional().nullable(),

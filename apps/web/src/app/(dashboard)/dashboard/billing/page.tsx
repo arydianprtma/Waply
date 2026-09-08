@@ -21,6 +21,7 @@ import {
   ShoppingBag,
   ArrowRight,
   Check,
+  Timer,
 } from "lucide-react";
 import {
   type PlanId,
@@ -28,6 +29,7 @@ import {
   type Subscription,
   type Invoice,
   getPlanDetailedFeatureList,
+  getPlanDiscountStatus,
 } from "@/lib/billing-types";
 import { AddonItem, UserAddon } from "@/lib/addon-types";
 import { setCachedBillingData } from "@/lib/use-billing-plan";
@@ -126,6 +128,12 @@ function BillingContent() {
   const [userAddonTotals, setUserAddonTotals] = useState<{ extraDevices: number; extraMessages: number }>({ extraDevices: 0, extraMessages: 0 });
   const [userAddons, setUserAddons] = useState<UserAddon[]>([]);
   const [addonCategoryFilter, setAddonCategoryFilter] = useState<"ALL" | "DEVICE" | "MESSAGES">("ALL");
+  const [nowMs, setNowMs] = useState<number>(Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const periodTabsList: { id: "day" | "month" | "year" | "all"; label: string; badge?: string }[] = [
     { id: "day", label: "Harian" },
@@ -509,26 +517,41 @@ function BillingContent() {
                       )}
                     </div>
 
-                    <div className="min-h-[54px] flex flex-col justify-end">
-                      {plan.originalPrice && plan.originalPrice > plan.price && (
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <span className="text-xs text-base-content/40 line-through font-semibold">
-                            {formatIDR(plan.originalPrice)}
-                          </span>
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black bg-rose-500 text-white shadow-xs tracking-wide">
-                            {plan.discountBadge || `HEMAT ${plan.discountPercent || Math.round(((plan.originalPrice - plan.price) / plan.originalPrice) * 100)}%`}
-                          </span>
-                        </div>
-                      )}
+                    {(() => {
+                      const discStatus = getPlanDiscountStatus(plan, nowMs);
+                      return (
+                        <div className="min-h-[54px] flex flex-col justify-end">
+                          {discStatus.isDiscountActive && discStatus.originalPrice && discStatus.originalPrice > discStatus.effectivePrice && (
+                            <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                              <span className="text-xs text-base-content/40 line-through font-semibold">
+                                {formatIDR(discStatus.originalPrice)}
+                              </span>
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black bg-rose-500 text-white shadow-xs tracking-wide">
+                                {discStatus.discountBadge || `HEMAT ${discStatus.discountPercent}%`}
+                              </span>
+                              {discStatus.hasTimer && (
+                                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-extrabold ${
+                                  discStatus.isUrgentCountdown
+                                    ? "bg-rose-600 text-white animate-pulse"
+                                    : "bg-amber-100 text-amber-900 border border-amber-300"
+                                }`}>
+                                  <Timer className="w-2.5 h-2.5" />
+                                  <span>{discStatus.isUrgentCountdown ? `Sisa ${discStatus.countdownFormatted}` : discStatus.countdownFormatted}</span>
+                                </span>
+                              )}
+                            </div>
+                          )}
 
-                      <div className="text-2xl font-black">
-                        {formatIDR(plan.price || 0)}
-                        <span className="text-xs font-normal text-base-content/50">
-                          {" "}
-                          / {plan.period === "day" ? "hari" : plan.period === "week" ? "mgg" : plan.period === "year" ? "thn" : "bln"}
-                        </span>
-                      </div>
-                    </div>
+                          <div className="text-2xl font-black">
+                            {formatIDR(discStatus.effectivePrice)}
+                            <span className="text-xs font-normal text-base-content/50">
+                              {" "}
+                              / {plan.period === "day" ? "hari" : plan.period === "week" ? "mgg" : plan.period === "year" ? "thn" : "bln"}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })()}
                     <ul className="space-y-2.5 mt-4">
                       {detailedFeatures.map((feat, idx) => (
                         <li

@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { CheckCircle2, X, Zap, Calendar, Sparkles, Layers, PackageX } from "lucide-react";
-import { Plan, getPlanDetailedFeatureList } from "@/lib/billing-types";
+import { CheckCircle2, X, Zap, Calendar, Sparkles, Layers, PackageX, Timer } from "lucide-react";
+import { Plan, getPlanDetailedFeatureList, getPlanDiscountStatus } from "@/lib/billing-types";
 
 interface LandingPricingProps {
   plans: Plan[];
@@ -13,6 +13,12 @@ type PeriodTab = "month" | "day" | "year" | "all";
 
 export default function LandingPricing({ plans }: LandingPricingProps) {
   const [activeTab, setActiveTab] = useState<PeriodTab>("month");
+  const [nowMs, setNowMs] = useState<number>(Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Calculate highest discount for each tab dynamically from plans
   const getTabDiscountBadge = (tabId: PeriodTab): string | undefined => {
@@ -26,15 +32,10 @@ export default function LandingPricing({ plans }: LandingPricingProps) {
     let badgeText = "";
 
     for (const p of periodPlans) {
-      if (p.discountPercent && p.discountPercent > maxPercent) {
-        maxPercent = p.discountPercent;
-        badgeText = p.discountBadge || `Hemat ${maxPercent}%`;
-      } else if (p.originalPrice && p.originalPrice > p.price) {
-        const pct = Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100);
-        if (pct > maxPercent) {
-          maxPercent = pct;
-          badgeText = p.discountBadge || `Hemat ${pct}%`;
-        }
+      const disc = getPlanDiscountStatus(p, nowMs);
+      if (disc.isDiscountActive && disc.discountPercent && disc.discountPercent > maxPercent) {
+        maxPercent = disc.discountPercent;
+        badgeText = disc.discountBadge || `Hemat ${maxPercent}%`;
       }
     }
 
@@ -59,44 +60,27 @@ export default function LandingPricing({ plans }: LandingPricingProps) {
   });
 
   return (
-    <div className="space-y-6 sm:space-y-10">
-      {/* Responsive Segmented Control Tab Filter */}
-      <div className="flex justify-center w-full px-2">
-        <div
-          role="tablist"
-          aria-label="Filter periode paket langganan"
-          className="inline-flex items-center justify-center flex-wrap sm:flex-nowrap gap-1.5 p-1.5 bg-slate-100 rounded-2xl border border-slate-200/90 shadow-xs max-w-full"
-        >
+    <div className="w-full">
+      {/* Tab Switcher */}
+      <div className="flex justify-center mb-8 sm:mb-12">
+        <div className="bg-slate-100 p-1.5 rounded-2xl flex flex-wrap gap-1 max-w-full justify-center">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
-                role="tab"
-                aria-selected={isActive}
-                type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center justify-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm transition-all duration-150 select-none shrink-0 cursor-pointer min-h-[42px] sm:min-h-[38px] ${
+                className={`flex items-center gap-2 px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all relative ${
                   isActive
-                    ? "bg-white text-slate-900 shadow-sm border border-slate-200 font-bold"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 font-medium"
+                    ? "bg-white text-slate-900 shadow-sm"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
                 }`}
               >
-                <Icon
-                  className={`w-3.5 h-3.5 shrink-0 ${
-                    isActive ? "text-primary font-bold" : "text-slate-500"
-                  }`}
-                />
+                <Icon className="w-4 h-4" />
                 <span>{tab.label}</span>
                 {tab.badge && (
-                  <span
-                    className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold tracking-tight ml-0.5 shrink-0 ${
-                      isActive
-                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                        : "bg-emerald-100/70 text-emerald-800"
-                    }`}
-                  >
+                  <span className="badge badge-error badge-xs text-white font-extrabold text-[9px] px-1.5">
                     {tab.badge}
                   </span>
                 )}
@@ -106,55 +90,69 @@ export default function LandingPricing({ plans }: LandingPricingProps) {
         </div>
       </div>
 
-      {/* Empty State when no plans match active tab */}
+      {/* Pricing Cards Grid */}
       {filteredPlans.length === 0 ? (
-        <div className="p-8 sm:p-12 text-center bg-white rounded-2xl border border-dashed border-slate-300 max-w-md mx-auto space-y-3">
-          <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
-            <PackageX className="w-6 h-6" />
-          </div>
-          <h3 className="font-bold text-slate-800 text-base">Tidak Ada Paket Tersedia</h3>
-          <p className="text-xs sm:text-sm text-slate-500">
-            Belum ada paket aktif untuk periode ini. Silakan pilih periode langganan lainnya.
+        <div className="text-center py-12 bg-white rounded-3xl border border-slate-200 p-8 max-w-md mx-auto">
+          <PackageX className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+          <h3 className="font-bold text-slate-700 text-sm">Belum Ada Paket</h3>
+          <p className="text-xs text-slate-400 mt-1">
+            Paket untuk periode ini belum dikonfigurasi.
           </p>
-          <button
-            type="button"
-            onClick={() => setActiveTab("all")}
-            className="btn btn-sm btn-outline rounded-xl mt-2 text-xs font-semibold"
-          >
-            Lihat Semua Paket
-          </button>
         </div>
       ) : (
-        /* Grid of Plans */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 sm:gap-6 items-stretch w-full">
+        <div
+          className={`grid grid-cols-1 gap-6 sm:gap-8 items-stretch ${
+            filteredPlans.length === 1
+              ? "max-w-md mx-auto"
+              : filteredPlans.length === 2
+              ? "sm:grid-cols-2 max-w-4xl mx-auto"
+              : filteredPlans.length === 3
+              ? "sm:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto"
+              : "sm:grid-cols-2 lg:grid-cols-4 max-w-7xl mx-auto"
+          }`}
+        >
           {filteredPlans.map((plan) => {
-            const isFree = plan.price === 0;
-            const priceFormatted = isFree ? "Rp0" : `Rp${plan.price.toLocaleString("id-ID")}`;
-            const periodLabel =
-              plan.period === "day"
-                ? " / hari"
-                : plan.period === "week"
-                ? " / minggu"
-                : plan.period === "year"
-                ? " / tahun"
-                : " / bulan";
+            const discStatus = getPlanDiscountStatus(plan, nowMs);
+            const isFree = plan.price === 0 || plan.id === "FREE";
+            const priceFormatted = isFree
+              ? "Gratis"
+              : `Rp${discStatus.effectivePrice.toLocaleString("id-ID")}`;
+            const periodLabel = isFree
+              ? "selamanya"
+              : plan.period === "day"
+              ? "/hari"
+              : plan.period === "week"
+              ? "/minggu"
+              : plan.period === "year"
+              ? "/tahun"
+              : "/bulan";
 
             const detailedFeatures = getPlanDetailedFeatureList(plan);
 
             return (
               <div
                 key={plan.id}
-                className={`bg-white p-5 sm:p-6 rounded-2xl flex flex-col justify-between transition-all duration-200 ${
+                className={`card bg-white rounded-3xl p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 relative ${
                   plan.isPopular
-                    ? "border-2 border-primary shadow-md relative ring-2 ring-primary/10"
+                    ? "border-2 border-primary shadow-xl shadow-primary/10 ring-4 ring-primary/5"
                     : "border border-slate-200 hover:shadow-md"
                 }`}
               >
-                {plan.isPopular && (
+                {discStatus.hasTimer && discStatus.isDiscountActive ? (
+                  <div className={`badge absolute -top-3 right-5 font-black shadow-xs text-[10px] flex items-center gap-1 ${
+                    discStatus.isUrgentCountdown
+                      ? "badge-error text-white animate-pulse"
+                      : "bg-amber-500 text-white border-none"
+                  }`}>
+                    <Timer className="w-3 h-3" />
+                    <span>{discStatus.isUrgentCountdown ? `Sisa ${discStatus.countdownFormatted}` : `Promo ${discStatus.countdownFormatted}`}</span>
+                  </div>
+                ) : plan.isPopular ? (
                   <div className="badge badge-primary absolute -top-3 right-5 font-bold shadow-xs text-xs">
                     Paling Populer
                   </div>
-                )}
+                ) : null}
+
                 <div>
                   <div className="flex items-center justify-between gap-2 min-h-[28px]">
                     <h3
@@ -164,31 +162,17 @@ export default function LandingPricing({ plans }: LandingPricingProps) {
                     >
                       {plan.name}
                     </h3>
-                    {plan.period === "day" && (
-                      <span className="badge badge-sm badge-warning font-bold text-[10px] shrink-0">
-                        Harian
-                      </span>
-                    )}
-                    {plan.period === "year" && (
-                      <span className="badge badge-sm badge-success text-white font-bold text-[10px] shrink-0">
-                        Tahunan
-                      </span>
-                    )}
                   </div>
 
                   {/* Price Section */}
                   <div className="mt-3 sm:mt-4 min-h-[52px] flex flex-col justify-end">
-                    {plan.originalPrice && plan.originalPrice > plan.price ? (
+                    {discStatus.isDiscountActive && discStatus.originalPrice && discStatus.originalPrice > discStatus.effectivePrice ? (
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs text-slate-400 line-through font-semibold">
-                          Rp{plan.originalPrice.toLocaleString("id-ID")}
+                          Rp{discStatus.originalPrice.toLocaleString("id-ID")}
                         </span>
                         <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-500 text-white tracking-tight shrink-0">
-                          {plan.discountBadge ||
-                            `HEMAT ${
-                              plan.discountPercent ||
-                              Math.round(((plan.originalPrice - plan.price) / plan.originalPrice) * 100)
-                            }%`}
+                          {discStatus.discountBadge || `HEMAT ${discStatus.discountPercent}%`}
                         </span>
                       </div>
                     ) : null}
