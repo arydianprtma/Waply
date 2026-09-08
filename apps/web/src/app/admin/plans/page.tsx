@@ -870,11 +870,11 @@ export default function AdminPlansPage() {
 
                 {formData.hasDiscount && (
                   <div className="space-y-3.5 pt-2 border-t border-slate-200">
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {/* Harga Asli */}
                       <div className="form-control">
                         <label className="label py-1">
-                          <span className="label-text font-bold text-[11px] text-slate-700">
+                          <span className="label-text font-bold text-xs text-slate-700">
                             Harga Normal (Coret)
                           </span>
                         </label>
@@ -899,85 +899,86 @@ export default function AdminPlansPage() {
                         />
                       </div>
 
-                      {/* Diskon % */}
-                      <div className="form-control">
-                        <div className="flex items-center justify-between py-1">
-                          <label className="label-text font-bold text-[11px] text-slate-700">
-                            Diskon (%)
-                          </label>
-                          <div className="flex items-center gap-1">
-                            {[10, 20, 25, 50].map((preset) => (
-                              <button
-                                key={preset}
-                                type="button"
-                                onClick={() => {
-                                  let newPrice = formData.price;
-                                  let newOrig = formData.originalPrice;
-                                  if (newOrig && newOrig > 0) {
-                                    newPrice = Math.round((newOrig * (1 - preset / 100)) / 100) * 100;
-                                  } else if (newPrice > 0) {
-                                    newOrig = Math.round((newPrice / (1 - preset / 100)) / 1000) * 1000;
-                                  }
-                                  const finalDisc = newOrig > newPrice ? Math.round(((newOrig - newPrice) / newOrig) * 100) : preset;
-                                  setFormData({
-                                    ...formData,
-                                    discountPercent: finalDisc,
-                                    price: newPrice,
-                                    originalPrice: newOrig,
-                                    discountBadge: `DISKON ${finalDisc}%`,
-                                  });
-                                }}
-                                className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-100 text-slate-700 transition-colors shadow-2xs cursor-pointer"
-                              >
-                                {preset}%
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                        <input
-                          type="number"
-                          min={0}
-                          max={100}
-                          step={1}
-                          className="input input-bordered input-sm bg-white text-xs"
-                          placeholder="0"
-                          value={!formData.discountPercent || formData.discountPercent === 0 ? "" : formData.discountPercent}
-                          onChange={(e) => {
-                            const val = e.target.value.replace(/^0+(?=\d)/, "");
-                            const pct = val === "" ? 0 : Number(val);
-                            let newPrice = formData.price;
-                            let newOrig = formData.originalPrice;
-
-                            if (newOrig && newOrig > 0) {
-                              newPrice = Math.round((newOrig * (1 - pct / 100)) / 100) * 100;
-                            } else if (newPrice > 0 && pct > 0 && pct < 100) {
-                              newOrig = Math.round((newPrice / (1 - pct / 100)) / 1000) * 1000;
-                            }
-
-                            setFormData({
-                              ...formData,
-                              discountPercent: pct,
-                              price: newPrice,
-                              originalPrice: newOrig,
-                              discountBadge: pct > 0 ? `DISKON ${pct}%` : "",
-                            });
-                          }}
-                        />
-                      </div>
-
                       {/* Teks Badge */}
                       <div className="form-control">
                         <label className="label py-1">
-                          <span className="label-text font-bold text-[11px] text-slate-700">Teks Badge Promo</span>
+                          <span className="label-text font-bold text-xs text-slate-700">Teks Badge Promo</span>
                         </label>
                         <input
                           type="text"
                           className="input input-bordered input-sm bg-white text-xs"
-                          placeholder="Misal: PROMO SPESIAL"
+                          placeholder="Misal: PROMO SPESIAL / FLASH SALE"
                           value={formData.discountBadge}
                           onChange={(e) => setFormData({ ...formData, discountBadge: e.target.value })}
                         />
                       </div>
+                    </div>
+
+                    {/* Diskon % + Presets */}
+                    <div className="form-control">
+                      <div className="flex items-center justify-between flex-wrap gap-1.5 py-1">
+                        <label className="label-text font-bold text-xs text-slate-700">
+                          Persentase Diskon (%)
+                        </label>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[10px] text-slate-400 font-medium">Preset cepat:</span>
+                          {[10, 20, 25, 50, 70].map((preset) => (
+                            <button
+                              key={preset}
+                              type="button"
+                              onClick={() => {
+                                let newPrice = formData.price;
+                                let newOrig = formData.originalPrice;
+                                if (newOrig && newOrig > 0) {
+                                  newPrice = Math.round((newOrig * (1 - preset / 100)) / 100) * 100;
+                                } else if (newPrice > 0) {
+                                  newOrig = Math.round((newPrice / (1 - preset / 100)) / 1000) * 1000;
+                                }
+                                const finalDisc = newOrig > newPrice ? Math.round(((newOrig - newPrice) / newOrig) * 100) : preset;
+                                setFormData({
+                                  ...formData,
+                                  discountPercent: finalDisc,
+                                  price: newPrice,
+                                  originalPrice: newOrig,
+                                  discountBadge: `DISKON ${finalDisc}%`,
+                                });
+                              }}
+                              className="px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-100 text-slate-700 transition-colors shadow-2xs cursor-pointer"
+                            >
+                              {preset}%
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        step={1}
+                        className="input input-bordered input-sm bg-white text-xs"
+                        placeholder="0"
+                        value={!formData.discountPercent || formData.discountPercent === 0 ? "" : formData.discountPercent}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/^0+(?=\d)/, "");
+                          const pct = val === "" ? 0 : Number(val);
+                          let newPrice = formData.price;
+                          let newOrig = formData.originalPrice;
+
+                          if (newOrig && newOrig > 0) {
+                            newPrice = Math.round((newOrig * (1 - pct / 100)) / 100) * 100;
+                          } else if (newPrice > 0 && pct > 0 && pct < 100) {
+                            newOrig = Math.round((newPrice / (1 - pct / 100)) / 1000) * 1000;
+                          }
+
+                          setFormData({
+                            ...formData,
+                            discountPercent: pct,
+                            price: newPrice,
+                            originalPrice: newOrig,
+                            discountBadge: pct > 0 ? `DISKON ${pct}%` : "",
+                          });
+                        }}
+                      />
                     </div>
 
                     {/* Jadwal Masa Berlaku Promo & Countdown Setting */}
