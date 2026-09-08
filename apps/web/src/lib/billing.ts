@@ -206,10 +206,10 @@ export function activateSubscription(
   } else if (period === "year") {
     endDate.setDate(endDate.getDate() + 365);
   } else {
-    // "month" / default: multiply 30 days or 365 for 12 months
+    // "month" / default: multiply 365 for each full year or 30 days per month
     const months = typeof durationMonths === "number" && durationMonths > 0 ? durationMonths : 1;
-    if (months === 12) {
-      endDate.setDate(endDate.getDate() + 365);
+    if (months % 12 === 0) {
+      endDate.setDate(endDate.getDate() + (365 * (months / 12)));
     } else {
       endDate.setDate(endDate.getDate() + (30 * months));
     }

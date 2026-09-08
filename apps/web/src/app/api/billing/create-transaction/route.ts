@@ -71,7 +71,8 @@ export async function POST(req: NextRequest) {
 
     const finalAmount = Math.max(1000, totalAfterDuration - couponDiscount);
     const orderId = generateOrderId(planId);
-    const durationLabel = durationMonths === 12 ? "1 Tahun" : `${durationMonths} Bulan`;
+    const durationLabel =
+      durationMonths === 24 ? "2 Tahun" : durationMonths === 12 ? "1 Tahun" : `${durationMonths} Bulan`;
 
     // Create Snap Token via Midtrans
     const snap = await createSnapToken({

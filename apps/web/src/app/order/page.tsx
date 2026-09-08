@@ -89,7 +89,7 @@ function OrderContent() {
   const [selectedPlanId, setSelectedPlanId] = useState<string>(
     DEFAULT_PLANS[initialPlanId] ? initialPlanId : "STARTER"
   );
-  const [durationMonths, setDurationMonths] = useState<1 | 3 | 12>(1);
+  const [durationMonths, setDurationMonths] = useState<number>(1);
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethodOption>("qris");
 
   // User Auth & Session State
@@ -269,7 +269,7 @@ function OrderContent() {
     DEFAULT_PLANS.STARTER;
   
   const planPeriod = currentPlan.period || "month";
-  const effectiveDurationMonths: 1 | 3 | 12 =
+  const effectiveDurationMonths: number =
     planPeriod === "year" ? 12 : planPeriod === "day" || planPeriod === "week" ? 1 : durationMonths;
 
   // Price calculations
@@ -1319,66 +1319,41 @@ function OrderContent() {
                       </div>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-                      {/* 1 Bulan */}
-                      <button
-                        type="button"
-                        onClick={() => setDurationMonths(1)}
-                        className={`p-4 rounded-2xl border text-left transition-all ${
-                          durationMonths === 1
-                            ? "bg-emerald-50/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs"
-                            : "bg-white border-slate-200 hover:border-slate-300"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="font-bold text-xs text-slate-900">1 Bulan</span>
-                          <div className={`w-3.5 h-3.5 rounded-full border ${durationMonths === 1 ? "border-emerald-600 bg-emerald-600" : "border-slate-300"}`} />
-                        </div>
-                        <div className="text-sm font-black text-slate-900">
-                          {formatIDR(currentPlan.price * 1)}
-                        </div>
-                        <span className="text-[10px] text-slate-400">Durasi 1 Bulan</span>
-                      </button>
-
-                      {/* 3 Bulan */}
-                      <button
-                        type="button"
-                        onClick={() => setDurationMonths(3)}
-                        className={`p-4 rounded-2xl border text-left transition-all ${
-                          durationMonths === 3
-                            ? "bg-emerald-50/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs"
-                            : "bg-white border-slate-200 hover:border-slate-300"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="font-bold text-xs text-slate-900">3 Bulan</span>
-                          <div className={`w-3.5 h-3.5 rounded-full border ${durationMonths === 3 ? "border-emerald-600 bg-emerald-600" : "border-slate-300"}`} />
-                        </div>
-                        <div className="text-sm font-black text-slate-900">
-                          {formatIDR(currentPlan.price * 3)}
-                        </div>
-                        <span className="text-[10px] text-slate-400">Durasi 3 Bulan</span>
-                      </button>
-
-                      {/* 12 Bulan (1 Tahun) */}
-                      <button
-                        type="button"
-                        onClick={() => setDurationMonths(12)}
-                        className={`p-4 rounded-2xl border text-left transition-all relative ${
-                          durationMonths === 12
-                            ? "bg-emerald-50/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs"
-                            : "bg-white border-slate-200 hover:border-slate-300"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="font-bold text-xs text-slate-900">12 Bulan (1 Tahun)</span>
-                          <div className={`w-3.5 h-3.5 rounded-full border ${durationMonths === 12 ? "border-emerald-600 bg-emerald-600" : "border-slate-300"}`} />
-                        </div>
-                        <div className="text-sm font-black text-slate-900">
-                          {formatIDR(currentPlan.price * 12)}
-                        </div>
-                        <span className="text-[10px] text-slate-400">Durasi 1 Tahun Penuh</span>
-                      </button>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                      {[
+                        { months: 1, label: "1 Bulan", sub: "Durasi 1 Bulan" },
+                        { months: 3, label: "3 Bulan", sub: "Durasi 3 Bulan" },
+                        { months: 6, label: "6 Bulan", sub: "Durasi 6 Bulan" },
+                        { months: 12, label: "12 Bulan", sub: "Durasi 1 Tahun Penuh" },
+                        { months: 24, label: "24 Bulan", sub: "Durasi 2 Tahun Penuh" },
+                      ].map((item) => {
+                        const isSelected = durationMonths === item.months;
+                        return (
+                          <button
+                            key={item.months}
+                            type="button"
+                            onClick={() => setDurationMonths(item.months)}
+                            className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all ${
+                              isSelected
+                                ? "bg-emerald-50/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs"
+                                : "bg-white border-slate-200 hover:border-slate-300"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="font-bold text-xs text-slate-900">{item.label}</span>
+                              <div
+                                className={`w-3.5 h-3.5 rounded-full border ${
+                                  isSelected ? "border-emerald-600 bg-emerald-600" : "border-slate-300"
+                                }`}
+                              />
+                            </div>
+                            <div className="text-sm font-black text-slate-900">
+                              {formatIDR(currentPlan.price * item.months)}
+                            </div>
+                            <span className="text-[10px] text-slate-400">{item.sub}</span>
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -1516,6 +1491,8 @@ function OrderContent() {
                       ? "1 Hari (24 Jam)"
                       : planPeriod === "week"
                       ? "1 Minggu (7 Hari)"
+                      : durationMonths === 24
+                      ? "24 Bulan (2 Tahun)"
                       : durationMonths === 12
                       ? "12 Bulan (1 Tahun)"
                       : `${durationMonths} Bulan`}
@@ -1773,7 +1750,13 @@ function OrderContent() {
                         <div className="flex items-center justify-between">
                           <span className="text-slate-400">Paket Layanan:</span>
                           <strong className="text-primary font-bold">
-                            Sendora {currentPlan.name} ({durationMonths === 12 ? "1 Tahun" : `${durationMonths} Bulan`})
+                            Sendora {currentPlan.name} (
+                              {durationMonths === 24
+                                ? "2 Tahun"
+                                : durationMonths === 12
+                                ? "1 Tahun"
+                                : `${durationMonths} Bulan`}
+                            )
                           </strong>
                         </div>
                         <div className="flex items-center justify-between">
