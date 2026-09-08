@@ -109,3 +109,50 @@ export async function addToBlacklist(
   }
 }
 
+export async function removeFromBlacklist(idOrPhone: string, userId?: string): Promise<void> {
+  const cleanPhone = idOrPhone.replace(/\D/g, "");
+
+  // 1. Remove from local file (match by ID OR by normalized phoneNumber)
+  try {
+    if (fs.existsSync(LOCAL_BLACKLIST_FILE)) {
+      const data = fs.readFileSync(LOCAL_BLACKLIST_FILE, "utf-8");
+      const list = JSON.parse(data || "[]");
+      const targetItem = list.find(
+        (item: any) =>
+          item.id === idOrPhone ||
+          (cleanPhone && item.phoneNumber && item.phoneNumber.replace(/\D/g, "") === cleanPhone)
+      );
+      const targetPhone = targetItem?.phoneNumber?.replace(/\D/g, "") || cleanPhone;
+
+      const updated = list.filter((item: any) => {
+        if (item.id === idOrPhone) return false;
+        if (targetPhone && item.phoneNumber && item.phoneNumber.replace(/\D/g, "") === targetPhone) {
+          return false;
+        }
+        return true;
+      });
+      fs.writeFileSync(LOCAL_BLACKLIST_FILE, JSON.stringify(updated, null, 2));
+    }
+  } catch (err) {
+    console.error("[Blacklist] Failed to remove from local blacklist:", err);
+  }
+
+  // 2. Remove from Prisma DB
+  try {
+    if (cleanPhone) {
+      await prisma.blacklist.deleteMany({
+        where: {
+          OR: [{ id: idOrPhone }, { phoneNumber: cleanPhone }],
+        },
+      });
+    } else {
+      await prisma.blacklist.deleteMany({
+        where: { id: idOrPhone },
+      });
+    }
+  } catch {
+    // DB fallback
+  }
+}
+
+
