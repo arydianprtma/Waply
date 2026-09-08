@@ -649,77 +649,89 @@ function BillingContent() {
             </div>
           </div>
 
-          {/* Addon Catalog Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {addonsCatalog
-              .filter((a) => {
-                if (!a.isActive) return false;
-                if (addonCategoryFilter === "ALL") return true;
-                return a.type === addonCategoryFilter;
-              })
-              .map((addon) => {
-                const isDev = addon.type === "DEVICE";
-                return (
-                  <div
-                    key={addon.id}
-                    className="card bg-base-100 border-2 border-base-200 hover:border-primary/50 transition-all shadow-sm hover:shadow-md p-5 rounded-2xl flex flex-col justify-between relative group"
-                  >
-                    {addon.badge && (
-                      <span className="absolute -top-3 right-4 inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-xs">
-                        {addon.badge}
-                      </span>
-                    )}
+          {/* Addon Catalog Grid / Empty State */}
+          {addonsCatalog.filter((a) => a.isActive && (addonCategoryFilter === "ALL" || a.type === addonCategoryFilter)).length === 0 ? (
+            <div className="card bg-base-100 border border-base-200 p-12 text-center rounded-2xl flex flex-col items-center justify-center">
+              <div className="w-14 h-14 rounded-2xl bg-base-200/70 flex items-center justify-center text-base-content/40 mb-3">
+                <PackagePlus className="w-7 h-7" />
+              </div>
+              <h4 className="font-bold text-base text-base-content">Belum Ada Addon Tersedia</h4>
+              <p className="text-xs text-base-content/60 max-w-sm mt-1">
+                Katalog addon ekstra belum ditambahkan oleh administrator. Silakan buat addon melalui panel admin untuk menampilkannya di sini.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {addonsCatalog
+                .filter((a) => {
+                  if (!a.isActive) return false;
+                  if (addonCategoryFilter === "ALL") return true;
+                  return a.type === addonCategoryFilter;
+                })
+                .map((addon) => {
+                  const isDev = addon.type === "DEVICE";
+                  return (
+                    <div
+                      key={addon.id}
+                      className="card bg-base-100 border-2 border-base-200 hover:border-primary/50 transition-all shadow-sm hover:shadow-md p-5 rounded-2xl flex flex-col justify-between relative group"
+                    >
+                      {addon.badge && (
+                        <span className="absolute -top-3 right-4 inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-xs">
+                          {addon.badge}
+                        </span>
+                      )}
 
-                    <div>
-                      <div className="flex items-center gap-3 mb-3">
-                        <div
-                          className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                            isDev
-                              ? "bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-950/50 dark:border-emerald-800"
-                              : "bg-indigo-50 text-indigo-600 border border-indigo-200 dark:bg-indigo-950/50 dark:border-indigo-800"
-                          }`}
-                        >
-                          {isDev ? <Smartphone className="w-5 h-5" /> : <MessageSquare className="w-5 h-5" />}
-                        </div>
-                        <div>
-                          <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                              isDev ? "bg-emerald-500/10 text-emerald-600" : "bg-indigo-500/10 text-indigo-600"
+                      <div>
+                        <div className="flex items-center gap-3 mb-3">
+                          <div
+                            className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                              isDev
+                                ? "bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-950/50 dark:border-emerald-800"
+                                : "bg-indigo-50 text-indigo-600 border border-indigo-200 dark:bg-indigo-950/50 dark:border-indigo-800"
                             }`}
                           >
-                            {isDev ? "Slot Device" : "Kuota Pesan"}
-                          </span>
-                          <h4 className="text-sm font-bold text-base-content mt-0.5">{addon.name}</h4>
+                            {isDev ? <Smartphone className="w-5 h-5" /> : <MessageSquare className="w-5 h-5" />}
+                          </div>
+                          <div>
+                            <span
+                              className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                                isDev ? "bg-emerald-500/10 text-emerald-600" : "bg-indigo-500/10 text-indigo-600"
+                              }`}
+                            >
+                              {isDev ? "Slot Device" : "Kuota Pesan"}
+                            </span>
+                            <h4 className="text-sm font-bold text-base-content mt-0.5">{addon.name}</h4>
+                          </div>
                         </div>
-                      </div>
 
-                      <p className="text-xs text-base-content/60 min-h-[32px] line-clamp-2">
-                        {addon.description || (isDev ? `Tambahan ${addon.amount} slot perangkat WhatsApp.` : `Top-up kuota ${addon.amount.toLocaleString("id-ID")} pesan.`)}
-                      </p>
-
-                      <div className="mt-4 pt-3 border-t border-base-200/80">
-                        <div className="text-xl font-black text-base-content">
-                          {formatIDR(addon.price)}
-                          <span className="text-xs font-normal text-base-content/50"> / addon</span>
-                        </div>
-                        <p className="text-[11px] text-base-content/50 mt-0.5">
-                          {isDev ? `+${addon.amount} WhatsApp Session` : `+${addon.amount.toLocaleString("id-ID")} Pesan WhatsApp`}
+                        <p className="text-xs text-base-content/60 min-h-[32px] line-clamp-2">
+                          {addon.description || (isDev ? `Tambahan ${addon.amount} slot perangkat WhatsApp.` : `Top-up kuota ${addon.amount.toLocaleString("id-ID")} pesan.`)}
                         </p>
-                      </div>
-                    </div>
 
-                    <button
-                      onClick={() => router.push(`/order?plan=${currentPlanId}&addon=${addon.id}`)}
-                      className="btn btn-sm btn-primary w-full mt-4 gap-2 rounded-xl group-hover:shadow-md group-hover:shadow-primary/20"
-                    >
-                      <ShoppingBag className="w-3.5 h-3.5" />
-                      Beli / Top-Up Addon
-                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                    </button>
-                  </div>
-                );
-              })}
-          </div>
+                        <div className="mt-4 pt-3 border-t border-base-200/80">
+                          <div className="text-xl font-black text-base-content">
+                            {formatIDR(addon.price)}
+                            <span className="text-xs font-normal text-base-content/50"> / addon</span>
+                          </div>
+                          <p className="text-[11px] text-base-content/50 mt-0.5">
+                            {isDev ? `+${addon.amount} WhatsApp Session` : `+${addon.amount.toLocaleString("id-ID")} Pesan WhatsApp`}
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => router.push(`/order?plan=${currentPlanId}&addon=${addon.id}`)}
+                        className="btn btn-sm btn-primary w-full mt-4 gap-2 rounded-xl group-hover:shadow-md group-hover:shadow-primary/20"
+                      >
+                        <ShoppingBag className="w-3.5 h-3.5" />
+                        Beli / Top-Up Addon
+                        <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                      </button>
+                    </div>
+                  );
+                })}
+            </div>
+          )}
 
           {/* Active Addons Details Table */}
           {userAddons.length > 0 && (

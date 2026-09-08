@@ -296,7 +296,7 @@ export default function AdminAddonsPage() {
             onClick={() => {
               setGrantData({
                 userId: "",
-                addonId: addons[0]?.id || "ADDON_DEV_1",
+                addonId: addons[0]?.id || "",
                 customAmount: 1,
               });
               setGrantModalOpen(true);
