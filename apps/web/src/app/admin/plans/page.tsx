@@ -644,8 +644,12 @@ export default function AdminPlansPage() {
                     min={0}
                     step={1}
                     className="input input-bordered input-sm"
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
+                    placeholder="0"
+                    value={formData.price === 0 ? "" : formData.price}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/^0+(?=\d)/, "");
+                      setFormData({ ...formData, price: val === "" ? 0 : Number(val) });
+                    }}
                     required
                   />
                 </div>
@@ -678,8 +682,12 @@ export default function AdminPlansPage() {
                     max={100}
                     step={1}
                     className="input input-bordered input-sm"
-                    value={formData.maxDevices}
-                    onChange={(e) => setFormData({ ...formData, maxDevices: Number(e.target.value) })}
+                    placeholder="1"
+                    value={formData.maxDevices === 0 ? "" : formData.maxDevices}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/^0+(?=\d)/, "");
+                      setFormData({ ...formData, maxDevices: val === "" ? 0 : Number(val) });
+                    }}
                     required
                   />
                 </div>
@@ -707,8 +715,17 @@ export default function AdminPlansPage() {
                     disabled={formData.isUnlimitedMessages}
                     className="input input-bordered input-sm disabled:opacity-50"
                     placeholder="Contoh: 10000"
-                    value={formData.isUnlimitedMessages ? "" : formData.monthlyMessages}
-                    onChange={(e) => setFormData({ ...formData, monthlyMessages: Number(e.target.value) })}
+                    value={
+                      formData.isUnlimitedMessages
+                        ? ""
+                        : formData.monthlyMessages === 0
+                        ? ""
+                        : formData.monthlyMessages
+                    }
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/^0+(?=\d)/, "");
+                      setFormData({ ...formData, monthlyMessages: val === "" ? 0 : Number(val) });
+                    }}
                     required={!formData.isUnlimitedMessages}
                   />
                 </div>
@@ -758,15 +775,16 @@ export default function AdminPlansPage() {
                         step={1}
                         className="input input-bordered input-xs bg-white text-xs"
                         placeholder="Misal: 199000"
-                        value={formData.originalPrice}
+                        value={!formData.originalPrice || formData.originalPrice === 0 ? "" : formData.originalPrice}
                         onChange={(e) => {
-                          const orig = Number(e.target.value);
+                          const val = e.target.value.replace(/^0+(?=\d)/, "");
+                          const orig = val === "" ? 0 : Number(val);
                           const disc = orig > formData.price ? Math.round(((orig - formData.price) / orig) * 100) : 0;
                           setFormData({
                             ...formData,
                             originalPrice: orig,
                             discountPercent: disc,
-                            discountBadge: `DISKON ${disc}%`,
+                            discountBadge: disc > 0 ? `DISKON ${disc}%` : "",
                           });
                         }}
                       />
@@ -782,15 +800,17 @@ export default function AdminPlansPage() {
                         max={100}
                         step={1}
                         className="input input-bordered input-xs bg-white text-xs"
-                        value={formData.discountPercent}
+                        placeholder="0"
+                        value={!formData.discountPercent || formData.discountPercent === 0 ? "" : formData.discountPercent}
                         onChange={(e) => {
-                          const pct = Number(e.target.value);
-                          const orig = Math.round(formData.price / (1 - pct / 100));
+                          const val = e.target.value.replace(/^0+(?=\d)/, "");
+                          const pct = val === "" ? 0 : Number(val);
+                          const orig = pct > 0 && pct < 100 ? Math.round(formData.price / (1 - pct / 100)) : formData.price;
                           setFormData({
                             ...formData,
                             discountPercent: pct,
                             originalPrice: orig,
-                            discountBadge: `DISKON ${pct}%`,
+                            discountBadge: pct > 0 ? `DISKON ${pct}%` : "",
                           });
                         }}
                       />
