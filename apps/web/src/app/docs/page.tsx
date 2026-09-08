@@ -46,6 +46,7 @@ type CodeLang = "curl" | "nodejs" | "python" | "php";
 export default function PublicDocsPage() {
   const [selectedLang, setSelectedLang] = useState<CodeLang>("curl");
   const [selectedBroadcastLang, setSelectedBroadcastLang] = useState<CodeLang>("curl");
+  const [selectedTemplateLang, setSelectedTemplateLang] = useState<CodeLang>("curl");
   const [selectedWebhookLang, setSelectedWebhookLang] = useState<"nodejs" | "php" | "python">("nodejs");
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
   const [activeNav, setActiveNav] = useState<string>("intro");
@@ -203,6 +204,83 @@ curl_setopt_array($curl, [
 $response = curl_exec($curl);
 curl_close($curl);
 echo $response;
+?>`,
+    },
+    templateSend: {
+      curl: `curl -X POST ${originUrl}/api/v1/messages/send \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer snd_live_YOUR_API_KEY" \\
+  -d '{
+    "to": "6281234567890",
+    "template": "tpl_order_notif",
+    "deviceId": "auto_rotate",
+    "variables": {
+      "name": "Budi Santoso",
+      "order_id": "INV-2026-9812",
+      "eta": "Besok Siang"
+    }
+  }'`,
+      nodejs: `import axios from "axios";
+
+// Kirim pesan WhatsApp menggunakan Shortcode Template
+const response = await axios.post(
+  "${originUrl}/api/v1/messages/send",
+  {
+    to: "6281234567890",
+    template: "tpl_order_notif", // Shortcode template dari menu Templates
+    deviceId: "auto_rotate",
+    variables: {
+      name: "Budi Santoso",
+      order_id: "INV-2026-9812",
+      eta: "Besok Siang",
+    },
+  },
+  {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer snd_live_YOUR_API_KEY",
+    },
+  }
+);
+
+console.log(response.data);`,
+      python: `import requests
+
+url = "${originUrl}/api/v1/messages/send"
+headers = {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer snd_live_YOUR_API_KEY",
+}
+payload = {
+    "to": "6281234567890",
+    "template": "tpl_order_notif",  # Shortcode template
+    "deviceId": "auto_rotate",
+    "variables": {
+        "name": "Budi Santoso",
+        "order_id": "INV-2026-9812",
+        "eta": "Besok Siang"
+    }
+}
+
+response = requests.post(url, json=payload, headers=headers)
+print(response.json())`,
+      php: `<?php
+use Illuminate\\Support\\Facades\\Http;
+
+// Kirim WhatsApp via Template menggunakan Laravel Http Client
+\$response = Http::withToken('snd_live_YOUR_API_KEY')
+    ->post('${originUrl}/api/v1/messages/send', [
+        'to' => '6281234567890',
+        'template' => 'tpl_order_notif', // Shortcode template
+        'deviceId' => 'auto_rotate',
+        'variables' => [
+            'name' => 'Budi Santoso',
+            'order_id' => 'INV-2026-9812',
+            'eta' => 'Besok Siang'
+        ]
+    ]);
+
+echo \$response->body();
 ?>`,
     },
     broadcast: {
@@ -997,13 +1075,20 @@ async def handle_sendora_webhook(request: Request):
           </section>
 
           {/* 9. Templates */}
-          <section id="templates" className="space-y-4 scroll-mt-24 border-t border-slate-200 pt-8">
-            <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-slate-900">
-              <FileText className="w-5 h-5 text-emerald-600" /> 9. Pustaka Template Pesan
-            </h2>
+          <section id="templates" className="space-y-5 scroll-mt-24 border-t border-slate-200 pt-8">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-slate-900">
+                <FileText className="w-5 h-5 text-emerald-600" /> 9. Pustaka Template Pesan & Integrasi API
+              </h2>
+              <span className="bg-emerald-50 text-emerald-700 font-mono text-xs px-2.5 py-1 rounded-lg font-bold border border-emerald-200 self-start sm:self-auto">
+                POST /api/v1/messages/send
+              </span>
+            </div>
+
             <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
-              Simpan format pesan siap pakai di menu <Link href="/dashboard/templates" className="text-emerald-700 font-semibold underline decoration-emerald-300 underline-offset-2 hover:text-emerald-800">Templates</Link> untuk efisiensi tim customer service dan pengiriman broadcast:
+              Simpan format pesan siap pakai di menu <Link href="/dashboard/templates" className="text-emerald-700 font-semibold underline decoration-emerald-300 underline-offset-2 hover:text-emerald-800">Templates</Link>. Client dapat langsung memanggil template di aplikasi backend mereka menggunakan <b>Shortcode</b> tanpa perlu menulis ulang seluruh isi pesan di kode program.
             </p>
+
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
               <div className="p-3.5 bg-white border border-slate-200/90 rounded-xl flex items-center gap-2.5 font-semibold text-slate-800 shadow-xs">
                 <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-700">
@@ -1029,6 +1114,121 @@ async def handle_sendora_webhook(request: Request):
                 </div>
                 <span>CS Support</span>
               </div>
+            </div>
+
+            {/* Cara Kerja Pemanggilan Template */}
+            <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-2xl space-y-2 text-xs text-emerald-950">
+              <span className="font-bold text-emerald-900 flex items-center gap-1.5 text-sm">
+                <Sparkles className="w-4 h-4 text-emerald-600" /> Cara Kerja Pemanggilan Template di Code Client
+              </span>
+              <ol className="list-decimal list-inside space-y-1 text-slate-700 leading-relaxed pt-1">
+                <li>Buka menu <b>Templates</b> di dashboard dan buat template (misal Shortcode: <code className="bg-white border border-emerald-200 px-1.5 py-0.5 rounded font-mono font-bold text-emerald-800">tpl_order_notif</code>).</li>
+                <li>Tulis pesan dengan Spintax <code className="bg-white border border-emerald-200 px-1.5 py-0.5 rounded font-mono text-emerald-800 font-semibold">{"{Halo|Hai}"}</code> dan variabel <code className="bg-white border border-emerald-200 px-1.5 py-0.5 rounded font-mono text-emerald-800 font-semibold">{"{{name}}"}</code>, <code className="bg-white border border-emerald-200 px-1.5 py-0.5 rounded font-mono text-emerald-800 font-semibold">{"{{order_id}}"}</code>.</li>
+                <li>Pada aplikasi backend Anda, panggil endpoint <code className="bg-white border border-emerald-200 px-1.5 py-0.5 rounded font-mono font-bold text-emerald-900">/api/v1/messages/send</code> dengan parameter <code className="bg-white border border-emerald-200 px-1.5 py-0.5 rounded font-mono font-bold text-emerald-900">template: "tpl_order_notif"</code> dan masukkan nilai objek <code className="bg-white border border-emerald-200 px-1.5 py-0.5 rounded font-mono font-bold text-emerald-900">variables</code>.</li>
+                <li>Jika sewaktu-waktu redaksi pesan diubah di dashboard, pesan API akan otomatis terupdate tanpa perlu mengubah kode aplikasi Anda.</li>
+              </ol>
+            </div>
+
+            {/* Parameters Table for Template Sending */}
+            <div className="space-y-3 pt-1">
+              <h3 className="text-xs sm:text-sm font-bold text-slate-900">
+                Parameter Request Body:
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                <div className="p-3.5 bg-white border border-slate-200/90 rounded-2xl space-y-1.5 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <code className="font-mono font-bold text-emerald-700 text-xs">to</code>
+                    <span className="text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded-md">Wajib</span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Nomor WhatsApp tujuan (contoh: <code className="bg-slate-100 px-1 py-0.5 rounded font-mono">6281234567890</code>).
+                  </p>
+                </div>
+
+                <div className="p-3.5 bg-white border border-slate-200/90 rounded-2xl space-y-1.5 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <code className="font-mono font-bold text-emerald-700 text-xs">template</code>
+                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-md">Shortcode</span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Shortcode template dari dashboard (contoh: <code className="bg-slate-100 px-1 py-0.5 rounded font-mono font-bold text-slate-800">"tpl_order_notif"</code>).
+                  </p>
+                </div>
+
+                <div className="p-3.5 bg-white border border-slate-200/90 rounded-2xl space-y-1.5 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <code className="font-mono font-bold text-emerald-700 text-xs">variables</code>
+                    <span className="text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded-md">Objek JSON</span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Data key-value untuk mengisi placeholder (misal: <code className="bg-slate-100 px-1 py-0.5 rounded font-mono">name</code>, <code className="bg-slate-100 px-1 py-0.5 rounded font-mono">order_id</code>).
+                  </p>
+                </div>
+
+                <div className="p-3.5 bg-white border border-slate-200/90 rounded-2xl space-y-1.5 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <code className="font-mono font-bold text-emerald-700 text-xs">deviceId</code>
+                    <span className="text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded-md">Opsional</span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    ID Device atau <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-800 font-bold">"auto_rotate"</code> untuk rotasi acak.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Template Code Snippet */}
+            <div className="bg-slate-50 p-4 sm:p-5 border border-slate-200 rounded-2xl">
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <div className="flex flex-wrap gap-1">
+                  {(["curl", "nodejs", "python", "php"] as CodeLang[]).map((lang) => (
+                    <button
+                      key={lang}
+                      onClick={() => setSelectedTemplateLang(lang)}
+                      className={`px-3 py-1 text-xs uppercase font-mono rounded-lg font-semibold transition-all cursor-pointer border ${
+                        selectedTemplateLang === lang
+                          ? "bg-slate-900 text-white border-slate-900 shadow-xs"
+                          : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900"
+                      }`}
+                    >
+                      {lang}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => copyCode(snippets.templateSend[selectedTemplateLang], "template-code")}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors cursor-pointer"
+                >
+                  {copiedSection === "template-code" ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-600" /> Disalin
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" /> Salin Kode
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <div className="bg-slate-900 text-slate-100 p-4 rounded-xl font-mono text-xs leading-relaxed overflow-x-auto border border-slate-800 shadow-inner">
+                <pre>{snippets.templateSend[selectedTemplateLang]}</pre>
+              </div>
+            </div>
+
+            {/* Endpoint GET Templates for Client Dropdowns */}
+            <div className="p-4 bg-white border border-slate-200/90 rounded-2xl space-y-2 text-xs shadow-xs">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <span className="font-bold text-slate-900 flex items-center gap-1.5">
+                  <Code2 className="w-4 h-4 text-emerald-600" /> Fetch Daftar Template via API (Untuk Dropdown CRM / Web Client)
+                </span>
+                <span className="bg-slate-100 text-slate-700 font-mono text-[11px] px-2 py-0.5 rounded font-bold">
+                  GET /api/v1/templates
+                </span>
+              </div>
+              <p className="text-slate-600 leading-relaxed">
+                Aplikasi client dapat melakukan request <code className="bg-slate-100 text-slate-800 px-1 py-0.5 rounded font-mono">GET {originUrl}/api/v1/templates</code> dengan header <code className="bg-slate-100 text-slate-800 px-1 py-0.5 rounded font-mono">Authorization: Bearer YOUR_API_KEY</code> untuk mengambil daftar template aktif yang tersimpan di akun mereka.
+              </p>
             </div>
           </section>
 
