@@ -11,6 +11,7 @@ import { sanitizePhoneNumber, isValidPhoneNumber } from "@/lib/sanitizer";
 import { applyWatermarkIfFree } from "@/lib/watermark";
 import { canUserSendMessage, recordSentMessage } from "@/lib/messages";
 import { getUserPlanAccess } from "@/lib/billing";
+import { getTemplates, incrementTemplateUsage } from "@/lib/templates";
 
 const GATEWAY_URL = process.env.GATEWAY_INTERNAL_URL || "http://localhost:3002";
 const GATEWAY_SECRET = process.env.GATEWAY_SECRET || "sendora_internal_gateway_token_key";
@@ -72,12 +73,42 @@ export async function POST(request: Request) {
       );
     }
 
-    const { deviceId, recipient: rawRecipient, to, message, variables } = validation.data;
+    const { deviceId, recipient: rawRecipient, to, message, template, templateId, variables } = validation.data;
     const targetRecipient = rawRecipient || to;
 
     if (!targetRecipient) {
       return NextResponse.json(
         { success: false, error: "Nomor WhatsApp penerima ('to' atau 'recipient') wajib diisi" },
+        { status: 400 }
+      );
+    }
+
+    // Resolve template if template / templateId is supplied
+    let rawContent = message;
+    if (template || templateId) {
+      const tKey = template || templateId;
+      const userTemplates = getTemplates(userId);
+      const foundTemplate = userTemplates.find(
+        (t) => t.id === tKey || t.shortcode === tKey
+      );
+
+      if (!foundTemplate) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Template '${tKey}' tidak ditemukan pada akun Anda. Pastikan ID atau Shortcode sesuai dengan yang ada di menu Templates.`,
+          },
+          { status: 404 }
+        );
+      }
+
+      rawContent = foundTemplate.content;
+      incrementTemplateUsage(foundTemplate.id);
+    }
+
+    if (!rawContent || !rawContent.trim()) {
+      return NextResponse.json(
+        { success: false, error: "Harap sertakan parameter 'message' atau 'template' (shortcode / templateId)." },
         { status: 400 }
       );
     }
@@ -127,7 +158,7 @@ export async function POST(request: Request) {
     }
 
     // 6. Parse Spintax & Dynamic Variables
-    const parsedContent = parseSpintax(message, variables || {});
+    const parsedContent = parseSpintax(rawContent, variables || {});
 
     // 7. Apply Watermark for Free/Trial Plan Users
     const { finalMessage: finalContent, isWatermarked } = applyWatermarkIfFree(

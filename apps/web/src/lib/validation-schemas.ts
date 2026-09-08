@@ -30,11 +30,13 @@ export const sendMessageSchema = z.object({
   deviceId: z.string().optional(),
   recipient: z.string().optional(),
   to: z.string().optional(),
+  template: z.string().optional(),
+  templateId: z.string().optional(),
   message: z
-    .string({ required_error: "Pesan WhatsApp wajib diisi" })
-    .min(1, "Pesan tidak boleh kosong")
+    .string()
     .max(4096, "Pesan maksimal 4096 karakter")
-    .transform((val) => sanitizeHtml(sanitizeText(val))),
+    .transform((val) => sanitizeHtml(sanitizeText(val)))
+    .optional(),
   variables: z.record(z.union([z.string(), z.number()])).optional(),
 });
 
