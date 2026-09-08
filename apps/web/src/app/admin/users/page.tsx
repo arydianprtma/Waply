@@ -371,9 +371,13 @@ export default function AdminUsersPage() {
           >
             <option value="ALL">Semua Paket</option>
             <option value="FREE">Free Trial</option>
-            <option value="STARTER">Starter</option>
-            <option value="BUSINESS">Business</option>
-            <option value="PRO">Pro</option>
+            {Object.values(availablePlans)
+              .filter((p: any) => p.id !== "FREE")
+              .map((p: any) => (
+                <option key={p.id} value={p.id}>
+                  {p.name || p.id}
+                </option>
+              ))}
           </select>
         </div>
       </div>
@@ -527,21 +531,29 @@ export default function AdminUsersPage() {
                       {/* Plan & Usage Column */}
                       <td className="py-4">
                         <div className="space-y-1">
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             <span
                               className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase border ${
-                                u.planId === "PRO"
+                                u.planId.includes("PRO")
                                   ? "bg-indigo-50 text-indigo-700 border-indigo-200"
-                                  : u.planId === "BUSINESS"
+                                  : u.planId.includes("BUSINESS") || u.planId.includes("ENTERPRISE")
                                   ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                  : u.planId === "STARTER" || u.planId === "DAILY_STARTER"
-                                  ? "bg-blue-50 text-blue-700 border-blue-200"
-                                  : "bg-slate-100 text-slate-600 border-slate-200"
+                                  : u.planId === "FREE"
+                                  ? "bg-slate-100 text-slate-600 border-slate-200"
+                                  : "bg-blue-50 text-blue-700 border-blue-200"
                               }`}
                             >
-                              {u.planId}
+                              {availablePlans[u.planId]?.name || u.planId}
                             </span>
-                            <span className="text-[10px] text-slate-400 font-medium">
+                            <span
+                              className={`text-[10px] font-bold ${
+                                u.planStatus === "ACTIVE"
+                                  ? "text-emerald-600"
+                                  : u.planStatus === "EXPIRED"
+                                  ? "text-rose-500"
+                                  : "text-slate-400"
+                              }`}
+                            >
                               ({u.planStatus})
                             </span>
                           </div>
@@ -743,7 +755,14 @@ export default function AdminUsersPage() {
                 <div className="grid grid-cols-2 gap-2 text-[11px] bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                   <div>
                     <span className="text-slate-400 block text-[10px]">Paket:</span>
-                    <span className="font-extrabold text-slate-800 uppercase">{u.planId}</span>
+                    <div className="flex items-center gap-1 flex-wrap">
+                      <span className="font-extrabold text-slate-800">
+                        {availablePlans[u.planId]?.name || u.planId}
+                      </span>
+                      <span className={`text-[10px] font-bold ${u.planStatus === "ACTIVE" ? "text-emerald-600" : "text-slate-400"}`}>
+                        ({u.planStatus})
+                      </span>
+                    </div>
                   </div>
                   <div>
                     <span className="text-slate-400 block text-[10px]">Penggunaan:</span>
@@ -1050,7 +1069,7 @@ export default function AdminUsersPage() {
                 <div className="font-bold text-slate-900">{selectedUser.name}</div>
                 <div className="text-slate-500">{selectedUser.email}</div>
                 <div className="text-[11px] text-primary font-bold mt-1">
-                  Paket Saat Ini: {selectedUser.planId} ({selectedUser.planStatus})
+                  Paket Saat Ini: {availablePlans[selectedUser.planId]?.name || selectedUser.planId} ({selectedUser.planStatus})
                 </div>
               </div>
 

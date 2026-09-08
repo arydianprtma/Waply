@@ -77,8 +77,23 @@ export function getAllManagedUsers(): ManagedUser[] {
     return list.map((u) => {
       const ip = u.lastLoginIp || u.registeredIp;
       const count = ip && ip !== "127.0.0.1" && ip !== "::1" ? (ipCounts.get(ip) || 1) : 1;
+      
+      // Dynamic live subscription resolution
+      const sub = getSubscription(u.id) || (u.email ? getSubscription(u.email) : null);
+      const effectivePlanId = (sub && sub.planId) || u.planId || "FREE";
+      let effectivePlanStatus: "ACTIVE" | "EXPIRED" | "FREE" | "PENDING" =
+        sub && sub.status === "ACTIVE"
+          ? "ACTIVE"
+          : sub && sub.status === "EXPIRED"
+          ? "EXPIRED"
+          : sub && sub.status === "FREE"
+          ? "FREE"
+          : u.planStatus || "FREE";
+
       return {
         ...u,
+        planId: effectivePlanId,
+        planStatus: effectivePlanStatus,
         duplicateIpCount: count,
       };
     });
@@ -104,7 +119,7 @@ export function registerOrSyncUser(user: {
     (u) => u.id === user.id || u.email.toLowerCase() === user.email.toLowerCase()
   );
 
-  const sub = getSubscription(user.id);
+  const sub = getSubscription(user.id) || (user.email ? getSubscription(user.email) : null);
   const cleanIp = user.ipAddress && user.ipAddress.trim() ? user.ipAddress.trim() : null;
 
   if (existingIdx >= 0) {
@@ -119,14 +134,17 @@ export function registerOrSyncUser(user: {
         ? cleanIp
         : cleanIp || users[existingIdx].lastLoginIp || "127.0.0.1";
 
+    const effectivePlanId = (sub && sub.planId) || users[existingIdx].planId || "FREE";
+    const effectivePlanStatus = (sub && sub.status === "ACTIVE" ? "ACTIVE" : sub && sub.status === "EXPIRED" ? "EXPIRED" : "FREE");
+
     users[existingIdx] = {
       ...users[existingIdx],
       id: user.id || users[existingIdx].id,
       name: user.name || users[existingIdx].name,
       email: user.email,
       role: user.role || users[existingIdx].role,
-      planId: users[existingIdx].planId || sub.planId || "FREE",
-      planStatus: users[existingIdx].planStatus || (sub.status === "ACTIVE" ? "ACTIVE" : "FREE"),
+      planId: effectivePlanId,
+      planStatus: effectivePlanStatus,
       lastLoginAt: new Date().toISOString(),
       registeredIp: updatedRegIp,
       lastLoginIp: updatedLastIp,

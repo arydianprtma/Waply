@@ -237,6 +237,7 @@ export function activateSubscription(
       );
       if (idx !== -1) {
         users[idx].planId = planId;
+        users[idx].planStatus = "ACTIVE";
         users[idx].subscriptionStatus = "ACTIVE";
         users[idx].endDate = endDate.toISOString();
         fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
