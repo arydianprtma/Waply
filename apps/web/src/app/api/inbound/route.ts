@@ -181,7 +181,9 @@ export async function POST(req: NextRequest) {
       const match = findMatchingRule(userId, text, deviceId);
       if (match) {
         matchedRuleName = match.rule.name;
-        autoReplyText = match.renderedReply.replace(/\{\{pushName\}\}/g, senderName || cleanSender);
+        autoReplyText = match.renderedReply
+          .replace(/\{\{(pushName|name)\}\}/g, senderName || cleanSender)
+          .replace(/\{\{(phone|number)\}\}/g, cleanSender);
         incrementRuleTrigger(match.rule.id);
 
         // Send auto-reply via Gateway
