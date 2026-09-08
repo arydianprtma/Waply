@@ -720,7 +720,7 @@ function BillingContent() {
                       </div>
 
                       <button
-                        onClick={() => router.push(`/order?plan=${currentPlanId}&addon=${addon.id}`)}
+                        onClick={() => router.push(`/order?mode=addon&addon=${addon.id}`)}
                         className="btn btn-sm btn-primary w-full mt-4 gap-2 rounded-xl group-hover:shadow-md group-hover:shadow-primary/20"
                       >
                         <ShoppingBag className="w-3.5 h-3.5" />

@@ -132,9 +132,21 @@ export function grantUserAddon(params: {
   const catalog = allAddons[params.addonId];
   const map = getAllUserAddonsMap();
   const list = map[params.userId] || [];
-
   const sub = getSubscription(params.userId);
   const now = new Date();
+
+  // If orderId is provided, prevent duplicate activation for the same invoice order
+  if (params.orderId) {
+    const existing = list.find(
+      (item) =>
+        item.orderId === params.orderId &&
+        item.addonId === params.addonId &&
+        item.status === "ACTIVE"
+    );
+    if (existing) {
+      return existing;
+    }
+  }
 
   // Default expiresAt follows user active subscription endDate for device addons
   let expiry = params.expiresAt;

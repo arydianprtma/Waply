@@ -67,11 +67,13 @@ export async function POST(req: NextRequest) {
 
     // 5. Activate subscription if paid
     if (invoiceStatus === "PAID") {
-      activateSubscription(
-        invoice.userId,
-        invoice.planId as PlanId,
-        invoice.durationMonths || 1
-      );
+      if (invoice.planId && invoice.planId !== "ADDON" && invoice.planId !== "ADDON_ONLY") {
+        activateSubscription(
+          invoice.userId,
+          invoice.planId as PlanId,
+          invoice.durationMonths || 1
+        );
+      }
 
       if (invoice.selectedAddonIds && invoice.selectedAddonIds.length > 0) {
         activateUserAddonsFromInvoice(
@@ -81,7 +83,7 @@ export async function POST(req: NextRequest) {
         );
       }
       console.log(
-        `[Billing] Subscription & Addons activated: user=${invoice.userId} plan=${invoice.planId}`
+        `[Billing] Subscription / Addons activated: user=${invoice.userId} plan=${invoice.planId}`
       );
 
       // Send Email receipt notification

@@ -46,11 +46,13 @@ export async function POST(req: NextRequest) {
     });
 
     if (invoiceStatus === "PAID") {
-      activateSubscription(
-        invoice.userId,
-        invoice.planId as PlanId,
-        invoice.durationMonths || 1
-      );
+      if (invoice.planId && invoice.planId !== "ADDON" && invoice.planId !== "ADDON_ONLY") {
+        activateSubscription(
+          invoice.userId,
+          invoice.planId as PlanId,
+          invoice.durationMonths || 1
+        );
+      }
 
       if (invoice.selectedAddonIds && invoice.selectedAddonIds.length > 0) {
         activateUserAddonsFromInvoice(

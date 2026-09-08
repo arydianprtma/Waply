@@ -88,6 +88,14 @@ function OrderContent() {
   const rawPlanParam = searchParams.get("plan") || "STARTER";
   const initialPlanId = rawPlanParam.toUpperCase().replace(/\s+/g, "_");
 
+  const rawModeParam = searchParams.get("mode");
+  const rawAddonParam = searchParams.get("addon") || searchParams.get("addons");
+  const [checkoutMode, setCheckoutMode] = useState<"PLAN" | "ADDON">(
+    rawModeParam === "addon" || (!searchParams.get("plan") && Boolean(rawAddonParam))
+      ? "ADDON"
+      : "PLAN"
+  );
+
   const [selectedPlanId, setSelectedPlanId] = useState<string>(
     DEFAULT_PLANS[initialPlanId] ? initialPlanId : "STARTER"
   );
@@ -300,16 +308,19 @@ function OrderContent() {
       ? 1
       : durationMonths;
 
-  // Price calculations
-  let basePrice = currentPlan.price;
+  const isAddonMode = checkoutMode === "ADDON";
 
-  if (planPeriod === "year") {
-    const years = Math.max(1, Math.round(effectiveDurationMonths / 12));
-    basePrice = currentPlan.price * years;
-  } else if (planPeriod === "month") {
-    basePrice = currentPlan.price * durationMonths;
-  } else {
-    basePrice = currentPlan.price;
+  // Price calculations
+  let basePrice = 0;
+  if (!isAddonMode) {
+    if (planPeriod === "year") {
+      const years = Math.max(1, Math.round(effectiveDurationMonths / 12));
+      basePrice = currentPlan.price * years;
+    } else if (planPeriod === "month") {
+      basePrice = currentPlan.price * durationMonths;
+    } else {
+      basePrice = currentPlan.price;
+    }
   }
 
   const addonsTotal = selectedAddonIds.reduce((sum, id) => {
@@ -318,7 +329,7 @@ function OrderContent() {
   }, 0);
 
   const durationDiscount = 0;
-  const subtotalAfterDuration = basePrice + addonsTotal;
+  const subtotalAfterDuration = isAddonMode ? addonsTotal : basePrice;
 
   // Dynamic Voucher discount calculation
   let couponDiscount = 0;
@@ -330,7 +341,7 @@ function OrderContent() {
     }
   }
 
-  const finalTotal = Math.max(1000, subtotalAfterDuration - couponDiscount);
+  const finalTotal = Math.max(isAddonMode && addonsTotal === 0 ? 0 : 1000, subtotalAfterDuration - couponDiscount);
 
   // Dynamic Apply Voucher Handler
   const handleApplyCoupon = async (e: React.FormEvent) => {
@@ -410,6 +421,11 @@ function OrderContent() {
       return;
     }
 
+    if (isAddonMode && selectedAddonIds.length === 0) {
+      setFormError("Silakan pilih minimal 1 addon tambahan untuk melanjutkan pembayaran.");
+      return;
+    }
+
     // If user is not logged in, require creating password
     if (!isLoggedIn) {
       if (!customerName.trim()) {
@@ -460,7 +476,7 @@ function OrderContent() {
     }
 
     // Free plan direct activation (No payment required)
-    if (currentPlan.price === 0) {
+    if (!isAddonMode && currentPlan.price === 0) {
       setLoading(false);
       router.push("/dashboard?welcome=free");
       return;
@@ -473,9 +489,10 @@ function OrderContent() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            planId: selectedPlanId,
-            durationMonths: effectiveDurationMonths,
-            selectedAddonIds,
+            isAddonOnly: isAddonMode,
+            planId: isAddonMode ? "ADDON" : selectedPlanId,
+            durationMonths: isAddonMode ? 0 : effectiveDurationMonths,
+            selectedAddonIds: isAddonMode ? selectedAddonIds : [],
             customerName: cleanName,
             customerEmail: cleanEmail,
             customerPhone: cleanPhone,
@@ -543,9 +560,10 @@ function OrderContent() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          planId: selectedPlanId,
-          durationMonths: effectiveDurationMonths,
-          selectedAddonIds,
+          isAddonOnly: isAddonMode,
+          planId: isAddonMode ? "ADDON" : selectedPlanId,
+          durationMonths: isAddonMode ? 0 : effectiveDurationMonths,
+          selectedAddonIds: isAddonMode ? selectedAddonIds : [],
           paymentType,
           bank,
           customerName: cleanName,
@@ -1136,442 +1154,518 @@ function OrderContent() {
                 </div>
               </div>
 
-              {/* SECTION 3: Pemilihan Paket Layanan (Plan Tier Switcher) */}
-              <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
-                <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between gap-2 flex-wrap">
-                  <div className="flex items-center gap-2">
-                    <Layers className="w-4 h-4 text-primary shrink-0" />
-                    <h2 className="font-extrabold text-sm text-slate-900">
-                      3. Pilih Paket Layanan Sendora
-                    </h2>
-                  </div>
-                  <span className="text-[11px] text-primary font-bold shrink-0">
-                    Cloud Hosted Ready
-                  </span>
-                </div>
+              {/* ORDER TYPE SELECTOR: Paket Langganan Utama VS Beli Addon & Top-Up */}
+              <div className="bg-slate-100 p-1.5 rounded-3xl border border-slate-200 flex items-center gap-1.5 shadow-2xs">
+                <button
+                  type="button"
+                  onClick={() => setCheckoutMode("PLAN")}
+                  className={`flex-1 py-3 px-4 rounded-2xl font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition-all min-h-[44px] ${
+                    checkoutMode === "PLAN"
+                      ? "bg-white text-slate-900 shadow-sm border border-slate-200/80"
+                      : "text-slate-500 hover:text-slate-900 hover:bg-white/50"
+                  }`}
+                >
+                  <Layers className={`w-4 h-4 ${checkoutMode === "PLAN" ? "text-emerald-600" : "text-slate-400"}`} />
+                  <span>Paket Langganan</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCheckoutMode("ADDON")}
+                  className={`flex-1 py-3 px-4 rounded-2xl font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition-all min-h-[44px] ${
+                    checkoutMode === "ADDON"
+                      ? "bg-emerald-600 text-white shadow-sm shadow-emerald-600/25"
+                      : "text-slate-500 hover:text-slate-900 hover:bg-white/50"
+                  }`}
+                >
+                  <PlusCircle className={`w-4 h-4 ${checkoutMode === "ADDON" ? "text-amber-300" : "text-slate-400"}`} />
+                  <span>Beli Addon & Top-Up</span>
+                </button>
+              </div>
 
-                <div className="p-4 sm:p-6">
-                  {activePlansList.length === 0 ? (
-                    <div className="p-6 text-center text-slate-500 text-sm">
-                      Memuat daftar paket layanan...
+              {checkoutMode === "PLAN" ? (
+                <>
+                  {/* SECTION 3: Pemilihan Paket Layanan (Plan Tier Switcher) */}
+                  <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
+                    <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-2">
+                        <Layers className="w-4 h-4 text-primary shrink-0" />
+                        <h2 className="font-extrabold text-sm text-slate-900">
+                          3. Pilih Paket Layanan Sendora
+                        </h2>
+                      </div>
+                      <span className="text-[11px] text-primary font-bold shrink-0">
+                        Cloud Hosted Ready
+                      </span>
                     </div>
-                  ) : (
-                    <div
-                      className={`grid grid-cols-1 gap-3.5 ${
-                        activePlansList.length === 1
-                          ? "sm:grid-cols-1 max-w-sm mx-auto"
-                          : activePlansList.length === 2
-                          ? "sm:grid-cols-2"
-                          : activePlansList.length === 4
-                          ? "sm:grid-cols-2 lg:grid-cols-4"
-                          : "sm:grid-cols-3"
-                      }`}
-                    >
-                      {activePlansList.map((p) => {
-                        const isSelected = selectedPlanId === p.id;
-                        const hasDiscount = Boolean(p.originalPrice && p.originalPrice > p.price);
-                        const periodSuffix =
-                          p.period === "day"
-                            ? "/ hr"
-                            : p.period === "week"
-                            ? "/ mgg"
-                            : p.period === "year"
-                            ? "/ thn"
-                            : "/ bln";
-                        const periodFull =
-                          p.period === "day"
-                            ? "hari"
-                            : p.period === "week"
-                            ? "minggu"
-                            : p.period === "year"
-                            ? "tahun"
-                            : "bulan";
-                        const msgLimit =
-                          p.monthlyMessages === -1
-                            ? "Unlimited"
-                            : `${p.monthlyMessages.toLocaleString("id-ID")}`;
 
-                        return (
-                          <button
-                            key={p.id}
-                            type="button"
-                            onClick={() => setSelectedPlanId(p.id)}
-                            className={`p-4 rounded-2xl border text-left transition-all relative ${
-                              isSelected
-                                ? "bg-emerald-50/40 border-emerald-500 shadow-md ring-2 ring-emerald-500/20"
-                                : "bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/50"
-                            }`}
-                          >
-                            {p.isPopular && (
-                              <span className="absolute -top-2.5 right-3 px-2 py-0.5 rounded-full text-[9px] font-black bg-primary text-white shadow-xs">
-                                POPULER
-                              </span>
-                            )}
-                            <div className="flex items-center justify-between mb-1.5">
-                              <span className="font-black text-sm text-slate-900">{p.name}</span>
-                              <div
-                                className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                                  isSelected ? "border-emerald-600 bg-emerald-600" : "border-slate-300"
+                    <div className="p-4 sm:p-6">
+                      {activePlansList.length === 0 ? (
+                        <div className="p-6 text-center text-slate-500 text-sm">
+                          Memuat daftar paket layanan...
+                        </div>
+                      ) : (
+                        <div
+                          className={`grid grid-cols-1 gap-3.5 ${
+                            activePlansList.length === 1
+                              ? "sm:grid-cols-1 max-w-sm mx-auto"
+                              : activePlansList.length === 2
+                              ? "sm:grid-cols-2"
+                              : activePlansList.length === 4
+                              ? "sm:grid-cols-2 lg:grid-cols-4"
+                              : "sm:grid-cols-3"
+                          }`}
+                        >
+                          {activePlansList.map((p) => {
+                            const isSelected = selectedPlanId === p.id;
+                            const hasDiscount = Boolean(p.originalPrice && p.originalPrice > p.price);
+                            const periodSuffix =
+                              p.period === "day"
+                                ? "/ hr"
+                                : p.period === "week"
+                                ? "/ mgg"
+                                : p.period === "year"
+                                ? "/ thn"
+                                : "/ bln";
+                            const periodFull =
+                              p.period === "day"
+                                ? "hari"
+                                : p.period === "week"
+                                ? "minggu"
+                                : p.period === "year"
+                                ? "tahun"
+                                : "bulan";
+                            const msgLimit =
+                              p.monthlyMessages === -1
+                                ? "Unlimited"
+                                : `${p.monthlyMessages.toLocaleString("id-ID")}`;
+
+                            return (
+                              <button
+                                key={p.id}
+                                type="button"
+                                onClick={() => setSelectedPlanId(p.id)}
+                                className={`p-4 rounded-2xl border text-left transition-all relative ${
+                                  isSelected
+                                    ? "bg-emerald-50/40 border-emerald-500 shadow-md ring-2 ring-emerald-500/20"
+                                    : "bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/50"
                                 }`}
                               >
-                                {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
-                              </div>
-                            </div>
-
-                            {hasDiscount && (
-                              <div className="flex items-center gap-1.5 mb-1 flex-wrap">
-                                <span className="text-xs text-slate-400 line-through font-medium">
-                                  {formatIDR(p.originalPrice!)}
-                                </span>
-                                {p.discountBadge ? (
-                                  <span className="text-[10px] font-bold px-1.5 py-0.5 bg-rose-50 text-rose-600 border border-rose-200/60 rounded">
-                                    {p.discountBadge}
+                                {p.isPopular && (
+                                  <span className="absolute -top-2.5 right-3 px-2 py-0.5 rounded-full text-[9px] font-black bg-primary text-white shadow-xs">
+                                    POPULER
                                   </span>
-                                ) : p.discountPercent ? (
-                                  <span className="text-[10px] font-bold px-1.5 py-0.5 bg-rose-50 text-rose-600 border border-rose-200/60 rounded">
-                                    -{p.discountPercent}%
-                                  </span>
-                                ) : null}
-                              </div>
-                            )}
+                                )}
+                                <div className="flex items-center justify-between mb-1.5">
+                                  <span className="font-black text-sm text-slate-900">{p.name}</span>
+                                  <div
+                                    className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                                      isSelected ? "border-emerald-600 bg-emerald-600" : "border-slate-300"
+                                    }`}
+                                  >
+                                    {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                                  </div>
+                                </div>
 
-                            <div className="text-base font-black text-slate-900">
-                              {formatIDR(p.price)}
-                              <span className="text-[10px] text-slate-400 font-normal"> {periodSuffix}</span>
-                            </div>
-                            <div className="text-[11px] text-slate-500 mt-2 space-y-0.5">
-                              <div>• {p.maxDevices} Device WhatsApp</div>
-                              <div>• {msgLimit} Pesan / {periodFull}</div>
-                            </div>
-                          </button>
-                        );
-                      })}
+                                {hasDiscount && (
+                                  <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                                    <span className="text-xs text-slate-400 line-through font-medium">
+                                      {formatIDR(p.originalPrice!)}
+                                    </span>
+                                    {p.discountBadge ? (
+                                      <span className="text-[10px] font-bold px-1.5 py-0.5 bg-rose-50 text-rose-600 border border-rose-200/60 rounded">
+                                        {p.discountBadge}
+                                      </span>
+                                    ) : p.discountPercent ? (
+                                      <span className="text-[10px] font-bold px-1.5 py-0.5 bg-rose-50 text-rose-600 border border-rose-200/60 rounded">
+                                        -{p.discountPercent}%
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                )}
+
+                                <div className="text-base font-black text-slate-900">
+                                  {formatIDR(p.price)}
+                                  <span className="text-[10px] text-slate-400 font-normal"> {periodSuffix}</span>
+                                </div>
+                                <div className="text-[11px] text-slate-500 mt-2 space-y-0.5">
+                                  <div>• {p.maxDevices} Device WhatsApp</div>
+                                  <div>• {msgLimit} Pesan / {periodFull}</div>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              </div>
-
-              {/* SECTION 4: Pilihan Durasi Berlangganan (Billing Cycle) */}
-              <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
-                <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between gap-2 flex-wrap">
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <h2 className="font-extrabold text-sm text-slate-900">
-                      4. Durasi Berlangganan
-                    </h2>
                   </div>
-                  <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full shrink-0">
-                    {currentPlan.price === 0
-                      ? "Akses Gratis (Rp 0)"
-                      : planPeriod === "year"
-                      ? "Paket Tahunan (365 Hari)"
-                      : planPeriod === "day"
-                      ? "Paket Harian (1 Hari)"
-                      : planPeriod === "week"
-                      ? "Paket Mingguan (7 Hari)"
-                      : "Pilihan Durasi"}
-                  </span>
-                </div>
 
-                <div className="p-4 sm:p-6 space-y-3">
-                  {currentPlan.price === 0 ? (
-                    <div className="p-4 rounded-2xl border bg-emerald-50/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs flex items-center justify-between flex-wrap gap-3">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-sm text-slate-900">Aktivasi Gratis (Free Trial)</span>
-                          <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-600 text-white">
-                            GRATIS
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-500 mt-1">
-                          Paket uji coba gratis tanpa biaya tagihan dan tanpa perlu memilih opsi durasi berulang.
-                        </p>
+                  {/* SECTION 4: Pilihan Durasi Berlangganan (Billing Cycle) */}
+                  <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
+                    <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <h2 className="font-extrabold text-sm text-slate-900">
+                          4. Durasi Berlangganan
+                        </h2>
                       </div>
-                      <div className="text-right">
-                        <div className="text-base font-black text-emerald-600">
-                          Rp 0
-                        </div>
-                        <span className="text-[11px] text-slate-400 font-normal">
-                          {planPeriod === "day" ? "/ hari" : planPeriod === "year" ? "/ tahun" : "/ bulan"}
-                        </span>
-                      </div>
+                      <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full shrink-0">
+                        {currentPlan.price === 0
+                          ? "Akses Gratis (Rp 0)"
+                          : planPeriod === "year"
+                          ? "Paket Tahunan (365 Hari)"
+                          : planPeriod === "day"
+                          ? "Paket Harian (1 Hari)"
+                          : planPeriod === "week"
+                          ? "Paket Mingguan (7 Hari)"
+                          : "Pilihan Durasi"}
+                      </span>
                     </div>
-                  ) : planPeriod === "year" ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-                      {[
-                        { months: 12, label: "1 Tahun (12 Bulan)", sub: "Durasi 1 Tahun Penuh", multiplier: 1 },
-                        { months: 24, label: "2 Tahun (24 Bulan)", sub: "Durasi 2 Tahun Penuh", multiplier: 2 },
-                        { months: 36, label: "3 Tahun (36 Bulan)", sub: "Durasi 3 Tahun Penuh", multiplier: 3 },
-                      ].map((item) => {
-                        const isSelected = effectiveDurationMonths === item.months;
-                        return (
-                          <button
-                            key={item.months}
-                            type="button"
-                            onClick={() => setDurationMonths(item.months)}
-                            className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all ${
-                              isSelected
-                                ? "bg-emerald-50/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs"
-                                : "bg-white border-slate-200 hover:border-slate-300"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="font-bold text-xs text-slate-900">{item.label}</span>
-                              <div
-                                className={`w-3.5 h-3.5 rounded-full border ${
-                                  isSelected ? "border-emerald-600 bg-emerald-600" : "border-slate-300"
-                                }`}
-                              />
-                            </div>
-                            <div className="text-sm font-black text-slate-900">
-                              {formatIDR(currentPlan.price * item.multiplier)}
-                            </div>
-                            <span className="text-[10px] text-slate-400">{item.sub}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ) : planPeriod === "day" ? (
-                    <div className="p-4 rounded-2xl border bg-emerald-50/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs flex items-center justify-between flex-wrap gap-3">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-sm text-slate-900">1 Hari (24 Jam)</span>
-                          <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-primary text-white">
-                            PAKET HARIAN
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-500 mt-1">
-                          Periode aktif 1 hari (24 jam) sejak aktivasi.
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-base font-black text-slate-900">
-                          {formatIDR(currentPlan.price)}
-                        </div>
-                        <span className="text-[11px] text-slate-400 font-normal">/ hari</span>
-                      </div>
-                    </div>
-                  ) : planPeriod === "week" ? (
-                    <div className="p-4 rounded-2xl border bg-emerald-50/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs flex items-center justify-between flex-wrap gap-3">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-sm text-slate-900">1 Minggu (7 Hari)</span>
-                          <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-primary text-white">
-                            PAKET MINGGUAN
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-500 mt-1">
-                          Periode aktif 7 hari penuh sejak aktivasi.
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-base font-black text-slate-900">
-                          {formatIDR(currentPlan.price)}
-                        </div>
-                        <span className="text-[11px] text-slate-400 font-normal">/ minggu</span>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-                      {[
-                        { months: 1, label: "1 Bulan", sub: "Durasi 1 Bulan" },
-                        { months: 3, label: "3 Bulan", sub: "Durasi 3 Bulan" },
-                        { months: 6, label: "6 Bulan", sub: "Durasi 6 Bulan" },
-                        { months: 12, label: "12 Bulan", sub: "Durasi 1 Tahun Penuh" },
-                        { months: 24, label: "24 Bulan", sub: "Durasi 2 Tahun Penuh" },
-                      ].map((item) => {
-                        const isSelected = durationMonths === item.months;
-                        return (
-                          <button
-                            key={item.months}
-                            type="button"
-                            onClick={() => setDurationMonths(item.months)}
-                            className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all ${
-                              isSelected
-                                ? "bg-emerald-50/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs"
-                                : "bg-white border-slate-200 hover:border-slate-300"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="font-bold text-xs text-slate-900">{item.label}</span>
-                              <div
-                                className={`w-3.5 h-3.5 rounded-full border ${
-                                  isSelected ? "border-emerald-600 bg-emerald-600" : "border-slate-300"
-                                }`}
-                              />
-                            </div>
-                            <div className="text-sm font-black text-slate-900">
-                              {formatIDR(currentPlan.price * item.months)}
-                            </div>
-                            <span className="text-[10px] text-slate-400">{item.sub}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              </div>
 
-              {/* SECTION: Tambah Addon Ekstra (Opsional) */}
-              {currentPlan.price > 0 && availableAddons.length > 0 && (
-                <div className="bg-white rounded-3xl border border-slate-200 shadow-xs p-4 sm:p-6 space-y-4">
-                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="p-4 sm:p-6 space-y-3">
+                      {currentPlan.price === 0 ? (
+                        <div className="p-4 rounded-2xl border bg-emerald-50/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs flex items-center justify-between flex-wrap gap-3">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-sm text-slate-900">Aktivasi Gratis (Free Trial)</span>
+                              <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-600 text-white">
+                                GRATIS
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-500 mt-1">
+                              Paket uji coba gratis tanpa biaya tagihan dan tanpa perlu memilih opsi durasi berulang.
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-base font-black text-emerald-600">
+                              Rp 0
+                            </div>
+                            <span className="text-[11px] text-slate-400 font-normal">
+                              {planPeriod === "day" ? "/ hari" : planPeriod === "year" ? "/ tahun" : "/ bulan"}
+                            </span>
+                          </div>
+                        </div>
+                      ) : planPeriod === "year" ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                          {[
+                            { months: 12, label: "1 Tahun (12 Bulan)", sub: "Durasi 1 Tahun Penuh", multiplier: 1 },
+                            { months: 24, label: "2 Tahun (24 Bulan)", sub: "Durasi 2 Tahun Penuh", multiplier: 2 },
+                            { months: 36, label: "3 Tahun (36 Bulan)", sub: "Durasi 3 Tahun Penuh", multiplier: 3 },
+                          ].map((item) => {
+                            const isSelected = effectiveDurationMonths === item.months;
+                            return (
+                              <button
+                                key={item.months}
+                                type="button"
+                                onClick={() => setDurationMonths(item.months)}
+                                className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all ${
+                                  isSelected
+                                    ? "bg-emerald-50/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs"
+                                    : "bg-white border-slate-200 hover:border-slate-300"
+                                }`}
+                              >
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className="font-bold text-xs text-slate-900">{item.label}</span>
+                                  <div
+                                    className={`w-3.5 h-3.5 rounded-full border ${
+                                      isSelected ? "border-emerald-600 bg-emerald-600" : "border-slate-300"
+                                    }`}
+                                  />
+                                </div>
+                                <div className="text-sm font-black text-slate-900">
+                                  {formatIDR(currentPlan.price * item.multiplier)}
+                                </div>
+                                <span className="text-[10px] text-slate-400">{item.sub}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : planPeriod === "day" ? (
+                        <div className="p-4 rounded-2xl border bg-emerald-50/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs flex items-center justify-between flex-wrap gap-3">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-sm text-slate-900">1 Hari (24 Jam)</span>
+                              <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-primary text-white">
+                                PAKET HARIAN
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-500 mt-1">
+                              Periode aktif 1 hari (24 jam) sejak aktivasi.
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-base font-black text-slate-900">
+                              {formatIDR(currentPlan.price)}
+                            </div>
+                            <span className="text-[11px] text-slate-400 font-normal">/ hari</span>
+                          </div>
+                        </div>
+                      ) : planPeriod === "week" ? (
+                        <div className="p-4 rounded-2xl border bg-emerald-50/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs flex items-center justify-between flex-wrap gap-3">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-sm text-slate-900">1 Minggu (7 Hari)</span>
+                              <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-primary text-white">
+                                PAKET MINGGUAN
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-500 mt-1">
+                              Periode aktif 7 hari penuh sejak aktivasi.
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-base font-black text-slate-900">
+                              {formatIDR(currentPlan.price)}
+                            </div>
+                            <span className="text-[11px] text-slate-400 font-normal">/ minggu</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                          {[
+                            { months: 1, label: "1 Bulan", sub: "Durasi 1 Bulan" },
+                            { months: 3, label: "3 Bulan", sub: "Durasi 3 Bulan" },
+                            { months: 6, label: "6 Bulan", sub: "Durasi 6 Bulan" },
+                            { months: 12, label: "12 Bulan", sub: "Durasi 1 Tahun Penuh" },
+                            { months: 24, label: "24 Bulan", sub: "Durasi 2 Tahun Penuh" },
+                          ].map((item) => {
+                            const isSelected = durationMonths === item.months;
+                            return (
+                              <button
+                                key={item.months}
+                                type="button"
+                                onClick={() => setDurationMonths(item.months)}
+                                className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all ${
+                                  isSelected
+                                    ? "bg-emerald-50/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs"
+                                    : "bg-white border-slate-200 hover:border-slate-300"
+                                }`}
+                              >
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className="font-bold text-xs text-slate-900">{item.label}</span>
+                                  <div
+                                    className={`w-3.5 h-3.5 rounded-full border ${
+                                      isSelected ? "border-emerald-600 bg-emerald-600" : "border-slate-300"
+                                    }`}
+                                  />
+                                </div>
+                                <div className="text-sm font-black text-slate-900">
+                                  {formatIDR(currentPlan.price * item.months)}
+                                </div>
+                                <span className="text-[10px] text-slate-400">{item.sub}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* SECTION 5: Fitur Layanan yang Didapatkan */}
+                  <div className="bg-white rounded-3xl border border-slate-200 shadow-xs p-4 sm:p-6 space-y-4">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
+                        <h3 className="font-extrabold text-sm text-slate-900">
+                          Fitur & Akses Paket {currentPlan.name}
+                        </h3>
+                      </div>
+                      <span className="text-xs text-slate-400 font-medium shrink-0">Akses Penuh</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                      {detailedFeatures.slice(0, 8).map((feat, idx) => (
+                        <div
+                          key={idx}
+                          className={`flex items-center gap-2.5 p-2.5 rounded-xl border ${
+                            feat.included
+                              ? "bg-slate-50/80 border-slate-200/80 text-slate-800"
+                              : "bg-slate-50/30 border-slate-100 text-slate-400 line-through opacity-60"
+                          }`}
+                        >
+                          {feat.included ? (
+                            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                          ) : (
+                            <span className="w-4 h-4 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center text-[10px] shrink-0 font-black">
+                              ✕
+                            </span>
+                          )}
+                          <span className="font-semibold truncate">{feat.label}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/70 text-[11px] text-slate-600 flex items-center gap-2 font-mono">
+                      <Server className="w-3.5 h-3.5 text-primary shrink-0" />
+                      <span className="truncate">
+                        REST API Base Endpoint: <strong>{originUrl}/api/v1/messages/send</strong>
+                      </span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                /* ADDON ONLY CHECKOUT SECTIONS */
+                <div className="bg-white rounded-3xl border border-slate-200 shadow-xs p-4 sm:p-6 space-y-6">
+                  <div className="flex items-center justify-between gap-2 flex-wrap border-b border-slate-100 pb-4">
                     <div className="flex items-center gap-2">
-                      <PlusCircle className="w-4 h-4 text-primary shrink-0" />
-                      <h3 className="font-extrabold text-sm text-slate-900">
-                        Tambah Addon Ekstra (Opsional)
-                      </h3>
+                      <PlusCircle className="w-5 h-5 text-emerald-600 shrink-0" />
+                      <div>
+                        <h2 className="font-extrabold text-sm sm:text-base text-slate-900">
+                          3. Pilih Addon Ekstra & Top-Up
+                        </h2>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Pilih kuota atau perangkat tambahan yang ingin langsung ditambahkan ke akun Anda
+                        </p>
+                      </div>
                     </div>
-                    <span className="text-xs text-slate-400 font-medium shrink-0">
-                      Perangkat & Kuota Tambahan
+                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full">
+                      {selectedAddonIds.length} Addon Dipilih
                     </span>
                   </div>
 
-                  <div className="space-y-4">
-                    {/* Device Addons */}
-                    {availableAddons.some((a) => a.type === "DEVICE") && (
-                      <div className="space-y-2">
-                        <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                          <Smartphone className="w-3.5 h-3.5 text-slate-400" />
-                          Tambah Slot Device WhatsApp
+                  {availableAddons.length === 0 ? (
+                    <div className="p-8 text-center text-slate-500 text-xs">
+                      Belum ada Addon yang tersedia untuk dibeli saat ini.
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {/* Device Addons */}
+                      {availableAddons.some((a) => a.type === "DEVICE") && (
+                        <div className="space-y-3">
+                          <div className="text-xs font-bold text-slate-700 flex items-center gap-2">
+                            <Smartphone className="w-4 h-4 text-emerald-600" />
+                            <span>Slot Perangkat WhatsApp Tambahan</span>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {availableAddons
+                              .filter((a) => a.type === "DEVICE")
+                              .map((addon) => {
+                                const isSelected = selectedAddonIds.includes(addon.id);
+                                return (
+                                  <button
+                                    key={addon.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedAddonIds((prev) =>
+                                        prev.includes(addon.id)
+                                          ? prev.filter((id) => id !== addon.id)
+                                          : [...prev, addon.id]
+                                      );
+                                    }}
+                                    className={`p-4 rounded-2xl border text-left transition-all relative ${
+                                      isSelected
+                                        ? "bg-emerald-50/50 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs"
+                                        : "bg-white border-slate-200 hover:border-slate-300"
+                                    }`}
+                                  >
+                                    {addon.badge && (
+                                      <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-800 shadow-2xs">
+                                        {addon.badge}
+                                      </span>
+                                    )}
+                                    <div className="flex items-center justify-between mb-1.5 pr-14">
+                                      <span className="font-extrabold text-xs text-slate-900">{addon.name}</span>
+                                    </div>
+                                    <div className="text-base font-black text-emerald-600">
+                                      {formatIDR(addon.price)}
+                                    </div>
+                                    <p className="text-[11px] text-slate-500 mt-1">
+                                      {addon.description || `+${addon.amount} Device WhatsApp`}
+                                    </p>
+                                    <div className="mt-3 flex items-center gap-1.5 text-[11px] font-bold">
+                                      <div
+                                        className={`w-4 h-4 rounded-md border flex items-center justify-center ${
+                                          isSelected ? "border-emerald-600 bg-emerald-600 text-white" : "border-slate-300 bg-white"
+                                        }`}
+                                      >
+                                        {isSelected && "✓"}
+                                      </div>
+                                      <span className={isSelected ? "text-emerald-700 font-black" : "text-slate-500"}>
+                                        {isSelected ? "Dipilih" : "Pilih Addon"}
+                                      </span>
+                                    </div>
+                                  </button>
+                                );
+                              })}
+                          </div>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          {availableAddons
-                            .filter((a) => a.type === "DEVICE")
-                            .map((addon) => {
-                              const isSelected = selectedAddonIds.includes(addon.id);
-                              return (
-                                <button
-                                  key={addon.id}
-                                  type="button"
-                                  onClick={() => {
-                                    setSelectedAddonIds((prev) =>
-                                      prev.includes(addon.id)
-                                        ? prev.filter((id) => id !== addon.id)
-                                        : [...prev, addon.id]
-                                    );
-                                  }}
-                                  className={`p-3.5 rounded-2xl border text-left transition-all relative ${
-                                    isSelected
-                                      ? "bg-emerald-50/50 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs"
-                                      : "bg-white border-slate-200 hover:border-slate-300"
-                                  }`}
-                                >
-                                  {addon.badge && (
-                                    <span className="absolute top-2.5 right-2.5 px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-100 text-emerald-800">
-                                      {addon.badge}
-                                    </span>
-                                  )}
-                                  <div className="flex items-center justify-between mb-1 pr-12">
-                                    <span className="font-bold text-xs text-slate-900">{addon.name}</span>
-                                  </div>
-                                  <div className="text-sm font-black text-slate-900">
-                                    + {formatIDR(addon.price)}
-                                  </div>
-                                  <p className="text-[10px] text-slate-400 mt-0.5 line-clamp-1">
-                                    {addon.description || `+${addon.amount} Device WhatsApp`}
-                                  </p>
-                                </button>
-                              );
-                            })}
-                        </div>
-                      </div>
-                    )}
+                      )}
 
-                    {/* Message Quota Addons */}
-                    {availableAddons.some((a) => a.type === "MESSAGES") && (
-                      <div className="space-y-2">
-                        <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                          <MessageSquare className="w-3.5 h-3.5 text-slate-400" />
-                          Tambah Kuota Pesan Chat
+                      {/* Message Quota Addons */}
+                      {availableAddons.some((a) => a.type === "MESSAGES") && (
+                        <div className="space-y-3">
+                          <div className="text-xs font-bold text-slate-700 flex items-center gap-2">
+                            <MessageSquare className="w-4 h-4 text-blue-600" />
+                            <span>Kuota Pesan / Chat Tambahan</span>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {availableAddons
+                              .filter((a) => a.type === "MESSAGES")
+                              .map((addon) => {
+                                const isSelected = selectedAddonIds.includes(addon.id);
+                                return (
+                                  <button
+                                    key={addon.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedAddonIds((prev) =>
+                                        prev.includes(addon.id)
+                                          ? prev.filter((id) => id !== addon.id)
+                                          : [...prev, addon.id]
+                                      );
+                                    }}
+                                    className={`p-4 rounded-2xl border text-left transition-all relative ${
+                                      isSelected
+                                        ? "bg-blue-50/50 border-blue-500 ring-2 ring-blue-500/20 shadow-xs"
+                                        : "bg-white border-slate-200 hover:border-slate-300"
+                                    }`}
+                                  >
+                                    {addon.badge && (
+                                      <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full text-[9px] font-black bg-blue-100 text-blue-800 shadow-2xs">
+                                        {addon.badge}
+                                      </span>
+                                    )}
+                                    <div className="flex items-center justify-between mb-1.5 pr-14">
+                                      <span className="font-extrabold text-xs text-slate-900">{addon.name}</span>
+                                    </div>
+                                    <div className="text-base font-black text-blue-600">
+                                      {formatIDR(addon.price)}
+                                    </div>
+                                    <p className="text-[11px] text-slate-500 mt-1">
+                                      {addon.description || `+${addon.amount.toLocaleString("id-ID")} Pesan`}
+                                    </p>
+                                    <div className="mt-3 flex items-center gap-1.5 text-[11px] font-bold">
+                                      <div
+                                        className={`w-4 h-4 rounded-md border flex items-center justify-center ${
+                                          isSelected ? "border-blue-600 bg-blue-600 text-white" : "border-slate-300 bg-white"
+                                        }`}
+                                      >
+                                        {isSelected && "✓"}
+                                      </div>
+                                      <span className={isSelected ? "text-blue-700 font-black" : "text-slate-500"}>
+                                        {isSelected ? "Dipilih" : "Pilih Addon"}
+                                      </span>
+                                    </div>
+                                  </button>
+                                );
+                              })}
+                          </div>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                          {availableAddons
-                            .filter((a) => a.type === "MESSAGES")
-                            .map((addon) => {
-                              const isSelected = selectedAddonIds.includes(addon.id);
-                              return (
-                                <button
-                                  key={addon.id}
-                                  type="button"
-                                  onClick={() => {
-                                    setSelectedAddonIds((prev) =>
-                                      prev.includes(addon.id)
-                                        ? prev.filter((id) => id !== addon.id)
-                                        : [...prev, addon.id]
-                                    );
-                                  }}
-                                  className={`p-3.5 rounded-2xl border text-left transition-all relative ${
-                                    isSelected
-                                      ? "bg-emerald-50/50 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs"
-                                      : "bg-white border-slate-200 hover:border-slate-300"
-                                  }`}
-                                >
-                                  {addon.badge && (
-                                    <span className="absolute top-2.5 right-2.5 px-1.5 py-0.5 rounded text-[9px] font-black bg-blue-100 text-blue-800">
-                                      {addon.badge}
-                                    </span>
-                                  )}
-                                  <div className="flex items-center justify-between mb-1 pr-12">
-                                    <span className="font-bold text-xs text-slate-900">{addon.name}</span>
-                                  </div>
-                                  <div className="text-sm font-black text-slate-900">
-                                    + {formatIDR(addon.price)}
-                                  </div>
-                                  <p className="text-[10px] text-slate-400 mt-0.5 line-clamp-1">
-                                    {addon.description || `+${addon.amount.toLocaleString("id-ID")} Pesan`}
-                                  </p>
-                                </button>
-                              );
-                            })}
-                        </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
+                  )}
+
+                  {/* Addon Info Note */}
+                  <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 text-xs text-slate-600 space-y-1">
+                    <div className="font-bold text-slate-800 flex items-center gap-1.5">
+                      <Zap className="w-3.5 h-3.5 text-amber-500" />
+                      Aktivasi Kuota Instan
+                    </div>
+                    <p className="text-slate-500 leading-relaxed">
+                      Kapasitas slot device dan kuota pesan dari Addon ini akan langsung ditambahkan ke akun Anda segera setelah pembayaran berhasil dikonfirmasi secara otomatis.
+                    </p>
                   </div>
                 </div>
               )}
-
-              {/* SECTION 5: Fitur Layanan yang Didapatkan */}
-              <div className="bg-white rounded-3xl border border-slate-200 shadow-xs p-4 sm:p-6 space-y-4">
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
-                    <h3 className="font-extrabold text-sm text-slate-900">
-                      Fitur & Akses Paket {currentPlan.name}
-                    </h3>
-                  </div>
-                  <span className="text-xs text-slate-400 font-medium shrink-0">Akses Penuh</span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                  {detailedFeatures.slice(0, 8).map((feat, idx) => (
-                    <div
-                      key={idx}
-                      className={`flex items-center gap-2.5 p-2.5 rounded-xl border ${
-                        feat.included
-                          ? "bg-slate-50/80 border-slate-200/80 text-slate-800"
-                          : "bg-slate-50/30 border-slate-100 text-slate-400 line-through opacity-60"
-                      }`}
-                    >
-                      {feat.included ? (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                      ) : (
-                        <span className="w-4 h-4 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center text-[10px] shrink-0 font-black">
-                          ✕
-                        </span>
-                      )}
-                      <span className="font-semibold truncate">{feat.label}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/70 text-[11px] text-slate-600 flex items-center gap-2 font-mono">
-                  <Server className="w-3.5 h-3.5 text-primary shrink-0" />
-                  <span className="truncate">
-                    REST API Base Endpoint: <strong>{originUrl}/api/v1/messages/send</strong>
-                  </span>
-                </div>
-              </div>
             </form>
           </div>
 
@@ -1581,16 +1675,38 @@ function OrderContent() {
             <div className="bg-white rounded-3xl border border-slate-200 shadow-xs p-3 space-y-1">
               <button
                 type="button"
-                onClick={() => setActiveTab("NEW")}
+                onClick={() => {
+                  setActiveTab("NEW");
+                  setCheckoutMode("PLAN");
+                }}
                 className={`w-full px-4 py-2.5 rounded-2xl text-xs font-bold flex items-center justify-between transition-all ${
-                  activeTab === "NEW"
+                  checkoutMode === "PLAN"
                     ? "bg-slate-900 text-white shadow-xs"
                     : "text-slate-600 hover:bg-slate-100"
                 }`}
               >
                 <span className="flex items-center gap-2">
                   <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                  Langganan Baru
+                  Langganan Paket Utama
+                </span>
+                <ChevronRight className="w-3.5 h-3.5 opacity-60" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab("ADDON_DEVICE");
+                  setCheckoutMode("ADDON");
+                }}
+                className={`w-full px-4 py-2.5 rounded-2xl text-xs font-bold flex items-center justify-between transition-all ${
+                  checkoutMode === "ADDON"
+                    ? "bg-emerald-600 text-white shadow-xs"
+                    : "text-slate-600 hover:bg-slate-100"
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <PlusCircle className="w-3.5 h-3.5 text-amber-300" />
+                  Beli Addon & Top-Up
                 </span>
                 <ChevronRight className="w-3.5 h-3.5 opacity-60" />
               </button>
@@ -1613,21 +1729,6 @@ function OrderContent() {
               <button
                 type="button"
                 onClick={() => {
-                  setActiveTab("ADDON_DEVICE");
-                  router.push("/dashboard/devices");
-                }}
-                className="w-full px-4 py-2.5 rounded-2xl text-xs font-bold text-slate-600 hover:bg-slate-100 flex items-center justify-between transition-all"
-              >
-                <span className="flex items-center gap-2">
-                  <Smartphone className="w-3.5 h-3.5 text-emerald-500" />
-                  Tambah Slot Device
-                </span>
-                <ChevronRight className="w-3.5 h-3.5 opacity-60" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
                   setActiveTab("INVOICES");
                   router.push("/dashboard/billing");
                 }}
@@ -1635,7 +1736,7 @@ function OrderContent() {
               >
                 <span className="flex items-center gap-2">
                   <Clock className="w-3.5 h-3.5 text-indigo-500" />
-                  Riwayat Invoice / Tertunda
+                  Riwayat Invoice / Billing
                 </span>
                 <ChevronRight className="w-3.5 h-3.5 opacity-60" />
               </button>
@@ -1644,77 +1745,100 @@ function OrderContent() {
             {/* Order Summary Card */}
             <div className="bg-white rounded-3xl border border-slate-200 shadow-md p-4 sm:p-6 space-y-5">
               <div className="border-b border-slate-100 pb-3">
-                <h3 className="text-base font-extrabold text-slate-900">Ringkasan Pesanan</h3>
-                <p className="text-xs text-slate-400 mt-0.5">Rincian tagihan langganan Anda</p>
+                <h3 className="text-base font-extrabold text-slate-900">
+                  {isAddonMode ? "Ringkasan Addon / Top-Up" : "Ringkasan Pesanan Paket"}
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {isAddonMode ? "Rincian kuota tambahan yang dibeli" : "Rincian tagihan langganan Anda"}
+                </p>
               </div>
 
-              {/* Selected Plan Details */}
+              {/* Selected Plan / Addon Details */}
               <div className="space-y-2 text-xs">
-                <div className="flex items-center justify-between font-bold text-slate-900">
-                  <span>Paket Layanan:</span>
-                  <span className="text-primary font-black">Sendora {currentPlan.name}</span>
-                </div>
-                <div className="flex items-center justify-between text-slate-600">
-                  <span>Durasi Langganan:</span>
-                  <span className="font-bold">
-                    {planPeriod === "day"
-                      ? "1 Hari (24 Jam)"
-                      : planPeriod === "week"
-                      ? "1 Minggu (7 Hari)"
-                      : effectiveDurationMonths === 36
-                      ? "36 Bulan (3 Tahun)"
-                      : effectiveDurationMonths === 24
-                      ? "24 Bulan (2 Tahun)"
-                      : effectiveDurationMonths === 12
-                      ? "12 Bulan (1 Tahun)"
-                      : `${effectiveDurationMonths} Bulan`}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-slate-600">
-                  <span>Metode Bayar:</span>
-                  <span className="font-bold text-slate-900 uppercase">{selectedMethod.replace("_", " ")}</span>
-                </div>
-                <div className="flex items-center justify-between text-slate-600">
-                  <span>
-                    Harga{" "}
-                    {planPeriod === "year"
-                      ? `(${Math.max(1, Math.round(effectiveDurationMonths / 12))} thn)`
-                      : planPeriod === "month"
-                      ? `(${durationMonths} bln)`
-                      : planPeriod === "day"
-                      ? "(1 hr)"
-                      : "(1 mgg)"}
-                    :
-                  </span>
-                  <span>{formatIDR(basePrice)}</span>
-                </div>
-
-                {addonsTotal > 0 && (
-                  <div className="space-y-1.5 py-1.5 border-y border-dashed border-slate-200">
-                    <div className="flex items-center justify-between text-slate-800 font-bold text-xs">
-                      <span>Addon Tambahan ({selectedAddonIds.length}):</span>
-                      <span className="text-emerald-600">+ {formatIDR(addonsTotal)}</span>
+                {isAddonMode ? (
+                  <>
+                    <div className="flex items-center justify-between font-bold text-slate-900">
+                      <span>Tipe Order:</span>
+                      <span className="text-emerald-600 font-black">Top-Up Addon Ekstra</span>
                     </div>
-                    <div className="space-y-1 pl-2 text-[11px] text-slate-500">
-                      {selectedAddonIds.map((id) => {
-                        const item = availableAddons.find((a) => a.id === id);
-                        if (!item) return null;
-                        return (
-                          <div key={id} className="flex items-center justify-between">
-                            <span className="truncate max-w-[150px]">• {item.name}</span>
-                            <span className="font-mono text-slate-600">+{formatIDR(item.price)}</span>
-                          </div>
-                        );
-                      })}
+                    <div className="flex items-center justify-between text-slate-600">
+                      <span>Metode Bayar:</span>
+                      <span className="font-bold text-slate-900 uppercase">{selectedMethod.replace("_", " ")}</span>
                     </div>
-                  </div>
-                )}
 
-                {durationDiscount > 0 && (
-                  <div className="flex items-center justify-between text-emerald-600 font-bold">
-                    <span>Diskon Durasi ({durationMonths === 12 ? "20%" : "5%"}):</span>
-                    <span>- {formatIDR(durationDiscount)}</span>
-                  </div>
+                    <div className="space-y-1.5 py-2 border-y border-dashed border-slate-200">
+                      <div className="flex items-center justify-between text-slate-800 font-bold text-xs">
+                        <span>Addon Dipilih ({selectedAddonIds.length}):</span>
+                        <span className="text-emerald-600">{formatIDR(addonsTotal)}</span>
+                      </div>
+                      {selectedAddonIds.length === 0 ? (
+                        <p className="text-[11px] text-amber-600 italic">
+                          Belum ada addon yang dipilih. Silakan centang addon di atas.
+                        </p>
+                      ) : (
+                        <div className="space-y-1 pl-1 text-[11px] text-slate-600">
+                          {selectedAddonIds.map((id) => {
+                            const item = availableAddons.find((a) => a.id === id);
+                            if (!item) return null;
+                            return (
+                              <div key={id} className="flex items-center justify-between">
+                                <span className="truncate max-w-[170px]">• {item.name}</span>
+                                <span className="font-mono font-bold text-slate-800">{formatIDR(item.price)}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between font-bold text-slate-900">
+                      <span>Paket Layanan:</span>
+                      <span className="text-primary font-black">Sendora {currentPlan.name}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-slate-600">
+                      <span>Durasi Langganan:</span>
+                      <span className="font-bold">
+                        {planPeriod === "day"
+                          ? "1 Hari (24 Jam)"
+                          : planPeriod === "week"
+                          ? "1 Minggu (7 Hari)"
+                          : effectiveDurationMonths === 36
+                          ? "36 Bulan (3 Tahun)"
+                          : effectiveDurationMonths === 24
+                          ? "24 Bulan (2 Tahun)"
+                          : effectiveDurationMonths === 12
+                          ? "12 Bulan (1 Tahun)"
+                          : `${effectiveDurationMonths} Bulan`}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-slate-600">
+                      <span>Metode Bayar:</span>
+                      <span className="font-bold text-slate-900 uppercase">{selectedMethod.replace("_", " ")}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-slate-600">
+                      <span>
+                        Harga{" "}
+                        {planPeriod === "year"
+                          ? `(${Math.max(1, Math.round(effectiveDurationMonths / 12))} thn)`
+                          : planPeriod === "month"
+                          ? `(${durationMonths} bln)`
+                          : planPeriod === "day"
+                          ? "(1 hr)"
+                          : "(1 mgg)"}
+                        :
+                      </span>
+                      <span>{formatIDR(basePrice)}</span>
+                    </div>
+
+                    {durationDiscount > 0 && (
+                      <div className="flex items-center justify-between text-emerald-600 font-bold">
+                        <span>Diskon Durasi ({durationMonths === 12 ? "20%" : "5%"}):</span>
+                        <span>- {formatIDR(durationDiscount)}</span>
+                      </div>
+                    )}
+                  </>
                 )}
 
                 {couponDiscount > 0 && appliedVoucher && (
@@ -1816,14 +1940,26 @@ function OrderContent() {
               <button
                 type="button"
                 onClick={handleCheckout}
-                disabled={loading}
-                className="btn btn-primary btn-block rounded-2xl text-white font-extrabold shadow-lg shadow-primary/25 gap-2 text-sm"
+                disabled={loading || (isAddonMode && selectedAddonIds.length === 0)}
+                className="btn btn-primary btn-block rounded-2xl text-white font-extrabold shadow-lg shadow-primary/25 gap-2 text-sm disabled:opacity-50"
               >
                 {loading ? (
                   <>
                     <RefreshCw className="w-4 h-4 animate-spin" />
                     Menghubungi Server...
                   </>
+                ) : isAddonMode ? (
+                  selectedAddonIds.length === 0 ? (
+                    <>
+                      <PlusCircle className="w-4 h-4" />
+                      Pilih Minimal 1 Addon
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="w-4 h-4" />
+                      Bayar Addon ({selectedAddonIds.length} item) - {formatIDR(finalTotal)}
+                    </>
+                  )
                 ) : currentPlan.price === 0 ? (
                   <>
                     <Zap className="w-4 h-4" />

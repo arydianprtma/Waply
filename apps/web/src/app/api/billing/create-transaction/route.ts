@@ -17,20 +17,35 @@ export async function POST(req: NextRequest) {
     const authUser = await getAuthUser();
     const body = await req.json();
 
-    const planId = (body.planId || "STARTER") as PlanId;
-    const durationMonths = Number(body.durationMonths || 1); // 1, 3, or 12
+    const isAddonOnly = body.isAddonOnly === true || body.planId === "ADDON" || body.planId === "ADDON_ONLY";
+    const planId = isAddonOnly ? ("ADDON" as any) : ((body.planId || "STARTER") as PlanId);
+    const durationMonths = isAddonOnly ? 0 : Number(body.durationMonths || 1); // 1, 3, or 12
     const customerName = (body.customerName || authUser.name || "Sendora User").trim();
     const customerEmail = (body.customerEmail || authUser.email || "user@sendora.id").trim().toLowerCase();
     const customerPhone = (body.customerPhone || "").trim();
     const couponCode = (body.couponCode || "").trim().toUpperCase();
 
+    // Addons calculation
+    const selectedAddonIds: string[] = Array.isArray(body.selectedAddonIds) ? body.selectedAddonIds : [];
+    const allAddons = getAllAddons();
+    let addonsAmount = 0;
+    for (const addId of selectedAddonIds) {
+      if (allAddons[addId] && allAddons[addId].isActive) {
+        addonsAmount += allAddons[addId].price;
+      }
+    }
+
+    if (isAddonOnly && selectedAddonIds.length === 0) {
+      return NextResponse.json({ success: false, error: "Pilih minimal 1 addon untuk checkout" }, { status: 400 });
+    }
+
     // Resolve plan
-    const plan = PLANS[planId] || DEFAULT_PLANS[planId];
-    if (!plan) {
+    const plan = isAddonOnly ? null : (PLANS[planId] || DEFAULT_PLANS[planId]);
+    if (!isAddonOnly && !plan) {
       return NextResponse.json({ success: false, error: "Paket tidak valid" }, { status: 400 });
     }
 
-    if (plan.price === 0) {
+    if (!isAddonOnly && plan && plan.price === 0) {
       return NextResponse.json(
         { success: false, error: "Paket Free Trial tidak memerlukan pembayaran" },
         { status: 400 }
@@ -46,24 +61,17 @@ export async function POST(req: NextRequest) {
     });
 
     // Base price & duration calculation
-    const isYearly = plan.period === "year";
-    const isFixedPeriod = plan.period && plan.period !== "month" && !isYearly;
-    let baseAmount = plan.price;
+    let baseAmount = 0;
+    if (!isAddonOnly && plan) {
+      const isYearly = plan.period === "year";
+      const isFixedPeriod = plan.period && plan.period !== "month" && !isYearly;
+      baseAmount = plan.price;
 
-    if (isYearly) {
-      const years = Math.max(1, Math.round(durationMonths / 12));
-      baseAmount = plan.price * years;
-    } else if (!isFixedPeriod) {
-      baseAmount = plan.price * durationMonths;
-    }
-
-    // Addons calculation
-    const selectedAddonIds: string[] = Array.isArray(body.selectedAddonIds) ? body.selectedAddonIds : [];
-    const allAddons = getAllAddons();
-    let addonsAmount = 0;
-    for (const addId of selectedAddonIds) {
-      if (allAddons[addId] && allAddons[addId].isActive) {
-        addonsAmount += allAddons[addId].price;
+      if (isYearly) {
+        const years = Math.max(1, Math.round(durationMonths / 12));
+        baseAmount = plan.price * years;
+      } else if (!isFixedPeriod) {
+        baseAmount = plan.price * durationMonths;
       }
     }
 
@@ -74,8 +82,8 @@ export async function POST(req: NextRequest) {
     if (couponCode) {
       const vResult = validateVoucher({
         code: couponCode,
-        planId,
-        durationMonths,
+        planId: isAddonOnly ? "STARTER" : planId,
+        durationMonths: isAddonOnly ? 1 : durationMonths,
         orderAmount: totalAfterDuration,
       });
       if (vResult.valid) {
@@ -85,7 +93,7 @@ export async function POST(req: NextRequest) {
     }
 
     const finalAmount = Math.max(1000, totalAfterDuration - couponDiscount);
-    const orderId = generateOrderId(planId);
+    const orderId = isAddonOnly ? `SENDORA-ADDON-${Date.now()}` : generateOrderId(planId);
     const durationLabel =
       durationMonths === 36
         ? "3 Tahun"
@@ -95,6 +103,9 @@ export async function POST(req: NextRequest) {
         ? "1 Tahun"
         : `${durationMonths} Bulan`;
 
+    const addonNames = selectedAddonIds.map((id: string) => allAddons[id]?.name).filter(Boolean);
+    const addonLabel = addonNames.length > 0 ? addonNames.join(", ") : "Top-Up";
+
     // Create Snap Token via Midtrans
     const snap = await createSnapToken({
       orderId,
@@ -103,7 +114,9 @@ export async function POST(req: NextRequest) {
       customerName,
       customerEmail,
       customerPhone,
-      itemName: `Sendora ${plan.name} (${durationLabel})`,
+      itemName: isAddonOnly
+        ? `Sendora Addon (${addonLabel})`
+        : `Sendora ${plan?.name || planId} (${durationLabel})`,
     });
 
     // Save pending invoice to local storage
