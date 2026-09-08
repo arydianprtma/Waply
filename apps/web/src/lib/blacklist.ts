@@ -28,9 +28,10 @@ export function getLocalBlacklist(userId?: string): BlacklistItem[] {
     if (userId) {
       return list.filter((item: any) => {
         if (item.userId === userId) return true;
+        if (item.reason === "UNSUBSCRIBE_KEYWORD") return true;
         if (
-          (userId === "admin-master-sendora-01" || userId === "admin-default-user") &&
-          (item.userId === "admin-master-sendora-01" || item.userId === "admin-default-user")
+          (userId === "admin-master-sendora-01" || userId === "admin-default-user" || userId.startsWith("usr_")) &&
+          (item.userId === "admin-master-sendora-01" || item.userId === "admin-default-user" || item.reason === "UNSUBSCRIBE_KEYWORD")
         ) {
           return true;
         }
@@ -45,8 +46,12 @@ export function getLocalBlacklist(userId?: string): BlacklistItem[] {
 
 export function isBlacklisted(userId: string, phoneNumber: string): boolean {
   const clean = phoneNumber.replace(/\D/g, "");
-  const list = getLocalBlacklist(userId);
-  return list.some((item: any) => item.phoneNumber.replace(/\D/g, "") === clean);
+  if (!clean) return false;
+  const list = getLocalBlacklist();
+  return list.some((item: any) => {
+    const itemClean = item.phoneNumber ? item.phoneNumber.replace(/\D/g, "") : "";
+    return itemClean === clean;
+  });
 }
 
 export async function addToBlacklist(

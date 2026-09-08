@@ -177,17 +177,25 @@ export class BaileysInstance {
           }
         }
 
-        if (type !== "notify") return;
-
         for (const msg of messages) {
           if (!msg.message || msg.key.fromMe) continue;
 
           const rawSender = msg.key.remoteJid || "";
           const senderName = msg.pushName || "";
+          
+          // Extract text across all WhatsApp message wrappers
           const text =
             msg.message.conversation ||
             msg.message.extendedTextMessage?.text ||
+            msg.message.ephemeralMessage?.message?.conversation ||
+            msg.message.ephemeralMessage?.message?.extendedTextMessage?.text ||
+            msg.message.viewOnceMessage?.message?.conversation ||
+            msg.message.viewOnceMessage?.message?.extendedTextMessage?.text ||
+            msg.message.imageMessage?.caption ||
+            msg.message.videoMessage?.caption ||
             "";
+
+          if (!text) continue;
 
           // Resolve phone number: check s.whatsapp.net, participant JID, or recent recipients
           let resolvedPhone = "";
@@ -206,13 +214,13 @@ export class BaileysInstance {
 
           logger.info(
             { sessionId: this.id, rawSender, resolvedPhone, senderName, text },
-            `📩 Received WhatsApp message from ${resolvedPhone || rawSender}`
+            `📩 Received WhatsApp message from ${resolvedPhone || rawSender}: "${text}"`
           );
 
           // Forward to Next.js Web App Inbound API for Auto-Reply, Chat Storage & Webhook Dispatching
           try {
             const webUrl = process.env.WEB_APP_URL || "http://localhost:3001";
-            fetch(`${webUrl}/api/inbound`, {
+            const inbRes = await fetch(`${webUrl}/api/inbound`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -224,11 +232,14 @@ export class BaileysInstance {
                 messageId: msg.key.id,
                 timestamp: new Date().toISOString(),
               }),
-            }).catch((err) => {
-              logger.warn({ err }, "Could not reach web inbound API");
             });
+            const inbJson: any = await inbRes.json().catch(() => ({}));
+            logger.info(
+              { sessionId: this.id, resolvedPhone, success: inbJson?.success, reason: inbJson?.reason },
+              `✅ Inbound message forwarded to Web API successfully`
+            );
           } catch (err) {
-            logger.error({ err }, "Error forwarding inbound message");
+            logger.error({ err }, "Error forwarding inbound message to web API");
           }
         }
       });
