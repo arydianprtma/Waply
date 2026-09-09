@@ -3,7 +3,7 @@ import path from "path";
 import { AddonItem, UserAddon, AddonType } from "./addon-types";
 import { getSubscription } from "./billing";
 
-const DATA_DIR = path.resolve(process.cwd(), ".sendora-data");
+const DATA_DIR = path.resolve(process.cwd(), ".waply-data");
 const ADDONS_FILE = path.join(DATA_DIR, "addons_catalog.json");
 const USER_ADDONS_FILE = path.join(DATA_DIR, "user_addons.json");
 

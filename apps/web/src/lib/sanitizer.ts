@@ -1,5 +1,5 @@
 /**
- * Input Sanitization & XSS Prevention Utility for Sendora
+ * Input Sanitization & XSS Prevention Utility for Waply
  */
 
 /**

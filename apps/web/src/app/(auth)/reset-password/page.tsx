@@ -96,7 +96,7 @@ function ResetPasswordForm() {
         </div>
         <h1 className="text-2xl font-bold text-slate-900">Buat Password Baru</h1>
         <p className="text-xs text-slate-500 mt-1">
-          Masukkan kata sandi baru untuk mengamankan akun Sendora Anda
+          Masukkan kata sandi baru untuk mengamankan akun Waply Anda
         </p>
       </div>
 

@@ -7,13 +7,13 @@ export async function POST() {
     const cookieStore = await cookies();
     const allCookies = cookieStore.getAll();
 
-    // 1. Delete all known sendora cookies
+    // 1. Delete all known waply cookies
     const authCookieNames = [
-      "sendora_demo_auth",
-      "sendora_user_email",
-      "sendora_user_name",
-      "sendora_user_role",
-      "sendora_user_id",
+      "waply_demo_auth",
+      "waply_user_email",
+      "waply_user_name",
+      "waply_user_role",
+      "waply_user_id",
     ];
 
     authCookieNames.forEach((name) => {
@@ -24,7 +24,7 @@ export async function POST() {
     // 2. Delete any lingering session or Supabase cookies
     allCookies.forEach((c) => {
       if (
-        c.name.startsWith("sendora_") ||
+        c.name.startsWith("waply_") ||
         c.name.startsWith("sb-") ||
         c.name.includes("supabase") ||
         c.name.includes("auth")
@@ -44,11 +44,11 @@ export async function POST() {
 
     // Explicitly append expired Set-Cookie headers
     const expiredCookies = [
-      "sendora_demo_auth=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; SameSite=Lax",
-      "sendora_user_email=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; SameSite=Lax",
-      "sendora_user_name=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; SameSite=Lax",
-      "sendora_user_role=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; SameSite=Lax",
-      "sendora_user_id=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; SameSite=Lax",
+      "waply_demo_auth=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; SameSite=Lax",
+      "waply_user_email=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; SameSite=Lax",
+      "waply_user_name=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; SameSite=Lax",
+      "waply_user_role=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; SameSite=Lax",
+      "waply_user_id=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; SameSite=Lax",
     ];
 
     expiredCookies.forEach((h) => response.headers.append("Set-Cookie", h));

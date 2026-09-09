@@ -55,7 +55,7 @@ export interface CreateTicketInput {
   message: string;
 }
 
-const DATA_DIR = path.resolve(process.cwd(), ".sendora-data");
+const DATA_DIR = path.resolve(process.cwd(), ".waply-data");
 const TICKETS_FILE = path.join(DATA_DIR, "support-tickets.json");
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
 
@@ -216,7 +216,7 @@ export function replyToTicket(
         ticketId: all[index].id,
         senderId: "system",
         senderName: "Sistem",
-        senderEmail: "system@sendora.id",
+        senderEmail: "system@waply.id",
         senderRole: "system",
         message: `Admin (${reply.senderName || "Customer Support"}) telah bergabung ke ruang obrolan.`,
         createdAt: new Date(Date.now() - 100).toISOString(),
@@ -281,7 +281,7 @@ export function escalateTicketToHuman(
     ticketId: all[index].id,
     senderId: "system",
     senderName: "Sistem",
-    senderEmail: "system@sendora.id",
+    senderEmail: "system@waply.id",
     senderRole: "system",
     message: customNotice || "Mohon tunggu, tiket telah dialihkan ke antrean CS dan Admin akan segera mengambil alih.",
     createdAt: now,

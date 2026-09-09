@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
-import { prisma } from "@sendora/database";
+import { prisma } from "@waply/database";
 import { getSessionUser } from "@/lib/auth-user";
 import { getUserPlanAccess } from "@/lib/billing";
 
@@ -14,7 +14,7 @@ interface LocalBlacklistItem {
   createdAt: string;
 }
 
-const LOCAL_STORAGE_DIR = path.join(process.cwd(), ".sendora-data");
+const LOCAL_STORAGE_DIR = path.join(process.cwd(), ".waply-data");
 const LOCAL_BLACKLIST_FILE = path.join(LOCAL_STORAGE_DIR, "blacklist.json");
 
 function getLocalBlacklist(userId?: string): LocalBlacklistItem[] {
@@ -76,7 +76,7 @@ export async function GET() {
           OR: [
             { userId: user.id },
             { userId: "admin-default-user" },
-            ...(user.role === "admin" ? [{ userId: "admin-master-sendora-01" }] : []),
+            ...(user.role === "admin" ? [{ userId: "admin-master-waply-01" }] : []),
           ],
         },
         orderBy: { createdAt: "desc" },

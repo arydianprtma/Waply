@@ -50,7 +50,7 @@ function generateEmailHtml(params: EmailInvoiceParams): string {
     minimumFractionDigits: 0,
   }).format(params.amount);
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://sendora.id";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://waply.id";
   const dateStr = new Date().toLocaleString("id-ID", {
     day: "numeric",
     month: "long",
@@ -74,7 +74,7 @@ function generateEmailHtml(params: EmailInvoiceParams): string {
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${isPaid ? "Bukti Pembayaran Resmi - Sendora" : "Tagihan Pesanan Baru - Sendora"}</title>
+  <title>${isPaid ? "Bukti Pembayaran Resmi - Waply" : "Tagihan Pesanan Baru - Waply"}</title>
   <!--[if mso]>
   <style type="text/css">
     body, table, td, p, a { font-family: Arial, sans-serif !important; }
@@ -99,7 +99,7 @@ function generateEmailHtml(params: EmailInvoiceParams): string {
                     <table border="0" cellpadding="0" cellspacing="0">
                       <tr>
                         <td style="width: 10px; height: 10px; background-color: #10b981; border-radius: 50%; display: inline-block; margin-right: 8px;"></td>
-                        <td style="color: #ffffff; font-size: 13px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;">SENDORA GATEWAY</td>
+                        <td style="color: #ffffff; font-size: 13px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;">WAPLY GATEWAY</td>
                       </tr>
                     </table>
                   </td>
@@ -131,12 +131,12 @@ function generateEmailHtml(params: EmailInvoiceParams): string {
               
               <!-- Greeting -->
               <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #334155;">
-                Halo <strong style="color: #0f172a;">${params.customerName || "Pelanggan Sendora"}</strong>,
+                Halo <strong style="color: #0f172a;">${params.customerName || "Pelanggan Waply"}</strong>,
               </p>
               <p style="margin: 0 0 28px; font-size: 14px; line-height: 1.6; color: #475569;">
                 ${
                   isPaid
-                    ? "Terima kasih atas kepercayaan Anda. Pembayaran langganan <strong>Sendora WhatsApp Gateway</strong> telah diverifikasi dan paket Anda telah <strong>AKTIF</strong> sepenuhnya."
+                    ? "Terima kasih atas kepercayaan Anda. Pembayaran langganan <strong>Waply WhatsApp Gateway</strong> telah diverifikasi dan paket Anda telah <strong>AKTIF</strong> sepenuhnya."
                     : "Pesanan langganan baru Anda telah kami terima. Silakan selesaikan pembayaran Anda sebelum batas waktu berakhir agar layanan dapat langsung aktif secara otomatis."
                 }
               </p>
@@ -195,7 +195,7 @@ function generateEmailHtml(params: EmailInvoiceParams): string {
                     Layanan & Paket
                   </td>
                   <td style="padding: 14px 18px; font-size: 13px; color: #0f172a; font-weight: 700; text-align: right; border-bottom: 1px solid #f1f5f9;">
-                    Sendora ${params.planName}
+                    Waply ${params.planName}
                   </td>
                 </tr>
                 <tr>
@@ -234,7 +234,7 @@ function generateEmailHtml(params: EmailInvoiceParams): string {
                       <tr>
                         <td align="center" style="border-radius: 14px; background-color: #059669; box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35);">
                           <a href="${appUrl}/dashboard/billing" target="_blank" style="display: inline-block; padding: 16px 36px; font-size: 15px; font-weight: 800; color: #ffffff; text-decoration: none; border-radius: 14px; letter-spacing: 0.02em;">
-                            ${isPaid ? "Buka Dashboard Sendora &rarr;" : "Lihat Status & Bayar Sekarang &rarr;"}
+                            ${isPaid ? "Buka Dashboard Waply &rarr;" : "Lihat Status & Bayar Sekarang &rarr;"}
                           </a>
                         </td>
                       </tr>
@@ -259,13 +259,13 @@ function generateEmailHtml(params: EmailInvoiceParams): string {
           <tr>
             <td style="padding: 28px 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
               <p style="margin: 0 0 6px; font-size: 13px; font-weight: 700; color: #334155;">
-                Sendora WhatsApp Gateway & Messaging API
+                Waply WhatsApp Gateway & Messaging API
               </p>
               <p style="margin: 0 0 12px; font-size: 12px; color: #94a3b8; line-height: 1.5;">
                 Solusi gateway pesan WhatsApp cepat, aman, dan handal untuk bisnis modern.
               </p>
               <p style="margin: 0; font-size: 12px; color: #94a3b8;">
-                &copy; ${new Date().getFullYear()} Sendora. Hak Cipta Dilindungi. • <a href="${appUrl}" style="color: #059669; text-decoration: none; font-weight: 600;">${appUrl.replace(/^https?:\/\//, "")}</a>
+                &copy; ${new Date().getFullYear()} Waply. Hak Cipta Dilindungi. • <a href="${appUrl}" style="color: #059669; text-decoration: none; font-weight: 600;">${appUrl.replace(/^https?:\/\//, "")}</a>
               </p>
             </td>
           </tr>
@@ -292,11 +292,11 @@ export async function sendEmailInvoiceNotification(params: EmailInvoiceParams): 
     const transporter = getTransporter();
     const isPaid = params.status === "PAID";
     const subject = isPaid
-      ? `[LUNAS] Bukti Pembayaran Resmi - Sendora ${params.planName} (#${params.orderId})`
-      : `[TAGIHAN] Rincian Tagihan Pesanan Sendora ${params.planName} (#${params.orderId})`;
+      ? `[LUNAS] Bukti Pembayaran Resmi - Waply ${params.planName} (#${params.orderId})`
+      : `[TAGIHAN] Rincian Tagihan Pesanan Waply ${params.planName} (#${params.orderId})`;
 
     const htmlContent = generateEmailHtml(params);
-    const fromAddress = process.env.SMTP_FROM || `"Sendora Gateway" <${process.env.SMTP_USER || "no-reply@sendora.id"}>`;
+    const fromAddress = process.env.SMTP_FROM || `"Waply Gateway" <${process.env.SMTP_USER || "no-reply@waply.id"}>`;
 
     if (!transporter) {
       console.warn(
@@ -332,7 +332,7 @@ export interface EmailResetPasswordParams {
  * Generate responsive corporate HTML email template for password reset.
  */
 function generateResetPasswordEmailHtml(params: EmailResetPasswordParams): string {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://sendora.id";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://waply.id";
   const headerBg = "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)";
 
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -340,7 +340,7 @@ function generateResetPasswordEmailHtml(params: EmailResetPasswordParams): strin
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Reset Password Akun Sendora</title>
+  <title>Reset Password Akun Waply</title>
   <!--[if mso]>
   <style type="text/css">
     body, table, td, p, a { font-family: Arial, sans-serif !important; }
@@ -364,7 +364,7 @@ function generateResetPasswordEmailHtml(params: EmailResetPasswordParams): strin
                     <table border="0" cellpadding="0" cellspacing="0">
                       <tr>
                         <td style="width: 10px; height: 10px; background-color: #10b981; border-radius: 50%; display: inline-block; margin-right: 8px;"></td>
-                        <td style="color: #ffffff; font-size: 13px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;">SENDORA GATEWAY</td>
+                        <td style="color: #ffffff; font-size: 13px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;">WAPLY GATEWAY</td>
                       </tr>
                     </table>
                   </td>
@@ -385,7 +385,7 @@ function generateResetPasswordEmailHtml(params: EmailResetPasswordParams): strin
               </h1>
 
               <p style="margin: 0; color: #cbd5e1; font-size: 13px;">
-                Pemulihan akses dan keamanan kata sandi akun Sendora Anda
+                Pemulihan akses dan keamanan kata sandi akun Waply Anda
               </p>
             </td>
           </tr>
@@ -398,7 +398,7 @@ function generateResetPasswordEmailHtml(params: EmailResetPasswordParams): strin
                 Halo <strong style="color: #0f172a;">${params.customerName || params.customerEmail}</strong>,
               </p>
               <p style="margin: 0 0 24px; font-size: 14px; line-height: 1.6; color: #475569;">
-                Kami menerima permintaan untuk mengatur ulang kata sandi (password) akun Sendora Anda. Untuk melanjutkan dan membuat kata sandi baru, silakan klik tombol konfirmasi di bawah ini:
+                Kami menerima permintaan untuk mengatur ulang kata sandi (password) akun Waply Anda. Untuk melanjutkan dan membuat kata sandi baru, silakan klik tombol konfirmasi di bawah ini:
               </p>
 
               <!-- CTA Button -->
@@ -446,13 +446,13 @@ function generateResetPasswordEmailHtml(params: EmailResetPasswordParams): strin
           <tr>
             <td style="padding: 28px 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
               <p style="margin: 0 0 6px; font-size: 13px; font-weight: 700; color: #334155;">
-                Sendora WhatsApp Gateway & Messaging API
+                Waply WhatsApp Gateway & Messaging API
               </p>
               <p style="margin: 0 0 12px; font-size: 12px; color: #94a3b8; line-height: 1.5;">
                 Solusi gateway pesan WhatsApp cepat, aman, dan handal untuk bisnis modern.
               </p>
               <p style="margin: 0; font-size: 12px; color: #94a3b8;">
-                &copy; ${new Date().getFullYear()} Sendora. Hak Cipta Dilindungi. • <a href="${appUrl}" style="color: #059669; text-decoration: none; font-weight: 600;">${appUrl.replace(/^https?:\/\//, "")}</a>
+                &copy; ${new Date().getFullYear()} Waply. Hak Cipta Dilindungi. • <a href="${appUrl}" style="color: #059669; text-decoration: none; font-weight: 600;">${appUrl.replace(/^https?:\/\//, "")}</a>
               </p>
             </td>
           </tr>
@@ -477,9 +477,9 @@ export async function sendEmailResetPassword(params: EmailResetPasswordParams): 
     }
 
     const transporter = getTransporter();
-    const subject = `[PEMULIHAN AKUN] Tautan Atur Ulang Password Akun Sendora`;
+    const subject = `[PEMULIHAN AKUN] Tautan Atur Ulang Password Akun Waply`;
     const htmlContent = generateResetPasswordEmailHtml(params);
-    const fromAddress = process.env.SMTP_FROM || `"Sendora Gateway" <${process.env.SMTP_USER || "no-reply@sendora.id"}>`;
+    const fromAddress = process.env.SMTP_FROM || `"Waply Gateway" <${process.env.SMTP_USER || "no-reply@waply.id"}>`;
 
     if (!transporter) {
       console.warn(

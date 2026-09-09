@@ -18,7 +18,7 @@ export async function POST(
     const normalizedTo = body.to ? sanitizePhoneNumber(body.to) : body.to;
 
     // 1. Blacklist / DND Safety Guard: Block sending if recipient requested Opt-Out
-    if (normalizedTo && (isBlacklisted(user.id, normalizedTo) || isBlacklisted("admin-master-sendora-01", normalizedTo) || isBlacklisted("admin-default-user", normalizedTo))) {
+    if (normalizedTo && (isBlacklisted(user.id, normalizedTo) || isBlacklisted("admin-master-waply-01", normalizedTo) || isBlacklisted("admin-default-user", normalizedTo))) {
       return NextResponse.json(
         {
           success: false,

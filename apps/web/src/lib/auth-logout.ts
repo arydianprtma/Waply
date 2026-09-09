@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 /**
  * Perform comprehensive logout:
  * 1. Clear in-memory React session cache
- * 2. Wipe every authentication cookie (sendora_*, sb-*, supabase-*)
+ * 2. Wipe every authentication cookie (waply_*, sb-*, supabase-*)
  * 3. Clear storage (sessionStorage, auth localStorage)
  * 4. Call /api/auth/logout API to clear server cookies & HTTP headers
  * 5. Sign out Supabase auth client if active
@@ -21,11 +21,11 @@ export async function performLogout(redirectTo: string = "/login") {
   // 2. Clear all client cookies explicitly across multiple path/domain combinations
   if (typeof document !== "undefined") {
     const cookieNames = [
-      "sendora_demo_auth",
-      "sendora_user_email",
-      "sendora_user_name",
-      "sendora_user_role",
-      "sendora_user_id",
+      "waply_demo_auth",
+      "waply_user_email",
+      "waply_user_name",
+      "waply_user_role",
+      "waply_user_id",
     ];
 
     // Read all existing cookie names in document.cookie
@@ -54,13 +54,13 @@ export async function performLogout(redirectTo: string = "/login") {
   if (typeof window !== "undefined") {
     try {
       sessionStorage.clear();
-      localStorage.removeItem("sendora_user");
-      localStorage.removeItem("sendora_session");
+      localStorage.removeItem("waply_user");
+      localStorage.removeItem("waply_session");
       localStorage.removeItem("supabase.auth.token");
       // Remove any Supabase localStorage keys
       for (let i = localStorage.length - 1; i >= 0; i--) {
         const key = localStorage.key(i);
-        if (key && (key.startsWith("sb-") || key.includes("supabase") || key.startsWith("sendora_"))) {
+        if (key && (key.startsWith("sb-") || key.includes("supabase") || key.startsWith("waply_"))) {
           localStorage.removeItem(key);
         }
       }

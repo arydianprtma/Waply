@@ -33,7 +33,7 @@ export async function GET() {
 
   return NextResponse.json({
     status: "healthy",
-    service: "sendora-web",
+    service: "waply-web",
     version: "1.0.0",
     uptimeSeconds: Math.floor(process.uptime()),
     timestamp: new Date().toISOString(),
@@ -46,7 +46,7 @@ export async function GET() {
         connectedDevices: connectedDevicesCount,
       },
       storage: {
-        status: fs.existsSync(path.resolve(process.cwd(), ".sendora-data")) ? "mounted" : "ready",
+        status: fs.existsSync(path.resolve(process.cwd(), ".waply-data")) ? "mounted" : "ready",
       },
     },
   });

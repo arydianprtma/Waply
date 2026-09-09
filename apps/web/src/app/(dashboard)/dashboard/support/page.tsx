@@ -373,7 +373,7 @@ export default function UserSupportPage() {
       {/* Quick Help Channels Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
         <a
-          href="https://wa.me/6281234567890?text=Halo%20Customer%20Support%20Sendora%2C%20saya%20memerlukan%20bantuan%20teknis."
+          href="https://wa.me/6281234567890?text=Halo%20Customer%20Support%20Waply%2C%20saya%20memerlukan%20bantuan%20teknis."
           target="_blank"
           rel="noopener noreferrer"
           className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm hover:border-emerald-300 hover:shadow-md transition-all flex items-center justify-between group"

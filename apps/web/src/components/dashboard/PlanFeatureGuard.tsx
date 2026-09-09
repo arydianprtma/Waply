@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Lock, ShieldAlert, CheckCircle2, ArrowLeft, CreditCard } from "lucide-react";
 import { PlanFeatureAccess } from "@/lib/billing-types";
 import { useBillingPlan } from "@/lib/use-billing-plan";
+import { PageLoadingSkeleton } from "@/components/ui/SkeletonLoaders";
 
 interface PlanFeatureGuardProps {
   feature: keyof PlanFeatureAccess;
@@ -16,13 +17,22 @@ interface PlanFeatureGuardProps {
 export function PlanFeatureGuard({
   feature,
   featureName,
-  minPlanName,
+  minPlanName: fallbackMinPlanName,
   description,
   children,
 }: PlanFeatureGuardProps) {
-  const { planAccess, currentPlanName } = useBillingPlan();
+  const { planAccess, currentPlanName, getRecommendedUpgradePlan, isLoading, isMounted } =
+    useBillingPlan();
 
   const hasAccess = Boolean(planAccess[feature]);
+
+  // Don't flash locked state while checking user's package upon page refresh
+  if (isLoading && !isMounted) {
+    return <PageLoadingSkeleton />;
+  }
+
+  const recommendedPlan = getRecommendedUpgradePlan ? getRecommendedUpgradePlan(feature) : null;
+  const targetPlanName = recommendedPlan?.name || fallbackMinPlanName || "Paket Lebih Tinggi";
 
   if (!hasAccess) {
     return (
@@ -57,7 +67,7 @@ export function PlanFeatureGuard({
           </h2>
           <p className="text-slate-600 text-xs sm:text-sm max-w-xl mx-auto mt-2 leading-relaxed">
             {description ||
-              `Fitur ${featureName} hanya tersedia mulai dari paket ${minPlanName}. Upgrade paket Anda untuk membuka fitur ini dan meningkatkan kapasitas pengiriman.`}
+              `Fitur ${featureName} tersedia mulai dari paket ${targetPlanName}. Upgrade paket Anda untuk membuka fitur ini dan meningkatkan kapasitas pengiriman.`}
           </p>
 
           {/* Feature Benefits Grid */}
@@ -82,11 +92,11 @@ export function PlanFeatureGuard({
           {/* Actions */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
             <Link
-              href="/dashboard/billing"
+              href={recommendedPlan ? `/order?plan=${recommendedPlan.id}` : "/dashboard/billing"}
               className="inline-flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-xl font-semibold px-6 text-xs sm:text-sm h-10 w-full sm:w-auto gap-2 transition-colors shadow-xs"
             >
               <CreditCard className="w-4 h-4" />
-              Upgrade ke {minPlanName}
+              Upgrade ke {targetPlanName}
             </Link>
             <Link
               href="/dashboard/billing"

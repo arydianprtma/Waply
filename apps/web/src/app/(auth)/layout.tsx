@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
-import { SendoraLogo } from "@/components/brand/SendoraLogo";
+import { WaplyLogo } from "@/components/brand/WaplyLogo";
 
 export default function AuthLayout({
   children,
@@ -10,7 +10,7 @@ export default function AuthLayout({
   return (
     <div className="min-h-screen bg-base-200 flex flex-col justify-center items-center p-4">
       <div className="mb-6 text-center">
-        <SendoraLogo href="/" size="lg" />
+        <WaplyLogo href="/" size="lg" />
         <p className="text-xs text-base-content/60 mt-2 flex items-center justify-center gap-1 font-medium">
           <ShieldCheck className="w-3.5 h-3.5 text-primary" />
           Safe, Automated & Anti-Ban WhatsApp Gateway

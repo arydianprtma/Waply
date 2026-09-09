@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { parseSpintax, generateSpintaxSamples } from "@/lib/spintax";
 import { PlanFeatureGuard } from "@/components/dashboard/PlanFeatureGuard";
+import { TableSkeleton } from "@/components/ui/SkeletonLoaders";
 
 interface BroadcastRecipient {
   id: string;
@@ -414,9 +415,7 @@ export default function BroadcastPage() {
         </div>
 
         {loading ? (
-          <div className="p-8 text-center text-sm text-base-content/60 flex items-center justify-center gap-2">
-            <Loader2 className="w-4 h-4 animate-spin" /> Memuat kampanye...
-          </div>
+          <TableSkeleton rows={4} cols={4} />
         ) : campaigns.length === 0 ? (
           <div className="p-10 text-center space-y-3">
             <div className="w-12 h-12 rounded-full bg-base-200 flex items-center justify-center mx-auto text-base-content/50">

@@ -20,7 +20,7 @@ import { getAdminSettings } from "./admin-settings";
 
 // ─── Plan Storage & Server Methods ────────────────────────────────────────────
 
-const DATA_DIR = path.resolve(process.cwd(), ".sendora-data");
+const DATA_DIR = path.resolve(process.cwd(), ".waply-data");
 const PLANS_FILE = path.join(DATA_DIR, "plans.json");
 const SUBSCRIPTION_FILE = path.join(DATA_DIR, "subscription.json");
 const INVOICES_FILE = path.join(DATA_DIR, "invoices.json");
@@ -336,7 +336,7 @@ const MIDTRANS_SANDBOX_BASE = "https://app.sandbox.midtrans.com/snap/v1";
 
 /** Generate a unique order ID */
 export function generateOrderId(planId: PlanId): string {
-  return `SENDORA-${planId}-${Date.now()}`;
+  return `WAPLY-${planId}-${Date.now()}`;
 }
 
 /** Create Snap token via Midtrans REST API */
@@ -374,7 +374,7 @@ export async function createSnapToken(params: {
         id: params.planId,
         price: params.amount,
         quantity: 1,
-        name: params.itemName || `Sendora ${plan.name} Gateway & API Plan`,
+        name: params.itemName || `Waply ${plan.name} Gateway & API Plan`,
       },
     ],
     customer_details: {
@@ -501,7 +501,7 @@ export async function chargeMidtransCoreApi(params: {
         id: params.planId,
         price: params.amount,
         quantity: 1,
-        name: params.itemName || `Sendora ${plan.name} Gateway & API Plan`,
+        name: params.itemName || `Waply ${plan.name} Gateway & API Plan`,
       },
     ],
     customer_details: {
@@ -517,7 +517,7 @@ export async function chargeMidtransCoreApi(params: {
     if (params.bank === "mandiri") {
       payload.payment_type = "echannel";
       payload.echannel = {
-        bill_info1: "Sendora Gateway",
+        bill_info1: "Waply Gateway",
         bill_info2: params.itemName || "Langganan Paket",
       };
     } else if (params.bank === "permata") {
@@ -605,9 +605,9 @@ export async function sendWhatsAppInvoiceNotification(params: {
     let message = "";
     if (params.status === "PAID") {
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001";
-      message = `*PEMBAYARAN BERHASIL DITERIMA!* 🎉✅\n\nHalo *${params.customerName || "Pelanggan Sendora"}*,\nTerima kasih, pembayaran untuk langganan Sendora Anda telah berhasil diverifikasi!\n\n📋 *Rincian Pesanan:*\n• *Order ID:* ${params.orderId}\n• *Paket Layanan:* Sendora ${params.planName}\n• *Total Nominal:* ${formattedAmount}\n• *Metode Bayar:* ${params.paymentMethod || "Transfer / QRIS"}\n• *Status Langganan:* LUNAS / AKTIF 🚀\n\nPaket Anda telah aktif dan kuota gateway sudah dapat langsung digunakan.\n\n🌐 *Buka Dashboard:* ${appUrl}/dashboard\n\n_Terima kasih telah mempercayakan WhatsApp Gateway bisnis Anda kepada Sendora!_`;
+      message = `*PEMBAYARAN BERHASIL DITERIMA!* 🎉✅\n\nHalo *${params.customerName || "Pelanggan Waply"}*,\nTerima kasih, pembayaran untuk langganan Waply Anda telah berhasil diverifikasi!\n\n📋 *Rincian Pesanan:*\n• *Order ID:* ${params.orderId}\n• *Paket Layanan:* Waply ${params.planName}\n• *Total Nominal:* ${formattedAmount}\n• *Metode Bayar:* ${params.paymentMethod || "Transfer / QRIS"}\n• *Status Langganan:* LUNAS / AKTIF 🚀\n\nPaket Anda telah aktif dan kuota gateway sudah dapat langsung digunakan.\n\n🌐 *Buka Dashboard:* ${appUrl}/dashboard\n\n_Terima kasih telah mempercayakan WhatsApp Gateway bisnis Anda kepada Waply!_`;
     } else {
-      message = `*TAGIHAN PESANAN SENDORA* 🧾\n\nHalo *${params.customerName || "Pelanggan Sendora"}*,\nPesanan langganan Sendora Gateway Anda telah berhasil dibuat.\n\n📋 *Detail Tagihan:*\n• *Order ID:* ${params.orderId}\n• *Paket:* Sendora ${params.planName}\n• *Total Tagihan:* ${formattedAmount}\n• *Metode Bayar:* ${params.paymentMethod || "Virtual Account / QRIS"}\n• *Status:* MENUNGGU PEMBAYARAN ⏳\n\n${params.vaNumber ? `💳 *No. Virtual Account:* \`${params.vaNumber}\`\n\n` : ""}Silakan selesaikan pembayaran tepat sesuai nominal agar sistem memverifikasi secara instan.\n\n_Pesan otomatis ini dikirim oleh Sendora Cloud Gateway_`;
+      message = `*TAGIHAN PESANAN WAPLY* 🧾\n\nHalo *${params.customerName || "Pelanggan Waply"}*,\nPesanan langganan Waply Gateway Anda telah berhasil dibuat.\n\n📋 *Detail Tagihan:*\n• *Order ID:* ${params.orderId}\n• *Paket:* Waply ${params.planName}\n• *Total Tagihan:* ${formattedAmount}\n• *Metode Bayar:* ${params.paymentMethod || "Virtual Account / QRIS"}\n• *Status:* MENUNGGU PEMBAYARAN ⏳\n\n${params.vaNumber ? `💳 *No. Virtual Account:* \`${params.vaNumber}\`\n\n` : ""}Silakan selesaikan pembayaran tepat sesuai nominal agar sistem memverifikasi secara instan.\n\n_Pesan otomatis ini dikirim oleh Waply Cloud Gateway_`;
     }
 
     const sendRes = await fetch(`${GATEWAY_URL}/api/sessions/${connectedDevice.id}/send`, {

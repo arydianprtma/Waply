@@ -392,7 +392,7 @@ export default function UserTicketDetailPage() {
                       <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
                         {isUser
                           ? "Anda"
-                          : msg.senderName || (isAi ? "Sendora AI" : "Sendora Support")}
+                          : msg.senderName || (isAi ? "Waply AI" : "Waply Support")}
                         {isAi && (
                           <span className="text-[9px] px-1.5 py-0.2 rounded bg-purple-100 text-purple-700 font-extrabold border border-purple-200">
                             AI
@@ -588,7 +588,7 @@ export default function UserTicketDetailPage() {
               Jika kendala bersifat sangat mendesak, Anda dapat meneruskan ID tiket ini ke WhatsApp CS kami:
             </p>
             <a
-              href={`https://wa.me/6281234567890?text=Halo%20Sendora%20CS%2C%20saya%20sudah%20membuka%20tiket%20bantuan%20dengan%20ID%20${ticket.id}%20mengenai%20${encodeURIComponent(
+              href={`https://wa.me/6281234567890?text=Halo%20Waply%20CS%2C%20saya%20sudah%20membuka%20tiket%20bantuan%20dengan%20ID%20${ticket.id}%20mengenai%20${encodeURIComponent(
                 ticket.subject
               )}.%20Mohon%20bantuannya.`}
               target="_blank"

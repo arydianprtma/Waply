@@ -24,8 +24,8 @@ export async function POST(req: NextRequest) {
     const paymentType = (body.paymentType || "qris") as "qris" | "bank_transfer" | "gopay" | "shopeepay";
     const bank = (body.bank || "bca") as "bca" | "bni" | "bri" | "permata" | "mandiri";
 
-    const customerName = (body.customerName || authUser.name || "Sendora User").trim();
-    const customerEmail = (body.customerEmail || authUser.email || "user@sendora.id").trim().toLowerCase();
+    const customerName = (body.customerName || authUser.name || "Waply User").trim();
+    const customerEmail = (body.customerEmail || authUser.email || "user@waply.id").trim().toLowerCase();
     const customerPhone = (body.customerPhone || "").trim();
     const couponCode = (body.couponCode || "").trim().toUpperCase();
 
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
       id: authUser.id && authUser.id !== "usr_default_guest" ? authUser.id : `usr_${customerEmail.replace(/[^a-zA-Z0-9]/g, "_")}`,
       email: customerEmail,
       name: customerName,
-      role: customerEmail === "admin@sendora.id" ? "admin" : "user",
+      role: customerEmail === "admin@waply.id" ? "admin" : "user",
     });
 
     // Base price & duration calculation
@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
     }
 
     const finalAmount = Math.max(1000, totalAfterDuration - couponDiscount);
-    const orderId = isAddonOnly ? `SENDORA-ADDON-${Date.now()}` : generateOrderId(planId);
+    const orderId = isAddonOnly ? `WAPLY-ADDON-${Date.now()}` : generateOrderId(planId);
     const durationLabel =
       durationMonths === 36
         ? "3 Tahun"
@@ -120,8 +120,8 @@ export async function POST(req: NextRequest) {
       customerEmail,
       customerPhone,
       itemName: isAddonOnly
-        ? `Sendora Addon (${addonLabel})`
-        : `Sendora ${plan?.name || planId} (${durationLabel})`,
+        ? `Waply Addon (${addonLabel})`
+        : `Waply ${plan?.name || planId} (${durationLabel})`,
     });
 
     // Extract payment details

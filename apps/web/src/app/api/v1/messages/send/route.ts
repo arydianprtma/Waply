@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
-import { prisma } from "@sendora/database";
+import { prisma } from "@waply/database";
 import { authenticateApiRequest } from "@/lib/api-auth";
 import { parseSpintax } from "@/lib/spintax";
 import { getNextRotatedDevice } from "@/lib/device-rotation";
@@ -14,11 +14,11 @@ import { getUserPlanAccess } from "@/lib/billing";
 import { getTemplates, incrementTemplateUsage } from "@/lib/templates";
 
 const GATEWAY_URL = process.env.GATEWAY_INTERNAL_URL || "http://localhost:3002";
-const GATEWAY_SECRET = process.env.GATEWAY_SECRET || "sendora_internal_gateway_token_key";
+const GATEWAY_SECRET = process.env.GATEWAY_SECRET || "waply_internal_gateway_token_key";
 
 function isBlacklistedLocally(userId: string, phoneNumber: string): boolean {
   try {
-    const file = path.join(process.cwd(), ".sendora-data", "blacklist.json");
+    const file = path.join(process.cwd(), ".waply-data", "blacklist.json");
     if (fs.existsSync(file)) {
       const items = JSON.parse(fs.readFileSync(file, "utf-8") || "[]");
       return items.some((i: any) => i.phoneNumber === phoneNumber);
@@ -167,14 +167,15 @@ export async function POST(request: Request) {
       auth.user.role
     );
 
-    // 7. Send to Gateway with internal secret token
+    // 7. Send to Gateway with automatic retry fallback
     let gatewayRes;
     let providerMessageId: string | null = null;
     let status: "SENT" | "FAILED" = "SENT";
     let failReason: string | null = null;
+    let usedDeviceId = targetDeviceId;
 
-    try {
-      const response = await fetch(`${GATEWAY_URL}/api/sessions/${targetDeviceId}/send`, {
+    async function attemptSend(devId: string) {
+      const response = await fetch(`${GATEWAY_URL}/api/sessions/${devId}/send`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -185,18 +186,63 @@ export async function POST(request: Request) {
           message: finalContent,
         }),
       });
+      const data = await response.json().catch(() => ({}));
+      return { ok: response.ok && data.success, response, data };
+    }
 
-      gatewayRes = await response.json();
-
-      if (!response.ok || !gatewayRes.success) {
-        status = "FAILED";
-        failReason = gatewayRes.error || `Gateway returned status ${response.status}`;
+    try {
+      const firstAttempt = await attemptSend(targetDeviceId);
+      if (firstAttempt.ok) {
+        providerMessageId = firstAttempt.data?.data?.messageId || null;
       } else {
-        providerMessageId = gatewayRes.data?.messageId || null;
+        // Attempt 1-Retry with another connected device (Failover Fallback)
+        failReason = firstAttempt.data?.error || `Gateway returned status ${firstAttempt.response?.status}`;
+        
+        const fallbackDevice = await getNextRotatedDevice("auto_rotate");
+        if (fallbackDevice && fallbackDevice.id !== targetDeviceId) {
+          try {
+            await new Promise((resolve) => setTimeout(resolve, 600)); // Brief backoff
+            const retryAttempt = await attemptSend(fallbackDevice.id);
+            if (retryAttempt.ok) {
+              status = "SENT";
+              failReason = null;
+              providerMessageId = retryAttempt.data?.data?.messageId || null;
+              usedDeviceId = fallbackDevice.id;
+            } else {
+              status = "FAILED";
+              failReason = `Primary & fallback device failed: ${retryAttempt.data?.error || failReason}`;
+            }
+          } catch (retryErr: any) {
+            status = "FAILED";
+            failReason = `Fallback retry error: ${retryErr.message}`;
+          }
+        } else {
+          status = "FAILED";
+        }
       }
     } catch (err: any) {
-      status = "FAILED";
-      failReason = `Gateway connection error: ${err.message}`;
+      // Network/gateway level error, try fallback if available
+      try {
+        const fallbackDevice = await getNextRotatedDevice("auto_rotate");
+        if (fallbackDevice && fallbackDevice.id !== targetDeviceId) {
+          const retryAttempt = await attemptSend(fallbackDevice.id);
+          if (retryAttempt.ok) {
+            status = "SENT";
+            failReason = null;
+            providerMessageId = retryAttempt.data?.data?.messageId || null;
+            usedDeviceId = fallbackDevice.id;
+          } else {
+            status = "FAILED";
+            failReason = `Gateway connection failed on both devices: ${err.message}`;
+          }
+        } else {
+          status = "FAILED";
+          failReason = `Gateway connection error: ${err.message}`;
+        }
+      } catch (fErr: any) {
+        status = "FAILED";
+        failReason = `Gateway connection error: ${err.message}`;
+      }
     }
 
     // 8. Save Message to Database and local storage

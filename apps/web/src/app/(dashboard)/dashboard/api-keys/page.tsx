@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useConfirm } from "@/components/confirm-dialog";
 import { ModalPortal } from "@/components/ui/ModalPortal";
+import { PlanFeatureGuard } from "@/components/dashboard/PlanFeatureGuard";
+import { TableSkeleton } from "@/components/ui/SkeletonLoaders";
 import {
   KeyRound,
   Plus,
@@ -130,7 +132,13 @@ export default function ApiKeysPage() {
   }'`;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <PlanFeatureGuard
+      feature="apiKeys"
+      featureName="API Keys Developer"
+      minPlanName="Starter"
+      description="API Keys memungkinkan integrasi langsung dari backend aplikasi atau bot Anda. Upgrade paket untuk mengaktifkan akses API Developer."
+    >
+      <div className="space-y-6 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">API Keys & REST API</h1>
@@ -276,9 +284,7 @@ export default function ApiKeysPage() {
         </div>
 
         {loading ? (
-          <div className="p-8 text-center text-sm text-base-content/60 flex items-center justify-center gap-2">
-            <Loader2 className="w-4 h-4 animate-spin" /> Memuat API Keys...
-          </div>
+          <TableSkeleton rows={4} cols={5} />
         ) : keys.length === 0 ? (
           <div className="p-8 text-center space-y-3">
             <div className="w-12 h-12 rounded-full bg-base-200 flex items-center justify-center mx-auto text-base-content/50">
@@ -363,5 +369,6 @@ export default function ApiKeysPage() {
         </div>
       </div>
     </div>
+    </PlanFeatureGuard>
   );
 }

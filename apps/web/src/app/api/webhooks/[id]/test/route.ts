@@ -19,10 +19,10 @@ export async function POST(
       event: "test.ping",
       timestamp: new Date().toISOString(),
       data: {
-        message: "This is a test ping from Sendora WhatsApp Gateway webhook engine.",
+        message: "This is a test ping from Waply WhatsApp Gateway webhook engine.",
         sender: {
           id: "6281234567890@s.whatsapp.net",
-          name: "Sendora Test Bot",
+          name: "Waply Test Bot",
         },
         messageId: `test_msg_${Date.now()}`,
         status: "DELIVERED",
@@ -40,9 +40,9 @@ export async function POST(
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-Sendora-Signature": signature,
-          "X-Sendora-Event": "test.ping",
-          "User-Agent": "Sendora-Webhook-Tester/1.0",
+          "X-Waply-Signature": signature,
+          "X-Waply-Event": "test.ping",
+          "User-Agent": "Waply-Webhook-Tester/1.0",
         },
         body: JSON.stringify(testPayload),
         signal: controller.signal,

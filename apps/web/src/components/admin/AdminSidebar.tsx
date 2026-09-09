@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import clsx from "clsx";
 import { performLogout } from "@/lib/auth-logout";
-import { SendoraLogo } from "@/components/brand/SendoraLogo";
+import { WaplyLogo } from "@/components/brand/WaplyLogo";
 import { useMobileNav } from "@/lib/mobile-nav-context";
 
 import { useAdminTickets } from "@/lib/admin-tickets-context";
@@ -88,7 +88,7 @@ export function AdminSidebar() {
     <div className="flex flex-col h-full justify-between select-none">
       {/* Brand Header */}
       <div className="h-16 px-5 border-b border-base-200 flex items-center justify-between shrink-0">
-        <SendoraLogo href="/admin" size="md" badge="Admin" />
+        <WaplyLogo href="/admin" size="md" badge="Admin" />
         {isMobile && (
           <button
             onClick={closeNav}

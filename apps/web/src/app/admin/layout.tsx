@@ -4,7 +4,7 @@ import { getSessionUser } from "@/lib/auth-user";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { Navbar } from "@/components/dashboard/Navbar";
 
-export const metadata: Metadata = { title: "Admin Panel — Sendora" };
+export const metadata: Metadata = { title: "Admin Panel — Waply" };
 
 import { MobileNavProvider } from "@/lib/mobile-nav-context";
 import { AdminTicketsProvider } from "@/lib/admin-tickets-context";

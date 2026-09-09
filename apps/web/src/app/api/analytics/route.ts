@@ -9,7 +9,7 @@ import path from "path";
 
 import { getStoredMessages } from "@/lib/messages";
 
-const DATA_DIR = path.resolve(process.cwd(), ".sendora-data");
+const DATA_DIR = path.resolve(process.cwd(), ".waply-data");
 
 function readJson<T>(file: string, fallback: T): T {
   try {

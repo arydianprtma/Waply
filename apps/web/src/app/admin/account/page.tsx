@@ -30,8 +30,8 @@ export default function AdminAccountPage() {
   const { user: currentUser } = useUserSession();
 
   const [name, setName] = useState("Super Administrator");
-  const [email, setEmail] = useState("admin@sendora.id");
-  const [adminId, setAdminId] = useState("admin-master-sendora-01");
+  const [email, setEmail] = useState("admin@waply.id");
+  const [adminId, setAdminId] = useState("admin-master-waply-01");
   const [copiedId, setCopiedId] = useState(false);
   const [activeTab, setActiveTab] = useState<"profile" | "security" | "notifications">("profile");
 
@@ -435,7 +435,7 @@ export default function AdminAccountPage() {
                   Peringatan Gateway Engine Error / Disconnect
                 </span>
                 <span className="text-[11px] text-slate-500">
-                  Kirim email jika terdeteksi kegagalan koneksi Sendora WhatsApp Engine
+                  Kirim email jika terdeteksi kegagalan koneksi Waply WhatsApp Engine
                 </span>
               </div>
             </label>
@@ -501,7 +501,7 @@ export default function AdminAccountPage() {
 
               <div className="p-4 bg-slate-900 rounded-2xl flex flex-col items-center justify-center gap-2 text-white">
                 <QrCode className="w-20 h-20 text-emerald-400" />
-                <span className="text-[10px] tracking-widest text-emerald-300 font-bold uppercase">SENDORA SUPER ADMIN 2FA</span>
+                <span className="text-[10px] tracking-widest text-emerald-300 font-bold uppercase">WAPLY SUPER ADMIN 2FA</span>
                 <p className="font-mono text-xs font-bold text-slate-300 bg-slate-800 px-3 py-1 rounded-lg select-all border border-slate-700 mt-1">
                   SNDR-ADM8-99K2-X1P7
                 </p>

@@ -29,7 +29,7 @@ import clsx from "clsx";
 
 import { useUserSession } from "@/lib/use-user-session";
 import { performLogout } from "@/lib/auth-logout";
-import { SendoraLogo } from "@/components/brand/SendoraLogo";
+import { WaplyLogo } from "@/components/brand/WaplyLogo";
 import { PlanFeatureAccess } from "@/lib/billing-types";
 import { useBillingPlan } from "@/lib/use-billing-plan";
 import { useMobileNav } from "@/lib/mobile-nav-context";
@@ -52,7 +52,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const { user } = useUserSession();
   const { isOpen, closeNav } = useMobileNav();
-  const { planAccess } = useBillingPlan();
+  const { planAccess, getRecommendedUpgradePlan } = useBillingPlan();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -132,7 +132,7 @@ export function Sidebar() {
     <div className="flex flex-col h-full justify-between select-none">
       {/* Brand Header */}
       <div className="h-16 px-5 border-b border-base-200 flex items-center justify-between shrink-0">
-        <SendoraLogo href="/dashboard" size="md" badge="v1.1.2" />
+        <WaplyLogo href="/dashboard" size="md" badge="v1.1.2" />
         {isMobile && (
           <button
             onClick={closeNav}
@@ -193,20 +193,24 @@ export function Sidebar() {
                           <Lock className="w-2.5 h-2.5 shrink-0" />
                           <span>Locked</span>
                         </span>
-                      ) : isPlanLocked ? (
-                        <span
-                          className={clsx(
-                            "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold tracking-tight shadow-2xs shrink-0",
-                            isActive
-                              ? "bg-amber-400/30 text-amber-200 border border-amber-300/40"
-                              : "bg-amber-500/10 text-amber-600 border border-amber-500/20"
-                          )}
-                          title={`Fitur ${item.name} memerlukan paket ${item.minPlanBadge || "Starter"}`}
-                        >
-                          <Lock className="w-2.5 h-2.5 shrink-0" />
-                          <span>{item.minPlanBadge || "Lock"}</span>
-                        </span>
-                      ) : item.badge ? (
+                      ) : isPlanLocked ? (() => {
+                        const targetUpgradePlan = item.accessKey && getRecommendedUpgradePlan ? getRecommendedUpgradePlan(item.accessKey) : null;
+                        const lockBadgeText = targetUpgradePlan?.name || item.minPlanBadge || "Lock";
+                        return (
+                          <span
+                            className={clsx(
+                              "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold tracking-tight shadow-2xs shrink-0",
+                              isActive
+                                ? "bg-amber-400/30 text-amber-200 border border-amber-300/40"
+                                : "bg-amber-500/10 text-amber-600 border border-amber-500/20"
+                            )}
+                            title={`Fitur ${item.name} tersedia pada paket ${lockBadgeText}`}
+                          >
+                            <Lock className="w-2.5 h-2.5 shrink-0" />
+                            <span>{lockBadgeText}</span>
+                          </span>
+                        );
+                      })() : item.badge ? (
                         <span
                           className={clsx(
                             "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide shrink-0",

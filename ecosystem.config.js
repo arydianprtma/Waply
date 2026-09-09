@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: "sendora-web",
+      name: "waply-web",
       cwd: "./apps/web",
       script: "npm",
       args: "run start",
@@ -18,7 +18,7 @@ module.exports = {
       out_file: "./logs/web-out.log",
     },
     {
-      name: "sendora-gateway",
+      name: "waply-gateway",
       cwd: "./apps/gateway",
       script: "npm",
       args: "run start",

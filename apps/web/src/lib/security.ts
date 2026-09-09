@@ -32,7 +32,7 @@ export function checkAccountStatus(status?: string, banReason?: string | null): 
   if (normalizedStatus === "BANNED") {
     return {
       allowed: false,
-      reason: `Akun Anda telah dinonaktifkan (Banned)${banReason ? `: ${banReason}` : ". Hubungi dukungan Sendora."}`,
+      reason: `Akun Anda telah dinonaktifkan (Banned)${banReason ? `: ${banReason}` : ". Hubungi dukungan Waply."}`,
       statusCode: 403,
     };
   }

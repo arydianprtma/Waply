@@ -42,7 +42,7 @@ export interface BroadcastCampaign {
   completedAt?: string;
 }
 
-const LOCAL_STORAGE_DIR = path.join(process.cwd(), ".sendora-data");
+const LOCAL_STORAGE_DIR = path.join(process.cwd(), ".waply-data");
 const LOCAL_CAMPAIGNS_FILE = path.join(LOCAL_STORAGE_DIR, "broadcast-campaigns.json");
 const GATEWAY_URL = process.env.GATEWAY_INTERNAL_URL || "http://localhost:3002";
 

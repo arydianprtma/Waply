@@ -28,7 +28,7 @@ export default function ForgotPasswordPage() {
       if (json.success) {
         setSuccessMsg(
           json.message ||
-            "Tautan reset password telah berhasil dikirim ke email Anda via SMTP resmi Sendora."
+            "Tautan reset password telah berhasil dikirim ke email Anda via SMTP resmi Waply."
         );
       } else {
         setErrorMsg(json.error || "Gagal memproses permintaan reset password.");

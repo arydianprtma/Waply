@@ -75,7 +75,7 @@ export class BaileysInstance {
           creds: state.creds,
           keys: makeCacheableSignalKeyStore(state.keys, baileysLogger),
         },
-        browser: ["Sendora Gateway", "Chrome", "1.0.0"],
+        browser: ["Waply Gateway", "Chrome", "1.0.0"],
         generateHighQualityLinkPreview: true,
         syncFullHistory: false,
         defaultQueryTimeoutMs: 60000,
@@ -219,7 +219,7 @@ export class BaileysInstance {
 
           // Forward to Next.js Web App Inbound API for Auto-Reply, Chat Storage & Webhook Dispatching
           try {
-            const webUrl = process.env.WEB_APP_URL || "http://localhost:3001";
+            const webUrl = process.env.WEB_APP_URL || "http://127.0.0.1:3001";
             const inbRes = await fetch(`${webUrl}/api/inbound`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },

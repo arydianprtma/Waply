@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { SdkGuideView } from "@/components/docs/sdk-guide-view";
+import { CodeBlock } from "@/components/docs/code-block";
 import {
   Code2,
   Copy,
@@ -21,12 +23,15 @@ import {
   ShieldCheck,
   Sparkles,
   Layers,
+  BookOpen,
+  Smartphone,
 } from "lucide-react";
 
 type CodeLang = "curl" | "nodejs" | "python" | "php";
 type EndpointTab = "send" | "broadcast" | "contacts" | "templates" | "autoreply" | "blacklist" | "webhooks";
 
 export default function ApiDocsPage() {
+  const [docsMode, setDocsMode] = useState<"api" | "sdk">("api");
   const [activeTab, setActiveTab] = useState<EndpointTab>("send");
   const [selectedLang, setSelectedLang] = useState<CodeLang>("curl");
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
@@ -39,7 +44,7 @@ export default function ApiDocsPage() {
   }, []);
 
   // Playground state
-  const [testApiKey, setTestApiKey] = useState("snd_live_sendora_demo_key");
+  const [testApiKey, setTestApiKey] = useState("snd_live_waply_demo_key");
   const [testTo, setTestTo] = useState("6281234567890");
   const [testMessage, setTestMessage] = useState("{Halo|Hai} {{name}}, pesanan Anda telah dikonfirmasi!");
   const [testDevice, setTestDevice] = useState("auto_rotate");
@@ -294,7 +299,7 @@ curl -X POST ${originUrl}/api/autoreply \\
     "name": "Info Harga & Paket",
     "matchType": "CONTAINS",
     "keywords": ["harga", "pricelist", "biaya"],
-    "replyMessage": "{Halo|Hai} {{pushName}}! Paket layanan Sendora mulai dari Rp99.000/bln.",
+    "replyMessage": "{Halo|Hai} {{name}}! Paket layanan Waply mulai dari Rp99.000/bln.",
     "delaySec": 2,
     "isActive": true
   }'`;
@@ -357,7 +362,7 @@ curl -X POST ${originUrl}/api/webhooks \\
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
             <Code2 className="w-6 h-6 text-emerald-600" />
-            Developer API & Features Reference
+            Developer API &amp; Features Reference
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
             Panduan lengkap REST API untuk integrasi pengiriman pesan, broadcast massal, kontak, template, dan webhook real-time.
@@ -369,13 +374,41 @@ curl -X POST ${originUrl}/api/webhooks \\
         </div>
       </div>
 
-      {/* Authentication Info */}
-      <div className="bg-white border border-slate-200/90 shadow-xs p-5 sm:p-6 rounded-2xl space-y-3">
-        <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
-          <KeyRound className="w-4 h-4 text-emerald-600" /> Autentikasi API
-        </h2>
+      {/* Mode Switcher */}
+      <div className="flex items-center gap-2 p-1.5 bg-slate-200/90 rounded-2xl w-full sm:w-auto self-start border border-slate-300/80">
+        <button
+          onClick={() => setDocsMode("api")}
+          className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+            docsMode === "api"
+              ? "bg-white text-emerald-800 shadow-xs"
+              : "text-slate-600 hover:text-slate-900"
+          }`}
+        >
+          <Terminal className="w-4 h-4 text-emerald-600" /> REST API Tester &amp; Playground
+        </button>
+        <button
+          onClick={() => setDocsMode("sdk")}
+          className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+            docsMode === "sdk"
+              ? "bg-white text-emerald-800 shadow-xs"
+              : "text-slate-600 hover:text-slate-900"
+          }`}
+        >
+          <Smartphone className="w-4 h-4 text-emerald-600" /> Panduan SDK Multi-Bahasa
+        </button>
+      </div>
+
+      {docsMode === "sdk" ? (
+        <SdkGuideView originUrl={originUrl} onSwitchToApi={() => setDocsMode("api")} />
+      ) : (
+        <>
+          {/* Authentication Info */}
+          <div className="bg-white border border-slate-200/90 shadow-xs p-5 sm:p-6 rounded-2xl space-y-3">
+            <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
+              <KeyRound className="w-4 h-4 text-emerald-600" /> Autentikasi API
+            </h2>
         <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-          Semua request ke REST API Sendora wajib menyertakan <b className="text-slate-900">API Key</b> pada Header HTTP dengan format standar Bearer Token:
+          Semua request ke REST API Waply wajib menyertakan <b className="text-slate-900">API Key</b> pada Header HTTP dengan format standar Bearer Token:
         </p>
         <div className="bg-slate-900 text-emerald-400 text-xs rounded-xl p-3.5 font-mono overflow-x-auto border border-slate-800">
           <code>Authorization: Bearer snd_live_xxxxxxxxxxxxxxxxxxxxxxxx</code>
@@ -469,25 +502,13 @@ curl -X POST ${originUrl}/api/webhooks \\
                 </button>
               ))}
             </div>
-            <button
-              onClick={() => copyCode(getEndpointSnippet(activeTab, selectedLang), `snippet-${activeTab}`)}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors cursor-pointer"
-            >
-              {copiedSection === `snippet-${activeTab}` ? (
-                <>
-                  <Check className="w-3.5 h-3.5 text-emerald-600" /> Disalin
-                </>
-              ) : (
-                <>
-                  <Copy className="w-3.5 h-3.5" /> Salin Kode
-                </>
-              )}
-            </button>
           </div>
 
-          <div className="bg-slate-900 text-slate-100 p-4 rounded-xl font-mono text-xs leading-relaxed overflow-x-auto border border-slate-800 shadow-inner">
-            <pre>{getEndpointSnippet(activeTab, selectedLang)}</pre>
-          </div>
+          <CodeBlock
+            code={getEndpointSnippet(activeTab, selectedLang)}
+            language={selectedLang}
+            filename={`${activeTab}_endpoint.${selectedLang === "curl" ? "sh" : selectedLang === "nodejs" ? "ts" : selectedLang === "python" ? "py" : "php"}`}
+          />
         </div>
       </div>
 
@@ -503,7 +524,7 @@ curl -X POST ${originUrl}/api/webhooks \\
           </span>
         </div>
         <p className="text-xs text-slate-500">
-          Uji coba kirim request langsung ke server API Sendora dan pantau respons JSON secara instan.
+          Uji coba kirim request langsung ke server API Waply dan pantau respons JSON secara instan.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-1">
@@ -580,10 +601,10 @@ curl -X POST ${originUrl}/api/webhooks \\
           <Webhook className="w-4 h-4 text-emerald-600" /> Webhook Events & HMAC Signature
         </h2>
         <p className="text-xs sm:text-sm text-slate-600">
-          Saat event terjadi di WhatsApp (pesan masuk, opt-out, device disconnected), server Sendora mengirimkan HTTP POST dengan Header signature:
+          Saat event terjadi di WhatsApp (pesan masuk, opt-out, device disconnected), server Waply mengirimkan HTTP POST dengan Header signature:
         </p>
         <div className="bg-slate-900 text-emerald-400 text-xs rounded-xl p-3.5 font-mono overflow-x-auto border border-slate-800">
-          <code>X-Sendora-Signature: sha256_hmac_hex_hash</code>
+          <code>X-Waply-Signature: sha256_hmac_hex_hash</code>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 text-xs">
           <div className="p-3.5 bg-slate-50 border border-slate-200/70 rounded-xl">
@@ -599,7 +620,9 @@ curl -X POST ${originUrl}/api/webhooks \\
             <span className="text-slate-500">Koneksi WhatsApp session terputus</span>
           </div>
         </div>
-      </div>
-    </div>
+        </div>
+      </>
+    )}
+  </div>
   );
 }

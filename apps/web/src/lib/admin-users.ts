@@ -22,7 +22,7 @@ export interface ManagedUser {
   duplicateIpCount?: number;
 }
 
-const DATA_DIR = path.resolve(process.cwd(), ".sendora-data");
+const DATA_DIR = path.resolve(process.cwd(), ".waply-data");
 const USERS_FILE = path.join(DATA_DIR, "users_registry.json");
 
 function ensureDataDir() {
@@ -33,9 +33,9 @@ function ensureDataDir() {
 
 const INITIAL_USERS: ManagedUser[] = [
   {
-    id: "admin-master-sendora-01",
-    email: "admin@sendora.id",
-    name: "Sendora Super Admin",
+    id: "admin-master-waply-01",
+    email: "admin@waply.id",
+    name: "Waply Super Admin",
     role: "admin",
     status: "ACTIVE",
     banReason: null,
@@ -157,7 +157,7 @@ export function registerOrSyncUser(user: {
     id: user.id,
     email: user.email,
     name: user.name || user.email.split("@")[0],
-    role: user.role || (user.email === "admin@sendora.id" ? "admin" : "user"),
+    role: user.role || (user.email === "admin@waply.id" ? "admin" : "user"),
     status: "ACTIVE",
     banReason: null,
     planId: sub.planId || "FREE",
@@ -202,7 +202,7 @@ export function banUsersByIp(
 
   for (let i = 0; i < users.length; i++) {
     const isTarget = users[i].lastLoginIp === clean || users[i].registeredIp === clean;
-    if (isTarget && users[i].role !== "admin" && users[i].id !== "admin-master-sendora-01") {
+    if (isTarget && users[i].role !== "admin" && users[i].id !== "admin-master-waply-01") {
       users[i].status = "BANNED";
       users[i].banReason = banReason;
       count++;
@@ -223,7 +223,7 @@ export function updateUserStatus(
   if (idx === -1) return null;
 
   users[idx].status = status;
-  users[idx].banReason = status === "BANNED" ? banReason || "Pelanggaran aturan sistem Sendora" : null;
+  users[idx].banReason = status === "BANNED" ? banReason || "Pelanggaran aturan sistem Waply" : null;
   saveManagedUsers(users);
   return users[idx];
 }
@@ -276,8 +276,8 @@ export function deleteUser(userId: string): { success: boolean; error?: string }
 
   if (
     target.role === "admin" ||
-    target.email.toLowerCase() === "admin@sendora.id" ||
-    target.id === "admin-master-sendora-01"
+    target.email.toLowerCase() === "admin@waply.id" ||
+    target.id === "admin-master-waply-01"
   ) {
     return { success: false, error: "Akun Super Admin utama tidak dapat dihapus!" };
   }

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@sendora/database";
+import { prisma } from "@waply/database";
 import { getSessionUser } from "@/lib/auth-user";
 import { getStoredMessages } from "@/lib/messages";
 

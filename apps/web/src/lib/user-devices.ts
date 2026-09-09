@@ -3,7 +3,7 @@ import path from "path";
 import { getSubscription, getAllPlans } from "./billing";
 import { DEFAULT_PLANS } from "./billing-types";
 
-const DATA_DIR = path.resolve(process.cwd(), ".sendora-data");
+const DATA_DIR = path.resolve(process.cwd(), ".waply-data");
 const USER_DEVICES_FILE = path.join(DATA_DIR, "user_devices.json");
 
 export interface UserDeviceRecord {

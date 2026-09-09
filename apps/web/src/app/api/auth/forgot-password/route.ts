@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
 
     // Find user in database / managed registry
     const dbUser = getUserByEmail(cleanEmail);
-    const userName = dbUser?.name || cleanEmail.split("@")[0] || "Pengguna Sendora";
+    const userName = dbUser?.name || cleanEmail.split("@")[0] || "Pengguna Waply";
 
     // Generate secure reset token
     const { token } = createPasswordResetToken(cleanEmail);

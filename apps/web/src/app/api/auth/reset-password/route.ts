@@ -76,8 +76,8 @@ export async function POST(req: NextRequest) {
       dbUser = registerOrSyncUser({
         id: `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, "_")}`,
         email: cleanEmail,
-        name: cleanEmail.split("@")[0] || "Sendora User",
-        role: cleanEmail === "admin@sendora.id" ? "admin" : "user",
+        name: cleanEmail.split("@")[0] || "Waply User",
+        role: cleanEmail === "admin@waply.id" ? "admin" : "user",
       });
     }
 
@@ -100,31 +100,31 @@ export async function POST(req: NextRequest) {
     // 5. Establish session cookies so user is automatically logged in
     const cookieStore = await cookies();
     const maxAge = 60 * 60 * 24 * 7;
-    cookieStore.set("sendora_demo_auth", "true", {
+    cookieStore.set("waply_demo_auth", "true", {
       path: "/",
       maxAge,
       sameSite: "lax",
       httpOnly: false,
     });
-    cookieStore.set("sendora_user_email", cleanEmail, {
+    cookieStore.set("waply_user_email", cleanEmail, {
       path: "/",
       maxAge,
       sameSite: "lax",
       httpOnly: false,
     });
-    cookieStore.set("sendora_user_name", dbUser.name || cleanEmail.split("@")[0], {
+    cookieStore.set("waply_user_name", dbUser.name || cleanEmail.split("@")[0], {
       path: "/",
       maxAge,
       sameSite: "lax",
       httpOnly: false,
     });
-    cookieStore.set("sendora_user_role", dbUser.role || "user", {
+    cookieStore.set("waply_user_role", dbUser.role || "user", {
       path: "/",
       maxAge,
       sameSite: "lax",
       httpOnly: false,
     });
-    cookieStore.set("sendora_user_id", dbUser.id, {
+    cookieStore.set("waply_user_id", dbUser.id, {
       path: "/",
       maxAge,
       sameSite: "lax",

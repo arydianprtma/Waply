@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { prisma } from "@sendora/database";
+import { prisma } from "@waply/database";
 import { getSubscription, getAllPlans } from "./billing";
 import { DEFAULT_PLANS } from "./billing-types";
 import { getUserAddonTotals } from "./addons";
@@ -20,7 +20,7 @@ export interface StoredMessage {
   createdAt: string;
 }
 
-const DATA_DIR = path.resolve(process.cwd(), ".sendora-data");
+const DATA_DIR = path.resolve(process.cwd(), ".waply-data");
 const MESSAGES_FILE = path.join(DATA_DIR, "messages.json");
 
 function ensureDataDir() {

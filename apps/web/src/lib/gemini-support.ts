@@ -1,13 +1,13 @@
 import type { TicketMessage, SupportTicket } from "./support-tickets";
 
-const SENDORA_KNOWLEDGE_BASE = `
-Anda adalah "Sendora AI Assistant", asisten AI resmi dari platform Sendora (WhatsApp Gateway & Customer Engagement Platform).
+const WAPLY_KNOWLEDGE_BASE = `
+Anda adalah "Waply AI Assistant", asisten AI resmi dari platform Waply (WhatsApp Gateway & Customer Engagement Platform).
 Tugas Anda adalah memberikan jawaban yang ramah, sopan, ringkas, solutif, dan sangat akurat secara teknis kepada klien yang membuka tiket bantuan.
 
-=== KNOWLEDGE BASE RESMI SENDORA ===
+=== KNOWLEDGE BASE RESMI WAPLY ===
 
-1. TENTANG SENDORA:
-   - Platform WhatsApp Gateway multi-device & multi-tenant berperforma tinggi tanpa emulator (menggunakan socket Baileys).
+1. TENTANG WAPLY:
+   - Platform WhatsApp Gateway multi-device & multi-tenant berperforma tinggi tanpa emulator (menggunakan direct socket engine).
    - Fitur utama: Pengiriman Pesan Teks & Media, Pustaka Template Spintax, Auto-Reply Chatbot, Broadcast Anti-Ban dengan Smart Delay, Manajemen Kontak, dan Webhook Event Real-Time.
 
 2. PENGHUBUNGAN DEVICE / WHATSAPP:
@@ -43,7 +43,7 @@ Tugas Anda adalah memberikan jawaban yang ramah, sopan, ringkas, solutif, dan sa
 
 6. WEBHOOKS & SIGNATURE:
    - Menerima event pesan masuk (message.received) dan status pengiriman (message.status).
-   - Dilengkapi verifikasi keamanan HMAC-SHA256 pada header "X-Sendora-Signature".
+   - Dilengkapi verifikasi keamanan HMAC-SHA256 pada header "X-Waply-Signature".
 
 7. BILLING, KUOTA & PAKET:
    - Paket tersedia: Trial, Starter, Business, Enterprise.
@@ -110,14 +110,14 @@ export async function generateAiTicketResponse(
           m.senderRole === "user"
             ? "Klien"
             : m.senderRole === "ai"
-            ? "Sendora AI"
+            ? "Waply AI"
             : "Admin Support";
         return `[${roleLabel} - ${m.senderName}]: ${m.message}`;
       })
       .join("\n");
 
     const prompt = `
-${SENDORA_KNOWLEDGE_BASE}
+${WAPLY_KNOWLEDGE_BASE}
 
 === INFORMASI TIKET SAAT INI ===
 ID Tiket: ${ticket.id}
@@ -233,7 +233,7 @@ Berikan balasan terbaik Anda dalam format JSON tunggal yang valid:
       return {
         replyText:
           parsed.reply ||
-          "Halo, terima kasih telah menghubungi Sendora Support. Ada yang bisa saya bantu terkait kendala Anda?",
+          "Halo, terima kasih telah menghubungi Waply Support. Ada yang bisa saya bantu terkait kendala Anda?",
         shouldEscalate: Boolean(parsed.shouldEscalate || containsExplicitHuman),
         escalationReason:
           parsed.escalationReason ||

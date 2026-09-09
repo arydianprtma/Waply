@@ -47,7 +47,7 @@ export interface AdminSystemSettings {
   updatedAt: string;
 }
 
-const DATA_DIR = path.resolve(process.cwd(), ".sendora-data");
+const DATA_DIR = path.resolve(process.cwd(), ".waply-data");
 const ADMIN_SETTINGS_FILE = path.join(DATA_DIR, "admin_settings.json");
 
 function ensureDataDir() {
@@ -60,8 +60,8 @@ export function getDefaultAdminSettings(): AdminSystemSettings {
   return {
     systemProfile: {
       adminName: "Super Administrator",
-      adminEmail: "admin@sendora.id",
-      appName: "Sendora WhatsApp Gateway",
+      adminEmail: "admin@waply.id",
+      appName: "Waply WhatsApp Gateway",
     },
     gatewayConfig: {
       gatewayUrl: "http://localhost:3002",
@@ -73,7 +73,7 @@ export function getDefaultAdminSettings(): AdminSystemSettings {
     },
     watermarkConfig: {
       enabled: true,
-      text: "\n\n> `Sendora.com`",
+      text: "\n\n> `Waply.id`",
       applyToFreeOnly: true,
     },
     paymentConfig: {
@@ -90,8 +90,8 @@ export function getDefaultAdminSettings(): AdminSystemSettings {
       secure: false,
       username: process.env.SMTP_USER || "apikey",
       password: process.env.SMTP_PASSWORD || "",
-      fromEmail: process.env.SMTP_FROM || "notifications@sendora.id",
-      fromName: "Sendora WhatsApp Gateway",
+      fromEmail: process.env.SMTP_FROM || "notifications@waply.id",
+      fromName: "Waply WhatsApp Gateway",
       enabled: false,
     },
     maintenanceConfig: {
@@ -150,7 +150,7 @@ export function saveAdminSettings(data: Partial<AdminSystemSettings>): AdminSyst
     watermarkConfig: {
       ...(current.watermarkConfig || {
         enabled: true,
-        text: "\n\n—\n*Sendora.com*",
+        text: "\n\n—\n*Waply.com*",
         applyToFreeOnly: true,
       }),
       ...(data.watermarkConfig || {}),

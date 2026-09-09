@@ -6,6 +6,11 @@ import { checkCsrfProtection } from "@/lib/csrf";
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
+  // Immediate pass-through for internal Gateway inbound & public API v1 endpoints
+  if (pathname.startsWith("/api/inbound") || pathname.startsWith("/api/v1/") || pathname.startsWith("/api/billing/notification")) {
+    return NextResponse.next();
+  }
+
   // 1. Rate Limiting for Auth Endpoints
   if (pathname.startsWith("/api/auth/") || pathname === "/login" || pathname === "/register") {
     if (request.method === "POST") {

@@ -45,7 +45,7 @@ export function AccountStatusBanner() {
             </div>
           )}
           <p className="text-[11px] opacity-75 mt-1">
-            Jika Anda merasa ini adalah kesalahan, silakan hubungi tim bantuan Sendora di <strong>support@sendora.id</strong>.
+            Jika Anda merasa ini adalah kesalahan, silakan hubungi tim bantuan Waply di <strong>support@waply.id</strong>.
           </p>
         </div>
       </div>

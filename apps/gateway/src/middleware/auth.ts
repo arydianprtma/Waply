@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import crypto from "crypto";
 
-const DEFAULT_SECRET = "sendora_internal_gateway_token_key";
+const DEFAULT_SECRET = "waply_internal_gateway_token_key";
 
 function timingSafeMatch(a: string, b: string): boolean {
   try {

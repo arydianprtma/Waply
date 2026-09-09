@@ -133,7 +133,7 @@ export default function LandingPage() {
                   Kirim Pesan Tanpa Khawatir Terblokir oleh Meta
                 </h2>
                 <p className="text-xs sm:text-sm text-base-content/70 leading-relaxed">
-                  Sendora dirancang dari awal dengan protokol perlindungan nomor berstandar enterprise untuk meminimalkan risiko banned akun WhatsApp.
+                  Waply dirancang dari awal dengan protokol perlindungan nomor berstandar enterprise untuk meminimalkan risiko banned akun WhatsApp.
                 </p>
 
                 <div className="space-y-3 sm:space-y-4 pt-2">

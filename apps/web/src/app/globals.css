@@ -18,7 +18,7 @@
     letter-spacing: -0.01em;
   }
 
-  [data-theme="sendoraDark"] body,
+  [data-theme="waplyDark"] body,
   .dark body {
     color: #f8fafc;
     background-color: #0f172a;
@@ -32,33 +32,33 @@
 }
 
 /* ==========================================================================
-   Sendora Dark Mode Theme Overrides
+   Waply Dark Mode Theme Overrides
    Ensures all cards, tables, panels, text, and inputs look premium in Dark Mode
    ========================================================================== */
 
-[data-theme="sendoraDark"],
+[data-theme="waplyDark"],
 .dark {
   color-scheme: dark;
 }
 
 /* Card & Panel Backgrounds */
-[data-theme="sendoraDark"] .bg-white,
+[data-theme="waplyDark"] .bg-white,
 .dark .bg-white {
   background-color: #1e293b !important;
   color: #f8fafc;
 }
 
-[data-theme="sendoraDark"] .bg-slate-50,
-[data-theme="sendoraDark"] .bg-slate-50\/50,
-[data-theme="sendoraDark"] .bg-slate-50\/70,
+[data-theme="waplyDark"] .bg-slate-50,
+[data-theme="waplyDark"] .bg-slate-50\/50,
+[data-theme="waplyDark"] .bg-slate-50\/70,
 .dark .bg-slate-50,
 .dark .bg-slate-50\/50,
 .dark .bg-slate-50\/70 {
   background-color: #0f172a !important;
 }
 
-[data-theme="sendoraDark"] .bg-slate-100,
-[data-theme="sendoraDark"] .bg-slate-100\/90,
+[data-theme="waplyDark"] .bg-slate-100,
+[data-theme="waplyDark"] .bg-slate-100\/90,
 .dark .bg-slate-100,
 .dark .bg-slate-100\/90 {
   background-color: #334155 !important;
@@ -66,45 +66,45 @@
 }
 
 /* Hover States */
-[data-theme="sendoraDark"] .hover\:bg-slate-50:hover,
-[data-theme="sendoraDark"] .hover\:bg-slate-100:hover,
+[data-theme="waplyDark"] .hover\:bg-slate-50:hover,
+[data-theme="waplyDark"] .hover\:bg-slate-100:hover,
 .dark .hover\:bg-slate-50:hover,
 .dark .hover\:bg-slate-100:hover {
   background-color: #334155 !important;
 }
 
 /* Text Colors */
-[data-theme="sendoraDark"] .text-slate-900,
-[data-theme="sendoraDark"] .text-slate-950,
-[data-theme="sendoraDark"] .text-slate-800,
+[data-theme="waplyDark"] .text-slate-900,
+[data-theme="waplyDark"] .text-slate-950,
+[data-theme="waplyDark"] .text-slate-800,
 .dark .text-slate-900,
 .dark .text-slate-950,
 .dark .text-slate-800 {
   color: #f8fafc !important;
 }
 
-[data-theme="sendoraDark"] .text-slate-700,
-[data-theme="sendoraDark"] .text-slate-600,
+[data-theme="waplyDark"] .text-slate-700,
+[data-theme="waplyDark"] .text-slate-600,
 .dark .text-slate-700,
 .dark .text-slate-600 {
   color: #cbd5e1 !important;
 }
 
-[data-theme="sendoraDark"] .text-slate-500,
-[data-theme="sendoraDark"] .text-slate-400,
+[data-theme="waplyDark"] .text-slate-500,
+[data-theme="waplyDark"] .text-slate-400,
 .dark .text-slate-500,
 .dark .text-slate-400 {
   color: #94a3b8 !important;
 }
 
 /* Borders */
-[data-theme="sendoraDark"] .border-slate-200,
-[data-theme="sendoraDark"] .border-slate-200\/70,
-[data-theme="sendoraDark"] .border-slate-200\/80,
-[data-theme="sendoraDark"] .border-slate-200\/90,
-[data-theme="sendoraDark"] .border-slate-300,
-[data-theme="sendoraDark"] .border-slate-100,
-[data-theme="sendoraDark"] .border-slate-100\/60,
+[data-theme="waplyDark"] .border-slate-200,
+[data-theme="waplyDark"] .border-slate-200\/70,
+[data-theme="waplyDark"] .border-slate-200\/80,
+[data-theme="waplyDark"] .border-slate-200\/90,
+[data-theme="waplyDark"] .border-slate-300,
+[data-theme="waplyDark"] .border-slate-100,
+[data-theme="waplyDark"] .border-slate-100\/60,
 .dark .border-slate-200,
 .dark .border-slate-200\/70,
 .dark .border-slate-200\/80,
@@ -115,8 +115,8 @@
   border-color: #334155 !important;
 }
 
-[data-theme="sendoraDark"] .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
-[data-theme="sendoraDark"] .divide-slate-200 > :not([hidden]) ~ :not([hidden]),
+[data-theme="waplyDark"] .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+[data-theme="waplyDark"] .divide-slate-200 > :not([hidden]) ~ :not([hidden]),
 .dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
 .dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
   border-color: #334155 !important;
@@ -165,9 +165,9 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type=
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15) !important;
 }
 
-[data-theme="sendoraDark"] input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
-[data-theme="sendoraDark"] select,
-[data-theme="sendoraDark"] textarea,
+[data-theme="waplyDark"] input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+[data-theme="waplyDark"] select,
+[data-theme="waplyDark"] textarea,
 .dark input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
 .dark select,
 .dark textarea {
@@ -176,10 +176,10 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type=
   color: #f8fafc;
 }
 
-[data-theme="sendoraDark"] input.input:hover:not(:disabled):not(:focus),
-[data-theme="sendoraDark"] textarea.textarea:hover:not(:disabled):not(:focus),
-[data-theme="sendoraDark"] select.select:hover:not(:disabled):not(:focus),
-[data-theme="sendoraDark"] .input-bordered:hover:not(:disabled):not(:focus),
+[data-theme="waplyDark"] input.input:hover:not(:disabled):not(:focus),
+[data-theme="waplyDark"] textarea.textarea:hover:not(:disabled):not(:focus),
+[data-theme="waplyDark"] select.select:hover:not(:disabled):not(:focus),
+[data-theme="waplyDark"] .input-bordered:hover:not(:disabled):not(:focus),
 .dark input.input:hover:not(:disabled):not(:focus),
 .dark textarea.textarea:hover:not(:disabled):not(:focus),
 .dark select.select:hover:not(:disabled):not(:focus),
@@ -187,16 +187,16 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type=
   border-color: #64748b !important;
 }
 
-[data-theme="sendoraDark"] input.input:focus,
-[data-theme="sendoraDark"] input.input:focus-visible,
-[data-theme="sendoraDark"] input.input:focus-within,
-[data-theme="sendoraDark"] textarea.textarea:focus,
-[data-theme="sendoraDark"] textarea.textarea:focus-visible,
-[data-theme="sendoraDark"] select.select:focus,
-[data-theme="sendoraDark"] select.select:focus-visible,
-[data-theme="sendoraDark"] .input-bordered:focus,
-[data-theme="sendoraDark"] .input-bordered:focus-visible,
-[data-theme="sendoraDark"] .input-bordered:focus-within,
+[data-theme="waplyDark"] input.input:focus,
+[data-theme="waplyDark"] input.input:focus-visible,
+[data-theme="waplyDark"] input.input:focus-within,
+[data-theme="waplyDark"] textarea.textarea:focus,
+[data-theme="waplyDark"] textarea.textarea:focus-visible,
+[data-theme="waplyDark"] select.select:focus,
+[data-theme="waplyDark"] select.select:focus-visible,
+[data-theme="waplyDark"] .input-bordered:focus,
+[data-theme="waplyDark"] .input-bordered:focus-visible,
+[data-theme="waplyDark"] .input-bordered:focus-within,
 .dark input.input:focus,
 .dark input.input:focus-visible,
 .dark input.input:focus-within,
@@ -214,33 +214,135 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type=
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25) !important;
 }
 
-[data-theme="sendoraDark"] select option,
+[data-theme="waplyDark"] select option,
 .dark select option {
   background-color: #1e293b;
   color: #f8fafc;
 }
 
-[data-theme="sendoraDark"] input::placeholder,
-[data-theme="sendoraDark"] textarea::placeholder,
+[data-theme="waplyDark"] input::placeholder,
+[data-theme="waplyDark"] textarea::placeholder,
 .dark input::placeholder,
 .dark textarea::placeholder {
   color: #64748b;
 }
 
 /* Tables in Dark Mode */
-[data-theme="sendoraDark"] table th,
+[data-theme="waplyDark"] table th,
 .dark table th {
   background-color: #0f172a !important;
   color: #94a3b8 !important;
   border-color: #334155 !important;
 }
 
-[data-theme="sendoraDark"] table td,
+[data-theme="waplyDark"] table td,
 .dark table td {
   border-color: #334155 !important;
 }
 
-[data-theme="sendoraDark"] table tr:hover td,
+[data-theme="waplyDark"] table tr:hover td,
 .dark table tr:hover td {
   background-color: #1e293b !important;
+}
+
+/* ==========================================================================
+   Visual Studio Code (Dark+ Theme) Syntax Highlighting
+   ========================================================================== */
+
+.vscode-dark-theme,
+pre[class*="language-"],
+code[class*="language-"] {
+  color: #d4d4d4;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  text-align: left;
+  white-space: pre-wrap;
+  word-spacing: normal;
+  word-break: break-word;
+  word-wrap: break-word;
+  tab-size: 2;
+  hyphens: none;
+}
+
+/* VS Code Comments */
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #6a9955 !important;
+  font-style: italic;
+}
+
+/* VS Code Punctuation */
+.token.punctuation {
+  color: #d4d4d4 !important;
+}
+
+/* VS Code Keywords & Tags */
+.token.keyword,
+.token.tag {
+  color: #569cd6 !important;
+  font-weight: 500;
+}
+
+/* VS Code Strings */
+.token.string,
+.token.char,
+.token.attr-value {
+  color: #ce9178 !important;
+}
+
+/* VS Code Functions & Methods */
+.token.function,
+.token.class-name.function {
+  color: #dcdcaa !important;
+}
+
+/* VS Code Classes, Types, Interfaces */
+.token.class-name,
+.token.type,
+.token.builtin {
+  color: #4ec9b0 !important;
+}
+
+/* VS Code Variables, Properties, JSON Keys */
+.token.property,
+.token.variable,
+.token.constant,
+.token.symbol,
+.token.attr-name {
+  color: #9cdcfe !important;
+}
+
+/* VS Code Numbers & Booleans */
+.token.number,
+.token.boolean {
+  color: #b5cea8 !important;
+}
+
+/* VS Code Operators */
+.token.operator,
+.token.entity,
+.token.url {
+  color: #d4d4d4 !important;
+}
+
+/* VS Code Regex */
+.token.regex,
+.token.important {
+  color: #d16969 !important;
+}
+
+/* VS Code Parameters */
+.token.parameter {
+  color: #9cdcfe !important;
+}
+
+/* Selection in VS Code */
+.vscode-dark-theme ::selection,
+pre[class*="language-"] ::selection,
+code[class*="language-"] ::selection {
+  background: #264f78 !important;
+  color: #ffffff !important;
 }

@@ -16,7 +16,7 @@ export function applyWatermarkIfFree(
     const settings = getAdminSettings();
     const config = settings.watermarkConfig || {
       enabled: true,
-      text: "\n\n—\n ```Sendora.com```",
+      text: "\n\n—\n ```Waply.com```",
       applyToFreeOnly: true,
     };
 
@@ -45,7 +45,7 @@ export function applyWatermarkIfFree(
     }
 
     // Append watermark
-    const watermarkText = config.text || "\n\n> `Sendora.com`";
+    const watermarkText = config.text || "\n\n> `Waply.com`";
     const finalMessage = `${message.trimEnd()}${watermarkText}`;
 
     return {

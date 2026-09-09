@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
       if (invoice.customerEmail) {
         sendEmailInvoiceNotification({
           orderId: order_id,
-          customerName: invoice.customerName || "Pelanggan Sendora",
+          customerName: invoice.customerName || "Pelanggan Waply",
           customerEmail: invoice.customerEmail,
           planName: invoice.planId,
           amount: invoice.amount,

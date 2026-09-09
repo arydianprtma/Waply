@@ -54,7 +54,7 @@ import {
 } from "@/lib/billing-types";
 import { AddonItem } from "@/lib/addon-types";
 import { ModalPortal } from "@/components/ui/ModalPortal";
-import { SendoraLogo } from "@/components/brand/SendoraLogo";
+import { WaplyLogo } from "@/components/brand/WaplyLogo";
 import { PromoCountdownTimer } from "@/components/ui/PromoCountdownTimer";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 
@@ -215,10 +215,10 @@ function OrderContent() {
       .then(([meRes, settingsRes]) => {
         if (meRes.status === "fulfilled" && meRes.value?.success && meRes.value?.user) {
           const u = meRes.value.user;
-          if (u.email && u.email !== "guest@sendora.id" && u.id && u.id !== "usr_default_guest") {
+          if (u.email && u.email !== "guest@waply.id" && u.id && u.id !== "usr_default_guest") {
             setIsLoggedIn(true);
             setLoggedInUser(u);
-            if (u.name && u.name !== "Sendora User") setCustomerName(u.name);
+            if (u.name && u.name !== "Waply User") setCustomerName(u.name);
             setCustomerEmail(u.email);
           }
         }
@@ -226,7 +226,7 @@ function OrderContent() {
         if (settingsRes.status === "fulfilled" && settingsRes.value?.success && settingsRes.value?.data?.profile) {
           const p = settingsRes.value.data.profile;
           if (p.name) setCustomerName((prev) => prev || p.name);
-          if (p.email && p.email !== "guest@sendora.id") {
+          if (p.email && p.email !== "guest@waply.id") {
             setCustomerEmail((prev) => prev || p.email);
           }
           if (p.phone || p.whatsapp) {
@@ -427,7 +427,7 @@ function OrderContent() {
     setFormError(null);
 
     const cleanEmail = customerEmail.trim().toLowerCase();
-    const cleanName = customerName.trim() || cleanEmail.split("@")[0] || "Sendora User";
+    const cleanName = customerName.trim() || cleanEmail.split("@")[0] || "Waply User";
     const cleanPhone = customerPhone.trim();
 
     if (!cleanEmail) {
@@ -447,7 +447,7 @@ function OrderContent() {
         return;
       }
       if (!customerPassword || customerPassword.length < 6) {
-        setFormError("Silakan buat password baru minimal 6 karakter untuk akun Sendora Anda.");
+        setFormError("Silakan buat password baru minimal 6 karakter untuk akun Waply Anda.");
         return;
       }
       if (customerConfirmPassword && customerPassword !== customerConfirmPassword) {
@@ -462,10 +462,10 @@ function OrderContent() {
     if (!isLoggedIn) {
       try {
         const maxAge = 60 * 60 * 24 * 7;
-        document.cookie = `sendora_demo_auth=true; path=/; max-age=${maxAge}; SameSite=Lax`;
-        document.cookie = `sendora_user_email=${encodeURIComponent(cleanEmail)}; path=/; max-age=${maxAge}; SameSite=Lax`;
-        document.cookie = `sendora_user_name=${encodeURIComponent(cleanName)}; path=/; max-age=${maxAge}; SameSite=Lax`;
-        document.cookie = `sendora_user_role=user; path=/; max-age=${maxAge}; SameSite=Lax`;
+        document.cookie = `waply_demo_auth=true; path=/; max-age=${maxAge}; SameSite=Lax`;
+        document.cookie = `waply_user_email=${encodeURIComponent(cleanEmail)}; path=/; max-age=${maxAge}; SameSite=Lax`;
+        document.cookie = `waply_user_name=${encodeURIComponent(cleanName)}; path=/; max-age=${maxAge}; SameSite=Lax`;
+        document.cookie = `waply_user_role=user; path=/; max-age=${maxAge}; SameSite=Lax`;
 
         if (isSupabaseConfigured() && customerPassword) {
           const supabase = createClient();
@@ -547,7 +547,7 @@ function OrderContent() {
       return;
     }
 
-    // Direct Midtrans Core API Charge (Sendora Custom UI)
+    // Direct Midtrans Core API Charge (Waply Custom UI)
     try {
       let paymentType = "qris";
       let bank: string | undefined = undefined;
@@ -622,7 +622,7 @@ function OrderContent() {
       {/* Top Navigation Bar */}
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <SendoraLogo href="/" size="md" />
+          <WaplyLogo href="/" size="md" />
 
           <div className="flex items-center gap-4 text-xs font-semibold">
             <Link href="/" className="text-slate-600 hover:text-slate-900 hidden sm:inline">
@@ -653,7 +653,7 @@ function OrderContent() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
-                Aktivasi Langganan Paket Sendora
+                Aktivasi Langganan Paket Waply
               </h1>
               <p className="text-xs sm:text-sm text-slate-500 mt-1">
                 Lengkapi formulir pesanan di bawah ini untuk aktivasi cloud WhatsApp Gateway & akses API instan.
@@ -723,7 +723,7 @@ function OrderContent() {
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
                               <span className="text-xs font-black text-slate-900 truncate">
-                                {customerName || "Sendora User"}
+                                {customerName || "Waply User"}
                               </span>
                               <span className="text-[10px] bg-emerald-600 text-white font-black px-2 py-0.5 rounded-full shadow-2xs shrink-0">
                                 Akun Terhubung
@@ -993,7 +993,7 @@ function OrderContent() {
                 </div>
               </div>
 
-              {/* SECTION 2: Pilihan Metode Pembayaran (Custom Sendora UI Options) */}
+              {/* SECTION 2: Pilihan Metode Pembayaran (Custom Waply UI Options) */}
               <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
                 <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between gap-2 flex-wrap">
                   <div className="flex items-center gap-2">
@@ -1204,7 +1204,7 @@ function OrderContent() {
                       <div className="flex items-center gap-2">
                         <Layers className="w-4 h-4 text-primary shrink-0" />
                         <h2 className="font-extrabold text-sm text-slate-900">
-                          3. Pilih Paket Layanan Sendora
+                          3. Pilih Paket Layanan Waply
                         </h2>
                       </div>
                       <span className="text-[11px] text-primary font-bold shrink-0">
@@ -1820,7 +1820,7 @@ function OrderContent() {
                   <>
                     <div className="flex items-center justify-between font-bold text-slate-900">
                       <span>Paket Layanan:</span>
-                      <span className="text-primary font-black">Sendora {currentPlan.name}</span>
+                      <span className="text-primary font-black">Waply {currentPlan.name}</span>
                     </div>
                     <div className="flex items-center justify-between text-slate-600">
                       <span>Durasi Langganan:</span>
@@ -1892,7 +1892,7 @@ function OrderContent() {
                     <div className="flex gap-2">
                       <input
                         type="text"
-                        placeholder="Contoh: SENDORAHEMAT"
+                        placeholder="Contoh: WAPLYHEMAT"
                         value={couponInput}
                         onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
                         className="input input-bordered input-sm flex-1 rounded-xl text-xs uppercase font-mono font-bold"
@@ -2025,7 +2025,7 @@ function OrderContent() {
       </main>
 
       {/* ========================================================================= */}
-      {/* SENDORA CUSTOM PAYMENT MODAL (DIRECT CORE API UI)                        */}
+      {/* WAPLY CUSTOM PAYMENT MODAL (DIRECT CORE API UI)                        */}
       {/* ========================================================================= */}
       {customModalOpen && chargeData && (
         <ModalPortal>
@@ -2090,7 +2090,7 @@ function OrderContent() {
                         Pembayaran Berhasil!
                       </h4>
                       <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
-                        {chargeData.orderId?.startsWith("SENDORA-ADDON") || isAddonMode ? (
+                        {chargeData.orderId?.startsWith("WAPLY-ADDON") || isAddonMode ? (
                           <>
                             Terima kasih! Addon{" "}
                             <strong className="text-slate-900">
@@ -2103,7 +2103,7 @@ function OrderContent() {
                           </>
                         ) : (
                           <>
-                            Terima kasih! Paket <strong className="text-slate-900">Sendora {currentPlan.name}</strong> Anda telah aktif. Kuota pesan & akses API gateway langsung dapat digunakan sekarang.
+                            Terima kasih! Paket <strong className="text-slate-900">Waply {currentPlan.name}</strong> Anda telah aktif. Kuota pesan & akses API gateway langsung dapat digunakan sekarang.
                           </>
                         )}
                       </p>
@@ -2132,16 +2132,16 @@ function OrderContent() {
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-slate-400">
-                            {chargeData.orderId?.startsWith("SENDORA-ADDON") || isAddonMode ? "Item Addon:" : "Paket Layanan:"}
+                            {chargeData.orderId?.startsWith("WAPLY-ADDON") || isAddonMode ? "Item Addon:" : "Paket Layanan:"}
                           </span>
                           <strong className="text-emerald-700 font-bold">
-                            {chargeData.orderId?.startsWith("SENDORA-ADDON") || isAddonMode ? (
+                            {chargeData.orderId?.startsWith("WAPLY-ADDON") || isAddonMode ? (
                               selectedAddonIds
                                 .map((id) => availableAddons.find((a) => a.id === id)?.name)
                                 .filter(Boolean)
                                 .join(", ") || "Top-Up Addon"
                             ) : (
-                              `Sendora ${currentPlan.name} (${
+                              `Waply ${currentPlan.name} (${
                                 effectiveDurationMonths === 36
                                   ? "3 Tahun"
                                   : effectiveDurationMonths === 24
@@ -2187,7 +2187,7 @@ function OrderContent() {
                     </div>
 
                     {/* Unlocked Benefits Quick Pills */}
-                    {chargeData.orderId?.startsWith("SENDORA-ADDON") || isAddonMode ? (
+                    {chargeData.orderId?.startsWith("WAPLY-ADDON") || isAddonMode ? (
                       <div className="grid grid-cols-3 gap-2 text-[11px] font-bold">
                         {(() => {
                           const addedDev = selectedAddonIds.reduce((sum, id) => {
@@ -2297,13 +2297,13 @@ function OrderContent() {
                           {chargeData.qrCodeUrl ? (
                             <img
                               src={chargeData.qrCodeUrl}
-                              alt="QRIS Code Sendora"
+                              alt="QRIS Code Waply"
                               className="w-56 h-56 object-contain mx-auto rounded-xl"
                             />
                           ) : chargeData.qrString ? (
                             <img
                               src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(chargeData.qrString)}`}
-                              alt="QRIS Code Sendora"
+                              alt="QRIS Code Waply"
                               className="w-56 h-56 object-contain mx-auto rounded-xl"
                             />
                           ) : (
@@ -2328,7 +2328,7 @@ function OrderContent() {
                             href={chargeData.qrCodeUrl}
                             target="_blank"
                             rel="noreferrer"
-                            download="QRIS-Sendora.png"
+                            download="QRIS-Waply.png"
                             className="btn btn-outline btn-xs gap-1.5 rounded-xl text-slate-700 font-bold"
                           >
                             <Download className="w-3.5 h-3.5" /> Unduh Gambar QRIS
@@ -2498,7 +2498,7 @@ function OrderContent() {
                                 <li>Buka aplikasi <strong>BCA Mobile</strong> & login m-BCA.</li>
                                 <li>Pilih menu <strong>m-Transfer</strong> &gt; <strong>BCA Virtual Account</strong>.</li>
                                 <li>Masukkan nomor Virtual Account di atas & klik <strong>Send</strong>.</li>
-                                <li>Periksa nama penerima <strong>SENDORA / MIDTRANS</strong> dan total nominal.</li>
+                                <li>Periksa nama penerima <strong>WAPLY / MIDTRANS</strong> dan total nominal.</li>
                                 <li>Masukkan <strong>PIN m-BCA</strong> Anda. Transaksi selesai & gateway langsung aktif.</li>
                               </ol>
                             )}
@@ -2527,7 +2527,7 @@ function OrderContent() {
                             {activeInstructionTab === "mbanking" && (
                               <ol className="list-decimal pl-4 space-y-1.5 text-[11px] leading-relaxed">
                                 <li>Buka aplikasi <strong>Livin&apos; by Mandiri</strong> & login.</li>
-                                <li>Pilih menu <strong>Bayar</strong> &gt; cari <strong>Midtrans / Sendora</strong> (Kode: {chargeData.billerCode}).</li>
+                                <li>Pilih menu <strong>Bayar</strong> &gt; cari <strong>Midtrans / Waply</strong> (Kode: {chargeData.billerCode}).</li>
                                 <li>Masukkan <strong>Bill Key / Nomor Pembayaran</strong>: {chargeData.billKey}.</li>
                                 <li>Konfirmasi detail pembayaran lalu masukkan <strong>PIN Livin&apos;</strong> Anda.</li>
                               </ol>
@@ -2613,7 +2613,7 @@ function OrderContent() {
                             <li>Buka aplikasi mobile banking atau e-wallet pilihan Anda (BCA Mobile, Livin&apos;, BRImo, GoPay, OVO, Dana, dll).</li>
                             <li>Pilih menu <strong>Scan QRIS / Bayar</strong>.</li>
                             <li>Arahkan kamera ke QR Code di atas (atau unggah dari galeri jika diunduh).</li>
-                            <li>Periksa nominal tagihan & nama merchant <strong>Sendora Gateway</strong>.</li>
+                            <li>Periksa nominal tagihan & nama merchant <strong>Waply Gateway</strong>.</li>
                             <li>Konfirmasi dan masukkan PIN transaksi Anda. Verifikasi akan terdeteksi otomatis dalam 1-3 detik.</li>
                           </ol>
                         )}

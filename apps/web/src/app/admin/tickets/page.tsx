@@ -137,7 +137,7 @@ export default function AdminTicketsPage() {
             Manajemen Tiket Bantuan & CS
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Pantau dan tanggapi kendala teknis serta permohonan banding akun pengguna Sendora.
+            Pantau dan tanggapi kendala teknis serta permohonan banding akun pengguna Waply.
           </p>
         </div>
 

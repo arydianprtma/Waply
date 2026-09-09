@@ -1,13 +1,12 @@
 <div align="center">
 
-# 🚀 Sendora - WhatsApp Gateway & Messaging API
+# 🚀 Waply - WhatsApp Gateway & Messaging API
 
 **Solusi Cloud WhatsApp Gateway, REST API, Broadcast & Automasi Pesan Modern untuk Bisnis.**
 
 [![Next.js](https://img.shields.io/badge/Next.js-15.0-black?style=flat-square&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=flat-square&logo=tailwind-css)](https://tailwindcss.com/)
-[![Baileys](https://img.shields.io/badge/Baileys-WhatsApp_Engine-25D366?style=flat-square&logo=whatsapp)](https://github.com/WhiskeySockets/Baileys)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
 [Fitur Utama](#-fitur-utama) • [Struktur Proyek](#-struktur-arsitektur-proyek) • [Panduan Instalasi](#-panduan-instalasi--menjalankan) • [Dokumentasi API](#-dokumentasi-singkat-rest-api) • [Variabel Environment](#-variabel-environment)
@@ -16,9 +15,9 @@
 
 </div>
 
-## 📌 Tentang Sendora
+## 📌 Tentang Waply
 
-**Sendora** adalah platform WhatsApp Gateway *all-in-one* yang memungkinkan integrasi pengiriman pesan WhatsApp secara otomatis ke dalam aplikasi, website, bot, atau sistem CRM Anda. Dilengkapi dengan dashboard manajemen modern, panel admin lengkap, billing payment gateway Midtrans, dan sistem anti-ban cerdas.
+**Waply** adalah platform WhatsApp Gateway *all-in-one* yang memungkinkan integrasi pengiriman pesan WhatsApp secara otomatis ke dalam aplikasi, website, bot, atau sistem CRM Anda. Dilengkapi dengan dashboard manajemen modern, panel admin lengkap, billing payment gateway Midtrans, dan sistem anti-ban cerdas.
 
 ---
 
@@ -74,10 +73,10 @@ WhatsApp-Gateway/
 │   │   │   └── lib/             # Service Email, Auth, Billing, Webhooks, Vouchers
 │   │   └── package.json
 │   │
-│   └── gateway/                 # WhatsApp Gateway Service (@whiskeysockets/baileys)
+│   └── gateway/                 # WhatsApp Gateway Service
 │       ├── src/
 │       │   ├── routes/          # Express REST API Gateway (Session & Message)
-│       │   ├── services/        # Baileys Engine, Session Manager, Safety Engine
+│       │   ├── services/        # Gateway Engine, Session Manager, Safety Engine
 │       │   └── utils/           # Spintax Parser, Logger
 │       └── package.json
 │
@@ -130,7 +129,7 @@ Atau jalankan masing-masing service secara terpisah:
 * **Web Dashboard & API:** `npm run dev:web` (Port `3001`)
 * **WhatsApp Gateway:** `npm run dev:gateway` (Port `3002`)
 
-Buka browser Anda di `http://localhost:3001` untuk mengakses dashboard Sendora.
+Buka browser Anda di `http://localhost:3001` untuk mengakses dashboard Waply.
 
 ---
 
@@ -187,7 +186,7 @@ Authorization: Bearer snd_live_YOUR_API_KEY
 | `SMTP_PORT` | Port SMTP (465 SSL / 587 TLS) | `465` |
 | `SMTP_USER` | Email pengirim SMTP | `admin@bisnis.id` |
 | `SMTP_PASS` | Password / App Password email SMTP | `xxxx-xxxx-xxxx-xxxx` |
-| `SMTP_FROM` | Nama & alamat pengirim email | `"Sendora Gateway" <no-reply@bisnis.id>` |
+| `SMTP_FROM` | Nama & alamat pengirim email | `"Waply Gateway" <no-reply@bisnis.id>` |
 
 ---
 

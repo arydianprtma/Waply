@@ -44,8 +44,8 @@ export async function GET(request: NextRequest) {
         authUser.user_metadata?.name ||
         authUser.user_metadata?.full_name ||
         userEmail.split("@")[0] ||
-        "Sendora User";
-      const isSuperAdmin = userEmail === "admin@sendora.id";
+        "Waply User";
+      const isSuperAdmin = userEmail === "admin@waply.id";
       const userRole: "admin" | "user" = isSuperAdmin ? "admin" : "user";
       const clientIp = extractClientIp(request);
 
@@ -62,31 +62,31 @@ export async function GET(request: NextRequest) {
         // Set session cookies for persistent auth
         const cookieStore = await cookies();
         const maxAge = 60 * 60 * 24 * 7; // 7 days
-        cookieStore.set("sendora_demo_auth", "true", {
+        cookieStore.set("waply_demo_auth", "true", {
           path: "/",
           maxAge,
           sameSite: "lax",
           httpOnly: false,
         });
-        cookieStore.set("sendora_user_email", userEmail, {
+        cookieStore.set("waply_user_email", userEmail, {
           path: "/",
           maxAge,
           sameSite: "lax",
           httpOnly: false,
         });
-        cookieStore.set("sendora_user_name", userName, {
+        cookieStore.set("waply_user_name", userName, {
           path: "/",
           maxAge,
           sameSite: "lax",
           httpOnly: false,
         });
-        cookieStore.set("sendora_user_role", userRole, {
+        cookieStore.set("waply_user_role", userRole, {
           path: "/",
           maxAge,
           sameSite: "lax",
           httpOnly: false,
         });
-        cookieStore.set("sendora_user_id", authUser.id, {
+        cookieStore.set("waply_user_id", authUser.id, {
           path: "/",
           maxAge,
           sameSite: "lax",

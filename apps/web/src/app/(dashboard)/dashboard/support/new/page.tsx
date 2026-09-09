@@ -250,7 +250,7 @@ export default function CreateTicketPage() {
               Memerlukan respon mendesak? Anda juga dapat langsung menghubungi WhatsApp Customer Support resmi kami.
             </p>
             <a
-              href="https://wa.me/6281234567890?text=Halo%20Customer%20Support%20Sendora%2C%20saya%20memerlukan%20bantuan%20teknis."
+              href="https://wa.me/6281234567890?text=Halo%20Customer%20Support%20Waply%2C%20saya%20memerlukan%20bantuan%20teknis."
               target="_blank"
               rel="noopener noreferrer"
               className="w-full py-2.5 px-4 rounded-xl bg-emerald-50 text-emerald-800 hover:bg-emerald-100 font-bold text-xs flex items-center justify-center gap-2 transition-all border border-emerald-200"

@@ -20,20 +20,17 @@ export function parseSpintax(
     result = result.replace(regexSingle, String(value));
   }
 
-  // 2. Parser Spintax rekursif: mencari pola {pilihan1|pilihan2|pilihan3} yang paling dalam (innermost)
-  const spintaxRegex = /\{([^{}]+)\}/;
+  // 2. Parser Spintax: mencari pola {pilihan1|pilihan2|...} yang memiliki setidaknya satu pipe '|'
+  const spintaxRegex = /\{([^{}]*\|[^{}]*)\}/;
+  let maxLoop = 30; // Safety guard against infinite loops
 
-  while (spintaxRegex.test(result)) {
-    result = result.replace(spintaxRegex, (match, choicesStr) => {
-      // Jika tidak ada separator pipe |, biarkan teks aslinya
-      if (!choicesStr.includes("|")) {
-        return match;
-      }
-
+  while (maxLoop > 0 && spintaxRegex.test(result)) {
+    result = result.replace(spintaxRegex, (_, choicesStr) => {
       const choices = choicesStr.split("|");
       const randomIndex = Math.floor(Math.random() * choices.length);
-      return choices[randomIndex];
+      return choices[randomIndex] ?? "";
     });
+    maxLoop--;
   }
 
   return result;

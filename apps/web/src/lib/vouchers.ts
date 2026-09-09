@@ -32,7 +32,7 @@ export interface VoucherValidationResult {
   error?: string;
 }
 
-const DATA_DIR = path.resolve(process.cwd(), ".sendora-data");
+const DATA_DIR = path.resolve(process.cwd(), ".waply-data");
 const VOUCHERS_FILE = path.join(DATA_DIR, "vouchers.json");
 
 function ensureDataDir() {
@@ -43,8 +43,8 @@ function ensureDataDir() {
 
 export const DEFAULT_VOUCHERS: Voucher[] = [
   {
-    id: "vcr_sendora_hemat_01",
-    code: "SENDORAHEMAT",
+    id: "vcr_waply_hemat_01",
+    code: "WAPLYHEMAT",
     name: "Diskon Promo Hemat 10%",
     description: "Potongan harga 10% untuk semua paket bulanan & tahunan",
     discountType: "PERCENTAGE",

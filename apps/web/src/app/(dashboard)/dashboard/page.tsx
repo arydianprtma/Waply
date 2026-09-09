@@ -31,6 +31,7 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
+import { DashboardOverviewSkeleton } from "@/components/ui/SkeletonLoaders";
 
 interface QuotaInfo {
   planId: string;
@@ -176,6 +177,10 @@ export default function DashboardOverviewPage() {
     { href: "/dashboard/webhooks", label: "Webhooks", icon: Zap },
     { href: "/dashboard/devices", label: "Connect Device", icon: Smartphone },
   ];
+
+  if (loading && !mounted) {
+    return <DashboardOverviewSkeleton />;
+  }
 
   return (
     <div className="space-y-7 max-w-7xl mx-auto">

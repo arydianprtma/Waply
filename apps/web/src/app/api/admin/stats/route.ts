@@ -5,7 +5,7 @@ import { getSessionUser } from "@/lib/auth-user";
 import { getAdminUserStats, getAllManagedUsers } from "@/lib/admin-users";
 import { fetchGateway } from "@/lib/gateway-client";
 
-const DATA_DIR = path.resolve(process.cwd(), ".sendora-data");
+const DATA_DIR = path.resolve(process.cwd(), ".waply-data");
 
 function readJson<T>(file: string, fallback: T): T {
   try {

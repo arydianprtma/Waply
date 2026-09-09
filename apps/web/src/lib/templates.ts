@@ -22,7 +22,7 @@ export interface MessageTemplate {
   updatedAt: string;
 }
 
-const DATA_DIR = path.resolve(process.cwd(), ".sendora-data");
+const DATA_DIR = path.resolve(process.cwd(), ".waply-data");
 const TEMPLATES_FILE = path.join(DATA_DIR, "templates.json");
 
 function ensureDataDir() {

@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { ConnectDeviceModal } from "@/components/devices/ConnectDeviceModal";
+import { PlanFeatureGuard } from "@/components/dashboard/PlanFeatureGuard";
+import { CardGridSkeleton } from "@/components/ui/SkeletonLoaders";
 
 interface SessionData {
   id: string;
@@ -116,13 +118,19 @@ export default function DevicesPage() {
   const isLimitReached = Boolean(limit && !limit.canAddMore);
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-10">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2.5 mb-1">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">WhatsApp Devices</h1>
-            {limit && (
+    <PlanFeatureGuard
+      feature="devices"
+      featureName="Koneksi WhatsApp Devices"
+      minPlanName="Starter"
+      description="Koneksi WhatsApp Devices memungkinkan Anda menghubungkan dan mengelola nomor WhatsApp di gateway. Upgrade paket untuk mengaktifkan fitur ini."
+    >
+      <div className="space-y-6 max-w-7xl mx-auto pb-10">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2.5 mb-1">
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900">WhatsApp Devices</h1>
+              {limit && (
               <span
                 className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                   isLimitReached
@@ -136,7 +144,7 @@ export default function DevicesPage() {
             )}
           </div>
           <p className="text-sm text-slate-500">
-            Kelola nomor WhatsApp yang terhubung ke Sendora WhatsApp Gateway Engine.
+            Kelola nomor WhatsApp yang terhubung ke Waply WhatsApp Gateway Engine.
           </p>
         </div>
 
@@ -198,10 +206,7 @@ export default function DevicesPage() {
 
       {/* Device List Grid */}
       {loading ? (
-        <div className="py-20 flex flex-col items-center justify-center text-slate-400">
-          <Loader2 className="w-8 h-8 animate-spin text-emerald-600 mb-2" />
-          <p className="text-sm font-medium">Memuat daftar perangkat WhatsApp...</p>
-        </div>
+        <CardGridSkeleton count={3} />
       ) : sessions.length === 0 ? (
         <div className="bg-white border border-slate-200/90 p-12 text-center rounded-2xl shadow-sm max-w-xl mx-auto">
           <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center mx-auto mb-4">
@@ -376,6 +381,7 @@ export default function DevicesPage() {
         }}
       />
     </div>
+    </PlanFeatureGuard>
   );
 }
 

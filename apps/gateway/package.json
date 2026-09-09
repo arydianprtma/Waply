@@ -1,5 +1,5 @@
 {
-  "name": "@sendora/gateway",
+  "name": "@waply/gateway",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@hapi/boom": "^10.0.1",
-    "@sendora/database": "*",
+    "@waply/database": "*",
     "@whiskeysockets/baileys": "^6.7.13",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",

@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { prisma } from "@sendora/database";
+import { prisma } from "@waply/database";
 
 export interface ContactGroup {
   id: string;
@@ -23,7 +23,7 @@ export interface Contact {
   updatedAt: string;
 }
 
-const LOCAL_STORAGE_DIR = path.join(process.cwd(), ".sendora-data");
+const LOCAL_STORAGE_DIR = path.join(process.cwd(), ".waply-data");
 const LOCAL_CONTACTS_FILE = path.join(LOCAL_STORAGE_DIR, "contacts.json");
 const LOCAL_GROUPS_FILE = path.join(LOCAL_STORAGE_DIR, "contact-groups.json");
 

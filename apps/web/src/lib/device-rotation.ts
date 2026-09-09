@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 
-const DATA_DIR = path.resolve(process.cwd(), ".sendora-data");
+const DATA_DIR = path.resolve(process.cwd(), ".waply-data");
 const ROTATION_STATE_FILE = path.join(DATA_DIR, "rotation_state.json");
 const GATEWAY_URL = process.env.GATEWAY_INTERNAL_URL || "http://localhost:3002";
 

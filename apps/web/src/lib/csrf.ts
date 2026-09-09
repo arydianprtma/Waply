@@ -36,8 +36,8 @@ export function validateCsrf(request: Request): { valid: boolean; error?: string
 
   // 4. Check custom client headers (standard SPA defense against simple CSRF forms)
   const xRequestedWith = request.headers.get("x-requested-with");
-  const xSendoraClient = request.headers.get("x-sendora-client");
-  if (xRequestedWith || xSendoraClient) {
+  const xWaplyClient = request.headers.get("x-waply-client");
+  if (xRequestedWith || xWaplyClient) {
     return { valid: true };
   }
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { SendoraLogo } from "@/components/brand/SendoraLogo";
+import { WaplyLogo } from "@/components/brand/WaplyLogo";
 import { Menu, X, ShieldCheck, Zap, BookOpen, CreditCard, HelpCircle } from "lucide-react";
 
 export function LandingNavbar() {
@@ -33,7 +33,7 @@ export function LandingNavbar() {
       <header className="navbar bg-white/95 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200 px-4 md:px-12 transition-all">
         {/* Brand Logo */}
         <div className="navbar-start">
-          <SendoraLogo href="/" size="md" />
+          <WaplyLogo href="/" size="md" />
         </div>
 
         {/* Desktop Menu */}
@@ -95,7 +95,7 @@ export function LandingNavbar() {
             {/* Drawer Top Header */}
             <div>
               <div className="h-16 px-5 border-b border-slate-200 flex items-center justify-between shrink-0">
-                <SendoraLogo href="/" size="sm" />
+                <WaplyLogo href="/" size="sm" />
                 <button
                   onClick={() => setMobileMenuOpen(false)}
                   className="p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"

@@ -492,7 +492,7 @@ export default function AdminTicketDetailPage() {
                         {isAdmin
                           ? `${msg.senderName || "Admin CS"} (Anda)`
                           : isAi
-                          ? "Sendora AI Assistant"
+                          ? "Waply AI Assistant"
                           : ticket.userName || ticket.userEmail}
                         {isAi && (
                           <span className="text-[9px] px-1.5 py-0.2 rounded bg-purple-100 text-purple-700 font-extrabold border border-purple-200">
@@ -676,7 +676,7 @@ export default function AdminTicketDetailPage() {
                     <span className="font-mono font-bold text-slate-800">{ticket.userPhone}</span>
                   </div>
                   <a
-                    href={`https://wa.me/${waTarget}?text=Halo%20kak%2C%20terkait%20tiket%20bantuan%20Sendora%20ID%20${ticket.id}%20mengenai%20${encodeURIComponent(
+                    href={`https://wa.me/${waTarget}?text=Halo%20kak%2C%20terkait%20tiket%20bantuan%20Waply%20ID%20${ticket.id}%20mengenai%20${encodeURIComponent(
                       ticket.subject
                     )}`}
                     target="_blank"

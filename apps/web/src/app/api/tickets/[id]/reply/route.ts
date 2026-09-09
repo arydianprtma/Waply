@@ -46,7 +46,7 @@ export async function POST(
     }
 
     const senderRole = isAdmin ? "support" : "user";
-    const senderName = isAdmin ? "Sendora Support Agent" : (user.name || "Sendora User");
+    const senderName = isAdmin ? "Waply Support Agent" : (user.name || "Waply User");
 
     let updated = replyToTicket(id, {
       senderId: user.id,
@@ -67,8 +67,8 @@ export async function POST(
         if (aiResult && aiResult.replyText) {
           replyToTicket(id, {
             senderId: "ai_assistant",
-            senderName: "Sendora AI Assistant",
-            senderEmail: "ai@sendora.id",
+            senderName: "Waply AI Assistant",
+            senderEmail: "ai@waply.id",
             senderRole: "ai",
             message: aiResult.replyText,
           });

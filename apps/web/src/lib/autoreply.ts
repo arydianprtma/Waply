@@ -19,7 +19,7 @@ export interface AutoReplyRule {
   updatedAt: string;
 }
 
-const DATA_DIR = path.resolve(process.cwd(), ".sendora-data");
+const DATA_DIR = path.resolve(process.cwd(), ".waply-data");
 const AUTOREPLY_FILE = path.join(DATA_DIR, "autoreply.json");
 
 function ensureDataDir() {
@@ -35,7 +35,7 @@ function ensureDataDir() {
         name: "Info Layanan & Harga",
         matchType: "CONTAINS",
         keywords: ["harga", "pricelist", "biaya", "paket"],
-        replyMessage: "{Halo|Hai|Selamat siang} {{pushName}}! 👋\n\nBerikut daftar harga layanan Sendora:\n📦 *Starter*: Rp99.000/bln\n🚀 *Pro*: Rp199.000/bln\n💎 *Enterprise*: Hubungi tim sales kami.\n\nAda yang bisa kami bantu lagi?",
+        replyMessage: "{Halo|Hai|Selamat siang} {{pushName}}! 👋\n\nBerikut daftar harga layanan Waply:\n📦 *Starter*: Rp99.000/bln\n🚀 *Pro*: Rp199.000/bln\n💎 *Enterprise*: Hubungi tim sales kami.\n\nAda yang bisa kami bantu lagi?",
         deviceId: null,
         delaySec: 2,
         isActive: true,
@@ -49,7 +49,7 @@ function ensureDataDir() {
         name: "Salam Pembuka / Ping",
         matchType: "EXACT",
         keywords: ["ping", "p", "halo", "hai", "hi", "test"],
-        replyMessage: "{Halo|Hai} {{pushName}}! Terima kasih telah menghubungi kami. Bot otomatis Sendora siap membantu Anda. Silakan ketik *menu* untuk melihat opsi layanan kami.",
+        replyMessage: "{Halo|Hai} {{pushName}}! Terima kasih telah menghubungi kami. Bot otomatis Waply siap membantu Anda. Silakan ketik *menu* untuk melihat opsi layanan kami.",
         deviceId: null,
         delaySec: 1,
         isActive: true,
@@ -155,7 +155,29 @@ export function findMatchingRule(
   incomingText: string,
   deviceId?: string
 ): { rule: AutoReplyRule; renderedReply: string } | null {
-  const rules = getAutoReplyRules(userId).filter((r) => r.isActive);
+  ensureDataDir();
+  
+  let allRules: AutoReplyRule[] = [];
+  try {
+    const data = fs.readFileSync(AUTOREPLY_FILE, "utf-8");
+    allRules = JSON.parse(data);
+  } catch {
+    allRules = [];
+  }
+
+  // Prioritas rules:
+  // 1. Rules milik userId spesifik (jika bukan admin-default-user)
+  // 2. Rules kustom non-demo yang aktif
+  // 3. Rules demo bawaan (rule_demo_*)
+  const activeRules = allRules.filter((r) => r.isActive && (!r.deviceId || !deviceId || r.deviceId === deviceId));
+  
+  const userRules = userId && userId !== "admin-default-user" 
+    ? activeRules.filter((r) => r.userId === userId) 
+    : [];
+  const customRules = activeRules.filter((r) => !r.id.startsWith("rule_demo_") && (!userId || r.userId !== userId));
+  const demoRules = activeRules.filter((r) => r.id.startsWith("rule_demo_"));
+
+  const rules: AutoReplyRule[] = [...userRules, ...customRules, ...demoRules];
   const cleanText = incomingText.trim().toLowerCase();
 
   let matchedRule: AutoReplyRule | null = null;

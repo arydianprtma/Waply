@@ -12,6 +12,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { parseSpintax, generateSpintaxSamples } from "@/lib/spintax";
+import { PlanFeatureGuard } from "@/components/dashboard/PlanFeatureGuard";
 
 interface DeviceOption {
   id: string;
@@ -25,7 +26,7 @@ export default function SendMessageTesterPage() {
   const [selectedDevice, setSelectedDevice] = useState<string>("");
   const [recipient, setRecipient] = useState<string>("");
   const [message, setMessage] = useState<string>(
-    "{Halo|Hai|Selamat siang} Kak, ini adalah pesan uji coba dari Sendora WhatsApp Gateway."
+    "{Halo|Hai|Selamat siang} Kak, ini adalah pesan uji coba dari Waply WhatsApp Gateway."
   );
   const [loading, setLoading] = useState(false);
   const [previewSamples, setPreviewSamples] = useState<string[]>([]);
@@ -125,7 +126,13 @@ export default function SendMessageTesterPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto">
+    <PlanFeatureGuard
+      feature="sendMessage"
+      featureName="Send Message (Kirim Pesan Manual)"
+      minPlanName="Starter"
+      description="Kirim Pesan Manual Sandbox Tester memungkinkan Anda menguji pengiriman pesan langsung dari antarmuka dashboard. Upgrade paket untuk mengaktifkan fitur ini."
+    >
+      <div className="space-y-6 max-w-3xl mx-auto">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
           Kirim Pesan Manual (Sandbox Tester)
@@ -273,7 +280,7 @@ export default function SendMessageTesterPage() {
             <ul className="list-disc list-inside space-y-0.5 text-[11px]">
               <li>Spintax otomatis dirandomize menjadi variasi unik per pesan sebelum dikirim.</li>
               <li>Simulasi mengetik ("composing presence") proporsional dengan panjang teks.</li>
-              <li>Pemeriksaan otomatis status koneksi Sendora WhatsApp Engine.</li>
+              <li>Pemeriksaan otomatis status koneksi Waply WhatsApp Engine.</li>
             </ul>
           </div>
 
@@ -295,5 +302,6 @@ export default function SendMessageTesterPage() {
         </form>
       </div>
     </div>
+    </PlanFeatureGuard>
   );
 }

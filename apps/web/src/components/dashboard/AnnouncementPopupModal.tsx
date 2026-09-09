@@ -55,7 +55,7 @@ export function AnnouncementPopupModal() {
         if (popupItems.length > 0) {
           // Find the first popup that has NOT been dismissed in localStorage
           for (const item of popupItems) {
-            const dismissedKey = `sendora_dismissed_popup_${item.id}`;
+            const dismissedKey = `waply_dismissed_popup_${item.id}`;
             const isDismissed = localStorage.getItem(dismissedKey);
             if (!isDismissed) {
               setPopup(item);
@@ -83,7 +83,7 @@ export function AnnouncementPopupModal() {
   const handleClose = useCallback(() => {
     if (popup) {
       if (dontShowAgain) {
-        localStorage.setItem(`sendora_dismissed_popup_${popup.id}`, "true");
+        localStorage.setItem(`waply_dismissed_popup_${popup.id}`, "true");
       }
       // Silently mark as read on server as well
       fetch("/api/announcements", {
@@ -282,7 +282,7 @@ export function AnnouncementPopupModal() {
               </label>
 
               <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
-                Sendora Announcement
+                Waply Announcement
               </span>
             </div>
           </div>

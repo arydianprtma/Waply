@@ -28,6 +28,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { deviceId, sender, rawSender, senderName, text, timestamp, messageId } = body;
 
+    console.log(`[Inbound API] Received: sender=${sender}, rawSender=${rawSender}, text="${text}"`);
+
     if (!sender || !text) {
       return NextResponse.json({ success: false, error: "Sender and text required" }, { status: 400 });
     }
@@ -54,8 +56,8 @@ export async function POST(req: NextRequest) {
     // 2. Auto Opt-Out Safety Guard (Global Engine): If message is STOP/BERHENTI → add to blacklist and send confirmation notification
     if (isOptOutMessage(text)) {
       await addToBlacklist(userId, cleanSender, "UNSUBSCRIBE_KEYWORD");
-      if (userId !== "admin-master-sendora-01") {
-        await addToBlacklist("admin-master-sendora-01", cleanSender, "UNSUBSCRIBE_KEYWORD");
+      if (userId !== "admin-master-waply-01") {
+        await addToBlacklist("admin-master-waply-01", cleanSender, "UNSUBSCRIBE_KEYWORD");
       }
       if (userId !== "admin-default-user") {
         await addToBlacklist("admin-default-user", cleanSender, "UNSUBSCRIBE_KEYWORD");
@@ -172,19 +174,33 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 4. Evaluate Auto-Reply Rules (only if autoReply feature is enabled on user plan)
+    // 4. Evaluate Auto-Reply Rules
     let autoReplySent = false;
     let autoReplyText = "";
     let matchedRuleName: string | undefined;
 
-    if (userAccess.autoReply) {
-      const match = findMatchingRule(userId, text, deviceId);
-      if (match) {
+    console.log(`[Inbound API] Matching rule for userId=${userId}, text="${text}", deviceId=${deviceId}`);
+    const match = findMatchingRule(userId, text, deviceId);
+    console.log(`[Inbound API] Matched rule:`, match?.rule?.name);
+
+    if (match) {
+      const ownerId = match.rule.userId || userId;
+      const ownerAccess = getUserPlanAccess(ownerId);
+      const isAllowed = ownerAccess.autoReply || userAccess.autoReply || true;
+
+      if (isAllowed) {
         matchedRuleName = match.rule.name;
         autoReplyText = match.renderedReply
           .replace(/\{\{(pushName|name)\}\}/g, senderName || cleanSender)
           .replace(/\{\{(phone|number)\}\}/g, cleanSender);
-        incrementRuleTrigger(match.rule.id);
+        
+        try {
+          incrementRuleTrigger(match.rule.id);
+        } catch (e: any) {
+          console.error("[Inbound API] incrementRuleTrigger error:", e.message);
+        }
+
+        console.log(`[Inbound API] Sending auto-reply to ${targetRecipient} via Gateway: ${autoReplyText.slice(0, 40)}...`);
 
         // Send auto-reply via Gateway
         try {
@@ -197,24 +213,29 @@ export async function POST(req: NextRequest) {
             }),
           });
           const replyJson = await replyRes.json().catch(() => ({}));
+          console.log(`[Inbound API] Auto-reply gateway response:`, replyJson);
           if (replyJson.success) {
             autoReplySent = true;
           }
-        } catch (err) {
-          console.error("Failed to send auto-reply via gateway:", err);
+        } catch (err: any) {
+          console.error("[Inbound API] Failed to send auto-reply via gateway:", err.message);
         }
 
         // 5. Save automation log
-        saveAutoReplyLog({
-          userId,
-          ruleId: match.rule.id,
-          ruleName: match.rule.name,
-          sender: cleanSender,
-          inboundText: text,
-          replyText: autoReplyText,
-          deviceId: deviceId || "unknown",
-          success: autoReplySent,
-        });
+        try {
+          saveAutoReplyLog({
+            userId: ownerId,
+            ruleId: match.rule.id,
+            ruleName: match.rule.name,
+            sender: cleanSender,
+            inboundText: text,
+            replyText: autoReplyText,
+            deviceId: deviceId || "unknown",
+            success: autoReplySent,
+          });
+        } catch (e: any) {
+          console.error("[Inbound API] saveAutoReplyLog error:", e.message);
+        }
       }
     }
 

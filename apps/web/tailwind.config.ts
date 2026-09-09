@@ -2,7 +2,7 @@ import type { Config } from "tailwindcss";
 import daisyui from "daisyui";
 
 const config: Config = {
-  darkMode: ["class", '[data-theme="sendoraDark"]'],
+  darkMode: ["class", '[data-theme="waplyDark"]'],
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -28,7 +28,7 @@ const config: Config = {
   daisyui: {
     themes: [
       {
-        sendoraLight: {
+        waplyLight: {
           "primary": "#059669",
           "primary-content": "#ffffff",
           "secondary": "#0ea5e9",
@@ -43,7 +43,7 @@ const config: Config = {
           "warning": "#f59e0b",
           "error": "#ef4444",
         },
-        sendoraDark: {
+        waplyDark: {
           "primary": "#10b981",
           "primary-content": "#0f172a",
           "secondary": "#38bdf8",
@@ -61,7 +61,7 @@ const config: Config = {
       "light",
       "dark",
     ],
-    defaultTheme: "sendoraLight",
+    defaultTheme: "waplyLight",
   },
 };
 

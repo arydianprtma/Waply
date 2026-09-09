@@ -35,15 +35,15 @@ export interface AppSettings {
   updatedAt: string;
 }
 
-const DATA_DIR = path.resolve(process.cwd(), ".sendora-data");
+const DATA_DIR = path.resolve(process.cwd(), ".waply-data");
 const SETTINGS_FILE = path.join(DATA_DIR, "settings.json");
 
 function getDefaultSettings(userId: string, defaultProfile?: { name?: string; email?: string }): AppSettings {
   return {
     userId,
     profile: {
-      name: defaultProfile?.name || "Sendora User",
-      email: defaultProfile?.email || "user@sendora.id",
+      name: defaultProfile?.name || "Waply User",
+      email: defaultProfile?.email || "user@waply.id",
       companyName: "",
     },
     security: {
@@ -117,7 +117,7 @@ export function getSettings(
   // Ensure email always reflects current auth email if provided
   if (defaultProfile?.email && userSettings.profile.email !== defaultProfile.email) {
     userSettings.profile.email = defaultProfile.email;
-    if (defaultProfile.name && (!userSettings.profile.name || userSettings.profile.name === "Sendora Admin")) {
+    if (defaultProfile.name && (!userSettings.profile.name || userSettings.profile.name === "Waply Admin")) {
       userSettings.profile.name = defaultProfile.name;
     }
     all[userId] = userSettings;

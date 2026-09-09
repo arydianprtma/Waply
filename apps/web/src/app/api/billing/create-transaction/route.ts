@@ -20,8 +20,8 @@ export async function POST(req: NextRequest) {
     const isAddonOnly = body.isAddonOnly === true || body.planId === "ADDON" || body.planId === "ADDON_ONLY";
     const planId = isAddonOnly ? ("ADDON" as any) : ((body.planId || "STARTER") as PlanId);
     const durationMonths = isAddonOnly ? 0 : Number(body.durationMonths || 1); // 1, 3, or 12
-    const customerName = (body.customerName || authUser.name || "Sendora User").trim();
-    const customerEmail = (body.customerEmail || authUser.email || "user@sendora.id").trim().toLowerCase();
+    const customerName = (body.customerName || authUser.name || "Waply User").trim();
+    const customerEmail = (body.customerEmail || authUser.email || "user@waply.id").trim().toLowerCase();
     const customerPhone = (body.customerPhone || "").trim();
     const couponCode = (body.couponCode || "").trim().toUpperCase();
 
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
       id: authUser.id && authUser.id !== "usr_default_guest" ? authUser.id : `usr_${customerEmail.replace(/[^a-zA-Z0-9]/g, "_")}`,
       email: customerEmail,
       name: customerName,
-      role: customerEmail === "admin@sendora.id" ? "admin" : "user",
+      role: customerEmail === "admin@waply.id" ? "admin" : "user",
     });
 
     // Base price & duration calculation
@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
     }
 
     const finalAmount = Math.max(1000, totalAfterDuration - couponDiscount);
-    const orderId = isAddonOnly ? `SENDORA-ADDON-${Date.now()}` : generateOrderId(planId);
+    const orderId = isAddonOnly ? `WAPLY-ADDON-${Date.now()}` : generateOrderId(planId);
     const durationLabel =
       durationMonths === 36
         ? "3 Tahun"
@@ -115,8 +115,8 @@ export async function POST(req: NextRequest) {
       customerEmail,
       customerPhone,
       itemName: isAddonOnly
-        ? `Sendora Addon (${addonLabel})`
-        : `Sendora ${plan?.name || planId} (${durationLabel})`,
+        ? `Waply Addon (${addonLabel})`
+        : `Waply ${plan?.name || planId} (${durationLabel})`,
     });
 
     // Save pending invoice to local storage

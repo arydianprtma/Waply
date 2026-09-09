@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { SendoraLogo } from "@/components/brand/SendoraLogo";
+import { WaplyLogo } from "@/components/brand/WaplyLogo";
 import { ShieldCheck, Heart, ArrowUpRight, Github, Twitter, CheckCircle2 } from "lucide-react";
 
 export function LandingFooter() {
@@ -13,18 +13,20 @@ export function LandingFooter() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-12 border-b border-slate-900">
           {/* Col 1: Brand info & Concept */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="inline-block bg-white/90 p-2 rounded-2xl">
-              <SendoraLogo href="/" size="md" />
-            </div>
+            <WaplyLogo href="/" size="md" variant="dark" />
             <p className="text-sm text-slate-400 leading-relaxed max-w-sm">
               Infrastruktur WhatsApp Gateway & Multi-Device Messaging API berkecepatan tinggi dengan proteksi Anti-Ban cerdas untuk otomasi notifikasi, OTP, dan broadcast bisnis Anda.
             </p>
             
             {/* System Status Indicator */}
-            <div className="inline-flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-emerald-950/80 border border-emerald-800/50 text-emerald-400 text-xs font-semibold">
+            <Link
+              href="/status"
+              className="inline-flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-emerald-950/80 border border-emerald-800/50 text-emerald-400 text-xs font-semibold hover:bg-emerald-900/60 transition-colors group"
+            >
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>Semua Sistem Normal (99.98% Uptime)</span>
-            </div>
+              <ArrowUpRight className="w-3 h-3 text-emerald-400/60 group-hover:text-emerald-300 transition-colors" />
+            </Link>
           </div>
 
           {/* Col 2: Platform Links */}
@@ -120,7 +122,7 @@ export function LandingFooter() {
               </li>
               <li>
                 <a
-                  href="https://wa.me/6281234567890?text=Halo%20Sendora%20Support"
+                  href="https://wa.me/6281234567890?text=Halo%20Waply%20Support"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-white transition-colors flex items-center gap-1 text-emerald-400 font-medium"
@@ -136,7 +138,7 @@ export function LandingFooter() {
         {/* Bottom Bar */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
           <div className="flex items-center gap-2">
-            <span>© {currentYear} Sendora API. Hak Cipta Dilindungi.</span>
+            <span>© {currentYear} Waply API. Hak Cipta Dilindungi.</span>
           </div>
           <div className="flex items-center gap-6">
             <span className="flex items-center gap-1.5 text-slate-400">

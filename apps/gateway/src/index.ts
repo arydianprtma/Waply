@@ -21,7 +21,7 @@ app.get("/health", (req, res) => {
 
   res.json({
     status: "ok",
-    service: "Sendora WhatsApp Gateway",
+    service: "Waply WhatsApp Gateway",
     activeSessions: sessions.length,
     timestamp: new Date().toISOString(),
   });
@@ -35,7 +35,7 @@ app.use("/api/sessions", gatewayAuthMiddleware, messageRouter);
 
 // Start Server and restore saved sessions
 app.listen(PORT, async () => {
-  logger.info(`🚀 Sendora Gateway Service running on http://localhost:${PORT}`);
+  logger.info(`🚀 Waply Gateway Service running on http://localhost:${PORT}`);
 
   const sessionManager = SessionManager.getInstance();
   await sessionManager.restoreSessions();

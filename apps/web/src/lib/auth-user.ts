@@ -17,8 +17,8 @@ export interface SessionUser {
 
 const DEFAULT_DEMO_USER: SessionUser = {
   id: "usr_default_guest",
-  email: "guest@sendora.id",
-  name: "Sendora User",
+  email: "guest@waply.id",
+  name: "Waply User",
   role: "user",
   status: "ACTIVE",
   banReason: null,
@@ -38,30 +38,30 @@ export async function getSessionUser(): Promise<SessionUser> {
       // Fallback
     }
 
-    const isDemoAuth = cookieStore.get("sendora_demo_auth")?.value === "true";
-    const rawEmail = cookieStore.get("sendora_user_email")?.value || "";
-    const rawName = cookieStore.get("sendora_user_name")?.value || "";
-    const rawId = cookieStore.get("sendora_user_id")?.value || "";
+    const isDemoAuth = cookieStore.get("waply_demo_auth")?.value === "true";
+    const rawEmail = cookieStore.get("waply_user_email")?.value || "";
+    const rawName = cookieStore.get("waply_user_name")?.value || "";
+    const rawId = cookieStore.get("waply_user_id")?.value || "";
 
     const demoEmail = rawEmail ? decodeURIComponent(rawEmail).trim().toLowerCase() : "";
     const demoName = rawName ? decodeURIComponent(rawName).trim() : "";
     const demoId = rawId ? decodeURIComponent(rawId).trim() : "";
 
     if (isDemoAuth || demoEmail) {
-      const email = demoEmail || "guest@sendora.id";
+      const email = demoEmail || "guest@waply.id";
       const dbUser = getUserByEmail(email) || (demoId ? getUserById(demoId) : null);
 
       const role: "admin" | "user" =
-        dbUser?.role || (email === "admin@sendora.id" ? "admin" : "user");
+        dbUser?.role || (email === "admin@waply.id" ? "admin" : "user");
       const userId =
         dbUser?.id ||
-        (email === "admin@sendora.id"
-          ? "admin-master-sendora-01"
+        (email === "admin@waply.id"
+          ? "admin-master-waply-01"
           : `usr_${email.replace(/[^a-zA-Z0-9]/g, "_")}`);
       const name =
         dbUser?.name ||
         demoName ||
-        (role === "admin" ? "Sendora Admin" : email.split("@")[0] || "Sendora User");
+        (role === "admin" ? "Waply Admin" : email.split("@")[0] || "Waply User");
 
       // Always sync to update lastLoginIp with the latest client IP
       const managed = registerOrSyncUser({
@@ -106,7 +106,7 @@ export async function getSessionUser(): Promise<SessionUser> {
         const role =
           authUser.user_metadata?.role ||
           authUser.app_metadata?.role ||
-          (email === "admin@sendora.id" ? "admin" : "user");
+          (email === "admin@waply.id" ? "admin" : "user");
         const name = authUser.user_metadata?.name || authUser.email.split("@")[0];
 
         const managed = registerOrSyncUser({

@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { LandingNavbar } from "@/components/landing-navbar";
 import { LandingFooter } from "@/components/landing-footer";
+import { SdkGuideView } from "@/components/docs/sdk-guide-view";
+import { CodeBlock } from "@/components/docs/code-block";
 import {
   MessageSquare,
   Code2,
@@ -42,11 +44,14 @@ import {
 } from "lucide-react";
 
 type CodeLang = "curl" | "nodejs" | "python" | "php";
+type DocMode = "api" | "sdk";
 
 export default function PublicDocsPage() {
+  const [docMode, setDocMode] = useState<DocMode>("api");
   const [selectedLang, setSelectedLang] = useState<CodeLang>("curl");
   const [selectedBroadcastLang, setSelectedBroadcastLang] = useState<CodeLang>("curl");
   const [selectedTemplateLang, setSelectedTemplateLang] = useState<CodeLang>("curl");
+  const [selectedAutoReplyLang, setSelectedAutoReplyLang] = useState<CodeLang>("curl");
   const [selectedWebhookLang, setSelectedWebhookLang] = useState<"nodejs" | "php" | "python">("nodejs");
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
   const [activeNav, setActiveNav] = useState<string>("intro");
@@ -295,8 +300,8 @@ echo \$response->body();
     "minDelaySec": 4,
     "maxDelaySec": 8,
     "recipients": [
-      { "phoneNumber": "6281234567890", "name": "Budi Santoso", "variables": { "kode": "SENDORA30" } },
-      { "phoneNumber": "6285712345678", "name": "Siti Rahma", "variables": { "kode": "SENDORA30" } }
+      { "phoneNumber": "6281234567890", "name": "Budi Santoso", "variables": { "kode": "WAPLY30" } },
+      { "phoneNumber": "6285712345678", "name": "Siti Rahma", "variables": { "kode": "WAPLY30" } }
     ]
   }'`,
       nodejs: `import axios from "axios";
@@ -397,6 +402,74 @@ curl_exec($curlStart);
 curl_close($curlStart);
 ?>`,
     },
+    autoReply: {
+      curl: `curl -X POST ${originUrl}/api/autoreply \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer snd_live_YOUR_API_KEY" \\
+  -d '{
+    "name": "Info Pricelist",
+    "matchType": "CONTAINS",
+    "keywords": ["harga", "paket"],
+    "replyMessage": "{Halo|Hai} Kak {{name}}! Paket mulai Rp99rb.",
+    "delaySec": 2,
+    "isActive": true
+  }'`,
+      nodejs: `import axios from "axios";
+
+// Buat Aturan Auto-Reply Bot Baru
+const res = await axios.post(
+  "${originUrl}/api/autoreply",
+  {
+    name: "Info Pricelist",
+    matchType: "CONTAINS",
+    keywords: ["harga", "paket"],
+    replyMessage: "{Halo|Hai} Kak {{name}}! Paket mulai Rp99rb.",
+    delaySec: 2,
+    isActive: true,
+  },
+  {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer snd_live_YOUR_API_KEY",
+    },
+  }
+);
+
+console.log(res.data);`,
+      python: `import requests
+
+url = "${originUrl}/api/autoreply"
+headers = {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer snd_live_YOUR_API_KEY",
+}
+payload = {
+    "name": "Info Pricelist",
+    "matchType": "CONTAINS",
+    "keywords": ["harga", "paket"],
+    "replyMessage": "{Halo|Hai} Kak {{name}}! Paket mulai Rp99rb.",
+    "delaySec": 2,
+    "isActive": True
+}
+
+res = requests.post(url, json=payload, headers=headers)
+print(res.json())`,
+      php: `<?php
+use Illuminate\\Support\\Facades\\Http;
+
+$response = Http::withToken('snd_live_YOUR_API_KEY')
+    ->post('${originUrl}/api/autoreply', [
+        'name' => 'Info Pricelist',
+        'matchType' => 'CONTAINS',
+        'keywords' => ['harga', 'paket'],
+        'replyMessage' => "{Halo|Hai} Kak {{name}}! Paket mulai Rp99rb.",
+        'delaySec' => 2,
+        'isActive' => true
+    ]);
+
+echo $response->body();
+?>`,
+    },
     webhookVerify: {
       nodejs: `import express from "express";
 import crypto from "crypto";
@@ -404,9 +477,9 @@ import crypto from "crypto";
 const app = express();
 app.use(express.json());
 
-app.post("/webhook/sendora", (req, res) => {
-  const signature = req.headers["x-sendora-signature"];
-  const webhookSecret = process.env.SENDORA_WEBHOOK_SECRET;
+app.post("/webhook/waply", (req, res) => {
+  const signature = req.headers["x-waply-signature"];
+  const webhookSecret = process.env.WAPLY_WEBHOOK_SECRET;
 
   // 1. Verifikasi HMAC-SHA256 signature
   const expectedSignature = crypto
@@ -431,8 +504,8 @@ app.post("/webhook/sendora", (req, res) => {
 });`,
       php: `<?php
 $rawPayload = file_get_contents('php://input');
-$signature = $_SERVER['HTTP_X_SENDORA_SIGNATURE'] ?? '';
-$webhookSecret = getenv('SENDORA_WEBHOOK_SECRET');
+$signature = $_SERVER['HTTP_X_WAPLY_SIGNATURE'] ?? '';
+$webhookSecret = getenv('WAPLY_WEBHOOK_SECRET');
 
 // 1. Verifikasi HMAC-SHA256 signature
 $expectedSignature = hash_hmac('sha256', $rawPayload, $webhookSecret);
@@ -463,12 +536,12 @@ import hashlib
 import os
 
 app = FastAPI()
-WEBHOOK_SECRET = os.getenv("SENDORA_WEBHOOK_SECRET", "whsec_your_secret")
+WEBHOOK_SECRET = os.getenv("WAPLY_WEBHOOK_SECRET", "whsec_your_secret")
 
-@app.post("/webhook/sendora")
-async def handle_sendora_webhook(request: Request):
+@app.post("/webhook/waply")
+async def handle_waply_webhook(request: Request):
     raw_body = await request.body()
-    signature = request.headers.get("x-sendora-signature", "").replace("sha256=", "")
+    signature = request.headers.get("x-waply-signature", "").replace("sha256=", "")
     
     # 1. Verifikasi HMAC-SHA256 signature
     expected_sig = hmac.new(
@@ -503,43 +576,103 @@ async def handle_sendora_webhook(request: Request):
         {/* Left Sticky Sidebar (ScrollSpy Highlight - Hidden on Mobile) */}
         <aside className="hidden md:block md:w-72 flex-shrink-0">
           <div className="sticky top-24 space-y-4">
-            <div className="px-4 py-3 bg-white rounded-2xl border border-slate-200/90 flex items-center justify-between shadow-xs">
-              <span className="text-xs font-bold text-slate-900 flex items-center gap-2">
-                <Code2 className="w-4 h-4 text-emerald-600" /> Dokumentasi Lengkap
-              </span>
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                v1.2 Active
-              </span>
+            {/* Mode Switcher Sidebar Card */}
+            <div className="p-2 bg-white rounded-2xl border border-slate-200/90 shadow-xs space-y-1.5">
+              <div className="px-2 pt-1 pb-0.5 flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  Mode Panduan
+                </span>
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-full">
+                  v1.2 Active
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 rounded-xl">
+                <button
+                  onClick={() => {
+                    setDocMode("api");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    docMode === "api"
+                      ? "bg-white text-emerald-800 shadow-2xs"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  <BookOpen className="w-3.5 h-3.5" /> REST API
+                </button>
+                <button
+                  onClick={() => {
+                    setDocMode("sdk");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    docMode === "sdk"
+                      ? "bg-white text-emerald-800 shadow-2xs"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  <Code2 className="w-3.5 h-3.5" /> SDK Guide
+                </button>
+              </div>
             </div>
 
-            <nav className="space-y-1 bg-white p-2.5 rounded-2xl border border-slate-200/90 max-h-[calc(100vh-250px)] overflow-y-auto shadow-xs">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeNav === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => scrollTo(item.id)}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all text-left cursor-pointer ${
-                      isActive
-                        ? "bg-slate-900 text-white shadow-xs"
-                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                    }`}
-                  >
-                    <Icon className="w-3.5 h-3.5 flex-shrink-0" />
-                    <span className="truncate">{item.label}</span>
-                  </button>
-                );
-              })}
-            </nav>
+            {docMode === "api" ? (
+              <nav className="space-y-1 bg-white p-2.5 rounded-2xl border border-slate-200/90 max-h-[calc(100vh-280px)] overflow-y-auto shadow-xs">
+                {navItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeNav === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => scrollTo(item.id)}
+                      className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all text-left cursor-pointer ${
+                        isActive
+                          ? "bg-slate-900 text-white shadow-xs"
+                          : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                      }`}
+                    >
+                      <Icon className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span className="truncate">{item.label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+            ) : (
+              <div className="p-4 rounded-2xl bg-white border border-slate-200/90 space-y-3 shadow-xs text-xs">
+                <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                  <Smartphone className="w-4 h-4 text-emerald-600" /> Multi-Language SDK
+                </div>
+                <p className="text-slate-600 text-xs leading-relaxed">
+                  Pilih bahasa pemrograman di panel utama untuk mendapatkan helper class, contoh kirim pesan, spintax, dan webhook HMAC.
+                </p>
+                <div className="space-y-1.5 pt-1">
+                  {[
+                    "Flutter / Dart",
+                    "Node.js / TypeScript",
+                    "PHP / Laravel",
+                    "Python / FastAPI",
+                    "Golang",
+                    "Java / Kotlin",
+                    "C# / .NET",
+                  ].map((name) => (
+                    <div
+                      key={name}
+                      className="px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200/80 font-semibold text-slate-700 text-[11px] flex items-center justify-between"
+                    >
+                      <span>{name}</span>
+                      <span className="text-[10px] text-emerald-600 font-bold">Ready</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="p-4 rounded-xl bg-white border border-slate-200/90 space-y-2.5 shadow-xs">
               <p className="font-bold text-xs flex items-center gap-1.5 text-slate-900">
                 <Terminal className="w-3.5 h-3.5 text-emerald-600" /> Interactive Sandbox
               </p>
               <p className="text-xs text-slate-600 leading-relaxed font-normal">
-                Uji coba kirim pesan & panggil REST API langsung dari browser melalui Developer Playground.
+                Uji coba kirim pesan &amp; panggil REST API langsung dari browser melalui Developer Playground.
               </p>
               <Link
                 href="/dashboard/docs"
@@ -552,44 +685,109 @@ async def handle_sendora_webhook(request: Request):
         </aside>
 
         {/* Right Main Content */}
-        <main className="flex-1 space-y-12 max-w-4xl min-w-0">
-          {/* Breadcrumb Navigation */}
-          <div className="flex items-center justify-between gap-4 pb-2 border-b border-slate-200">
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
-              <Link href="/" className="hover:text-emerald-600 transition-colors flex items-center gap-1">
-                Beranda
-              </Link>
-              <span>/</span>
-              <span className="text-slate-900 font-bold">Dokumentasi Fitur & API</span>
+        <main className="flex-1 space-y-10 max-w-4xl min-w-0">
+          {/* Breadcrumb Navigation & Top Mode Selector */}
+          <div className="space-y-4 pb-2 border-b border-slate-200">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+                <Link href="/" className="hover:text-emerald-600 transition-colors flex items-center gap-1">
+                  Beranda
+                </Link>
+                <span>/</span>
+                <span className="text-slate-900 font-bold">
+                  {docMode === "api" ? "Dokumentasi Fitur & REST API" : "Panduan SDK & Multi-Bahasa"}
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Link
+                  href="/#pricing"
+                  className="text-xs font-semibold text-slate-600 hover:text-emerald-600 transition-colors"
+                >
+                  Lihat Paket
+                </Link>
+                <span className="text-slate-300">•</span>
+                <Link
+                  href="/login"
+                  className="text-xs font-semibold text-emerald-600 hover:underline"
+                >
+                  Dashboard
+                </Link>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Link
-                href="/#pricing"
-                className="text-xs font-semibold text-slate-600 hover:text-emerald-600 transition-colors"
+
+            {/* Top Switcher Segmented Control Bar */}
+            <div className="flex items-center gap-2 p-1 bg-slate-200/90 rounded-2xl w-full sm:w-auto self-start border border-slate-300/80">
+              <button
+                onClick={() => setDocMode("api")}
+                className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  docMode === "api"
+                    ? "bg-white text-emerald-800 shadow-xs"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
               >
-                Lihat Paket
-              </Link>
-              <span className="text-slate-300">•</span>
-              <Link
-                href="/login"
-                className="text-xs font-semibold text-emerald-600 hover:underline"
+                <BookOpen className="w-4 h-4 text-emerald-600" /> Dokumentasi REST API
+              </button>
+              <button
+                onClick={() => setDocMode("sdk")}
+                className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  docMode === "sdk"
+                    ? "bg-white text-emerald-800 shadow-xs"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
               >
-                Dashboard
-              </Link>
+                <Code2 className="w-4 h-4 text-emerald-600" /> Panduan SDK &amp; Multi-Bahasa
+              </button>
             </div>
           </div>
 
-          {/* 1. Intro */}
-          <section id="intro" className="space-y-4 scroll-mt-24">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-semibold border border-emerald-200">
-              <Zap className="w-3.5 h-3.5 text-emerald-600" /> Panduan Lengkap Platform
-            </div>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
-              Dokumentasi Fitur & REST API Sendora
-            </h1>
-            <p className="text-xs sm:text-sm md:text-base text-slate-700 leading-relaxed font-normal">
-              Sendora adalah platform WhatsApp Gateway & Customer Engagement multi-tenant berperforma tinggi. Sendora dilengkapi kemampuan pengiriman pesan otomatis (OTP & invoice), kampanye broadcast anti-ban dengan throttling pintar, rotasi multi-device otomatis, auto-reply bot, pustaka template spintax, serta webhook event real-time.
-            </p>
+          {/* Conditional Rendering: SDK Guide vs Full REST API Documentation */}
+          {docMode === "sdk" ? (
+            <SdkGuideView
+              originUrl={originUrl}
+              onSwitchToApi={() => {
+                setDocMode("api");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            />
+          ) : (
+            <>
+              {/* 1. Intro */}
+              <section id="intro" className="space-y-4 scroll-mt-24">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-semibold border border-emerald-200">
+                  <Zap className="w-3.5 h-3.5 text-emerald-600" /> Panduan Lengkap Platform
+                </div>
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
+                  Dokumentasi Fitur &amp; REST API Waply
+                </h1>
+                <p className="text-xs sm:text-sm md:text-base text-slate-700 leading-relaxed font-normal">
+                  Waply adalah platform WhatsApp Gateway &amp; Customer Engagement multi-tenant berperforma tinggi. Waply dilengkapi kemampuan pengiriman pesan otomatis (OTP &amp; invoice), kampanye broadcast anti-ban dengan throttling pintar, rotasi multi-device otomatis, auto-reply bot, pustaka template spintax, serta webhook event real-time.
+                </p>
+
+                {/* Banner: Switch to SDK Guide */}
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-200/90 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shrink-0 mt-0.5 shadow-2xs">
+                      <Smartphone className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs sm:text-sm font-bold text-emerald-950">
+                        Integrasi dengan Flutter, Laravel, Node.js, Python, atau Golang?
+                      </h4>
+                      <p className="text-xs text-emerald-900/80 mt-0.5 leading-relaxed font-normal">
+                        Dapatkan boilerplate client siap salin &amp; contoh kode pengiriman lengkap untuk bahasa pemrograman favorit Anda.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setDocMode("sdk");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold transition-colors cursor-pointer shrink-0 shadow-2xs flex items-center gap-1.5 self-stretch sm:self-auto justify-center"
+                  >
+                    Buka Panduan SDK <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 text-xs">
               <div className="p-3.5 rounded-xl bg-white border border-slate-200/90 shadow-xs">
@@ -756,7 +954,7 @@ async def handle_sendora_webhook(request: Request):
               <KeyRound className="w-5 h-5 text-emerald-600" /> 2. Autentikasi & API Key
             </h2>
             <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
-              Setiap request ke REST API Sendora wajib menyertakan <b>API Key</b> pada Header HTTP dengan format standar:
+              Setiap request ke REST API Waply wajib menyertakan <b>API Key</b> pada Header HTTP dengan format standar:
             </p>
 
             <div className="space-y-2.5">
@@ -785,7 +983,7 @@ async def handle_sendora_webhook(request: Request):
               <Smartphone className="w-5 h-5 text-emerald-600" /> 3. WhatsApp Device & Multi-Device Rotasi
             </h2>
             <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
-              Sendora menghubungkan nomor WhatsApp bisnis Anda menggunakan socket resmi Baileys tanpa memerlukan emulator.
+              Waply menghubungkan nomor WhatsApp bisnis Anda secara langsung menggunakan engine socket berkecepatan tinggi tanpa memerlukan emulator.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
@@ -855,7 +1053,7 @@ async def handle_sendora_webhook(request: Request):
                   <div className="text-lg font-bold text-slate-900 tracking-tight">1.000+ <span className="text-xs font-normal text-slate-500">pesan / hari</span></div>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Nomor telah memiliki reputasi kuat. Kampanye massal aman dengan sistem <span className="font-semibold text-slate-800">Batch Throttling</span> Sendora.
+                  Nomor telah memiliki reputasi kuat. Kampanye massal aman dengan sistem <span className="font-semibold text-slate-800">Batch Throttling</span> Waply.
                 </p>
               </div>
             </div>
@@ -908,42 +1106,30 @@ async def handle_sendora_webhook(request: Request):
             </div>
 
             {/* Code Snippet Tabs */}
-            <div className="bg-slate-50 p-4 sm:p-5 border border-slate-200 rounded-2xl">
-              <div className="flex items-center justify-between gap-2 mb-3">
-                <div className="flex flex-wrap gap-1">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex flex-wrap gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
                   {(["curl", "nodejs", "python", "php"] as CodeLang[]).map((lang) => (
                     <button
                       key={lang}
                       onClick={() => setSelectedLang(lang)}
-                      className={`px-3 py-1 text-xs uppercase font-mono rounded-lg font-semibold transition-all cursor-pointer border ${
+                      className={`px-3 py-1 text-xs uppercase font-mono rounded-lg font-semibold transition-all cursor-pointer ${
                         selectedLang === lang
-                          ? "bg-slate-900 text-white border-slate-900 shadow-xs"
-                          : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900"
+                          ? "bg-white text-emerald-700 shadow-2xs font-bold border border-slate-200"
+                          : "text-slate-600 hover:text-slate-900"
                       }`}
                     >
                       {lang}
                     </button>
                   ))}
                 </div>
-                <button
-                  onClick={() => copyCode(snippets.send[selectedLang], "send-code")}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors cursor-pointer"
-                >
-                  {copiedSection === "send-code" ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-emerald-600" /> Disalin
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5" /> Salin Kode
-                    </>
-                  )}
-                </button>
               </div>
 
-              <div className="bg-slate-900 text-slate-100 p-4 rounded-xl font-mono text-xs leading-relaxed overflow-x-auto border border-slate-800 shadow-inner">
-                <pre>{snippets.send[selectedLang]}</pre>
-              </div>
+              <CodeBlock
+                code={snippets.send[selectedLang]}
+                language={selectedLang}
+                filename={`send_message.${selectedLang === "curl" ? "sh" : selectedLang === "nodejs" ? "ts" : selectedLang === "python" ? "py" : "php"}`}
+              />
             </div>
 
             {/* Request Body Parameters Breakdown */}
@@ -985,7 +1171,7 @@ async def handle_sendora_webhook(request: Request):
                       <td className="font-mono text-slate-500 px-4 py-3">string</td>
                       <td className="px-4 py-3"><span className="text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md">Opsional</span></td>
                       <td className="px-4 py-3 text-slate-600 leading-relaxed">
-                        ID WhatsApp Device pengirim. Gunakan <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-800 font-bold">"auto_rotate"</code> (rekomendasi) agar Sendora otomatis merotasi nomor WhatsApp aktif Anda.
+                        ID WhatsApp Device pengirim. Gunakan <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-800 font-bold">"auto_rotate"</code> (rekomendasi) agar Waply otomatis merotasi nomor WhatsApp aktif Anda.
                       </td>
                     </tr>
                     <tr className="hover:bg-slate-50/50">
@@ -1057,7 +1243,7 @@ async def handle_sendora_webhook(request: Request):
                   <p className="text-[11px] text-slate-600 leading-relaxed">
                     Kirim kode 6-digit ke nomor yang diinput user saat login:
                   </p>
-                  <div className="bg-slate-900 text-slate-200 p-3.5 rounded-xl font-mono text-[11px] leading-relaxed overflow-x-auto">
+                  <div className="bg-slate-50 text-slate-800 p-3.5 rounded-xl font-mono text-[11px] leading-relaxed overflow-x-auto border border-slate-200">
                     <pre>{`const res = await axios.post(
   "${originUrl}/api/v1/messages/send",
   {
@@ -1082,7 +1268,7 @@ async def handle_sendora_webhook(request: Request):
                   <p className="text-[11px] text-slate-600 leading-relaxed">
                     Kirim tagihan otomatis setelah checkout dari database toko:
                   </p>
-                  <div className="bg-slate-900 text-slate-200 p-3.5 rounded-xl font-mono text-[11px] leading-relaxed overflow-x-auto">
+                  <div className="bg-slate-50 text-slate-800 p-3.5 rounded-xl font-mono text-[11px] leading-relaxed overflow-x-auto border border-slate-200">
                     <pre>{`$res = Http::withToken($apiKey)->post(
   "${originUrl}/api/v1/messages/send",
   [
@@ -1139,7 +1325,7 @@ async def handle_sendora_webhook(request: Request):
             </div>
 
             <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
-              Kirim pesan massal ke ribuan penerima dengan aman menggunakan sistem <b>Safety Throttling</b> dan <b>Batch Cooldown</b> bawaan Sendora:
+              Kirim pesan massal ke ribuan penerima dengan aman menggunakan sistem <b>Safety Throttling</b> dan <b>Batch Cooldown</b> bawaan Waply:
             </p>
 
             {/* Broadcast Features Grid */}
@@ -1163,42 +1349,30 @@ async def handle_sendora_webhook(request: Request):
             </div>
 
             {/* Broadcast Code Snippet */}
-            <div className="bg-slate-50 p-4 sm:p-5 border border-slate-200 rounded-2xl">
-              <div className="flex items-center justify-between gap-2 mb-3">
-                <div className="flex flex-wrap gap-1">
+            <div className="bg-slate-50 p-4 sm:p-5 border border-slate-200/90 rounded-2xl space-y-3">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex flex-wrap gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
                   {(["curl", "nodejs", "python", "php"] as CodeLang[]).map((lang) => (
                     <button
                       key={lang}
                       onClick={() => setSelectedBroadcastLang(lang)}
-                      className={`px-3 py-1 text-xs uppercase font-mono rounded-lg font-semibold transition-all cursor-pointer border ${
+                      className={`px-3 py-1 text-xs uppercase font-mono rounded-lg font-semibold transition-all cursor-pointer ${
                         selectedBroadcastLang === lang
-                          ? "bg-slate-900 text-white border-slate-900 shadow-xs"
-                          : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900"
+                          ? "bg-white text-emerald-700 shadow-2xs font-bold border border-slate-200"
+                          : "text-slate-600 hover:text-slate-900"
                       }`}
                     >
                       {lang}
                     </button>
                   ))}
                 </div>
-                <button
-                  onClick={() => copyCode(snippets.broadcast[selectedBroadcastLang], "broadcast-code")}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors cursor-pointer"
-                >
-                  {copiedSection === "broadcast-code" ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-emerald-600" /> Disalin
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5" /> Salin Kode
-                    </>
-                  )}
-                </button>
               </div>
 
-              <div className="bg-slate-900 text-slate-100 p-4 rounded-xl font-mono text-xs leading-relaxed overflow-x-auto border border-slate-800 shadow-inner">
-                <pre>{snippets.broadcast[selectedBroadcastLang]}</pre>
-              </div>
+              <CodeBlock
+                code={snippets.broadcast[selectedBroadcastLang]}
+                language={selectedBroadcastLang}
+                filename={`broadcast_campaign.${selectedBroadcastLang === "curl" ? "sh" : selectedBroadcastLang === "nodejs" ? "ts" : selectedBroadcastLang === "python" ? "py" : "php"}`}
+              />
             </div>
           </section>
 
@@ -1273,7 +1447,7 @@ async def handle_sendora_webhook(request: Request):
               <div className="rounded-xl overflow-hidden border border-slate-200 bg-slate-50 flex justify-center p-1 sm:p-2">
                 <img
                   src="/docs-template-shortcode.png"
-                  alt="Contoh Pengisian Shortcode Template Pesan di Dashboard Sendora"
+                  alt="Contoh Pengisian Shortcode Template Pesan di Dashboard Waply"
                   className="w-full max-w-2xl h-auto object-contain rounded-lg shadow-xs"
                 />
               </div>
@@ -1344,42 +1518,30 @@ async def handle_sendora_webhook(request: Request):
             </div>
 
             {/* Template Code Snippet */}
-            <div className="bg-slate-50 p-4 sm:p-5 border border-slate-200 rounded-2xl">
-              <div className="flex items-center justify-between gap-2 mb-3">
-                <div className="flex flex-wrap gap-1">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex flex-wrap gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
                   {(["curl", "nodejs", "python", "php"] as CodeLang[]).map((lang) => (
                     <button
                       key={lang}
                       onClick={() => setSelectedTemplateLang(lang)}
-                      className={`px-3 py-1 text-xs uppercase font-mono rounded-lg font-semibold transition-all cursor-pointer border ${
+                      className={`px-3 py-1 text-xs uppercase font-mono rounded-lg font-semibold transition-all cursor-pointer ${
                         selectedTemplateLang === lang
-                          ? "bg-slate-900 text-white border-slate-900 shadow-xs"
-                          : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900"
+                          ? "bg-white text-emerald-700 shadow-2xs font-bold border border-slate-200"
+                          : "text-slate-600 hover:text-slate-900"
                       }`}
                     >
                       {lang}
                     </button>
                   ))}
                 </div>
-                <button
-                  onClick={() => copyCode(snippets.templateSend[selectedTemplateLang], "template-code")}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors cursor-pointer"
-                >
-                  {copiedSection === "template-code" ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-emerald-600" /> Disalin
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5" /> Salin Kode
-                    </>
-                  )}
-                </button>
               </div>
 
-              <div className="bg-slate-900 text-slate-100 p-4 rounded-xl font-mono text-xs leading-relaxed overflow-x-auto border border-slate-800 shadow-inner">
-                <pre>{snippets.templateSend[selectedTemplateLang]}</pre>
-              </div>
+              <CodeBlock
+                code={snippets.templateSend[selectedTemplateLang]}
+                language={selectedTemplateLang}
+                filename={`template_send.${selectedTemplateLang === "curl" ? "sh" : selectedTemplateLang === "nodejs" ? "ts" : selectedTemplateLang === "python" ? "py" : "php"}`}
+              />
             </div>
 
             {/* Endpoint GET Templates for Client Dropdowns */}
@@ -1399,29 +1561,307 @@ async def handle_sendora_webhook(request: Request):
           </section>
 
           {/* 10. Automation & Auto-Reply */}
-          <section id="automation" className="space-y-4 scroll-mt-24 border-t border-slate-200 pt-8">
-            <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-slate-900">
-              <Bot className="w-5 h-5 text-emerald-600" /> 10. Auto-Reply & Bot Otomatisasi
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
-              Atur respon chat instan otomatis di menu <Link href="/dashboard/automation" className="text-emerald-700 font-semibold underline decoration-emerald-300 underline-offset-2 hover:text-emerald-800">Auto Reply</Link>. Mendukung 5 tipe pencocokan kata kunci:
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
-              <div className="p-3 bg-white border border-slate-200 rounded-xl space-y-0.5">
-                <span className="font-bold text-emerald-700">CONTAINS</span>
-                <p className="text-slate-600">Merespon jika pesan mengandung kata (contoh: "harga", "pricelist").</p>
+          <section id="automation" className="space-y-6 scroll-mt-24 border-t border-slate-200 pt-8">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-slate-900">
+                  <Bot className="w-5 h-5 text-emerald-600" /> 10. Auto-Reply & Bot Otomatisasi
+                </h2>
+                <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-mono font-semibold px-2.5 py-1 rounded-lg">
+                  POST /api/autoreply
+                </span>
               </div>
-              <div className="p-3 bg-white border border-slate-200 rounded-xl space-y-0.5">
-                <span className="font-bold text-sky-700">EXACT</span>
-                <p className="text-slate-600">Merespon jika pesan sama persis (contoh: "halo", "ping", "menu").</p>
+              <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
+                Konfigurasi bot balasan otomatis WhatsApp berbasis kata kunci di menu{" "}
+                <Link href="/dashboard/automation" className="text-emerald-700 font-semibold underline decoration-emerald-300 underline-offset-2 hover:text-emerald-800">
+                  Auto Reply
+                </Link>
+                . Engine kami mengevaluasi setiap pesan masuk secara real-time, menyisipkan variabel kontak dinamis, mengacak kalimat melalui Spintax, dan mensimulasikan jeda pengetikan (typing presence) agar nomor tetap aman dari banned.
+              </p>
+            </div>
+
+            {/* Workflow Banner */}
+            <div className="p-4 bg-slate-100/80 border border-slate-200/90 rounded-2xl text-xs space-y-2">
+              <span className="font-bold text-slate-900 flex items-center gap-1.5 text-xs">
+                <Zap className="w-4 h-4 text-amber-500" /> Alur Eksekusi Balasan Otomatis:
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 pt-1 font-mono text-[11px]">
+                <div className="bg-white p-2.5 rounded-xl border border-slate-200/80">
+                  <span className="font-bold text-slate-900 block mb-0.5">1. Pesan Masuk</span>
+                  <span className="text-slate-600">Gateway server menangkap teks dari pengirim.</span>
+                </div>
+                <div className="bg-white p-2.5 rounded-xl border border-slate-200/80">
+                  <span className="font-bold text-slate-900 block mb-0.5">2. Evaluasi Aturan</span>
+                  <span className="text-slate-600">Pencocokan bertingkat (Exact $\rightarrow$ Starts $\rightarrow$ Contains $\rightarrow$ Regex $\rightarrow$ Fallback).</span>
+                </div>
+                <div className="bg-white p-2.5 rounded-xl border border-slate-200/80">
+                  <span className="font-bold text-slate-900 block mb-0.5">3. Dynamic & Spintax</span>
+                  <span className="text-slate-600">Substitusi {'{{name}}'} & acak variasi {'{Halo|Hai}'}.</span>
+                </div>
+                <div className="bg-white p-2.5 rounded-xl border border-slate-200/80">
+                  <span className="font-bold text-slate-900 block mb-0.5">4. Typing & Kirim</span>
+                  <span className="text-slate-600">Simulasi status "mengetik..." 1–3 detik lalu kirim.</span>
+                </div>
               </div>
-              <div className="p-3 bg-white border border-slate-200 rounded-xl space-y-0.5">
-                <span className="font-bold text-indigo-700">STARTS_WITH</span>
-                <p className="text-slate-600">Merespon jika pesan diawali kata tertentu (contoh: "order ", "daftar ").</p>
+            </div>
+
+            {/* 5 Match Types Grid */}
+            <div className="space-y-3">
+              <h3 className="font-bold text-xs sm:text-sm text-slate-900 flex items-center gap-2">
+                <Tag className="w-4 h-4 text-emerald-600" /> 5 Tipe Pencocokan Kata Kunci (Match Types)
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
+                {/* 1. CONTAINS */}
+                <div className="p-4 bg-white border border-slate-200/90 rounded-2xl space-y-2 flex flex-col justify-between shadow-2xs">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold font-mono bg-emerald-50 text-emerald-800 border border-emerald-200">
+                        CONTAINS
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-semibold uppercase">Paling Populer</span>
+                    </div>
+                    <div className="font-bold text-slate-900 text-xs">Mengandung Kata Kunci</div>
+                    <p className="text-slate-600 leading-relaxed text-[11px]">
+                      Merespons jika pesan memuat kata kunci di mana saja dalam kalimat (tidak peduli posisi awal, tengah, atau akhir).
+                    </p>
+                  </div>
+                  <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 font-mono text-[11px] space-y-1">
+                    <div className="text-[10px] text-slate-500 font-semibold">Kata Kunci: <span className="text-slate-800">harga, pricelist, ongkir</span></div>
+                    <div className="text-emerald-700 text-[10px]">✓ "Halo min minta info <b>harga</b> paket"</div>
+                  </div>
+                </div>
+
+                {/* 2. EXACT */}
+                <div className="p-4 bg-white border border-slate-200/90 rounded-2xl space-y-2 flex flex-col justify-between shadow-2xs">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold font-mono bg-sky-50 text-sky-800 border border-sky-200">
+                        EXACT
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-semibold uppercase">Menu Angka</span>
+                    </div>
+                    <div className="font-bold text-slate-900 text-xs">Pencocokan Persis 100%</div>
+                    <p className="text-slate-600 leading-relaxed text-[11px]">
+                      Pesan dari pengirim harus sama persis tanpa tambahan kata lain. Sangat cocok untuk navigasi menu angka atau satu kata.
+                    </p>
+                  </div>
+                  <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 font-mono text-[11px] space-y-1">
+                    <div className="text-[10px] text-slate-500 font-semibold">Kata Kunci: <span className="text-slate-800">1, 2, 3, halo, menu</span></div>
+                    <div className="text-emerald-700 text-[10px]">✓ "1" &nbsp; | &nbsp; <span className="text-rose-600">✗ "halo min"</span></div>
+                  </div>
+                </div>
+
+                {/* 3. STARTS_WITH */}
+                <div className="p-4 bg-white border border-slate-200/90 rounded-2xl space-y-2 flex flex-col justify-between shadow-2xs">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold font-mono bg-indigo-50 text-indigo-800 border border-indigo-200">
+                        STARTS_WITH
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-semibold uppercase">Perintah / Format</span>
+                    </div>
+                    <div className="font-bold text-slate-900 text-xs">Awalan Kalimat</div>
+                    <p className="text-slate-600 leading-relaxed text-[11px]">
+                      Merespons jika kalimat pesan dimulai dengan salah satu kata kunci yang ditentukan.
+                    </p>
+                  </div>
+                  <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 font-mono text-[11px] space-y-1">
+                    <div className="text-[10px] text-slate-500 font-semibold">Kata Kunci: <span className="text-slate-800">order, daftar, cek</span></div>
+                    <div className="text-emerald-700 text-[10px]">✓ "<b>order</b> paket bulanan B"</div>
+                  </div>
+                </div>
+
+                {/* 4. REGEX */}
+                <div className="p-4 bg-white border border-slate-200/90 rounded-2xl space-y-2 flex flex-col justify-between shadow-2xs">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold font-mono bg-purple-50 text-purple-800 border border-purple-200">
+                        REGEX
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-semibold uppercase">Pola Lanjutan</span>
+                    </div>
+                    <div className="font-bold text-slate-900 text-xs">Ekspresi Reguler (Pattern)</div>
+                    <p className="text-slate-600 leading-relaxed text-[11px]">
+                      Validasi pola teks khusus seperti format kode transaksi, nomor invoice, atau kombinasi opsi tertentu.
+                    </p>
+                  </div>
+                  <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 font-mono text-[11px] space-y-1">
+                    <div className="text-[10px] text-slate-500 font-semibold">Pola: <span className="text-slate-800">^INV-\d&#123;4&#125;</span></div>
+                    <div className="text-emerald-700 text-[10px]">✓ "INV-2026" &nbsp; | &nbsp; <span className="text-rose-600">✗ "INV"</span></div>
+                  </div>
+                </div>
+
+                {/* 5. FALLBACK */}
+                <div className="p-4 bg-white border border-slate-200/90 rounded-2xl space-y-2 flex flex-col justify-between shadow-2xs md:col-span-2 lg:col-span-2">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold font-mono bg-amber-50 text-amber-800 border border-amber-200">
+                        FALLBACK
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-semibold uppercase">Cadangan Otomatis</span>
+                    </div>
+                    <div className="font-bold text-slate-900 text-xs">Pesan Default Saat Kata Kunci Tidak Dikenal</div>
+                    <p className="text-slate-600 leading-relaxed text-[11px]">
+                      Dieksekusi saat tidak ada satupun aturan lain yang cocok dengan pesan pelanggan. Sangat ideal untuk menampilkan menu utama atau memberikan kontak Customer Service.
+                    </p>
+                  </div>
+                  <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 font-mono text-[11px] space-y-1">
+                    <div className="text-[10px] text-slate-500 font-semibold">Contoh Respon:</div>
+                    <div className="text-slate-700 text-[10px]">"Halo Kak! Perintah tidak dikenal. Ketik <b>MENU</b> untuk melihat daftar opsi layanan kami."</div>
+                  </div>
+                </div>
               </div>
-              <div className="p-3 bg-white border border-slate-200 rounded-xl space-y-0.5">
-                <span className="font-bold text-amber-700">FALLBACK</span>
-                <p className="text-slate-600">Pesan penampung jika tidak ada kata kunci yang cocok.</p>
+            </div>
+
+            {/* Dynamic Variables & Spintax Reference */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              {/* Dynamic Variables Table */}
+              <div className="p-4 bg-white border border-slate-200/90 rounded-2xl space-y-2.5 shadow-2xs">
+                <span className="font-bold text-slate-900 flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-emerald-600" /> Variabel Dinamis (Placeholders)
+                </span>
+                <p className="text-slate-600 text-[11px] leading-relaxed">
+                  Sisipkan tag variabel berikut ke dalam isi pesan balasan untuk personalisasi otomatis:
+                </p>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left font-mono text-[11px] border border-slate-200 rounded-xl overflow-hidden">
+                    <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+                      <tr>
+                        <th className="p-2">Tag Variabel</th>
+                        <th className="p-2">Keterangan</th>
+                        <th className="p-2">Contoh Output</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-slate-600">
+                      <tr>
+                        <td className="p-2 text-emerald-700 font-bold">{'{{name}}'}</td>
+                        <td className="p-2 font-sans">Nama kontak WhatsApp pengirim</td>
+                        <td className="p-2">Budi Santoso</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2 text-emerald-700 font-bold">{'{{phone}}'}</td>
+                        <td className="p-2 font-sans">Nomor WhatsApp pengirim</td>
+                        <td className="p-2">6281234567890</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2 text-emerald-700 font-bold">{'{{time}}'}</td>
+                        <td className="p-2 font-sans">Waktu pesan diterima (WIB)</td>
+                        <td className="p-2">14:30</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2 text-emerald-700 font-bold">{'{{date}}'}</td>
+                        <td className="p-2 font-sans">Tanggal pesan diterima</td>
+                        <td className="p-2">09/09/2026</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Spintax Guide */}
+              <div className="p-4 bg-white border border-slate-200/90 rounded-2xl space-y-2.5 shadow-2xs flex flex-col justify-between">
+                <div className="space-y-2">
+                  <span className="font-bold text-slate-900 flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600" /> Format Spintax Anti-Spam
+                  </span>
+                  <p className="text-slate-600 text-[11px] leading-relaxed">
+                    Gunakan tanda kurung kurawal <code className="bg-slate-100 px-1 py-0.5 rounded text-emerald-700 font-mono font-bold">{'{opsi1|opsi2|opsi3}'}</code> agar bot mengacak susunan kalimat di setiap balasan:
+                  </p>
+                  <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 font-mono text-[11px] text-slate-800 space-y-1">
+                    <div className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Format Penulisan:</div>
+                    <div>{'{Halo|Hai|Selamat datang}'} Kak {'{{name}}'}! {'{Ada yang bisa kami bantu?|Ada perlu apa hari ini?}'}</div>
+                  </div>
+                </div>
+                <div className="p-2.5 bg-emerald-50/70 border border-emerald-200 rounded-xl text-[11px] text-emerald-950 space-y-1">
+                  <div className="font-bold text-emerald-900 flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5 text-emerald-700" /> Jeda Pengetikan (Human Typing Delay):
+                  </div>
+                  <p className="text-emerald-800 leading-relaxed text-[11px]">
+                    Atur nilai <b>delaySec (1–3 detik)</b>. Bot akan menampilkan status <i>"sedang mengetik..."</i> di WhatsApp pelanggan sebelum pesan dikirim.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* REST API Code Snippet for Auto-Reply */}
+            <div className="space-y-2.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <h3 className="font-bold text-xs sm:text-sm text-slate-900 flex items-center gap-2">
+                  <Code2 className="w-4 h-4 text-emerald-600" /> Buat Aturan Auto-Reply via REST API
+                </h3>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex flex-wrap gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+                    {(["curl", "nodejs", "python", "php"] as CodeLang[]).map((lang) => (
+                      <button
+                        key={lang}
+                        onClick={() => setSelectedAutoReplyLang(lang)}
+                        className={`px-3 py-1 text-xs uppercase font-mono rounded-lg font-semibold transition-all cursor-pointer ${
+                          selectedAutoReplyLang === lang
+                            ? "bg-white text-emerald-700 shadow-2xs font-bold border border-slate-200"
+                            : "text-slate-600 hover:text-slate-900"
+                        }`}
+                      >
+                        {lang}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <CodeBlock
+                code={snippets.autoReply[selectedAutoReplyLang]}
+                language={selectedAutoReplyLang}
+                filename={`autoreply_rule.${selectedAutoReplyLang === "curl" ? "sh" : selectedAutoReplyLang === "nodejs" ? "ts" : selectedAutoReplyLang === "python" ? "py" : "php"}`}
+              />
+            </div>
+
+            {/* Endpoints Quick Reference Table */}
+            <div className="p-4 bg-white border border-slate-200/90 rounded-2xl space-y-2.5 text-xs shadow-2xs">
+              <span className="font-bold text-slate-900 flex items-center gap-1.5">
+                <Code2 className="w-4 h-4 text-emerald-600" /> Direktori Endpoint API Auto-Reply
+              </span>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left font-mono text-[11px] border border-slate-200 rounded-xl overflow-hidden">
+                  <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+                    <tr>
+                      <th className="p-2">Method</th>
+                      <th className="p-2">Endpoint Path</th>
+                      <th className="p-2 font-sans">Deskripsi Fungsi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-slate-600">
+                    <tr>
+                      <td className="p-2 font-bold text-sky-700">GET</td>
+                      <td className="p-2 text-slate-900">/api/autoreply</td>
+                      <td className="p-2 font-sans">Mengambil seluruh daftar aturan auto-reply aktif akun Anda.</td>
+                    </tr>
+                    <tr>
+                      <td className="p-2 font-bold text-emerald-700">POST</td>
+                      <td className="p-2 text-slate-900">/api/autoreply</td>
+                      <td className="p-2 font-sans">Membuat aturan auto-reply baru dengan kata kunci dan pesan balasan.</td>
+                    </tr>
+                    <tr>
+                      <td className="p-2 font-bold text-amber-700">PUT</td>
+                      <td className="p-2 text-slate-900">/api/autoreply/:id</td>
+                      <td className="p-2 font-sans">Memperbarui konfigurasi aturan (nama, kata kunci, template balasan, delay).</td>
+                    </tr>
+                    <tr>
+                      <td className="p-2 font-bold text-purple-700">PATCH</td>
+                      <td className="p-2 text-slate-900">/api/autoreply/:id</td>
+                      <td className="p-2 font-sans">Mengubah status aktif / nonaktif aturan secara instan.</td>
+                    </tr>
+                    <tr>
+                      <td className="p-2 font-bold text-rose-700">DELETE</td>
+                      <td className="p-2 text-slate-900">/api/autoreply/:id</td>
+                      <td className="p-2 font-sans">Menghapus aturan auto-reply dari database.</td>
+                    </tr>
+                    <tr>
+                      <td className="p-2 font-bold text-emerald-700">POST</td>
+                      <td className="p-2 text-slate-900">/api/autoreply/test</td>
+                      <td className="p-2 font-sans">Menguji simulasi respon teks masuk di lingkungan sandbox sebelum live.</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </section>
@@ -1439,7 +1879,7 @@ async def handle_sendora_webhook(request: Request):
                 <ShieldAlert className="w-4 h-4 text-rose-600" /> Auto Unsubscribe Detection:
               </span>
               <p className="leading-relaxed">
-                Saat pelanggan membalas kata kunci seperti <code className="bg-white px-1.5 py-0.5 rounded border border-rose-300 font-bold">STOP</code>, <code className="bg-white px-1.5 py-0.5 rounded border border-rose-300 font-bold">BERHENTI</code>, atau <code className="bg-white px-1.5 py-0.5 rounded border border-rose-300 font-bold">UNSUBSCRIBE</code>, sistem Sendora otomatis memasukkan nomor tersebut ke daftar Blacklist dan melewati pengiriman pesan selanjutnya.
+                Saat pelanggan membalas kata kunci seperti <code className="bg-white px-1.5 py-0.5 rounded border border-rose-300 font-bold">STOP</code>, <code className="bg-white px-1.5 py-0.5 rounded border border-rose-300 font-bold">BERHENTI</code>, atau <code className="bg-white px-1.5 py-0.5 rounded border border-rose-300 font-bold">UNSUBSCRIBE</code>, sistem Waply otomatis memasukkan nomor tersebut ke daftar Blacklist dan melewati pengiriman pesan selanjutnya.
               </p>
             </div>
           </section>
@@ -1476,25 +1916,11 @@ async def handle_sendora_webhook(request: Request):
                 </div>
               </div>
 
-              <div className="relative">
-                <div className="bg-slate-900 text-slate-100 text-xs p-4 sm:p-5 rounded-xl font-mono leading-relaxed border border-slate-800 shadow-inner overflow-x-auto">
-                  <pre><code>{snippets.webhookVerify[selectedWebhookLang]}</code></pre>
-                </div>
-                <button
-                  onClick={() => copyCode(snippets.webhookVerify[selectedWebhookLang], "webhook-code")}
-                  className="absolute top-3 right-3 inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold text-slate-300 hover:text-white bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-lg transition-colors cursor-pointer"
-                >
-                  {copiedSection === "webhook-code" ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-emerald-400" /> Tersalin!
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5" /> Salin Kode
-                    </>
-                  )}
-                </button>
-              </div>
+              <CodeBlock
+                code={snippets.webhookVerify[selectedWebhookLang]}
+                language={selectedWebhookLang}
+                filename={`webhook_handler.${selectedWebhookLang === "nodejs" ? "ts" : selectedWebhookLang === "php" ? "php" : "py"}`}
+              />
             </div>
           </section>
 
@@ -1528,7 +1954,7 @@ async def handle_sendora_webhook(request: Request):
               <LifeBuoy className="w-5 h-5 text-emerald-600" /> 14. Pusat Bantuan (Support Tickets)
             </h2>
             <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
-              Jika mengalami kendala teknis atau pertanyaan seputar gateway, buat tiket bantuan di menu <Link href="/dashboard/support" className="text-emerald-700 font-semibold underline decoration-emerald-300 underline-offset-2 hover:text-emerald-800">Bantuan & Support</Link>. Tim teknis Sendora akan membalas langsung di room chat tiket Anda.
+              Jika mengalami kendala teknis atau pertanyaan seputar gateway, buat tiket bantuan di menu <Link href="/dashboard/support" className="text-emerald-700 font-semibold underline decoration-emerald-300 underline-offset-2 hover:text-emerald-800">Bantuan & Support</Link>. Tim teknis Waply akan membalas langsung di room chat tiket Anda.
             </p>
           </section>
 
@@ -1600,7 +2026,7 @@ async def handle_sendora_webhook(request: Request):
                   <tr className="hover:bg-slate-50/50">
                     <td className="font-mono font-bold text-rose-600 p-3">401 Unauthorized</td>
                     <td className="p-3 text-slate-700">API Key tidak valid atau header authorization hilang.</td>
-                    <td className="p-3 text-slate-600">Periksa kembali API Key di dashboard Sendora.</td>
+                    <td className="p-3 text-slate-600">Periksa kembali API Key di dashboard Waply.</td>
                   </tr>
                   <tr className="hover:bg-slate-50/50">
                     <td className="font-mono font-bold text-rose-600 p-3">404 Not Found</td>
@@ -1616,7 +2042,9 @@ async def handle_sendora_webhook(request: Request):
               </table>
             </div>
           </section>
-        </main>
+        </>
+      )}
+    </main>
       </div>
 
       {/* Modern Multi-Column Footer */}

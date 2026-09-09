@@ -9,6 +9,7 @@ export type WebhookEvent =
   | "message.read"
   | "message.failed"
   | "message.opt_out"
+  | "message.opt_in"
   | "device.connected"
   | "device.disconnected"
   | "device.warning";
@@ -42,7 +43,7 @@ export interface WebhookLog {
   createdAt: string;
 }
 
-const DATA_DIR = path.resolve(process.cwd(), ".sendora-data");
+const DATA_DIR = path.resolve(process.cwd(), ".waply-data");
 const WEBHOOKS_FILE = path.join(DATA_DIR, "webhooks.json");
 const LOGS_FILE = path.join(DATA_DIR, "webhook_logs.json");
 
@@ -56,7 +57,7 @@ function ensureDataDir() {
         id: "wh_demo_1",
         userId: "admin-default-user",
         name: "Production CRM Webhook",
-        url: "https://webhook.site/sendora-crm-demo",
+        url: "https://webhook.site/waply-crm-demo",
         secret: "whsec_" + crypto.randomBytes(16).toString("hex"),
         events: ["message.received", "message.delivered", "device.connected"],
         isActive: true,
@@ -223,9 +224,9 @@ export async function dispatchWebhookEvent(
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "X-Sendora-Signature": signature,
-            "X-Sendora-Event": event,
-            "User-Agent": "Sendora-Webhook-Dispatcher/1.0",
+            "X-Waply-Signature": signature,
+            "X-Waply-Event": event,
+            "User-Agent": "Waply-Webhook-Dispatcher/1.0",
           },
           body: JSON.stringify(body),
           signal: controller.signal,

@@ -21,13 +21,13 @@ const ThemeContext = createContext<ThemeContextType>({
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Enforce 100% Light Mode globally across all pages
-    document.documentElement.setAttribute("data-theme", "sendoraLight");
+    document.documentElement.setAttribute("data-theme", "waplyLight");
     document.documentElement.classList.remove("dark");
 
     // Clean up any old dark mode storage or cookies
     try {
-      localStorage.removeItem("sendora_theme");
-      document.cookie = "sendora_theme=light; path=/; max-age=31536000; SameSite=Lax";
+      localStorage.removeItem("waply_theme");
+      document.cookie = "waply_theme=light; path=/; max-age=31536000; SameSite=Lax";
     } catch {}
   }, []);
 
@@ -50,14 +50,14 @@ export function useTheme() {
 }
 
 /**
- * Inline script to prevent FOUC and enforce pure Sendora Light theme
+ * Inline script to prevent FOUC and enforce pure Waply Light theme
  */
 export const themeInitScript = `
 (function() {
   try {
-    document.documentElement.setAttribute('data-theme', 'sendoraLight');
+    document.documentElement.setAttribute('data-theme', 'waplyLight');
     document.documentElement.classList.remove('dark');
-    localStorage.removeItem('sendora_theme');
+    localStorage.removeItem('waply_theme');
   } catch (e) {}
 })();
 `;

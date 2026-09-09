@@ -6,7 +6,7 @@ import { clearWebhookLogs } from "@/lib/webhooks";
 import { clearAutoReplyLogs } from "@/lib/autoreply-logs";
 import { getStoredMessages } from "@/lib/messages";
 
-const DATA_DIR = path.resolve(process.cwd(), ".sendora-data");
+const DATA_DIR = path.resolve(process.cwd(), ".waply-data");
 const WEBHOOK_LOGS_FILE = path.join(DATA_DIR, "webhook_logs.json");
 const AUTOREPLY_LOGS_FILE = path.join(DATA_DIR, "autoreply_logs.json");
 

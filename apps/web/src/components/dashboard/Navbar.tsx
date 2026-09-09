@@ -355,13 +355,20 @@ export function Navbar() {
           <div
             tabIndex={0}
             role="button"
-            className="btn btn-ghost btn-sm gap-2 pl-2 pr-3.5 rounded-full border border-base-300 text-base-content font-bold bg-base-200/70 hover:bg-base-200"
+            className="inline-flex items-center gap-2.5 pl-1.5 pr-3.5 py-1 rounded-full border border-slate-200/90 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-900 hover:bg-white dark:hover:bg-slate-800 text-slate-800 dark:text-slate-100 font-semibold text-xs transition-all shadow-2xs hover:shadow-xs cursor-pointer select-none"
           >
-            <div className="w-7 h-7 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-xs">
-              <User className="w-4 h-4" />
+            <div className="relative">
+              <div className="w-7 h-7 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-xs">
+                {currentUser?.name ? (
+                  currentUser.name.charAt(0).toUpperCase()
+                ) : (
+                  <User className="w-3.5 h-3.5" />
+                )}
+              </div>
+              <span className="w-2 h-2 rounded-full bg-emerald-500 absolute -bottom-0.5 -right-0.5 ring-2 ring-white dark:ring-slate-900"></span>
             </div>
-            <span className="text-xs font-bold hidden md:inline text-base-content">
-              {currentUser?.name || (isAdmin ? "Admin (Online)" : "User (Online)")}
+            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate max-w-[130px]">
+              {currentUser?.name || (isAdmin ? "Super Admin" : "Pengguna")}
             </span>
           </div>
           <ul

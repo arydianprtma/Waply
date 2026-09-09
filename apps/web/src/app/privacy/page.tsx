@@ -96,7 +96,7 @@ export default function PrivacyPage() {
                 Kebijakan Privasi (Privacy Policy)
               </h1>
               <p className="mt-3 text-slate-600 text-sm md:text-base leading-relaxed">
-                Di Sendora, kami berkomitmen untuk melindungi privasi, kerahasiaan payload pesan, dan keamanan data Anda sesuai dengan standar keamanan industri dan Undang-Undang Perlindungan Data Pribadi (UU PDP).
+                Di Waply, kami berkomitmen untuk melindungi privasi, kerahasiaan payload pesan, dan keamanan data Anda sesuai dengan standar keamanan industri dan Undang-Undang Perlindungan Data Pribadi (UU PDP).
               </p>
               <div className="mt-4 inline-flex items-center gap-2 text-xs font-medium text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg">
                 <Clock className="w-3.5 h-3.5" /> Terakhir Diperbarui: {lastUpdated}
@@ -152,7 +152,7 @@ export default function PrivacyPage() {
                 </div>
                 <div className="text-sm text-slate-600 space-y-3 leading-relaxed">
                   <p>
-                    Kebijakan Privasi ini menjelaskan bagaimana <strong>Sendora</strong> mengumpulkan, mengelola, memproses, dan melindungi data pribadi Anda saat menggunakan platform web, dashboard, dan REST API kami.
+                    Kebijakan Privasi ini menjelaskan bagaimana <strong>Waply</strong> mengumpulkan, mengelola, memproses, dan melindungi data pribadi Anda saat menggunakan platform web, dashboard, dan REST API kami.
                   </p>
                   <p>
                     Kami <strong>tidak pernah menjual, menyewakan, atau memperdagangkan data kontak atau isi pesan Anda</strong> kepada pihak pengiklan atau pihak ketiga manapun.
@@ -229,7 +229,7 @@ export default function PrivacyPage() {
                     <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/90 text-xs font-medium text-slate-800 flex items-start gap-2.5">
                       <Lock className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                       <div>
-                        <strong>Enkripsi Transit (SSL/TLS 1.3):</strong> Seluruh komunikasi antara server Anda dan Sendora dienkripsi dengan standar 256-bit SSL.
+                        <strong>Enkripsi Transit (SSL/TLS 1.3):</strong> Seluruh komunikasi antara server Anda dan Waply dienkripsi dengan standar 256-bit SSL.
                       </div>
                     </div>
                     <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/90 text-xs font-medium text-slate-800 flex items-start gap-2.5">
@@ -272,7 +272,7 @@ export default function PrivacyPage() {
                     Saat Anda melakukan scan QR code, kredensial sesi WhatsApp Multi-Device disimpan dalam bentuk auth state terenkripsi pada server kami hanya untuk menjaga konektivitas gateway Anda.
                   </p>
                   <p>
-                    Anda dapat memutus (disconnect/logout) sesi WhatsApp Anda kapan saja melalui dashboard Sendora atau langsung dari aplikasi WhatsApp di smartphone Anda (Linked Devices). Saat disconnect dilakukan, token sesi langsung dihapus secara permanen dari server.
+                    Anda dapat memutus (disconnect/logout) sesi WhatsApp Anda kapan saja melalui dashboard Waply atau langsung dari aplikasi WhatsApp di smartphone Anda (Linked Devices). Saat disconnect dilakukan, token sesi langsung dihapus secara permanen dari server.
                   </p>
                 </div>
               </section>
@@ -343,8 +343,8 @@ export default function PrivacyPage() {
                     Jika Anda memiliki pertanyaan mengenai kebijakan privasi ini atau ingin mengajukan permintaan terkait data pribadi Anda, silakan hubungi tim kami di:
                   </p>
                   <div className="pt-2">
-                    <p className="font-semibold text-slate-800">Sendora Data Protection Officer (DPO):</p>
-                    <p className="text-slate-600">Email: <a href="mailto:privacy@sendora.id" className="text-primary font-bold hover:underline">privacy@sendora.id</a></p>
+                    <p className="font-semibold text-slate-800">Waply Data Protection Officer (DPO):</p>
+                    <p className="text-slate-600">Email: <a href="mailto:privacy@waply.id" className="text-primary font-bold hover:underline">privacy@waply.id</a></p>
                     <p className="text-slate-600">WhatsApp Support: <a href="https://wa.me/6281234567890" target="_blank" rel="noopener noreferrer" className="text-emerald-600 font-bold hover:underline">+62 812-3456-7890</a></p>
                   </div>
                 </div>

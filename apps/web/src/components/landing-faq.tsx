@@ -14,13 +14,13 @@ const FAQS: FAQItem[] = [
     category: "Umum",
     question: "Apakah perlu verifikasi centang hijau (WhatsApp Business API Official)?",
     answer:
-      "Tidak perlu. Sendora menggunakan teknologi WhatsApp Multi-Device Gateway modern. Anda cukup scan QR code menggunakan nomor WhatsApp pribadi atau WhatsApp Business biasa yang sudah Anda miliki, dan API langsung aktif seketika dalam hitungan detik tanpa proses approval Meta yang rumit.",
+      "Tidak perlu. Waply menggunakan teknologi WhatsApp Multi-Device Gateway modern. Anda cukup scan QR code menggunakan nomor WhatsApp pribadi atau WhatsApp Business biasa yang sudah Anda miliki, dan API langsung aktif seketika dalam hitungan detik tanpa proses approval Meta yang rumit.",
   },
   {
     category: "Keamanan",
-    question: "Bagaimana cara kerja Proteksi Anti-Ban di Sendora?",
+    question: "Bagaimana cara kerja Proteksi Anti-Ban di Waply?",
     answer:
-      "Sendora dilengkapi algoritma Anti-Ban cerdas: Dynamic Typing Simulation (mensimulasikan jeda mengetik manusia), Smart Random Delay (jeda acak 3-7 detik antar pesan broadcast), Warm-up Queueing (pembatasan volume bertahap untuk nomor baru), dan Auto-Pause saat terdeteksi lonjakan error dari WhatsApp server.",
+      "Waply dilengkapi algoritma Anti-Ban cerdas: Dynamic Typing Simulation (mensimulasikan jeda mengetik manusia), Smart Random Delay (jeda acak 3-7 detik antar pesan broadcast), Warm-up Queueing (pembatasan volume bertahap untuk nomor baru), dan Auto-Pause saat terdeteksi lonjakan error dari WhatsApp server.",
   },
   {
     category: "Harga",
@@ -32,13 +32,13 @@ const FAQS: FAQItem[] = [
     category: "Teknis",
     question: "Bahasa pemrograman apa saja yang didukung?",
     answer:
-      "Sendora menyediakan REST API standar yang bisa dipanggil dari bahasa apapun: Laravel/PHP, Node.js/TypeScript, Python, Golang, Java, C#, hingga integrasi tanpa coding seperti Zapier, Make, n8n, atau plugin WordPress/WooCommerce.",
+      "Waply menyediakan REST API standar yang bisa dipanggil dari bahasa apapun: Laravel/PHP, Node.js/TypeScript, Python, Golang, Java, C#, hingga integrasi tanpa coding seperti Zapier, Make, n8n, atau plugin WordPress/WooCommerce.",
   },
   {
     category: "Teknis",
     question: "Apakah bisa mengirim gambar, PDF, dokumen, dan pesan lokasi?",
     answer:
-      "Tentu saja. Sendora mendukung pengiriman pesan Teks, Gambar (JPG/PNG/WebP), Dokumen (PDF, Excel, Word), Video, Audio (Voice Note PTT), Pesan Lokasi, dan Kontak (vCard) secara mulus via REST API endpoint.",
+      "Tentu saja. Waply mendukung pengiriman pesan Teks, Gambar (JPG/PNG/WebP), Dokumen (PDF, Excel, Word), Video, Audio (Voice Note PTT), Pesan Lokasi, dan Kontak (vCard) secara mulus via REST API endpoint.",
   },
   {
     category: "Umum",
@@ -89,7 +89,7 @@ export function LandingFaq() {
             Pertanyaan yang Sering Diajukan
           </h2>
           <p className="mt-2 text-slate-600 text-xs sm:text-sm md:text-base leading-relaxed">
-            Informasi lengkap seputar integrasi WhatsApp Gateway, keamanan anti-ban, dan performa Sendora.
+            Informasi lengkap seputar integrasi WhatsApp Gateway, keamanan anti-ban, dan performa Waply.
           </p>
 
           {/* Category Filter Pills */}
@@ -181,7 +181,7 @@ export function LandingFaq() {
             </div>
           </div>
           <a
-            href="https://wa.me/6281234567890?text=Halo%20Tim%20Sendora,%20saya%20ingin%20tanya%20seputar%20API%20WhatsApp%20Gateway"
+            href="https://wa.me/6281234567890?text=Halo%20Tim%20Waply,%20saya%20ingin%20tanya%20seputar%20API%20WhatsApp%20Gateway"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 rounded-xl font-semibold px-4 py-2 text-xs transition-colors shrink-0 shadow-2xs w-full sm:w-auto"

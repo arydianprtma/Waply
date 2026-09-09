@@ -41,16 +41,16 @@ function LoginForm() {
       if (json.success) {
         // Set client-side cookies directly to guarantee immediate sync
         const maxAge = 60 * 60 * 24 * 7;
-        document.cookie = `sendora_demo_auth=true; path=/; max-age=${maxAge}; SameSite=Lax`;
-        document.cookie = `sendora_user_email=${encodeURIComponent(cleanEmail)}; path=/; max-age=${maxAge}; SameSite=Lax`;
+        document.cookie = `waply_demo_auth=true; path=/; max-age=${maxAge}; SameSite=Lax`;
+        document.cookie = `waply_user_email=${encodeURIComponent(cleanEmail)}; path=/; max-age=${maxAge}; SameSite=Lax`;
         if (json.user?.name) {
-          document.cookie = `sendora_user_name=${encodeURIComponent(json.user.name)}; path=/; max-age=${maxAge}; SameSite=Lax`;
+          document.cookie = `waply_user_name=${encodeURIComponent(json.user.name)}; path=/; max-age=${maxAge}; SameSite=Lax`;
         }
         if (json.user?.role) {
-          document.cookie = `sendora_user_role=${json.user.role}; path=/; max-age=${maxAge}; SameSite=Lax`;
+          document.cookie = `waply_user_role=${json.user.role}; path=/; max-age=${maxAge}; SameSite=Lax`;
         }
         if (json.user?.id) {
-          document.cookie = `sendora_user_id=${json.user.id}; path=/; max-age=${maxAge}; SameSite=Lax`;
+          document.cookie = `waply_user_id=${json.user.id}; path=/; max-age=${maxAge}; SameSite=Lax`;
         }
 
         const userRole = json.user?.role || "user";
@@ -100,7 +100,7 @@ function LoginForm() {
   return (
     <div>
       <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold">Masuk ke Sendora</h1>
+        <h1 className="text-2xl font-bold">Masuk ke Waply</h1>
         <p className="text-sm text-base-content/60 mt-1">
           Akses dashboard dan kelola gateway WhatsApp Anda
         </p>
@@ -229,7 +229,7 @@ function LoginForm() {
         <Link href="/privacy" className="text-slate-600 font-semibold hover:underline" target="_blank">
           Kebijakan Privasi
         </Link>{" "}
-        Sendora.
+        Waply.
       </p>
     </div>
   );

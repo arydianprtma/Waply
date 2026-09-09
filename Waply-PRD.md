@@ -1,6 +1,6 @@
-# PRD - Sendora
+# PRD - Waply
 
-**Product:** Sendora  
+**Product:** Waply  
 **Category:** WhatsApp Gateway & Messaging API SaaS  
 **Tagline:** Simple Messaging, Powerful Automation  
 **Status:** Development / Local First
@@ -9,7 +9,7 @@
 
 ## 1. Product Vision
 
-Sendora adalah platform SaaS yang memungkinkan pengguna menghubungkan nomor WhatsApp mereka ke sistem Sendora dan menggunakannya sebagai Messaging Gateway/API.
+Waply adalah platform SaaS yang memungkinkan pengguna menghubungkan nomor WhatsApp mereka ke sistem Waply dan menggunakannya sebagai Messaging Gateway/API.
 
 Pengguna dapat:
 
@@ -28,7 +28,7 @@ Pengguna dapat:
 ### Konsep
 
 ```text
-                SENDORA
+                WAPLY
                    |
        +-----------+-----------+
        |                       |
@@ -47,7 +47,7 @@ Pengguna dapat:
 
 # 2. Development Strategy: Local First
 
-Pengembangan Sendora dilakukan **sepenuhnya secara lokal terlebih dahulu**.
+Pengembangan Waply dilakukan **sepenuhnya secara lokal terlebih dahulu**.
 
 Jangan melakukan deployment ke Vercel atau VPS pada tahap awal.
 
@@ -377,7 +377,7 @@ Test Payment
 Midtrans Notification
  |
  v
-Webhook Sendora
+Webhook Waply
  |
  v
 Update Payment
@@ -470,7 +470,7 @@ Harga di atas adalah rancangan awal dan harus divalidasi berdasarkan biaya gatew
 Sidebar:
 
 ```text
-Sendora
+Waply
 ────────────────────
 
 Overview
@@ -642,7 +642,7 @@ Request:
 {
   "device": "device_123",
   "to": "628123456789",
-  "message": "Hello from Sendora"
+  "message": "Hello from Waply"
 }
 ```
 
@@ -731,7 +731,7 @@ Untuk MVP, queue dapat dimulai dengan PostgreSQL. Setelah traffic meningkat, gun
 
 Penggunaan library tidak resmi (WhatsApp Web / Baileys) membawa risiko pemblokiran nomor (*account ban*) oleh Meta jika terdeteksi aktivitas spam atau perilaku robotik abnormal.
 
-Sendora menerapkan arsitektur perlindungan multi-lapis untuk meminimalisir risiko ban:
+Waply menerapkan arsitektur perlindungan multi-lapis untuk meminimalisir risiko ban:
 
 ### 1. Randomized Human Delay & Adaptive Throttling
 - **Random Delay Antar Pesan:** Setiap pesan di antrean per device dikirim dengan jeda acak (default: 4–12 detik per pesan, dapat disesuaikan per device).
@@ -786,7 +786,7 @@ User dapat mengatur:
 ```text
 Webhook URL
 
-https://example.com/webhook/sendora
+https://example.com/webhook/waply
 ```
 
 Event:
@@ -822,7 +822,7 @@ Gunakan signature/HMAC untuk verifikasi webhook.
 Contoh:
 
 ```text
-X-Sendora-Signature
+X-Waply-Signature
 ```
 
 ---
@@ -1121,7 +1121,7 @@ Invoice
 Gunakan:
 
 ```text
-X-Sendora-Signature
+X-Waply-Signature
 ```
 
 dengan HMAC.
@@ -1218,10 +1218,10 @@ Developer PC
 ├── Git
 ├── Docker (optional)
 |
-├── Sendora Web
+├── Waply Web
 │     └── localhost:3000
 |
-├── Sendora Gateway
+├── Waply Gateway
 │     └── localhost:3001
 |
 ├── PostgreSQL / Supabase
@@ -1254,7 +1254,7 @@ npm run dev:admin
 Gunakan monorepo:
 
 ```text
-sendora/
+waply/
 |
 ├── apps/
 │   ├── web/
@@ -1296,12 +1296,12 @@ Domain belum diperlukan pada tahap local development.
 Setelah siap production, struktur yang direkomendasikan:
 
 ```text
-sendora.id
-app.sendora.id
-api.sendora.id
-docs.sendora.id
-admin.sendora.id
-gateway.sendora.id
+waply.id
+app.waply.id
+api.waply.id
+docs.waply.id
+admin.waply.id
+gateway.waply.id
 ```
 
 Pada tahap local:
@@ -1408,7 +1408,7 @@ Keputusan final hosting dilakukan setelah mengetahui kebutuhan resource dan juml
 - [ ] Webhook configuration
 - [ ] Event system (termasuk `device.warning` dan `message.opt_out`)
 - [ ] Webhook delivery
-- [ ] HMAC signature (`X-Sendora-Signature`)
+- [ ] HMAC signature (`X-Waply-Signature`)
 - [ ] Retry mechanism
 - [ ] Webhook logs
 
@@ -1462,7 +1462,7 @@ Keputusan final hosting dilakukan setelah mengetahui kebutuhan resource dan juml
 
 # 29. MVP Target
 
-Versi pertama Sendora cukup memiliki:
+Versi pertama Waply cukup memiliki:
 
 ```text
 Landing Page
@@ -1586,6 +1586,6 @@ Role & Permission
 
 ## Catatan Kepatuhan
 
-Jika Sendora menggunakan koneksi WhatsApp Web melalui library pihak ketiga seperti Baileys, produk harus memperhatikan Terms dan kebijakan WhatsApp. Sendora tidak boleh diposisikan sebagai produk resmi WhatsApp kecuali menggunakan jalur resmi WhatsApp Business Platform.
+Jika Waply menggunakan koneksi WhatsApp Web melalui library pihak ketiga seperti Baileys, produk harus memperhatikan Terms dan kebijakan WhatsApp. Waply tidak boleh diposisikan sebagai produk resmi WhatsApp kecuali menggunakan jalur resmi WhatsApp Business Platform.
 
 Penggunaan library pihak ketiga juga memiliki risiko session/account restriction yang harus diperhitungkan dalam desain produk dan terms of service. Fitur anti-ban, spintax, jeda acak, simulasi pengetikan, dan protokol warm-up dirancang untuk meminimalkan risiko tersebut.

@@ -78,8 +78,8 @@ interface AdminSystemSettings {
 const DEFAULT_ADMIN_SETTINGS: AdminSystemSettings = {
   systemProfile: {
     adminName: "Super Administrator",
-    adminEmail: "admin@sendora.id",
-    appName: "Sendora WhatsApp Gateway",
+    adminEmail: "admin@waply.id",
+    appName: "Waply WhatsApp Gateway",
   },
   gatewayConfig: {
     gatewayUrl: "http://localhost:3002",
@@ -91,7 +91,7 @@ const DEFAULT_ADMIN_SETTINGS: AdminSystemSettings = {
   },
   watermarkConfig: {
     enabled: true,
-    text: "\n\n—\n*Sendora.com*",
+    text: "\n\n—\n*Waply.com*",
     applyToFreeOnly: true,
   },
   paymentConfig: {
@@ -108,8 +108,8 @@ const DEFAULT_ADMIN_SETTINGS: AdminSystemSettings = {
     secure: false,
     username: "apikey",
     password: "",
-    fromEmail: "notifications@sendora.id",
-    fromName: "Sendora WhatsApp Gateway",
+    fromEmail: "notifications@waply.id",
+    fromName: "Waply WhatsApp Gateway",
     enabled: false,
   },
   maintenanceConfig: {
@@ -277,7 +277,7 @@ export default function AdminSettingsPage() {
       watermarkConfig: {
         ...(prev.watermarkConfig || {
           enabled: true,
-          text: "\n\n—\n*Sendora.com*",
+          text: "\n\n—\n*Waply.com*",
           applyToFreeOnly: true,
         }),
         [field]: value,
@@ -419,7 +419,7 @@ export default function AdminSettingsPage() {
               <div className="form-control md:col-span-2">
                 <label className="label py-1">
                   <span className="label-text font-bold text-xs text-slate-700">Gateway Engine Base URL</span>
-                  <span className="label-text-alt text-slate-400">Endpoint internal/eksternal Sendora Gateway Service</span>
+                  <span className="label-text-alt text-slate-400">Endpoint internal/eksternal Waply Gateway Service</span>
                 </label>
                 <input
                   type="text"
@@ -560,9 +560,9 @@ export default function AdminSettingsPage() {
               <textarea
                 rows={3}
                 className="textarea textarea-bordered font-mono text-xs leading-relaxed"
-                value={settings.watermarkConfig?.text ?? "\n\n> `Sendora.com`"}
+                value={settings.watermarkConfig?.text ?? "\n\n> `Waply.com`"}
                 onChange={(e) => updateWatermark("text", e.target.value)}
-                placeholder="\n\n> `Sendora.com`"
+                placeholder="\n\n> `Waply.com`"
               />
             </div>
 
@@ -581,7 +581,7 @@ export default function AdminSettingsPage() {
                   {`Nama : Ahmad Fauzi\nKelas : XII RPL 1\nAbsensi : Hadir\nJam : 07:15 WIB`}
                   <span className="text-emerald-400 font-mono font-bold block mt-2 border-l-2 border-emerald-500 pl-2">
                     {settings.watermarkConfig?.enabled
-                      ? (settings.watermarkConfig?.text?.replace(/^[\n\r]+>\s*/, "") || "`Sendora.com`")
+                      ? (settings.watermarkConfig?.text?.replace(/^[\n\r]+>\s*/, "") || "`Waply.com`")
                       : ""}
                   </span>
                 </div>
@@ -589,7 +589,7 @@ export default function AdminSettingsPage() {
               </div>
 
               <p className="text-[11px] text-slate-400 italic">
-                * Keterangan: Jika klien meng-upgrade akun ke <strong>Paket Pro</strong>, teks <span className="text-emerald-400">"{settings.watermarkConfig?.text?.trim() || "> `Sendora.com`"}"</span> di atas akan otomatis hilang 100%.
+                * Keterangan: Jika klien meng-upgrade akun ke <strong>Paket Pro</strong>, teks <span className="text-emerald-400">"{settings.watermarkConfig?.text?.trim() || "> `Waply.com`"}"</span> di atas akan otomatis hilang 100%.
               </p>
             </div>
 
@@ -778,7 +778,7 @@ export default function AdminSettingsPage() {
               <input
                 type="email"
                 className="input input-bordered input-sm"
-                placeholder="no-reply@sendora.id"
+                placeholder="no-reply@waply.id"
                 value={settings.smtpConfig.fromEmail}
                 onChange={(e) => updateSmtp("fromEmail", e.target.value)}
               />
@@ -791,7 +791,7 @@ export default function AdminSettingsPage() {
               <input
                 type="text"
                 className="input input-bordered input-sm"
-                placeholder="Sendora Notification"
+                placeholder="Waply Notification"
                 value={settings.smtpConfig.fromName}
                 onChange={(e) => updateSmtp("fromName", e.target.value)}
               />

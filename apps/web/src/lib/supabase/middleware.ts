@@ -23,12 +23,12 @@ export async function updateSession(request: NextRequest) {
   }
 
   // 1. Check local session cookies first (instant, zero network latency)
-  const isDemoAuth = request.cookies.get("sendora_demo_auth")?.value === "true";
-  const rawEmail = request.cookies.get("sendora_user_email")?.value || "";
+  const isDemoAuth = request.cookies.get("waply_demo_auth")?.value === "true";
+  const rawEmail = request.cookies.get("waply_user_email")?.value || "";
   const decodedEmail = rawEmail ? decodeURIComponent(rawEmail).trim().toLowerCase() : "";
-  const rawRole = request.cookies.get("sendora_user_role")?.value || "";
+  const rawRole = request.cookies.get("waply_user_role")?.value || "";
 
-  const isAdmin = rawRole === "admin" || decodedEmail === "admin@sendora.id";
+  const isAdmin = rawRole === "admin" || decodedEmail === "admin@waply.id";
 
   if (isDemoAuth || rawEmail) {
     if (isAuthRoute) {
@@ -121,7 +121,7 @@ export async function updateSession(request: NextRequest) {
       const role =
         user.user_metadata?.role ||
         user.app_metadata?.role ||
-        (email === "admin@sendora.id" ? "admin" : rawRole || "user");
+        (email === "admin@waply.id" ? "admin" : rawRole || "user");
 
       if (role !== "admin") {
         const url = request.nextUrl.clone();

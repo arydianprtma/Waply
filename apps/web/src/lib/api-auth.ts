@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import fs from "fs";
 import path from "path";
-import { prisma } from "@sendora/database";
+import { prisma } from "@waply/database";
 
 export interface AuthenticatedApiUser {
   id: string;
@@ -29,7 +29,7 @@ interface LocalApiKey {
   createdAt: string;
 }
 
-const LOCAL_STORAGE_DIR = path.join(process.cwd(), ".sendora-data");
+const LOCAL_STORAGE_DIR = path.join(process.cwd(), ".waply-data");
 const LOCAL_KEYS_FILE = path.join(LOCAL_STORAGE_DIR, "api-keys.json");
 
 function getLocalKeys(): LocalApiKey[] {
@@ -243,8 +243,8 @@ export async function validateApiKey(rawKey: string): Promise<ApiAuthResult> {
       authenticated: true,
       user: {
         id: localKey.userId,
-        email: managedUser?.email || "demo@sendora.id",
-        name: managedUser?.name || "Sendora User",
+        email: managedUser?.email || "demo@waply.id",
+        name: managedUser?.name || "Waply User",
         role: managedUser?.role || "admin",
       },
       apiKeyId: localKey.id,
@@ -344,8 +344,8 @@ export async function validateApiKey(rawKey: string): Promise<ApiAuthResult> {
     authenticated: true,
     user: {
       id: localKey.userId,
-      email: fallbackUser?.email || "demo@sendora.id",
-      name: fallbackUser?.name || "Sendora User",
+      email: fallbackUser?.email || "demo@waply.id",
+      name: fallbackUser?.name || "Waply User",
       role: fallbackUser?.role || "admin",
     },
     apiKeyId: localKey.id,

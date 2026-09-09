@@ -903,7 +903,7 @@ export default function AdminUsersPage() {
                 <div className="flex flex-wrap gap-1.5">
                   {[
                     "Spam multi-akun free trial dari IP yang sama",
-                    "Pelanggaran aturan sistem Sendora",
+                    "Pelanggaran aturan sistem Waply",
                     "Spamming & Broadcast tanpa persetujuan",
                     "Terdeteksi anomali bot abuse / traffic",
                     "Penggunaan nomor tidak valid / melanggar ToS",
@@ -1184,7 +1184,7 @@ export default function AdminUsersPage() {
                   Tindakan ini tidak dapat dibatalkan
                 </div>
                 <p className="text-[11px] text-rose-700 leading-relaxed">
-                  Akun akan dihapus secara permanen dari sistem Sendora. Sesi aktif akan dihentikan dan seluruh data terkait akan dihapus.
+                  Akun akan dihapus secara permanen dari sistem Waply. Sesi aktif akan dihentikan dan seluruh data terkait akan dihapus.
                 </p>
               </div>
 

@@ -23,8 +23,8 @@ export function setCachedUser(user: CachedUser | null) {
   cachedUser = user;
   if (typeof window !== "undefined") {
     try {
-      if (user) sessionStorage.setItem("sendora_user_session", JSON.stringify(user));
-      else sessionStorage.removeItem("sendora_user_session");
+      if (user) sessionStorage.setItem("waply_user_session", JSON.stringify(user));
+      else sessionStorage.removeItem("waply_user_session");
     } catch {}
   }
   listeners.forEach((cb) => cb(user));
@@ -62,7 +62,7 @@ export function useUserSession() {
       setUser(cachedUser);
     } else {
       try {
-        const raw = sessionStorage.getItem("sendora_user_session");
+        const raw = sessionStorage.getItem("waply_user_session");
         if (raw) {
           const parsed = JSON.parse(raw);
           cachedUser = parsed;

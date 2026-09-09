@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 
-const DATA_DIR = path.resolve(process.cwd(), ".sendora-data");
+const DATA_DIR = path.resolve(process.cwd(), ".waply-data");
 const LOGS_FILE = path.join(DATA_DIR, "autoreply_logs.json");
 
 export interface AutoReplyLog {

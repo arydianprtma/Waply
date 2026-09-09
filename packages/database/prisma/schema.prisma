@@ -263,7 +263,7 @@ model Automation {
 model Invoice {
   id            String        @id @default(cuid())
   userId        String
-  orderId       String        @unique // e.g. "INV-SENDORA-20260904-XXXX"
+  orderId       String        @unique // e.g. "INV-WAPLY-20260904-XXXX"
   planCode      String
   amount        Int           // IDR amount
   status        InvoiceStatus @default(PENDING)

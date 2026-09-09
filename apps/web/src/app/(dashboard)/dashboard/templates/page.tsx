@@ -17,6 +17,8 @@ import {
   Info,
 } from "lucide-react";
 import { ModalPortal } from "@/components/ui/ModalPortal";
+import { PlanFeatureGuard } from "@/components/dashboard/PlanFeatureGuard";
+import { CardGridSkeleton } from "@/components/ui/SkeletonLoaders";
 
 type TemplateCategory =
   | "BROADCAST"
@@ -190,7 +192,13 @@ export default function TemplatesPage() {
   });
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <PlanFeatureGuard
+      feature="templatesSpintax"
+      featureName="Templates & Spintax"
+      minPlanName="Starter"
+      description="Pustaka Template Pesan dan Generator Spintax dinamis untuk broadcast dan otomatisasi. Upgrade paket untuk mengaktifkan fitur ini."
+    >
+      <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -254,10 +262,7 @@ export default function TemplatesPage() {
 
       {/* Template Grid */}
       {loading ? (
-        <div className="text-center py-20 text-slate-400">
-          <span className="loading loading-spinner loading-md text-emerald-600" />
-          <p className="mt-3 text-xs sm:text-sm font-medium">Memuat pustaka template...</p>
-        </div>
+        <CardGridSkeleton count={6} />
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50 p-6">
           <FileText className="w-10 h-10 mx-auto text-slate-300 mb-3" />
@@ -466,6 +471,7 @@ export default function TemplatesPage() {
         </ModalPortal>
       )}
     </div>
+    </PlanFeatureGuard>
   );
 }
 

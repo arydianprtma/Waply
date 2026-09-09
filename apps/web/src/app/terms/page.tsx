@@ -98,7 +98,7 @@ export default function TermsPage() {
                 Syarat & Ketentuan Layanan (Terms of Service)
               </h1>
               <p className="mt-3 text-slate-600 text-sm md:text-base leading-relaxed">
-                Harap baca dengan saksama seluruh syarat dan ketentuan berikut sebelum menggunakan infrastruktur WhatsApp Gateway, REST API, dashboard, dan layanan Sendora.
+                Harap baca dengan saksama seluruh syarat dan ketentuan berikut sebelum menggunakan infrastruktur WhatsApp Gateway, REST API, dashboard, dan layanan Waply.
               </p>
               <div className="mt-4 inline-flex items-center gap-2 text-xs font-medium text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg">
                 <Clock className="w-3.5 h-3.5" /> Terakhir Diperbarui: {lastUpdated}
@@ -154,10 +154,10 @@ export default function TermsPage() {
                 </div>
                 <div className="text-sm text-slate-600 space-y-3 leading-relaxed">
                   <p>
-                    Dengan mendaftar akun, mengakses, atau menggunakan layanan <strong>Sendora</strong> (selanjutnya disebut "Layanan", "Kami", atau "Platform"), Anda menyatakan bahwa Anda telah membaca, memahami, dan menyetujui untuk terikat oleh Syarat dan Ketentuan ini.
+                    Dengan mendaftar akun, mengakses, atau menggunakan layanan <strong>Waply</strong> (selanjutnya disebut "Layanan", "Kami", atau "Platform"), Anda menyatakan bahwa Anda telah membaca, memahami, dan menyetujui untuk terikat oleh Syarat dan Ketentuan ini.
                   </p>
                   <p>
-                    Jika Anda tidak menyetujui salah satu bagian dari ketentuan ini, Anda tidak diperkenankan untuk mengakses atau menggunakan layanan Sendora.
+                    Jika Anda tidak menyetujui salah satu bagian dari ketentuan ini, Anda tidak diperkenankan untuk mengakses atau menggunakan layanan Waply.
                   </p>
                 </div>
               </section>
@@ -177,7 +177,7 @@ export default function TermsPage() {
                 </div>
                 <div className="text-sm text-slate-600 space-y-3 leading-relaxed">
                   <p>
-                    Sendora menyediakan infrastruktur perantara (Gateway) dan antarmuka pemrograman aplikasi (REST API) yang memungkinkan integrasi software aplikasi pengguna dengan protokol komunikasi WhatsApp Multi-Device.
+                    Waply menyediakan infrastruktur perantara (Gateway) dan antarmuka pemrograman aplikasi (REST API) yang memungkinkan integrasi software aplikasi pengguna dengan protokol komunikasi WhatsApp Multi-Device.
                   </p>
                   <ul className="list-disc list-inside space-y-1.5 pl-2 text-slate-700">
                     <li><strong>Gateway:</strong> Server perantara yang menjembatani request API pengguna ke sesi koneksi WhatsApp.</li>
@@ -225,7 +225,7 @@ export default function TermsPage() {
                   <h2 className="text-xl font-bold text-slate-900">Kebijakan Penggunaan yang Diizinkan (AUP)</h2>
                 </div>
                 <div className="text-sm text-slate-600 space-y-3 leading-relaxed">
-                  <p>Layanan Sendora ditujukan untuk komunikasi bisnis yang sah dan etis, termasuk:</p>
+                  <p>Layanan Waply ditujukan untuk komunikasi bisnis yang sah dan etis, termasuk:</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
                     <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/60 text-xs font-medium text-emerald-900">
                       ✓ <strong>Pesan Transaksional:</strong> Kode OTP, verifikasi akun, invoice, resi pengiriman, konfirmasi order.
@@ -258,14 +258,14 @@ export default function TermsPage() {
                 </div>
                 <div className="text-sm text-slate-600 space-y-3 leading-relaxed">
                   <p className="font-semibold text-rose-900">
-                    Pengguna DILARANG KERAS menggunakan Sendora untuk tujuan berikut:
+                    Pengguna DILARANG KERAS menggunakan Waply untuk tujuan berikut:
                   </p>
                   <ul className="list-disc list-inside space-y-2 pl-2 text-slate-700">
                     <li><strong>Spam Massal Liar (Unsolicited Messages):</strong> Mengirim pesan promosi secara acak kepada nomor tanpa izin/persetujuan penerima (scraping database kontak).</li>
                     <li><strong>Penipuan & Phishing:</strong> Mengirim tautan palsu, impersonasi institusi bank/keuangan, atau penipuan berhadiah/undian.</li>
                     <li><strong>Konten Terlarang & Ilegal:</strong> Materi pornografi, perjudian online (judi slot/togel), perdagangan obat-obatan terlarang, senjata api, atau barang selundupan.</li>
                     <li><strong>Ujaran Kebencian & Pelecehan:</strong> Mengancam, memfitnah, mendiskriminasi SARA, atau melakukan tindakan intimidasi.</li>
-                    <li><strong>Serangan Siber:</strong> Melakukan DoS/DDoS pada infrastruktur server Sendora atau menyalahgunakan endpoint API secara berlebihan.</li>
+                    <li><strong>Serangan Siber:</strong> Melakukan DoS/DDoS pada infrastruktur server Waply atau menyalahgunakan endpoint API secara berlebihan.</li>
                   </ul>
                 </div>
               </section>
@@ -285,12 +285,12 @@ export default function TermsPage() {
                 </div>
                 <div className="text-sm text-slate-600 space-y-3 leading-relaxed">
                   <p>
-                    Sendora menyediakan serangkaian fitur proteksi (Anti-Ban, Smart Random Delay, Dynamic Typing presence, Spintax, dan Warmup limits) yang dirancang untuk mengoptimalkan keamanan pengiriman pesan.
+                    Waply menyediakan serangkaian fitur proteksi (Anti-Ban, Smart Random Delay, Dynamic Typing presence, Spintax, dan Warmup limits) yang dirancang untuk mengoptimalkan keamanan pengiriman pesan.
                   </p>
                   <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs leading-relaxed space-y-2">
                     <p className="font-bold">Pernyataan Batasan Tanggung Jawab (Disclaimer):</p>
                     <p>
-                      WhatsApp dan Meta memiliki algoritma dan kebijakan internal independen terkait deteksi aktivitas spam. Sendora <strong>tidak berafiliasi resmi dengan Meta/WhatsApp LLC</strong>. Sendora <strong>tidak bertanggung jawab</strong> atas segala bentuk penangguhan, pemblokiran (ban), atau penghapusan nomor WhatsApp yang dilakukan oleh pihak WhatsApp/Meta akibat pola broadcast atau laporan (report spam) dari penerima pesan pengguna.
+                      WhatsApp dan Meta memiliki algoritma dan kebijakan internal independen terkait deteksi aktivitas spam. Waply <strong>tidak berafiliasi resmi dengan Meta/WhatsApp LLC</strong>. Waply <strong>tidak bertanggung jawab</strong> atas segala bentuk penangguhan, pemblokiran (ban), atau penghapusan nomor WhatsApp yang dilakukan oleh pihak WhatsApp/Meta akibat pola broadcast atau laporan (report spam) dari penerima pesan pengguna.
                     </p>
                   </div>
                 </div>
@@ -311,7 +311,7 @@ export default function TermsPage() {
                 </div>
                 <div className="text-sm text-slate-600 space-y-3 leading-relaxed">
                   <p>
-                    Layanan berbayar Sendora diproses melalui payment gateway terverifikasi (Midtrans) dengan mata uang Rupiah (IDR).
+                    Layanan berbayar Waply diproses melalui payment gateway terverifikasi (Midtrans) dengan mata uang Rupiah (IDR).
                   </p>
                   <ul className="list-disc list-inside space-y-1.5 pl-2 text-slate-700">
                     <li>Paket langganan berlaku sesuai durasi yang dipilih (Harian, Bulanan, atau Tahunan).</li>
@@ -336,7 +336,7 @@ export default function TermsPage() {
                 </div>
                 <div className="text-sm text-slate-600 space-y-3 leading-relaxed">
                   <p>
-                    Sendora berupaya menjaga ketersediaan layanan (Uptime) hingga target 99.9%. Namun, gangguan dapat terjadi sewaktu-waktu akibat pembaruan protokol dari pihak WhatsApp/Meta, gangguan jaringan pihak ketiga, atau bencana di luar kendali wajar kami (Force Majeure).
+                    Waply berupaya menjaga ketersediaan layanan (Uptime) hingga target 99.9%. Namun, gangguan dapat terjadi sewaktu-waktu akibat pembaruan protokol dari pihak WhatsApp/Meta, gangguan jaringan pihak ketiga, atau bencana di luar kendali wajar kami (Force Majeure).
                   </p>
                   <p>
                     Pemeliharaan sistem terjadwal (Maintenance) akan diinformasikan sebelumnya melalui dashboard atau saluran resmi kami.
@@ -359,7 +359,7 @@ export default function TermsPage() {
                 </div>
                 <div className="text-sm text-slate-600 space-y-3 leading-relaxed">
                   <p>
-                    Sendora berhak secara mutlak untuk menangguhkan (suspend) sementara atau menghapus permanen akun pengguna tanpa pemberitahuan sebelumnya jika ditemukan indikasi kuat pelanggaran terhadap Syarat & Ketentuan ini atau hukum yang berlaku di Indonesia.
+                    Waply berhak secara mutlak untuk menangguhkan (suspend) sementara atau menghapus permanen akun pengguna tanpa pemberitahuan sebelumnya jika ditemukan indikasi kuat pelanggaran terhadap Syarat & Ketentuan ini atau hukum yang berlaku di Indonesia.
                   </p>
                   <p>
                     Akun yang diterminasi akibat pelanggaran berat tidak berhak atas kompensasi atau pengembalian sisa kuota.
@@ -385,8 +385,8 @@ export default function TermsPage() {
                     Kami dapat memperbarui Syarat & Ketentuan ini dari waktu ke waktu. Perubahan akan berlaku segera setelah dipublikasikan pada halaman ini. Penggunaan berkelanjutan atas layanan setelah perubahan berarti Anda menerima ketentuan yang diperbarui.
                   </p>
                   <div className="pt-2">
-                    <p className="font-semibold text-slate-800">Hubungi Tim Legal & Support Sendora:</p>
-                    <p className="text-slate-600">Email: <a href="mailto:legal@sendora.id" className="text-primary font-bold hover:underline">legal@sendora.id</a> / <a href="mailto:support@sendora.id" className="text-primary font-bold hover:underline">support@sendora.id</a></p>
+                    <p className="font-semibold text-slate-800">Hubungi Tim Legal & Support Waply:</p>
+                    <p className="text-slate-600">Email: <a href="mailto:legal@waply.id" className="text-primary font-bold hover:underline">legal@waply.id</a> / <a href="mailto:support@waply.id" className="text-primary font-bold hover:underline">support@waply.id</a></p>
                     <p className="text-slate-600">WhatsApp Support: <a href="https://wa.me/6281234567890" target="_blank" rel="noopener noreferrer" className="text-emerald-600 font-bold hover:underline">+62 812-3456-7890</a></p>
                   </div>
                 </div>

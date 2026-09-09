@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
 
     const input: CreateTicketInput = {
       userId: user.id,
-      userName: user.name || "Sendora User",
+      userName: user.name || "Waply User",
       userEmail: user.email,
       userPhone: phone || undefined,
       subject: subject.trim(),
@@ -75,8 +75,8 @@ export async function POST(req: NextRequest) {
         if (aiResult && aiResult.replyText) {
           replyToTicket(ticket.id, {
             senderId: "ai_assistant",
-            senderName: "Sendora AI Assistant",
-            senderEmail: "ai@sendora.id",
+            senderName: "Waply AI Assistant",
+            senderEmail: "ai@waply.id",
             senderRole: "ai",
             message: aiResult.replyText,
           });

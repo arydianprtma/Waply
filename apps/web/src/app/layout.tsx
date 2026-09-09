@@ -16,16 +16,15 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Sendora - WhatsApp Gateway & Messaging API SaaS",
-  description: "Simple Messaging, Powerful Automation. WhatsApp Gateway & Messaging API for developers and businesses.",
+  title: "Waply - WhatsApp Gateway & Multi-Device Messaging API SaaS",
+  description: "Infrastruktur WhatsApp Gateway & Messaging API tercepat dan aman untuk developer dan bisnis.",
   icons: {
     icon: [
-      { url: "/favicon.ico?v=2", sizes: "any" },
-      { url: "/favicon-32x32.png?v=2", type: "image/png", sizes: "32x32" },
-      { url: "/sendora-icon.png?v=2", type: "image/png", sizes: "512x512" },
+      { url: "/favicon.png", type: "image/png" },
+      { url: "/icon.png", type: "image/png" },
     ],
-    shortcut: "/favicon.ico?v=2",
-    apple: "/apple-icon.png?v=2",
+    shortcut: "/favicon.png",
+    apple: "/icon.png",
   },
 };
 
@@ -39,13 +38,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" data-theme="sendoraLight" suppressHydrationWarning>
+    <html lang="id" data-theme="waplyLight" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-        <link rel="icon" href="/favicon.ico?v=2" sizes="any" />
-        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=2" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=2" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon.png?v=2" />
+        <link rel="icon" type="image/png" href="/favicon.png" />
+        <link rel="shortcut icon" href="/favicon.png" />
+        <link rel="apple-touch-icon" href="/icon.png" />
       </head>
       <body
         className={`${plusJakartaSans.className} antialiased`}

@@ -13,6 +13,8 @@ import {
   Clock,
   Send,
 } from "lucide-react";
+import { PlanFeatureGuard } from "@/components/dashboard/PlanFeatureGuard";
+import { TableSkeleton } from "@/components/ui/SkeletonLoaders";
 
 interface MessageItem {
   id: string;
@@ -82,7 +84,7 @@ export default function MessagesPage() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `sendora_messages_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute("download", `waply_messages_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -119,7 +121,13 @@ export default function MessagesPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <PlanFeatureGuard
+      feature="messageLogs"
+      featureName="Message Logs (Riwayat Pesan)"
+      minPlanName="Starter"
+      description="Message Logs mencatat riwayat pengiriman pesan WhatsApp keluar, status delivery, dan pelacakan audit pesan. Upgrade paket untuk mengaktifkan fitur ini."
+    >
+      <div className="space-y-6 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Message Logs</h1>
@@ -173,9 +181,7 @@ export default function MessagesPage() {
         </div>
 
         {loading ? (
-          <div className="p-8 text-center text-sm text-base-content/60 flex items-center justify-center gap-2">
-            <Loader2 className="w-4 h-4 animate-spin" /> Memuat riwayat pesan...
-          </div>
+          <TableSkeleton rows={5} cols={5} />
         ) : messages.length === 0 ? (
           <div className="p-8 text-center space-y-3">
             <div className="w-12 h-12 rounded-full bg-base-200 flex items-center justify-center mx-auto text-base-content/50">
@@ -207,7 +213,7 @@ export default function MessagesPage() {
                       {new Date(m.createdAt).toLocaleString("id-ID")}
                     </td>
                     <td className="font-medium text-base-content">
-                      {m.device?.phoneNumber ? `+${m.device.phoneNumber}` : m.device?.name || "Sendora Device"}
+                      {m.device?.phoneNumber ? `+${m.device.phoneNumber}` : m.device?.name || "Waply Device"}
                     </td>
                     <td className="font-mono font-medium">+{m.recipient}</td>
                     <td className="max-w-md">
@@ -229,5 +235,6 @@ export default function MessagesPage() {
         )}
       </div>
     </div>
+    </PlanFeatureGuard>
   );
 }

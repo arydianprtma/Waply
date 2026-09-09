@@ -13,6 +13,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { PlanFeatureGuard } from "@/components/dashboard/PlanFeatureGuard";
+import { TableSkeleton } from "@/components/ui/SkeletonLoaders";
 
 interface BlacklistItem {
   id: string;
@@ -251,9 +252,7 @@ export default function BlacklistPage() {
 
         {/* Table Content */}
         {loading ? (
-          <div className="flex items-center justify-center p-12 bg-base-100 rounded-3xl border border-base-200">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          </div>
+          <TableSkeleton rows={4} cols={5} />
         ) : blacklist.length === 0 ? (
           <div className="p-12 text-center bg-base-100 rounded-3xl border border-base-200 space-y-3">
             <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto">

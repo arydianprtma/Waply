@@ -221,7 +221,7 @@ export function ConnectDeviceModal({
                 ) : (
                   <div className="py-12 flex flex-col items-center justify-center">
                     <Loader2 className="w-10 h-10 animate-spin text-primary mb-3" />
-                    <p className="text-sm font-semibold">Menghasilkan QR Code autentikasi Sendora Engine...</p>
+                    <p className="text-sm font-semibold">Menghasilkan QR Code autentikasi Waply Engine...</p>
                     <p className="text-xs text-base-content/50 mt-1">Harap tunggu beberapa detik.</p>
                   </div>
                 )}

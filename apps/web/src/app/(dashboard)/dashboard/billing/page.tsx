@@ -22,6 +22,10 @@ import {
   ArrowRight,
   Check,
   Timer,
+  Printer,
+  BarChart3,
+  FileText,
+  Download,
 } from "lucide-react";
 import {
   type PlanId,
@@ -67,10 +71,27 @@ const PLAN_COLORS: Record<string, { badge: string; border: string; btn: string }
   },
 };
 
+interface MeteredUsage {
+  messages: {
+    used: number;
+    limit: number;
+    remaining: number;
+    percent: number;
+    isUnlimited: boolean;
+  };
+  devices: {
+    connected: number;
+    limit: number;
+    remaining: number;
+    percent: number;
+  };
+}
+
 interface BillingData {
   subscription: Subscription & { status: string };
   plan: Plan;
   invoices: Invoice[];
+  meteredUsage?: MeteredUsage;
 }
 
 declare global {
@@ -130,6 +151,7 @@ function BillingContent() {
   const [userAddons, setUserAddons] = useState<UserAddon[]>([]);
   const [addonCategoryFilter, setAddonCategoryFilter] = useState<"ALL" | "DEVICE" | "MESSAGES">("ALL");
   const [nowMs, setNowMs] = useState<number>(Date.now());
+  const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => setNowMs(Date.now()), 1000);
@@ -418,6 +440,106 @@ function BillingContent() {
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Metered Usage & Quota Monitor (Transparency) */}
+          {billingData?.meteredUsage && (
+            <div className="card bg-base-100 border border-base-200 shadow-sm p-6 rounded-2xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                    <BarChart3 className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm text-base-content">Transparansi Penggunaan Kuota (Metered Usage)</h3>
+                    <p className="text-xs text-base-content/50">Pantau konsumsi pesan dan perangkat aktif secara real-time</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setActiveTab("addons")}
+                  className="btn btn-xs btn-outline btn-primary rounded-lg gap-1.5 self-start sm:self-center"
+                >
+                  <PlusCircle className="w-3.5 h-3.5" /> Top-Up Kuota / Addon
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* Messages Meter */}
+                <div className="bg-base-200/40 border border-base-200 rounded-xl p-4 space-y-2.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-base-content flex items-center gap-1.5">
+                      <MessageSquare className="w-3.5 h-3.5 text-primary" /> Pengiriman Pesan (Bulan Ini)
+                    </span>
+                    <span className="font-bold font-mono">
+                      {billingData.meteredUsage.messages.used.toLocaleString("id-ID")}{" "}
+                      {billingData.meteredUsage.messages.isUnlimited
+                        ? "Pesan (Unlimited)"
+                        : `/ ${billingData.meteredUsage.messages.limit.toLocaleString("id-ID")} Pesan`}
+                    </span>
+                  </div>
+
+                  {!billingData.meteredUsage.messages.isUnlimited ? (
+                    <>
+                      <div className="w-full bg-base-300/80 rounded-full h-2.5 overflow-hidden">
+                        <div
+                          className={`h-2.5 rounded-full transition-all duration-500 ${
+                            billingData.meteredUsage.messages.percent > 85
+                              ? "bg-rose-500"
+                              : billingData.meteredUsage.messages.percent > 65
+                              ? "bg-amber-500"
+                              : "bg-primary"
+                          }`}
+                          style={{ width: `${Math.min(100, Math.max(2, billingData.meteredUsage.messages.percent))}%` }}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] text-base-content/50">
+                        <span>
+                          {billingData.meteredUsage.messages.percent}% terpakai
+                        </span>
+                        <span>
+                          Sisa: <strong className="text-base-content/80 font-bold">{billingData.meteredUsage.messages.remaining.toLocaleString("id-ID")}</strong> pesan
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-xs text-emerald-600 font-medium flex items-center gap-1.5 pt-1">
+                      <CheckCircle2 className="w-4 h-4" /> Paket Anda memiliki kuota pesan Unlimited tanpa batas bulanan.
+                    </div>
+                  )}
+                </div>
+
+                {/* Device Slots Meter */}
+                <div className="bg-base-200/40 border border-base-200 rounded-xl p-4 space-y-2.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-base-content flex items-center gap-1.5">
+                      <Smartphone className="w-3.5 h-3.5 text-emerald-600" /> Slot Device WhatsApp
+                    </span>
+                    <span className="font-bold font-mono">
+                      {billingData.meteredUsage.devices.connected} / {billingData.meteredUsage.devices.limit} Device
+                    </span>
+                  </div>
+
+                  <div className="w-full bg-base-300/80 rounded-full h-2.5 overflow-hidden">
+                    <div
+                      className={`h-2.5 rounded-full transition-all duration-500 ${
+                        billingData.meteredUsage.devices.percent >= 100
+                          ? "bg-rose-500"
+                          : "bg-emerald-500"
+                      }`}
+                      style={{ width: `${Math.min(100, Math.max(4, billingData.meteredUsage.devices.percent))}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-base-content/50">
+                    <span>
+                      {billingData.meteredUsage.devices.percent}% slot terhubung
+                    </span>
+                    <span>
+                      Sisa: <strong className="text-base-content/80 font-bold">{billingData.meteredUsage.devices.remaining}</strong> slot tersedia
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
@@ -863,6 +985,16 @@ function BillingContent() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3 self-end sm:self-center">
+                    {inv.status === "PAID" && (
+                      <button
+                        onClick={() => setViewingInvoice(inv)}
+                        className="btn btn-xs rounded-lg gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 font-semibold px-2.5 py-1"
+                        title="Lihat dan Cetak Invoice Resmi"
+                      >
+                        <Printer className="w-3 h-3 text-slate-500" />
+                        Cetak Invoice
+                      </button>
+                    )}
                     {inv.status === "PENDING" && (
                       <button
                         onClick={() => handleSyncOrder(inv.orderId)}
@@ -885,6 +1017,120 @@ function BillingContent() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── Printable Official Invoice Modal ────────────────────────────── */}
+      {viewingInvoice && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white text-slate-900 rounded-3xl shadow-2xl max-w-2xl w-full p-6 md:p-8 space-y-6 relative border border-slate-200 max-h-[90vh] overflow-y-auto print:max-w-none print:w-full print:p-0 print:border-none print:shadow-none">
+            {/* Modal Controls (Hidden when printed) */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4 print:hidden">
+              <div className="flex items-center gap-2">
+                <Receipt className="w-5 h-5 text-primary" />
+                <h3 className="font-bold text-base text-slate-900">Faktur Pembayaran Resmi</h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => window.print()}
+                  className="btn btn-sm btn-primary rounded-xl gap-1.5 font-bold"
+                >
+                  <Printer className="w-4 h-4" /> Cetak / Simpan PDF
+                </button>
+                <button
+                  onClick={() => setViewingInvoice(null)}
+                  className="btn btn-sm btn-ghost btn-circle"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Printable Invoice Body */}
+            <div className="space-y-6 print:p-8">
+              {/* Header */}
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="text-2xl font-black text-slate-900 tracking-tight">WAPLY</h2>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">
+                    WhatsApp Gateway & Messaging Infrastructure
+                  </p>
+                  <p className="text-xs text-slate-400">PT Waply Digital Nusantara • NPWP: 98.123.456.7-012.000</p>
+                </div>
+                <div className="text-right">
+                  <span className="inline-block px-3 py-1 bg-emerald-100 text-emerald-800 rounded-lg text-xs font-black uppercase tracking-wider border border-emerald-300">
+                    LUNAS / PAID
+                  </span>
+                  <p className="text-xs font-mono font-bold text-slate-800 mt-2">
+                    INV-{viewingInvoice.orderId}
+                  </p>
+                </div>
+              </div>
+
+              {/* Invoice Meta Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100 text-xs">
+                <div>
+                  <p className="text-slate-400 font-medium">Tanggal Transaksi</p>
+                  <p className="font-bold text-slate-800 mt-0.5">
+                    {formatDate(viewingInvoice.paidAt || viewingInvoice.createdAt)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-slate-400 font-medium">Metode Pembayaran</p>
+                  <p className="font-bold text-slate-800 mt-0.5">Midtrans Snap Gateway</p>
+                </div>
+                <div>
+                  <p className="text-slate-400 font-medium">Status Verifikasi</p>
+                  <p className="font-bold text-emerald-600 mt-0.5">Terverifikasi Otomatis</p>
+                </div>
+              </div>
+
+              {/* Itemized Table */}
+              <div className="border border-slate-200 rounded-2xl overflow-hidden">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                    <tr>
+                      <th className="p-3.5">Deskripsi Layanan</th>
+                      <th className="p-3.5 text-center">Durasi / Qty</th>
+                      <th className="p-3.5 text-right">Harga</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    <tr>
+                      <td className="p-3.5 font-semibold text-slate-900">
+                        Paket Langganan Waply — Plan {viewingInvoice.planId}
+                        <p className="text-[11px] text-slate-400 font-normal mt-0.5">
+                          Akses WhatsApp Multi-Device Gateway, REST API, Spintax & Broadcast
+                        </p>
+                      </td>
+                      <td className="p-3.5 text-center text-slate-600">1 Periode</td>
+                      <td className="p-3.5 text-right font-bold text-slate-900">
+                        {formatIDR(viewingInvoice.amount)}
+                      </td>
+                    </tr>
+                  </tbody>
+                  <tfoot className="bg-slate-50 border-t border-slate-200">
+                    <tr>
+                      <td colSpan={2} className="p-3.5 font-bold text-slate-700 text-right">
+                        Total Pembayaran
+                      </td>
+                      <td className="p-3.5 font-black text-slate-900 text-right text-sm">
+                        {formatIDR(viewingInvoice.amount)}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+
+              {/* Footer Note */}
+              <div className="text-[11px] text-slate-400 leading-relaxed pt-2 border-t border-slate-100">
+                <p>
+                  Faktur ini diterbitkan secara otomatis oleh sistem penagihan digital Waply dan sah tanpa tanda tangan basah.
+                  Terima kasih telah mempercayakan infrastruktur WhatsApp Gateway bisnis Anda kepada Waply.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

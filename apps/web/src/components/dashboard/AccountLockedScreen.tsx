@@ -66,15 +66,15 @@ export function AccountLockedScreen({ user }: AccountLockedScreenProps) {
     }
   };
 
-  const supportEmail = "support@sendora.id";
+  const supportEmail = "support@waply.id";
   const emailSubject = encodeURIComponent(`[${topic}] Banding Akun ${user.email} (ID: ${user.id})`);
   const emailBody = encodeURIComponent(
-    `Halo Tim Customer Support Sendora,\n\nSaya ingin membuka tiket bantuan / permohonan peninjauan akun terkait status ${user.status}.\n\nDetail Akun:\n- Nama: ${user.name}\n- Email: ${user.email}\n- User ID: ${user.id}\n- Status Saat Ini: ${user.status}\n- Catatan Penonaktifan: ${user.banReason || "Tidak tercantum"}\n- Topik Bantuan: ${topic}\n\nPenjelasan / Pesan:\n${message || "Mohon lakukan peninjauan kembali terhadap akun saya."}\n\nTerima kasih.`
+    `Halo Tim Customer Support Waply,\n\nSaya ingin membuka tiket bantuan / permohonan peninjauan akun terkait status ${user.status}.\n\nDetail Akun:\n- Nama: ${user.name}\n- Email: ${user.email}\n- User ID: ${user.id}\n- Status Saat Ini: ${user.status}\n- Catatan Penonaktifan: ${user.banReason || "Tidak tercantum"}\n- Topik Bantuan: ${topic}\n\nPenjelasan / Pesan:\n${message || "Mohon lakukan peninjauan kembali terhadap akun saya."}\n\nTerima kasih.`
   );
   const mailtoUrl = `mailto:${supportEmail}?subject=${emailSubject}&body=${emailBody}`;
 
   const waText = encodeURIComponent(
-    `Halo Customer Support Sendora, saya ingin mengajukan tiket bantuan / banding akun:\n\n- Nama: ${user.name}\n- Email: ${user.email}\n- User ID: ${user.id}\n- Status: ${user.status}\n- Topik: ${topic}\n\nPesan: ${message || "Mohon ditinjau kembali."}`
+    `Halo Customer Support Waply, saya ingin mengajukan tiket bantuan / banding akun:\n\n- Nama: ${user.name}\n- Email: ${user.email}\n- User ID: ${user.id}\n- Status: ${user.status}\n- Topik: ${topic}\n\nPesan: ${message || "Mohon ditinjau kembali."}`
   );
   const waUrl = `https://wa.me/6281234567890?text=${waText}`;
 
@@ -126,7 +126,7 @@ export function AccountLockedScreen({ user }: AccountLockedScreenProps) {
             Alasan Penonaktifan / Catatan Admin:
           </span>
           <p className="text-xs font-semibold text-slate-900 bg-white p-3 rounded-xl border border-slate-200">
-            {user.banReason || "Pelanggaran terhadap syarat dan kebijakan sistem Sendora."}
+            {user.banReason || "Pelanggaran terhadap syarat dan kebijakan sistem Waply."}
           </p>
         </div>
 
@@ -136,7 +136,7 @@ export function AccountLockedScreen({ user }: AccountLockedScreenProps) {
           <div className="space-y-0.5">
             <span className="font-bold block">Semua Fitur Telah Dikunci:</span>
             <p className="text-rose-800 text-[11px] leading-relaxed">
-              Koneksi Sendora WhatsApp Gateway, pengiriman pesan broadcast massal, otomasi auto-reply, manajemen kontak, dan akses REST API Key telah diblokir secara total demi keamanan sistem.
+              Koneksi Waply WhatsApp Gateway, pengiriman pesan broadcast massal, otomasi auto-reply, manajemen kontak, dan akses REST API Key telah diblokir secara total demi keamanan sistem.
             </p>
           </div>
         </div>
@@ -190,7 +190,7 @@ export function AccountLockedScreen({ user }: AccountLockedScreenProps) {
                       Buka Tiket Bantuan CS
                     </h3>
                     <p className="text-[11px] text-slate-500 mt-1">
-                      Pusat Dukungan & Banding Akun Sendora
+                      Pusat Dukungan & Banding Akun Waply
                     </p>
                   </div>
                 </div>
@@ -307,7 +307,7 @@ export function AccountLockedScreen({ user }: AccountLockedScreenProps) {
                   </div>
 
                   <p className="text-[11px] text-slate-500 leading-relaxed max-w-sm mx-auto">
-                    Tim Customer Service Sendora akan meninjau catatan Anda dan mengirimkan balasan ke email <strong>{user.email}</strong> dalam 1x24 jam kerja.
+                    Tim Customer Service Waply akan meninjau catatan Anda dan mengirimkan balasan ke email <strong>{user.email}</strong> dalam 1x24 jam kerja.
                   </p>
 
                   <div className="pt-2 flex flex-wrap items-center justify-center gap-2">

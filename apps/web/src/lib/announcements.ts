@@ -19,7 +19,7 @@ export interface Announcement {
   readBy?: string[]; // Array of user IDs who have marked this read
 }
 
-const DATA_DIR = path.resolve(process.cwd(), ".sendora-data");
+const DATA_DIR = path.resolve(process.cwd(), ".waply-data");
 const ANNOUNCEMENTS_FILE = path.join(DATA_DIR, "announcements.json");
 
 function ensureDataDir() {
@@ -32,7 +32,7 @@ export function getDefaultAnnouncements(): Announcement[] {
   return [
     {
       id: "ann_welcome_01",
-      title: "Selamat Datang di Sendora API Gateway! 🎉",
+      title: "Selamat Datang di Waply API Gateway! 🎉",
       message: "Nikmati kuota 100 pesan Free Trial Anda. Silakan hubungkan WhatsApp Device Anda melalui scan QR Code di menu WhatsApp Devices.",
       type: "SUCCESS",
       targetAudience: "ALL",

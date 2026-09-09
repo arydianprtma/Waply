@@ -21,6 +21,8 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { WebhookConfig, WebhookEvent, WebhookLog } from "@/lib/webhooks";
+import { PlanFeatureGuard } from "@/components/dashboard/PlanFeatureGuard";
+import { CardGridSkeleton, TableSkeleton } from "@/components/ui/SkeletonLoaders";
 
 const ALL_EVENTS: { id: WebhookEvent; label: string; desc: string }[] = [
   {
@@ -232,7 +234,13 @@ export default function WebhooksPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+    <PlanFeatureGuard
+      feature="webhooks"
+      featureName="Inbound Webhooks"
+      minPlanName="Starter"
+      description="Fitur Inbound Webhooks memungkinkan pengiriman notifikasi event pesan secara real-time ke sistem backend Anda. Upgrade paket untuk mengaktifkan fitur ini."
+    >
+      <div className="space-y-6 max-w-7xl mx-auto pb-12">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -279,9 +287,7 @@ export default function WebhooksPage() {
       {activeTab === "ENDPOINTS" ? (
         <div className="space-y-4">
           {loading ? (
-            <div className="p-12 text-center text-sm text-base-content/60 flex items-center justify-center gap-2 bg-base-100 rounded-3xl border border-base-200">
-              <Loader2 className="w-5 h-5 animate-spin" /> Memuat daftar webhooks...
-            </div>
+            <CardGridSkeleton count={3} />
           ) : webhooks.length === 0 ? (
             <div className="card bg-base-100 border border-base-200 p-10 text-center space-y-3 rounded-3xl">
               <div className="w-12 h-12 rounded-full bg-base-200 flex items-center justify-center mx-auto text-base-content/50">
@@ -516,7 +522,7 @@ export default function WebhooksPage() {
                   <input
                     type="url"
                     required
-                    placeholder="https://my-domain.com/api/sendora-webhook"
+                    placeholder="https://my-domain.com/api/waply-webhook"
                     className="input input-bordered input-sm w-full font-mono text-xs"
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
@@ -582,5 +588,6 @@ export default function WebhooksPage() {
         </ModalPortal>
       )}
     </div>
+    </PlanFeatureGuard>
   );
 }

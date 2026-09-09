@@ -10,7 +10,7 @@ export interface PasswordResetRecord {
   used: boolean;
 }
 
-const DATA_DIR = path.resolve(process.cwd(), ".sendora-data");
+const DATA_DIR = path.resolve(process.cwd(), ".waply-data");
 const RESET_TOKENS_FILE = path.join(DATA_DIR, "password_resets.json");
 
 function ensureDataDir() {

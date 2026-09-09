@@ -675,7 +675,7 @@ export default function SettingsPage() {
                 <div className="w-36 h-36 bg-slate-900 rounded-xl flex items-center justify-center text-white font-mono text-center p-2">
                   <div className="space-y-1">
                     <QrCode className="w-16 h-16 mx-auto text-primary" />
-                    <span className="text-[10px] tracking-wider block font-bold text-primary-content/80">SENDORA 2FA</span>
+                    <span className="text-[10px] tracking-wider block font-bold text-primary-content/80">WAPLY 2FA</span>
                   </div>
                 </div>
                 <div className="text-center">

@@ -21,15 +21,15 @@ export async function POST(request: Request) {
 
     // 2. If user does not exist in database, auto-register them
     if (!dbUser) {
-      const isSuperAdmin = cleanEmail === "admin@sendora.id";
+      const isSuperAdmin = cleanEmail === "admin@waply.id";
       const initialRole: "admin" | "user" = isSuperAdmin ? "admin" : "user";
       const initialName = isSuperAdmin
-        ? "Sendora Super Admin"
-        : body.name || cleanEmail.split("@")[0] || "Sendora User";
+        ? "Waply Super Admin"
+        : body.name || cleanEmail.split("@")[0] || "Waply User";
 
       dbUser = registerOrSyncUser({
         id: isSuperAdmin
-          ? "admin-master-sendora-01"
+          ? "admin-master-waply-01"
           : `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, "_")}`,
         email: cleanEmail,
         name: initialName,
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
         {
           success: false,
           error: `Akun Anda telah DIBLOKIR (BANNED). Alasan: ${
-            dbUser.banReason || "Pelanggaran aturan sistem Sendora"
+            dbUser.banReason || "Pelanggaran aturan sistem Waply"
           }. Hubungi admin untuk informasi lebih lanjut.`,
         },
         { status: 403 }
@@ -64,8 +64,8 @@ export async function POST(request: Request) {
 
     // 4. Resolve exact role from database record
     const exactRole: "admin" | "user" =
-      dbUser.role || (cleanEmail === "admin@sendora.id" ? "admin" : "user");
-    const exactName = dbUser.name || cleanEmail.split("@")[0] || "Sendora User";
+      dbUser.role || (cleanEmail === "admin@waply.id" ? "admin" : "user");
+    const exactName = dbUser.name || cleanEmail.split("@")[0] || "Waply User";
 
     // 5. Update last login timestamp and client IP in database
     registerOrSyncUser({
@@ -78,31 +78,31 @@ export async function POST(request: Request) {
 
     // 6. Set Session Cookies
     const cookieStore = await cookies();
-    cookieStore.set("sendora_demo_auth", "true", {
+    cookieStore.set("waply_demo_auth", "true", {
       path: "/",
       maxAge: 60 * 60 * 24 * 7, // 7 days
       sameSite: "lax",
       httpOnly: false,
     });
-    cookieStore.set("sendora_user_email", cleanEmail, {
+    cookieStore.set("waply_user_email", cleanEmail, {
       path: "/",
       maxAge: 60 * 60 * 24 * 7,
       sameSite: "lax",
       httpOnly: false,
     });
-    cookieStore.set("sendora_user_name", exactName, {
+    cookieStore.set("waply_user_name", exactName, {
       path: "/",
       maxAge: 60 * 60 * 24 * 7,
       sameSite: "lax",
       httpOnly: false,
     });
-    cookieStore.set("sendora_user_role", exactRole, {
+    cookieStore.set("waply_user_role", exactRole, {
       path: "/",
       maxAge: 60 * 60 * 24 * 7,
       sameSite: "lax",
       httpOnly: false,
     });
-    cookieStore.set("sendora_user_id", dbUser.id, {
+    cookieStore.set("waply_user_id", dbUser.id, {
       path: "/",
       maxAge: 60 * 60 * 24 * 7,
       sameSite: "lax",
