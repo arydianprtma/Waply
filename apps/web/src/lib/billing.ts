@@ -542,7 +542,7 @@ export async function checkMidtransOrderStatus(orderId: string): Promise<any> {
 /** Charge payment directly via Midtrans Core API (Headless Custom UI) */
 export async function chargeMidtransCoreApi(params: {
   paymentType: "qris" | "bank_transfer" | "echannel" | "cstore" | "gopay" | "shopeepay";
-  bank?: "bca" | "bni" | "bri" | "permata" | "mandiri";
+  bank?: "bca" | "bni" | "bri" | "permata" | "mandiri" | "cimb";
   orderId: string;
   amount: number;
   planId: PlanId;
@@ -598,6 +598,10 @@ export async function chargeMidtransCoreApi(params: {
       };
     } else if (params.bank === "permata") {
       payload.payment_type = "permata";
+    } else if (params.bank === "cimb") {
+      payload.bank_transfer = {
+        bank: "cimb",
+      };
     } else {
       payload.bank_transfer = {
         bank: params.bank || "bca",

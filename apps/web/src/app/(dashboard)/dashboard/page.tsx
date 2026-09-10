@@ -98,7 +98,12 @@ export default function DashboardOverviewPage() {
   const [data, setData] = useState<AnalyticsData>(EMPTY);
   const [loading, setLoading] = useState(true);
   const [initialLoaded, setInitialLoaded] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [timeRange, setTimeRange] = useState<"24h" | "7d" | "30d">("7d");
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const fetchAnalytics = async (range = timeRange) => {
     setLoading(true);

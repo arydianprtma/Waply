@@ -1,5 +1,16 @@
 import fs from "fs";
 import path from "path";
+import {
+  PaymentChannelDefinition,
+  AVAILABLE_PAYMENT_CHANNELS,
+  DEFAULT_ENABLED_PAYMENT_CHANNELS,
+} from "./payment-channels";
+
+export {
+  type PaymentChannelDefinition,
+  AVAILABLE_PAYMENT_CHANNELS,
+  DEFAULT_ENABLED_PAYMENT_CHANNELS,
+};
 
 export interface AdminSystemSettings {
   systemProfile: {
@@ -27,6 +38,7 @@ export interface AdminSystemSettings {
     clientKey: string;
     serverKey: string;
     enabled: boolean;
+    enabledChannels?: string[];
   };
   smtpConfig: {
     host: string;
@@ -83,6 +95,7 @@ export function getDefaultAdminSettings(): AdminSystemSettings {
       clientKey: process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || "",
       serverKey: process.env.MIDTRANS_SERVER_KEY || "",
       enabled: true,
+      enabledChannels: DEFAULT_ENABLED_PAYMENT_CHANNELS,
     },
     smtpConfig: {
       host: process.env.SMTP_HOST || "smtp.sendgrid.net",
@@ -115,9 +128,18 @@ export function getAdminSettings(): AdminSystemSettings {
   try {
     const raw = fs.readFileSync(ADMIN_SETTINGS_FILE, "utf-8");
     const parsed = JSON.parse(raw);
+    const defaults = getDefaultAdminSettings();
     return {
-      ...getDefaultAdminSettings(),
+      ...defaults,
       ...parsed,
+      paymentConfig: {
+        ...defaults.paymentConfig,
+        ...(parsed.paymentConfig || {}),
+        enabledChannels:
+          parsed.paymentConfig?.enabledChannels && Array.isArray(parsed.paymentConfig.enabledChannels)
+            ? parsed.paymentConfig.enabledChannels
+            : DEFAULT_ENABLED_PAYMENT_CHANNELS,
+      },
     };
   } catch {
     return getDefaultAdminSettings();

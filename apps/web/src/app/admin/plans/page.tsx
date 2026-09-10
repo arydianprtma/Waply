@@ -1093,17 +1093,19 @@ export default function AdminPlansPage() {
                     {(() => {
                       const tempStatus = getPlanDiscountStatus(
                         {
-                          price: formData.price,
-                          originalPrice: formData.originalPrice,
-                          discountPercent: formData.discountPercent,
-                          discountBadge: formData.discountBadge,
-                          discountStartDate: formData.discountStartDate,
-                          discountEndDate: formData.discountEndDate,
+                          price: Number(formData.price) || 0,
+                          originalPrice: formData.originalPrice ? Number(formData.originalPrice) : undefined,
+                          discountPercent: formData.discountPercent ? Number(formData.discountPercent) : undefined,
+                          discountBadge: formData.discountBadge || undefined,
+                          discountStartDate: formData.discountStartDate || null,
+                          discountEndDate: formData.discountEndDate || null,
                         },
                         nowMs
                       );
 
-                      const hasValidDiscount = formData.originalPrice > 0 && formData.originalPrice > formData.price;
+                      const numOrig = Number(formData.originalPrice) || 0;
+                      const numPrice = Number(formData.price) || 0;
+                      const hasValidDiscount = numOrig > 0 && numOrig > numPrice;
 
                       return (
                         <div className="rounded-xl bg-white border border-slate-200 p-3 shadow-2xs space-y-2">
@@ -1112,18 +1114,18 @@ export default function AdminPlansPage() {
                             <div className="flex flex-wrap items-center justify-between gap-2">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="line-through text-slate-400 font-medium text-xs">
-                                  Rp {formData.originalPrice.toLocaleString("id-ID")}
+                                  Rp {numOrig.toLocaleString("id-ID")}
                                 </span>
                                 <span className="badge badge-sm bg-rose-50 border-rose-200 text-rose-700 font-bold text-[10px]">
                                   {formData.discountBadge || `HEMAT ${formData.discountPercent}%`}
                                 </span>
                                 <span className="text-slate-400 text-xs">→</span>
                                 <span className="font-extrabold text-slate-900 text-sm">
-                                  Rp {formData.price.toLocaleString("id-ID")}
+                                  Rp {numPrice.toLocaleString("id-ID")}
                                 </span>
                               </div>
                               <span className="text-[11px] text-emerald-600 font-semibold">
-                                Hemat Rp {(formData.originalPrice - formData.price).toLocaleString("id-ID")} ({formData.discountPercent}%)
+                                Hemat Rp {(numOrig - numPrice).toLocaleString("id-ID")} ({formData.discountPercent}%)
                               </span>
                             </div>
                           ) : (

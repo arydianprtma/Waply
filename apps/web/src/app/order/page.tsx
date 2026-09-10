@@ -58,7 +58,17 @@ import { WaplyLogo } from "@/components/brand/WaplyLogo";
 import { PromoCountdownTimer } from "@/components/ui/PromoCountdownTimer";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 
-type PaymentMethodOption = "qris" | "bca_va" | "mandiri_va" | "bri_va" | "bni_va" | "gopay" | "snap";
+type PaymentMethodOption =
+  | "qris"
+  | "bca_va"
+  | "mandiri_va"
+  | "bri_va"
+  | "bni_va"
+  | "permata_va"
+  | "cimb_va"
+  | "gopay"
+  | "shopeepay"
+  | "snap";
 
 interface PaymentChargeData {
   orderId: string;
@@ -74,6 +84,74 @@ interface PaymentChargeData {
   expiryTime?: string;
   transactionStatus?: string;
 }
+
+const PAYMENT_CHANNELS_DATA: Record<
+  string,
+  {
+    name: string;
+    description: string;
+    badge?: string;
+    icon: (cls: string) => React.ReactNode;
+    colorCls: string;
+  }
+> = {
+  qris: {
+    name: "QRIS Nasional",
+    description: "BCA Mobile, GoPay, OVO, Dana, ShopeePay, Mandiri Livin, BRImo, dll.",
+    badge: "TERCEPAT & PRAKTIS",
+    icon: (cls) => <QrCode className={cls} />,
+    colorCls: "text-emerald-600",
+  },
+  bca_va: {
+    name: "BCA Virtual Account",
+    description: "Transfer via BCA Mobile, myBCA, KlikBCA, atau ATM BCA.",
+    badge: "POPULER",
+    icon: (cls) => <Building2 className={cls} />,
+    colorCls: "text-blue-600",
+  },
+  mandiri_va: {
+    name: "Mandiri Bill / VA",
+    description: "Transfer via Livin by Mandiri atau ATM Mandiri.",
+    icon: (cls) => <Building2 className={cls} />,
+    colorCls: "text-amber-600",
+  },
+  bri_va: {
+    name: "BRI (BRIVA)",
+    description: "Transfer via BRImo, Internet Banking BRI, atau ATM BRI.",
+    icon: (cls) => <Building2 className={cls} />,
+    colorCls: "text-sky-600",
+  },
+  bni_va: {
+    name: "BNI Virtual Account",
+    description: "Transfer via BNI Mobile Banking atau ATM BNI.",
+    icon: (cls) => <Building2 className={cls} />,
+    colorCls: "text-orange-600",
+  },
+  permata_va: {
+    name: "Permata Virtual Account",
+    description: "Transfer via PermataMobile X, PermataNet, atau ATM Permata.",
+    icon: (cls) => <Building2 className={cls} />,
+    colorCls: "text-purple-600",
+  },
+  cimb_va: {
+    name: "CIMB Virtual Account",
+    description: "Transfer via OCTO Mobile, OCTO Clicks, atau ATM CIMB Niaga.",
+    icon: (cls) => <Building2 className={cls} />,
+    colorCls: "text-red-600",
+  },
+  gopay: {
+    name: "GoPay & QRIS",
+    description: "Bayar instan via aplikasi GoPay atau scan QR.",
+    icon: (cls) => <Smartphone className={cls} />,
+    colorCls: "text-emerald-600",
+  },
+  shopeepay: {
+    name: "ShopeePay & QRIS",
+    description: "Bayar instan via aplikasi ShopeePay atau scan QR.",
+    icon: (cls) => <Smartphone className={cls} />,
+    colorCls: "text-orange-500",
+  },
+};
 
 function formatIDR(n: number) {
   return new Intl.NumberFormat("id-ID", {
@@ -104,6 +182,15 @@ function OrderContent() {
   );
   const [durationMonths, setDurationMonths] = useState<number>(1);
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethodOption>("qris");
+  const [enabledChannels, setEnabledChannels] = useState<string[]>([
+    "qris",
+    "bca_va",
+    "mandiri_va",
+    "bri_va",
+    "bni_va",
+    "gopay",
+    "snap",
+  ]);
 
   // User Auth & Session State
   const [isLoadingUser, setIsLoadingUser] = useState<boolean>(true);
@@ -252,6 +339,21 @@ function OrderContent() {
               setSelectedAddonIds(valid);
             }
           }
+        }
+      })
+      .catch(() => {});
+
+    // Fetch active payment methods configured in admin settings
+    fetch("/api/billing/payment-methods", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success && Array.isArray(json.enabledChannels)) {
+          setEnabledChannels(json.enabledChannels);
+          setSelectedMethod((prev) => {
+            if (json.enabledChannels.includes(prev)) return prev;
+            const firstDirect = json.enabledChannels.find((ch: string) => ch !== "snap");
+            return (firstDirect as PaymentMethodOption) || (json.enabledChannels.includes("snap") ? "snap" : "qris");
+          });
         }
       })
       .catch(() => {});
@@ -566,8 +668,16 @@ function OrderContent() {
       } else if (selectedMethod === "bni_va") {
         paymentType = "bank_transfer";
         bank = "bni";
+      } else if (selectedMethod === "permata_va") {
+        paymentType = "bank_transfer";
+        bank = "permata";
+      } else if (selectedMethod === "cimb_va") {
+        paymentType = "bank_transfer";
+        bank = "cimb";
       } else if (selectedMethod === "gopay") {
         paymentType = "gopay";
+      } else if (selectedMethod === "shopeepay") {
+        paymentType = "shopeepay";
       }
 
       const res = await fetch("/api/billing/charge", {
@@ -1021,148 +1131,71 @@ function OrderContent() {
                   ) : (
                     <>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {/* QRIS Option (Recommended) */}
-                        <button
-                          type="button"
-                          onClick={() => setSelectedMethod("qris")}
-                          className={`p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between ${
-                            selectedMethod === "qris"
-                              ? "bg-emerald-50/50 border-emerald-500 ring-2 ring-emerald-500/20 shadow-sm"
-                              : "bg-white border-slate-200 hover:border-slate-300"
-                          }`}
-                        >
-                          <span className="absolute -top-2.5 right-3 px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-600 text-white shadow-xs">
-                            TERCEPAT & PRAKTIS
-                          </span>
-                          <div>
-                            <div className="flex items-center justify-between mb-1.5">
-                              <span className="font-black text-xs text-slate-900 flex items-center gap-1.5">
-                                <QrCode className="w-4 h-4 text-emerald-600" /> QRIS Nasional
-                              </span>
-                              <div className={`w-3.5 h-3.5 rounded-full border ${selectedMethod === "qris" ? "border-emerald-600 bg-emerald-600" : "border-slate-300"}`} />
-                            </div>
-                            <p className="text-[11px] text-slate-500">
-                              BCA Mobile, GoPay, OVO, Dana, ShopeePay, Mandiri Livin, BRImo, dll.
-                            </p>
-                          </div>
-                        </button>
+                        {(() => {
+                          const activeChannelKeys = Object.keys(PAYMENT_CHANNELS_DATA).filter((k) =>
+                            enabledChannels.includes(k)
+                          );
+                          const channelsToRender =
+                            activeChannelKeys.length > 0
+                              ? activeChannelKeys
+                              : ["qris", "bca_va", "mandiri_va", "bri_va", "bni_va", "gopay"];
 
-                        {/* BCA VA */}
-                        <button
-                          type="button"
-                          onClick={() => setSelectedMethod("bca_va")}
-                          className={`p-4 rounded-2xl border text-left transition-all ${
-                            selectedMethod === "bca_va"
-                              ? "bg-emerald-50/50 border-emerald-500 ring-2 ring-emerald-500/20 shadow-sm"
-                              : "bg-white border-slate-200 hover:border-slate-300"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-1.5">
-                            <span className="font-black text-xs text-slate-900 flex items-center gap-1.5">
-                              <Building2 className="w-4 h-4 text-blue-600" /> BCA Virtual Account
-                            </span>
-                            <div className={`w-3.5 h-3.5 rounded-full border ${selectedMethod === "bca_va" ? "border-emerald-600 bg-emerald-600" : "border-slate-300"}`} />
-                          </div>
-                          <p className="text-[11px] text-slate-500">
-                            Transfer via BCA Mobile, myBCA, KlikBCA, atau ATM BCA.
-                          </p>
-                        </button>
+                          return channelsToRender.map((channelKey) => {
+                            const ch = PAYMENT_CHANNELS_DATA[channelKey];
+                            if (!ch) return null;
+                            const isSelected = selectedMethod === channelKey;
 
-                        {/* Mandiri VA */}
-                        <button
-                          type="button"
-                          onClick={() => setSelectedMethod("mandiri_va")}
-                          className={`p-4 rounded-2xl border text-left transition-all ${
-                            selectedMethod === "mandiri_va"
-                              ? "bg-emerald-50/50 border-emerald-500 ring-2 ring-emerald-500/20 shadow-sm"
-                              : "bg-white border-slate-200 hover:border-slate-300"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-1.5">
-                            <span className="font-black text-xs text-slate-900 flex items-center gap-1.5">
-                              <Building2 className="w-4 h-4 text-amber-600" /> Mandiri Bill / VA
-                            </span>
-                            <div className={`w-3.5 h-3.5 rounded-full border ${selectedMethod === "mandiri_va" ? "border-emerald-600 bg-emerald-600" : "border-slate-300"}`} />
-                          </div>
-                          <p className="text-[11px] text-slate-500">
-                            Transfer via Livin by Mandiri atau ATM Mandiri.
-                          </p>
-                        </button>
-
-                        {/* BRI VA */}
-                        <button
-                          type="button"
-                          onClick={() => setSelectedMethod("bri_va")}
-                          className={`p-4 rounded-2xl border text-left transition-all ${
-                            selectedMethod === "bri_va"
-                              ? "bg-emerald-50/50 border-emerald-500 ring-2 ring-emerald-500/20 shadow-sm"
-                              : "bg-white border-slate-200 hover:border-slate-300"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-1.5">
-                            <span className="font-black text-xs text-slate-900 flex items-center gap-1.5">
-                              <Building2 className="w-4 h-4 text-sky-600" /> BRI (BRIVA)
-                            </span>
-                            <div className={`w-3.5 h-3.5 rounded-full border ${selectedMethod === "bri_va" ? "border-emerald-600 bg-emerald-600" : "border-slate-300"}`} />
-                          </div>
-                          <p className="text-[11px] text-slate-500">
-                            Transfer via BRImo, Internet Banking BRI, atau ATM BRI.
-                          </p>
-                        </button>
-
-                        {/* BNI VA */}
-                        <button
-                          type="button"
-                          onClick={() => setSelectedMethod("bni_va")}
-                          className={`p-4 rounded-2xl border text-left transition-all ${
-                            selectedMethod === "bni_va"
-                              ? "bg-emerald-50/50 border-emerald-500 ring-2 ring-emerald-500/20 shadow-sm"
-                              : "bg-white border-slate-200 hover:border-slate-300"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-1.5">
-                            <span className="font-black text-xs text-slate-900 flex items-center gap-1.5">
-                              <Building2 className="w-4 h-4 text-orange-600" /> BNI Virtual Account
-                            </span>
-                            <div className={`w-3.5 h-3.5 rounded-full border ${selectedMethod === "bni_va" ? "border-emerald-600 bg-emerald-600" : "border-slate-300"}`} />
-                          </div>
-                          <p className="text-[11px] text-slate-500">
-                            Transfer via BNI Mobile Banking atau ATM BNI.
-                          </p>
-                        </button>
-
-                        {/* GoPay */}
-                        <button
-                          type="button"
-                          onClick={() => setSelectedMethod("gopay")}
-                          className={`p-4 rounded-2xl border text-left transition-all ${
-                            selectedMethod === "gopay"
-                              ? "bg-emerald-50/50 border-emerald-500 ring-2 ring-emerald-500/20 shadow-sm"
-                              : "bg-white border-slate-200 hover:border-slate-300"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-1.5">
-                            <span className="font-black text-xs text-slate-900 flex items-center gap-1.5">
-                              <Smartphone className="w-4 h-4 text-emerald-600" /> GoPay & QRIS
-                            </span>
-                            <div className={`w-3.5 h-3.5 rounded-full border ${selectedMethod === "gopay" ? "border-emerald-600 bg-emerald-600" : "border-slate-300"}`} />
-                          </div>
-                          <p className="text-[11px] text-slate-500">
-                            Bayar instan via aplikasi GoPay atau scan QR.
-                          </p>
-                        </button>
+                            return (
+                              <button
+                                key={channelKey}
+                                type="button"
+                                onClick={() => setSelectedMethod(channelKey as PaymentMethodOption)}
+                                className={`p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between ${
+                                  isSelected
+                                    ? "bg-emerald-50/50 border-emerald-500 ring-2 ring-emerald-500/20 shadow-sm"
+                                    : "bg-white border-slate-200 hover:border-slate-300"
+                                }`}
+                              >
+                                {ch.badge && (
+                                  <span className="absolute -top-2.5 right-3 px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-600 text-white shadow-xs">
+                                    {ch.badge}
+                                  </span>
+                                )}
+                                <div>
+                                  <div className="flex items-center justify-between mb-1.5">
+                                    <span className="font-black text-xs text-slate-900 flex items-center gap-1.5">
+                                      {ch.icon(`w-4 h-4 ${ch.colorCls}`)} {ch.name}
+                                    </span>
+                                    <div
+                                      className={`w-3.5 h-3.5 rounded-full border ${
+                                        isSelected
+                                          ? "border-emerald-600 bg-emerald-600"
+                                          : "border-slate-300"
+                                      }`}
+                                    />
+                                  </div>
+                                  <p className="text-[11px] text-slate-500">
+                                    {ch.description}
+                                  </p>
+                                </div>
+                              </button>
+                            );
+                          });
+                        })()}
                       </div>
 
-                      <div className="pt-2 flex items-center justify-between text-xs text-slate-400">
-                        <span>Ingin bayar dengan Kartu Kredit atau saluran lain?</span>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedMethod("snap")}
-                          className={`font-bold hover:underline ${selectedMethod === "snap" ? "text-primary font-black" : "text-slate-600"}`}
-                        >
-                          {selectedMethod === "snap" ? "✓ Mode Snap Modal Aktif" : "Buka Midtrans Snap Klasik"}
-                        </button>
-                      </div>
+                      {enabledChannels.includes("snap") && (
+                        <div className="pt-2 flex items-center justify-between text-xs text-slate-400 flex-wrap gap-2">
+                          <span>Ingin bayar dengan Kartu Kredit atau saluran lain?</span>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedMethod("snap")}
+                            className={`font-bold hover:underline ${selectedMethod === "snap" ? "text-primary font-black" : "text-slate-600"}`}
+                          >
+                            {selectedMethod === "snap" ? "✓ Mode Snap Modal Aktif" : "Buka Midtrans Snap Klasik"}
+                          </button>
+                        </div>
+                      )}
                     </>
                   )}
                 </div>
@@ -2371,7 +2404,8 @@ function OrderContent() {
                                 {chargeData.bank?.toUpperCase() === "BRI" && "BRI (BRIVA)"}
                                 {chargeData.bank?.toUpperCase() === "BNI" && "BNI Virtual Account"}
                                 {chargeData.bank?.toUpperCase() === "PERMATA" && "Permata Virtual Account"}
-                                {!["BCA", "BRI", "BNI", "PERMATA"].includes(chargeData.bank?.toUpperCase() || "") &&
+                                {chargeData.bank?.toUpperCase() === "CIMB" && "CIMB Virtual Account"}
+                                {!["BCA", "BRI", "BNI", "PERMATA", "CIMB"].includes(chargeData.bank?.toUpperCase() || "") &&
                                   `${chargeData.bank?.toUpperCase()} Virtual Account`}
                               </span>
                             </div>

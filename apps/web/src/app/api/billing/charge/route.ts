@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     const planId = isAddonOnly ? ("ADDON" as any) : ((body.planId || "STARTER") as PlanId);
     const durationMonths = isAddonOnly ? 0 : Number(body.durationMonths || 1); // 1, 3, 12
     const paymentType = (body.paymentType || "qris") as "qris" | "bank_transfer" | "gopay" | "shopeepay";
-    const bank = (body.bank || "bca") as "bca" | "bni" | "bri" | "permata" | "mandiri";
+    const bank = (body.bank || "bca") as "bca" | "bni" | "bri" | "permata" | "mandiri" | "cimb";
 
     const customerName = (body.customerName || authUser.name || "Waply User").trim();
     const customerEmail = (body.customerEmail || authUser.email || "user@waply.id").trim().toLowerCase();

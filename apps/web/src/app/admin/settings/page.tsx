@@ -27,7 +27,12 @@ import {
   QrCode,
   Check,
   Sparkles,
+  Building2,
 } from "lucide-react";
+import {
+  AVAILABLE_PAYMENT_CHANNELS,
+  DEFAULT_ENABLED_PAYMENT_CHANNELS,
+} from "@/lib/payment-channels";
 
 interface AdminSystemSettings {
   systemProfile: {
@@ -55,6 +60,7 @@ interface AdminSystemSettings {
     clientKey: string;
     serverKey: string;
     enabled: boolean;
+    enabledChannels?: string[];
   };
   smtpConfig: {
     host: string;
@@ -101,6 +107,7 @@ const DEFAULT_ADMIN_SETTINGS: AdminSystemSettings = {
     clientKey: "",
     serverKey: "",
     enabled: true,
+    enabledChannels: DEFAULT_ENABLED_PAYMENT_CHANNELS,
   },
   smtpConfig: {
     host: "smtp.sendgrid.net",
@@ -691,6 +698,114 @@ export default function AdminSettingsPage() {
                 value={settings.paymentConfig.serverKey}
                 onChange={(e) => updatePayment("serverKey", e.target.value)}
               />
+            </div>
+
+            {/* Saluran Pembayaran Aktif */}
+            <div className="md:col-span-2 pt-6 border-t border-slate-100 space-y-4">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div>
+                  <h4 className="font-extrabold text-sm text-slate-900 flex items-center gap-2">
+                    <Sliders className="w-4 h-4 text-emerald-600" /> Saluran Pembayaran Aktif di Halaman Order
+                  </h4>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Pilih metode pembayaran apa saja yang aktif dan dapat dipilih oleh pelanggan saat checkout.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSettings((prev) => ({
+                        ...prev,
+                        paymentConfig: {
+                          ...prev.paymentConfig,
+                          enabledChannels: AVAILABLE_PAYMENT_CHANNELS.map((c) => c.id),
+                        },
+                      }));
+                    }}
+                    className="btn btn-ghost btn-xs text-emerald-700 hover:bg-emerald-50 font-bold"
+                  >
+                    Aktifkan Semua
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSettings((prev) => ({
+                        ...prev,
+                        paymentConfig: {
+                          ...prev.paymentConfig,
+                          enabledChannels: DEFAULT_ENABLED_PAYMENT_CHANNELS,
+                        },
+                      }));
+                    }}
+                    className="btn btn-ghost btn-xs text-slate-600 hover:bg-slate-100 font-bold"
+                  >
+                    Reset Default
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {AVAILABLE_PAYMENT_CHANNELS.map((channel) => {
+                  const currentChannels =
+                    settings.paymentConfig.enabledChannels && Array.isArray(settings.paymentConfig.enabledChannels)
+                      ? settings.paymentConfig.enabledChannels
+                      : DEFAULT_ENABLED_PAYMENT_CHANNELS;
+                  const isEnabled = currentChannels.includes(channel.id);
+
+                  return (
+                    <div
+                      key={channel.id}
+                      onClick={() => {
+                        setSettings((prev) => {
+                          const current =
+                            prev.paymentConfig.enabledChannels && Array.isArray(prev.paymentConfig.enabledChannels)
+                              ? prev.paymentConfig.enabledChannels
+                              : DEFAULT_ENABLED_PAYMENT_CHANNELS;
+                          const exists = current.includes(channel.id);
+                          const next = exists
+                            ? current.filter((id) => id !== channel.id)
+                            : [...current, channel.id];
+                          return {
+                            ...prev,
+                            paymentConfig: {
+                              ...prev.paymentConfig,
+                              enabledChannels: next,
+                            },
+                          };
+                        });
+                      }}
+                      className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start justify-between gap-3 select-none ${
+                        isEnabled
+                          ? "bg-emerald-50/40 border-emerald-300 ring-1 ring-emerald-500/20 shadow-xs"
+                          : "bg-slate-50/50 border-slate-200 opacity-60 hover:opacity-80"
+                      }`}
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-bold text-xs text-slate-900">{channel.name}</span>
+                          {channel.badge && (
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-600 text-white shadow-xs">
+                              {channel.badge}
+                            </span>
+                          )}
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-slate-100 text-slate-600">
+                            {channel.category}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 line-clamp-2">{channel.description}</p>
+                      </div>
+
+                      <input
+                        type="checkbox"
+                        className="toggle toggle-primary toggle-sm mt-0.5 shrink-0 pointer-events-none"
+                        checked={isEnabled}
+                        readOnly
+                      />
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
