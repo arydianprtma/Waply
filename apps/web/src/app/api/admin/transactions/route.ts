@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth-user";
-import { getAllTransactions, syncMidtransTransaction } from "@/lib/admin-transactions";
+import {
+  getAllTransactions,
+  syncMidtransTransaction,
+  clearAllTransactions,
+  deleteTransaction,
+} from "@/lib/admin-transactions";
 import { sendEmailInvoiceNotification } from "@/lib/email-service";
 import { getInvoices } from "@/lib/billing";
 
@@ -82,6 +87,42 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ error: "Aksi tidak dikenal" }, { status: 400 });
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: err.message || "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const user = await getSessionUser();
+    if (user.role !== "admin") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const orderId = searchParams.get("orderId");
+    const clearAll = searchParams.get("clearAll") === "true";
+
+    if (clearAll) {
+      clearAllTransactions();
+      return NextResponse.json({
+        success: true,
+        message: "Seluruh riwayat transaksi berhasil dihapus dan dinolkan.",
+      });
+    }
+
+    if (orderId) {
+      deleteTransaction(orderId);
+      return NextResponse.json({
+        success: true,
+        message: `Transaksi ${orderId} berhasil dihapus.`,
+      });
+    }
+
+    return NextResponse.json({ error: "Parameter tidak valid" }, { status: 400 });
   } catch (err: any) {
     return NextResponse.json(
       { error: err.message || "Internal server error" },

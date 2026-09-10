@@ -237,3 +237,29 @@ export async function syncMidtransTransaction(
     };
   }
 }
+
+export function clearAllTransactions(): boolean {
+  ensureDataDir();
+  try {
+    fs.writeFileSync(INVOICES_FILE, JSON.stringify([], null, 2));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function deleteTransaction(orderId: string): boolean {
+  ensureDataDir();
+  try {
+    if (!fs.existsSync(INVOICES_FILE)) return true;
+    const raw = fs.readFileSync(INVOICES_FILE, "utf-8");
+    const invoices: Invoice[] = JSON.parse(raw || "[]");
+    const filtered = invoices.filter(
+      (inv) => inv.orderId !== orderId && inv.id !== orderId
+    );
+    fs.writeFileSync(INVOICES_FILE, JSON.stringify(filtered, null, 2));
+    return true;
+  } catch {
+    return false;
+  }
+}

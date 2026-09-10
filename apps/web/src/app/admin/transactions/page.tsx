@@ -16,6 +16,8 @@ import {
   Receipt,
   ExternalLink,
   ShieldCheck,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
 import { TransactionDetail, TransactionSummary } from "@/lib/admin-transactions";
 
@@ -35,6 +37,8 @@ export default function AdminTransactionsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [showClearModal, setShowClearModal] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   const fetchTransactions = async () => {
     setLoading(true);
@@ -59,6 +63,48 @@ export default function AdminTransactionsPage() {
   const showToast = (msg: string) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(null), 3000);
+  };
+
+  const handleClearAll = async () => {
+    setActionLoading("clear-all");
+    try {
+      const res = await fetch("/api/admin/transactions?clearAll=true", {
+        method: "DELETE",
+      });
+      const json = await res.json();
+      if (json.success) {
+        showToast(json.message);
+        setShowClearModal(false);
+        fetchTransactions();
+      } else {
+        showToast(json.error || "Gagal menghapus riwayat transaksi");
+      }
+    } catch {
+      showToast("Terjadi kesalahan saat menghapus data");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleDeleteOne = async (orderId: string) => {
+    setActionLoading(`delete-${orderId}`);
+    try {
+      const res = await fetch(`/api/admin/transactions?orderId=${encodeURIComponent(orderId)}`, {
+        method: "DELETE",
+      });
+      const json = await res.json();
+      if (json.success) {
+        showToast(json.message);
+        setDeleteTargetId(null);
+        fetchTransactions();
+      } else {
+        showToast(json.error || "Gagal menghapus transaksi");
+      }
+    } catch {
+      showToast("Terjadi kesalahan saat menghapus transaksi");
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   const handleSyncStatus = async (orderId: string) => {
@@ -183,6 +229,15 @@ export default function AdminTransactionsPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowClearModal(true)}
+            disabled={transactions.length === 0 || loading}
+            className="btn btn-outline btn-error btn-sm gap-2"
+            title="Hapus seluruh riwayat transaksi dan jadikan 0"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            Hapus Semua
+          </button>
           <button
             onClick={fetchTransactions}
             disabled={loading}
@@ -419,6 +474,19 @@ export default function AdminTransactionsPage() {
                           )}
                           Email
                         </button>
+
+                        <button
+                          onClick={() => setDeleteTargetId(tx.orderId || tx.id)}
+                          disabled={actionLoading === `delete-${tx.orderId || tx.id}`}
+                          className="btn btn-ghost btn-xs h-7 px-2 font-semibold text-error/80 hover:text-error hover:bg-error/10 gap-1"
+                          title="Hapus riwayat transaksi ini"
+                        >
+                          {actionLoading === `delete-${tx.orderId || tx.id}` ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-3 h-3" />
+                          )}
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -428,6 +496,96 @@ export default function AdminTransactionsPage() {
           </div>
         )}
       </div>
+
+      {/* Modal Konfirmasi Hapus Semua */}
+      {showClearModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-200">
+          <div className="bg-base-100 rounded-2xl max-w-md w-full p-6 border border-base-200 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-error">
+              <div className="w-10 h-10 rounded-xl bg-error/10 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-base-content">Hapus Seluruh Riwayat?</h3>
+                <p className="text-xs text-base-content/60">Tindakan ini tidak dapat dibatalkan</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-base-content/70 leading-relaxed">
+              Semua data riwayat transaksi dan invoice Midtrans akan dihapus permanen. Seluruh total omzet, pendapatan bulanan, dan statistik transaksi di semua menu dashboard akan direset menjadi <span className="font-bold text-base-content">0</span>.
+            </p>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowClearModal(false)}
+                disabled={actionLoading === "clear-all"}
+                className="btn btn-ghost btn-sm text-xs"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleClearAll}
+                disabled={actionLoading === "clear-all"}
+                className="btn btn-error btn-sm text-xs gap-1.5 text-white"
+              >
+                {actionLoading === "clear-all" ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Trash2 className="w-3.5 h-3.5" />
+                )}
+                Ya, Bersihkan Semua (0)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Konfirmasi Hapus Satu Transaksi */}
+      {deleteTargetId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-200">
+          <div className="bg-base-100 rounded-2xl max-w-md w-full p-6 border border-base-200 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-error">
+              <div className="w-10 h-10 rounded-xl bg-error/10 flex items-center justify-center shrink-0">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-base-content">Hapus Transaksi?</h3>
+                <p className="text-xs font-mono text-base-content/60">{deleteTargetId}</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-base-content/70 leading-relaxed">
+              Data transaksi ini akan dihapus dari riwayat sistem dan nominalnya akan dikurangi dari kalkulasi omzet.
+            </p>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeleteTargetId(null)}
+                disabled={actionLoading === `delete-${deleteTargetId}`}
+                className="btn btn-ghost btn-sm text-xs"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteOne(deleteTargetId)}
+                disabled={actionLoading === `delete-${deleteTargetId}`}
+                className="btn btn-error btn-sm text-xs gap-1.5 text-white"
+              >
+                {actionLoading === `delete-${deleteTargetId}` ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Trash2 className="w-3.5 h-3.5" />
+                )}
+                Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
