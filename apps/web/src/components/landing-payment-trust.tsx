@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React from "react";
 import { Lock, Zap, Receipt, ShieldCheck } from "lucide-react";
@@ -85,7 +85,8 @@ export function LandingPaymentTrust() {
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
             <div className="max-w-xl space-y-3">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-bold text-xs border border-emerald-500/20">
-                <Lock className="w-3.5 h-3.5 text-emerald-600" /> Transaksi Aman & Terenkripsi
+                <Lock className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Transaksi Aman & Terenkripsi • Powered by Midtrans</span>
               </div>
               <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight text-base-content">
                 Pembayaran Otomatis & Langsung Aktif 24/7
@@ -107,14 +108,30 @@ export function LandingPaymentTrust() {
               </div>
             </div>
 
-            <div className="lg:max-w-sm w-full p-4 sm:p-5 rounded-2xl bg-base-200/60 border border-base-300 space-y-2">
-              <div className="flex items-center gap-2 text-xs font-bold text-base-content">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <span>Terhubung ke Jaringan Perbankan Nasional</span>
+            <div className="lg:max-w-sm w-full p-4 sm:p-5 rounded-2xl bg-base-200/60 border border-base-300 space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-base-300/80">
+                <span className="text-[10px] font-bold text-base-content/50 uppercase tracking-wider">
+                  Payment Processor
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] text-base-content/60 font-semibold">Powered by</span>
+                  <img
+                    src="/icons/payments/midtrans.svg"
+                    alt="Midtrans"
+                    className="h-4 w-auto object-contain"
+                  />
+                </div>
               </div>
-              <p className="text-[11px] text-base-content/60 leading-relaxed">
-                Mendukung pembayaran instan via kode QR QRIS, Transfer Virtual Account bank terkemuka, dan dompet digital e-wallet.
-              </p>
+
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-xs font-bold text-base-content">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <span>Terhubung ke Jaringan Perbankan Nasional</span>
+                </div>
+                <p className="text-[11px] text-base-content/60 leading-relaxed">
+                  Mendukung pembayaran instan via kode QR QRIS, Transfer Virtual Account bank terkemuka, dan dompet digital e-wallet.
+                </p>
+              </div>
             </div>
           </div>
         </div>
