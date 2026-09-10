@@ -20,6 +20,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { TransactionDetail, TransactionSummary } from "@/lib/admin-transactions";
+import { ModalPortal } from "@/components/ui/ModalPortal";
 
 export default function AdminTransactionsPage() {
   const [transactions, setTransactions] = useState<TransactionDetail[]>([]);
@@ -499,92 +500,96 @@ export default function AdminTransactionsPage() {
 
       {/* Modal Konfirmasi Hapus Semua */}
       {showClearModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-200">
-          <div className="bg-base-100 rounded-2xl max-w-md w-full p-6 border border-base-200 shadow-2xl space-y-4">
-            <div className="flex items-center gap-3 text-error">
-              <div className="w-10 h-10 rounded-xl bg-error/10 flex items-center justify-center shrink-0">
-                <AlertTriangle className="w-5 h-5" />
+        <ModalPortal>
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+            <div className="bg-base-100 rounded-2xl max-w-md w-full p-6 border border-base-200 shadow-2xl space-y-4">
+              <div className="flex items-center gap-3 text-error">
+                <div className="w-10 h-10 rounded-xl bg-error/10 flex items-center justify-center shrink-0">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-base-content">Hapus Seluruh Riwayat?</h3>
+                  <p className="text-xs text-base-content/60">Tindakan ini tidak dapat dibatalkan</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-base font-bold text-base-content">Hapus Seluruh Riwayat?</h3>
-                <p className="text-xs text-base-content/60">Tindakan ini tidak dapat dibatalkan</p>
+
+              <p className="text-xs text-base-content/70 leading-relaxed">
+                Semua data riwayat transaksi dan invoice Midtrans akan dihapus permanen. Seluruh total omzet, pendapatan bulanan, dan statistik transaksi di semua menu dashboard akan direset menjadi <span className="font-bold text-base-content">0</span>.
+              </p>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowClearModal(false)}
+                  disabled={actionLoading === "clear-all"}
+                  className="btn btn-ghost btn-sm text-xs"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={handleClearAll}
+                  disabled={actionLoading === "clear-all"}
+                  className="btn btn-error btn-sm text-xs gap-1.5 text-white"
+                >
+                  {actionLoading === "clear-all" ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-3.5 h-3.5" />
+                  )}
+                  Ya, Bersihkan Semua (0)
+                </button>
               </div>
-            </div>
-
-            <p className="text-xs text-base-content/70 leading-relaxed">
-              Semua data riwayat transaksi dan invoice Midtrans akan dihapus permanen. Seluruh total omzet, pendapatan bulanan, dan statistik transaksi di semua menu dashboard akan direset menjadi <span className="font-bold text-base-content">0</span>.
-            </p>
-
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setShowClearModal(false)}
-                disabled={actionLoading === "clear-all"}
-                className="btn btn-ghost btn-sm text-xs"
-              >
-                Batal
-              </button>
-              <button
-                type="button"
-                onClick={handleClearAll}
-                disabled={actionLoading === "clear-all"}
-                className="btn btn-error btn-sm text-xs gap-1.5 text-white"
-              >
-                {actionLoading === "clear-all" ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <Trash2 className="w-3.5 h-3.5" />
-                )}
-                Ya, Bersihkan Semua (0)
-              </button>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
 
       {/* Modal Konfirmasi Hapus Satu Transaksi */}
       {deleteTargetId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-200">
-          <div className="bg-base-100 rounded-2xl max-w-md w-full p-6 border border-base-200 shadow-2xl space-y-4">
-            <div className="flex items-center gap-3 text-error">
-              <div className="w-10 h-10 rounded-xl bg-error/10 flex items-center justify-center shrink-0">
-                <Trash2 className="w-5 h-5" />
+        <ModalPortal>
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+            <div className="bg-base-100 rounded-2xl max-w-md w-full p-6 border border-base-200 shadow-2xl space-y-4">
+              <div className="flex items-center gap-3 text-error">
+                <div className="w-10 h-10 rounded-xl bg-error/10 flex items-center justify-center shrink-0">
+                  <Trash2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-base-content">Hapus Transaksi?</h3>
+                  <p className="text-xs font-mono text-base-content/60">{deleteTargetId}</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-base font-bold text-base-content">Hapus Transaksi?</h3>
-                <p className="text-xs font-mono text-base-content/60">{deleteTargetId}</p>
+
+              <p className="text-xs text-base-content/70 leading-relaxed">
+                Data transaksi ini akan dihapus dari riwayat sistem dan nominalnya akan dikurangi dari kalkulasi omzet.
+              </p>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setDeleteTargetId(null)}
+                  disabled={actionLoading === `delete-${deleteTargetId}`}
+                  className="btn btn-ghost btn-sm text-xs"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteOne(deleteTargetId)}
+                  disabled={actionLoading === `delete-${deleteTargetId}`}
+                  className="btn btn-error btn-sm text-xs gap-1.5 text-white"
+                >
+                  {actionLoading === `delete-${deleteTargetId}` ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-3.5 h-3.5" />
+                  )}
+                  Hapus
+                </button>
               </div>
-            </div>
-
-            <p className="text-xs text-base-content/70 leading-relaxed">
-              Data transaksi ini akan dihapus dari riwayat sistem dan nominalnya akan dikurangi dari kalkulasi omzet.
-            </p>
-
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setDeleteTargetId(null)}
-                disabled={actionLoading === `delete-${deleteTargetId}`}
-                className="btn btn-ghost btn-sm text-xs"
-              >
-                Batal
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDeleteOne(deleteTargetId)}
-                disabled={actionLoading === `delete-${deleteTargetId}`}
-                className="btn btn-error btn-sm text-xs gap-1.5 text-white"
-              >
-                {actionLoading === `delete-${deleteTargetId}` ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <Trash2 className="w-3.5 h-3.5" />
-                )}
-                Hapus
-              </button>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
     </div>
   );
