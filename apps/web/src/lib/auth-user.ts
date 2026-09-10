@@ -81,7 +81,7 @@ export async function getSessionUser(): Promise<SessionUser> {
         banReason: managed.banReason,
         createdAt: new Date(managed.createdAt || Date.now()),
         updatedAt: new Date(),
-        avatarUrl: null,
+        avatarUrl: managed.avatarUrl || dbUser?.avatarUrl || null,
       };
     }
 
@@ -115,6 +115,7 @@ export async function getSessionUser(): Promise<SessionUser> {
           name,
           role: role as "admin" | "user",
           ipAddress: clientIp,
+          avatarUrl: authUser.user_metadata?.avatar_url || null,
         });
 
         return {
@@ -126,7 +127,7 @@ export async function getSessionUser(): Promise<SessionUser> {
           banReason: managed.banReason,
           createdAt: new Date(),
           updatedAt: new Date(),
-          avatarUrl: authUser.user_metadata?.avatar_url || null,
+          avatarUrl: managed.avatarUrl || authUser.user_metadata?.avatar_url || null,
         };
       }
     } catch (sbErr) {

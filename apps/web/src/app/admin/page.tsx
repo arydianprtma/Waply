@@ -651,8 +651,19 @@ export default function AdminOverviewPage() {
               stats.recentUsers.map((u) => (
                 <div key={u.id} className="px-6 py-3.5 flex items-center justify-between hover:bg-slate-50/70 transition-colors">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 font-black text-xs flex items-center justify-center shrink-0 border border-slate-200">
-                      {u.name.charAt(0).toUpperCase()}
+                    <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 font-black text-xs flex items-center justify-center shrink-0 border border-slate-200 overflow-hidden">
+                      {u.avatarUrl ? (
+                        <img
+                          src={u.avatarUrl}
+                          alt={u.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                          }}
+                        />
+                      ) : (
+                        u.name.charAt(0).toUpperCase()
+                      )}
                     </div>
                     <div className="min-w-0">
                       <div className="font-bold text-xs text-slate-900 truncate">{u.name}</div>

@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { updateUserAvatar } from "./admin-users";
 
 export interface AppSettings {
   userId: string;
@@ -160,6 +161,18 @@ export function saveSettings(
 
   all[userId] = updated;
   writeAllSettings(all);
+
+  if (data.profile && data.profile.avatarUrl !== undefined) {
+    try {
+      updateUserAvatar(userId, data.profile.avatarUrl || null);
+      if (updated.profile.email) {
+        updateUserAvatar(updated.profile.email, data.profile.avatarUrl || null);
+      }
+    } catch {
+      // Ignore
+    }
+  }
+
   return updated;
 }
 

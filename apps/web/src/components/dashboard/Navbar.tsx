@@ -358,8 +358,17 @@ export function Navbar() {
             className="inline-flex items-center gap-2.5 pl-1.5 pr-3.5 py-1 rounded-full border border-slate-200/90 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-900 hover:bg-white dark:hover:bg-slate-800 text-slate-800 dark:text-slate-100 font-semibold text-xs transition-all shadow-2xs hover:shadow-xs cursor-pointer select-none"
           >
             <div className="relative">
-              <div className="w-7 h-7 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-xs">
-                {currentUser?.name ? (
+              <div className="w-7 h-7 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-xs overflow-hidden shrink-0">
+                {currentUser?.avatarUrl ? (
+                  <img
+                    src={currentUser.avatarUrl}
+                    alt={currentUser.name || "Foto Profil"}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                ) : currentUser?.name ? (
                   currentUser.name.charAt(0).toUpperCase()
                 ) : (
                   <User className="w-3.5 h-3.5" />

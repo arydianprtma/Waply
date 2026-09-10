@@ -9,6 +9,7 @@ export interface CachedUser {
   role: "admin" | "user";
   status?: "ACTIVE" | "SUSPENDED" | "BANNED";
   banReason?: string | null;
+  avatarUrl?: string | null;
 }
 
 let cachedUser: CachedUser | null = null;

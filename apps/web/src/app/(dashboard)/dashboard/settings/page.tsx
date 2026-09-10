@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   User,
   ShieldCheck,
@@ -25,16 +25,21 @@ import {
   Shield,
   Trash2,
   Sparkles,
+  Camera,
+  Upload,
+  Image as ImageIcon,
 } from "lucide-react";
 import clsx from "clsx";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import { useBillingPlan } from "@/lib/use-billing-plan";
+import { setCachedUser, getCachedUser } from "@/lib/use-user-session";
 
 interface Profile {
   name: string;
   email: string;
   companyName: string;
   phoneNumber?: string;
+  avatarUrl?: string;
 }
 
 interface SecurityConfig {
@@ -128,6 +133,86 @@ export default function SettingsPage() {
   const [twoFACode, setTwoFACode] = useState("");
   const [twoFAVerifying, setTwoFAVerifying] = useState(false);
   const [sessionsRevoked, setSessionsRevoked] = useState(false);
+
+  // Avatar Upload State
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [avatarToast, setAvatarToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
+
+  const showAvatarToast = (msg: string, type: "success" | "error" = "success") => {
+    setAvatarToast({ msg, type });
+    setTimeout(() => setAvatarToast(null), 3000);
+  };
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type)) {
+      showAvatarToast("Format file harus berupa gambar (JPG, PNG, WebP, GIF)", "error");
+      return;
+    }
+
+    if (file.size > 3 * 1024 * 1024) {
+      showAvatarToast("Ukuran foto maksimal 3MB", "error");
+      return;
+    }
+
+    setAvatarUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/user/avatar", {
+        method: "POST",
+        body: formData,
+      });
+      const json = await res.json();
+      if (json.success && json.avatarUrl) {
+        setSettings((prev) => ({
+          ...prev,
+          profile: { ...prev.profile, avatarUrl: json.avatarUrl },
+        }));
+        const cached = getCachedUser();
+        if (cached) {
+          setCachedUser({ ...cached, avatarUrl: json.avatarUrl });
+        }
+        showAvatarToast("Foto profil berhasil diperbarui!");
+      } else {
+        showAvatarToast(json.error || "Gagal mengunggah foto profil", "error");
+      }
+    } catch {
+      showAvatarToast("Terjadi kesalahan jaringan saat mengunggah foto", "error");
+    } finally {
+      setAvatarUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    setAvatarUploading(true);
+    try {
+      const res = await fetch("/api/user/avatar", { method: "DELETE" });
+      const json = await res.json();
+      if (json.success) {
+        setSettings((prev) => ({
+          ...prev,
+          profile: { ...prev.profile, avatarUrl: "" },
+        }));
+        const cached = getCachedUser();
+        if (cached) {
+          setCachedUser({ ...cached, avatarUrl: null });
+        }
+        showAvatarToast("Foto profil berhasil dihapus");
+      } else {
+        showAvatarToast(json.error || "Gagal menghapus foto profil", "error");
+      }
+    } catch {
+      showAvatarToast("Terjadi kesalahan jaringan saat menghapus foto", "error");
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
 
   const { currentPlanName } = useBillingPlan();
 
@@ -289,13 +374,67 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-12">
+      {/* Hidden File Input for Avatar */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleAvatarChange}
+        accept="image/png,image/jpeg,image/webp,image/gif"
+        className="hidden"
+      />
+
+      {/* Toast Alert for Avatar and Settings */}
+      {avatarToast && (
+        <div className="toast toast-top toast-center z-50">
+          <div
+            className={clsx(
+              "alert text-xs font-bold py-2.5 px-4 shadow-xl rounded-2xl flex items-center gap-2 text-white",
+              avatarToast.type === "error" ? "alert-error bg-rose-600" : "alert-success bg-emerald-600"
+            )}
+          >
+            {avatarToast.type === "error" ? (
+              <AlertCircle className="w-4 h-4" />
+            ) : (
+              <CheckCircle2 className="w-4 h-4" />
+            )}
+            <span>{avatarToast.msg}</span>
+          </div>
+        </div>
+      )}
+
       {/* Page Header Card */}
       <div className="card bg-base-100 border border-base-200 shadow-2xs rounded-3xl p-6 sm:p-7 relative overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 relative z-10">
           <div className="flex items-center gap-4">
-            {/* Avatar Pill */}
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-emerald-600 text-white font-black text-2xl flex items-center justify-center shadow-md shadow-primary/20 shrink-0 select-none">
-              {userInitial}
+            {/* Avatar Pill with Photo / Initial + Quick Camera Button */}
+            <div className="relative group shrink-0">
+              <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl bg-gradient-to-br from-primary to-emerald-600 text-white font-black text-2xl flex items-center justify-center shadow-md shadow-primary/20 overflow-hidden border-2 border-white dark:border-slate-800 select-none relative">
+                {settings.profile.avatarUrl ? (
+                  <img
+                    src={settings.profile.avatarUrl}
+                    alt={settings.profile.name || "Foto Profil"}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span>{userInitial}</span>
+                )}
+                {avatarUploading && (
+                  <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-2xs flex items-center justify-center">
+                    <span className="loading loading-spinner loading-sm text-white" />
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={avatarUploading}
+                className="absolute -bottom-1 -right-1 w-7 h-7 rounded-xl bg-slate-900 text-white hover:bg-primary border-2 border-white dark:border-slate-800 flex items-center justify-center shadow-sm transition-transform hover:scale-110 active:scale-95 cursor-pointer"
+                title="Ganti Foto Profil"
+                aria-label="Ganti Foto Profil"
+              >
+                <Camera className="w-3.5 h-3.5" />
+              </button>
             </div>
 
             <div className="space-y-1 min-w-0">
@@ -380,8 +519,8 @@ export default function SettingsPage() {
                 "flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 select-none",
                 isActive
                   ? isDanger
-                    ? "bg-rose-600 text-white shadow-sm"
-                    : "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs border border-base-300/80"
+                    ? "bg-rose-600 text-white shadow-xs"
+                    : "bg-base-100 text-slate-900 dark:text-slate-100 shadow-xs"
                   : isDanger
                   ? "text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30"
                   : "text-base-content/60 hover:text-base-content hover:bg-base-100"
@@ -406,6 +545,57 @@ export default function SettingsPage() {
               <p className="text-xs text-base-content/60 mt-0.5">
                 Perbarui data identitas pengguna dan nama organisasi yang tertera pada invoice.
               </p>
+            </div>
+
+            {/* Profile Photo Management Card */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-base-200/50 border border-base-300 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-4 w-full sm:w-auto">
+                <div className="relative shrink-0">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-emerald-600 text-white font-bold text-xl flex items-center justify-center shadow-xs overflow-hidden border border-base-300">
+                    {settings.profile.avatarUrl ? (
+                      <img
+                        src={settings.profile.avatarUrl}
+                        alt={settings.profile.name || "Avatar"}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span>{userInitial}</span>
+                    )}
+                  </div>
+                </div>
+                <div className="space-y-0.5">
+                  <div className="font-bold text-xs text-slate-800 dark:text-slate-200">
+                    Foto Profil
+                  </div>
+                  <p className="text-[11px] text-base-content/60">
+                    Format: JPG, PNG, WebP, GIF. Maksimal ukuran 3MB.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={avatarUploading}
+                  className="btn btn-sm btn-outline rounded-xl text-xs font-bold gap-1.5 flex-1 sm:flex-initial"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  {avatarUploading ? "Mengunggah..." : settings.profile.avatarUrl ? "Ganti Foto" : "Unggah Foto"}
+                </button>
+                {settings.profile.avatarUrl && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveAvatar}
+                    disabled={avatarUploading}
+                    className="btn btn-sm btn-ghost text-rose-600 hover:bg-rose-50 rounded-xl text-xs font-bold gap-1.5"
+                    title="Hapus Foto Profil"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Hapus
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">

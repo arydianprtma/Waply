@@ -426,7 +426,7 @@ export default function AdminUsersPage() {
                       <td className="pl-5 py-4">
                         <div className="flex items-center gap-3">
                           <div
-                            className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${
+                            className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden ${
                               isAdmin
                                 ? "bg-primary/10 text-primary border border-primary/20"
                                 : isBanned
@@ -436,7 +436,18 @@ export default function AdminUsersPage() {
                                 : "bg-slate-100 text-slate-700"
                             }`}
                           >
-                            {u.name.charAt(0).toUpperCase()}
+                            {u.avatarUrl ? (
+                              <img
+                                src={u.avatarUrl}
+                                alt={u.name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = "none";
+                                }}
+                              />
+                            ) : (
+                              u.name.charAt(0).toUpperCase()
+                            )}
                           </div>
                           <div className="min-w-0 max-w-[220px]">
                             <div className="flex items-center gap-1.5 truncate">
@@ -709,7 +720,7 @@ export default function AdminUsersPage() {
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div
-                      className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden ${
                         isAdmin
                           ? "bg-primary/10 text-primary border border-primary/20"
                           : isBanned
@@ -719,7 +730,18 @@ export default function AdminUsersPage() {
                           : "bg-slate-100 text-slate-700"
                       }`}
                     >
-                      {u.name.charAt(0).toUpperCase()}
+                      {u.avatarUrl ? (
+                        <img
+                          src={u.avatarUrl}
+                          alt={u.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                          }}
+                        />
+                      ) : (
+                        u.name.charAt(0).toUpperCase()
+                      )}
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5 truncate">

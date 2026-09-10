@@ -11,6 +11,7 @@ export interface ManagedUser {
   role: "admin" | "user";
   status: UserAccountStatus;
   banReason?: string | null;
+  avatarUrl?: string | null;
   planId: string;
   planStatus: "ACTIVE" | "EXPIRED" | "FREE" | "PENDING";
   messagesUsed: number;
@@ -72,11 +73,14 @@ export function getAllManagedUsers(): ManagedUser[] {
       if (!dedupedMap.has(key)) {
         dedupedMap.set(key, u);
       } else {
-        // Merge preferring active plan, newer login, or fuller name
+        // Merge preferring active plan, newer login, fuller name, or non-empty avatarUrl
         const existing = dedupedMap.get(key)!;
         const preferU = (u.planId && u.planId !== "FREE") || (!existing.name && u.name) || (u.lastLoginAt && (!existing.lastLoginAt || new Date(u.lastLoginAt) > new Date(existing.lastLoginAt)));
+        const mergedAvatar = u.avatarUrl || existing.avatarUrl || null;
         if (preferU) {
-          dedupedMap.set(key, { ...existing, ...u });
+          dedupedMap.set(key, { ...existing, ...u, avatarUrl: mergedAvatar });
+        } else {
+          dedupedMap.set(key, { ...existing, avatarUrl: mergedAvatar });
         }
       }
     }
@@ -133,6 +137,7 @@ export function registerOrSyncUser(user: {
   name: string;
   role?: "admin" | "user";
   ipAddress?: string | null;
+  avatarUrl?: string | null;
 }): ManagedUser {
   const users = getAllManagedUsers();
   const existingIdx = users.findIndex(
@@ -170,12 +175,20 @@ export function registerOrSyncUser(user: {
         ? (sub.status as any)
         : existing.planStatus || (effectivePlanId === "FREE" ? "FREE" : "ACTIVE");
 
+    const effectiveAvatar =
+      user.avatarUrl !== undefined
+        ? user.avatarUrl
+        : existing.avatarUrl !== undefined
+        ? existing.avatarUrl
+        : null;
+
     users[existingIdx] = {
       ...existing,
       id: user.id || existing.id,
       name: user.name || existing.name,
       email: user.email || existing.email,
       role: user.role || existing.role,
+      avatarUrl: effectiveAvatar,
       planId: effectivePlanId,
       planStatus: effectivePlanStatus,
       lastLoginAt: new Date().toISOString(),
@@ -196,6 +209,7 @@ export function registerOrSyncUser(user: {
     role: user.role || (user.email === "admin@waply.id" ? "admin" : "user"),
     status: "ACTIVE",
     banReason: null,
+    avatarUrl: user.avatarUrl || null,
     planId: effectivePlanId,
     planStatus: effectivePlanStatus,
     messagesUsed: 0,
@@ -209,6 +223,22 @@ export function registerOrSyncUser(user: {
   users.push(newUser);
   saveManagedUsers(users);
   return newUser;
+}
+
+export function updateUserAvatar(
+  userIdOrEmail: string,
+  avatarUrl: string | null
+): ManagedUser | null {
+  const users = getAllManagedUsers();
+  const clean = userIdOrEmail.trim().toLowerCase();
+  const idx = users.findIndex(
+    (u) => u.id === userIdOrEmail || u.email.toLowerCase() === clean
+  );
+  if (idx === -1) return null;
+
+  users[idx].avatarUrl = avatarUrl;
+  saveManagedUsers(users);
+  return users[idx];
 }
 
 export function getUserById(userId: string): ManagedUser | null {
