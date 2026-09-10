@@ -380,13 +380,16 @@ export function Navbar() {
               {currentUser?.name || (isAdmin ? "Super Admin" : "Pengguna")}
             </span>
           </div>
-          <ul
+          <div
             tabIndex={0}
-            className="menu dropdown-content z-[1] p-2 shadow-xl bg-base-100 rounded-2xl w-56 mt-3 border border-base-200 text-sm"
+            className="dropdown-content z-[60] p-2.5 shadow-xl bg-base-100 rounded-2xl w-60 mt-3 border border-base-200 text-sm"
           >
-            <li className="menu-title px-4 py-2">
+            {/* Header User Card */}
+            <div className="p-3 bg-base-200/60 rounded-xl border border-base-300/80 mb-2 select-none">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-extrabold text-base-content/50 uppercase tracking-wider">ID USER</span>
+                <span className="text-[10px] font-extrabold text-base-content/50 uppercase tracking-wider">
+                  ID USER
+                </span>
                 {isAdmin && (
                   <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-primary/10 text-primary border border-primary/20">
                     ADMIN
@@ -394,72 +397,80 @@ export function Navbar() {
                 )}
               </div>
               <span
-                className="font-mono text-[11px] font-bold text-base-content/80 bg-base-200 px-2.5 py-1 rounded-lg border border-base-300 mt-1 select-all truncate block"
+                className="font-mono text-[11px] font-bold text-base-content/80 bg-base-100 px-2.5 py-1 rounded-lg border border-base-300 mt-1 select-all truncate block"
                 title={currentUser?.id || ""}
               >
-                {currentUser?.id ? (currentUser.id.length > 18 ? `#${currentUser.id.slice(0, 14)}...` : `#${currentUser.id}`) : "#USR-ONLINE"}
+                {currentUser?.id
+                  ? currentUser.id.length > 18
+                    ? `#${currentUser.id.slice(0, 14)}...`
+                    : `#${currentUser.id}`
+                  : "#USR-ONLINE"}
               </span>
-            </li>
-            <div className="divider my-1"></div>
-            <li>
-              <Link
-                href="/dashboard/settings"
-                prefetch={true}
-                className="flex items-center gap-2 font-medium text-base-content/80 hover:text-base-content"
-              >
-                <User className="w-4 h-4 text-base-content/60" /> Pengaturan Akun
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/dashboard/billing"
-                prefetch={true}
-                className="flex items-center gap-2 font-medium text-base-content/80 hover:text-base-content"
-              >
-                <Zap className="w-4 h-4 text-amber-500" /> Upgrade Paket
-              </Link>
-            </li>
-            {isAdmin && (
-              <>
-                <li>
-                  <Link
-                    href="/admin"
-                    prefetch={true}
-                    className="flex items-center gap-2 font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
-                  >
-                    <ShieldCheck className="w-4 h-4" /> Admin Panel
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/admin/account"
-                    prefetch={true}
-                    className="flex items-center gap-2 font-medium text-base-content/80 hover:text-base-content"
-                  >
-                    <User className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Akun Super Admin
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/admin/settings"
-                    prefetch={true}
-                    className="flex items-center gap-2 font-medium text-base-content/80 hover:text-base-content"
-                  >
-                    <ShieldCheck className="w-4 h-4 text-base-content/60" /> Pengaturan Sistem
-                  </Link>
-                </li>
-              </>
-            )}
-            <div className="divider my-1"></div>
-            <li>
-              <button
-                onClick={handleLogout}
-                className="text-rose-600 dark:text-rose-400 flex items-center gap-2 hover:bg-rose-500/10 font-bold"
-              >
-                <LogOut className="w-4 h-4" /> Keluar (Logout)
-              </button>
-            </li>
-          </ul>
+            </div>
+
+            <ul className="menu menu-sm p-0 gap-0.5">
+              <li>
+                <Link
+                  href="/dashboard/settings"
+                  prefetch={true}
+                  className="flex items-center gap-2 font-medium text-base-content/80 hover:text-base-content hover:bg-base-200 rounded-xl py-2 active:!bg-primary active:!text-white"
+                >
+                  <User className="w-4 h-4 text-base-content/60" /> Pengaturan Akun
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/dashboard/billing"
+                  prefetch={true}
+                  className="flex items-center gap-2 font-medium text-base-content/80 hover:text-base-content hover:bg-base-200 rounded-xl py-2 active:!bg-primary active:!text-white"
+                >
+                  <Zap className="w-4 h-4 text-amber-500" /> Upgrade Paket
+                </Link>
+              </li>
+              {isAdmin && (
+                <>
+                  <div className="divider my-1"></div>
+                  <li>
+                    <Link
+                      href="/admin"
+                      prefetch={true}
+                      className="flex items-center gap-2 font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 rounded-xl py-2 active:!bg-emerald-600 active:!text-white"
+                    >
+                      <ShieldCheck className="w-4 h-4" /> Admin Panel
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/admin/account"
+                      prefetch={true}
+                      className="flex items-center gap-2 font-medium text-base-content/80 hover:text-base-content hover:bg-base-200 rounded-xl py-2 active:!bg-primary active:!text-white"
+                    >
+                      <User className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Akun Super Admin
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/admin/settings"
+                      prefetch={true}
+                      className="flex items-center gap-2 font-medium text-base-content/80 hover:text-base-content hover:bg-base-200 rounded-xl py-2 active:!bg-primary active:!text-white"
+                    >
+                      <ShieldCheck className="w-4 h-4 text-base-content/60" /> Pengaturan Sistem
+                    </Link>
+                  </li>
+                </>
+              )}
+              <div className="divider my-1"></div>
+              <li>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="text-rose-600 dark:text-rose-400 flex items-center gap-2 hover:bg-rose-500/10 rounded-xl py-2 font-bold active:!bg-rose-600 active:!text-white"
+                >
+                  <LogOut className="w-4 h-4" /> Keluar (Logout)
+                </button>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     </header>
