@@ -14,6 +14,7 @@ export interface Announcement {
   popupActionUrl?: string;
   popupImage?: string;
   popupImageRatio?: "16:9" | "1:1" | "4:3" | "AUTO";
+  popupImageLayout?: "TOP" | "SIDE";
   createdAt: string;
   updatedAt: string;
   readBy?: string[]; // Array of user IDs who have marked this read

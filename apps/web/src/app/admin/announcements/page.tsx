@@ -39,6 +39,7 @@ interface AnnouncementItem {
   popupActionUrl?: string;
   popupImage?: string;
   popupImageRatio?: "16:9" | "1:1" | "4:3" | "AUTO";
+  popupImageLayout?: "TOP" | "SIDE";
   createdAt: string;
   updatedAt: string;
   readBy?: string[];
@@ -65,6 +66,7 @@ export default function AdminAnnouncementsPage() {
   const [formPopupActionUrl, setFormPopupActionUrl] = useState("");
   const [formPopupImage, setFormPopupImage] = useState("");
   const [formPopupImageRatio, setFormPopupImageRatio] = useState<"16:9" | "1:1" | "4:3" | "AUTO">("16:9");
+  const [formPopupImageLayout, setFormPopupImageLayout] = useState<"TOP" | "SIDE">("SIDE");
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -113,6 +115,7 @@ export default function AdminAnnouncementsPage() {
     setFormPopupActionUrl("");
     setFormPopupImage("");
     setFormPopupImageRatio("16:9");
+    setFormPopupImageLayout("SIDE");
     setImageError(false);
     setShowModal(true);
   };
@@ -130,6 +133,7 @@ export default function AdminAnnouncementsPage() {
     setFormPopupActionUrl(item.popupActionUrl || "");
     setFormPopupImage(item.popupImage || "");
     setFormPopupImageRatio(item.popupImageRatio || "16:9");
+    setFormPopupImageLayout(item.popupImageLayout || "SIDE");
     setImageError(false);
     setShowModal(true);
   };
@@ -204,6 +208,7 @@ export default function AdminAnnouncementsPage() {
         popupActionUrl: formPopupActionUrl.trim(),
         popupImage: formPopupImage.trim(),
         popupImageRatio: formPopupImageRatio,
+        popupImageLayout: formPopupImageLayout,
       };
 
       if (editingId) {
@@ -626,8 +631,11 @@ export default function AdminAnnouncementsPage() {
                           (e.target as HTMLElement).style.display = "none";
                         }}
                       />
-                      <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold">
-                        Rasio: {item.popupImageRatio || "16:9"}
+                      <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[10px] font-bold p-1 text-center leading-tight">
+                        <span>{item.popupImageRatio || "16:9"}</span>
+                        <span className="text-[9px] text-purple-200">
+                          {item.popupImageLayout === "SIDE" ? "Layout Samping" : "Layout Atas"}
+                        </span>
                       </div>
                     </div>
                   )}
@@ -994,11 +1002,80 @@ export default function AdminAnnouncementsPage() {
                             </div>
                           </div>
 
+                          {/* Layout Selector: Side vs Top */}
+                          <div className="space-y-1.5 pt-1">
+                            <label className="label py-0">
+                              <span className="label-text font-bold text-[11px] text-slate-700">Tata Letak Gambar pada Pop-up:</span>
+                            </label>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setFormPopupImageLayout("SIDE")}
+                                className={`p-2.5 rounded-xl border text-left transition-all flex items-start gap-2.5 ${
+                                  formPopupImageLayout === "SIDE"
+                                    ? "bg-purple-50/90 border-purple-400 text-purple-900 shadow-xs ring-1 ring-purple-400/40"
+                                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                                }`}
+                              >
+                                <div
+                                  className={`w-4 h-4 rounded-full mt-0.5 shrink-0 border flex items-center justify-center ${
+                                    formPopupImageLayout === "SIDE"
+                                      ? "border-purple-600 bg-purple-600"
+                                      : "border-slate-300 bg-white"
+                                  }`}
+                                >
+                                  {formPopupImageLayout === "SIDE" && (
+                                    <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                                  )}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-1.5">
+                                    <p className="text-xs font-bold leading-tight">Di Samping (Side-by-Side)</p>
+                                    <span className="px-1.5 py-0.2 bg-purple-200/60 text-purple-800 text-[9px] font-extrabold rounded">
+                                      Disarankan
+                                    </span>
+                                  </div>
+                                  <p className="text-[10px] text-slate-500 mt-1 leading-normal">
+                                    Gambar di kolom kiri & pesan di kolom kanan. Rapi & modern pada desktop/tablet.
+                                  </p>
+                                </div>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => setFormPopupImageLayout("TOP")}
+                                className={`p-2.5 rounded-xl border text-left transition-all flex items-start gap-2.5 ${
+                                  formPopupImageLayout === "TOP"
+                                    ? "bg-purple-50/90 border-purple-400 text-purple-900 shadow-xs ring-1 ring-purple-400/40"
+                                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                                }`}
+                              >
+                                <div
+                                  className={`w-4 h-4 rounded-full mt-0.5 shrink-0 border flex items-center justify-center ${
+                                    formPopupImageLayout === "TOP"
+                                      ? "border-purple-600 bg-purple-600"
+                                      : "border-slate-300 bg-white"
+                                  }`}
+                                >
+                                  {formPopupImageLayout === "TOP" && (
+                                    <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                                  )}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-xs font-bold leading-tight">Di Atas (Top Banner)</p>
+                                  <p className="text-[10px] text-slate-500 mt-1 leading-normal">
+                                    Banner horizontal penuh di bagian atas modal dengan teks konten di bawahnya.
+                                  </p>
+                                </div>
+                              </button>
+                            </div>
+                          </div>
+
                           {/* Live Image Preview */}
                           {formPopupImage && (
                             <div className="mt-2 p-2.5 rounded-xl border border-slate-200 bg-white space-y-1.5">
                               <div className="flex items-center justify-between text-[11px] font-bold text-slate-600">
-                                <span>Preview Banner ({formPopupImageRatio}):</span>
+                                <span>Preview Banner ({formPopupImageRatio} - {formPopupImageLayout === "SIDE" ? "Samping" : "Atas"}):</span>
                                 {imageError ? (
                                   <span className="text-rose-500 flex items-center gap-1 font-bold">
                                     <AlertCircle className="w-3 h-3" /> Gagal Memuat
