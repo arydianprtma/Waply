@@ -17,6 +17,11 @@ import {
   Ticket,
   Headphones,
   PlusCircle,
+  CreditCard,
+  ShieldAlert,
+  Activity,
+  Radio,
+  Database,
   X,
 } from "lucide-react";
 import clsx from "clsx";
@@ -68,16 +73,31 @@ export function AdminSidebar() {
       ],
     },
     {
-      title: "Monitoring & Engine",
+      title: "Finansial & Bisnis",
       items: [
-        { name: "Devices & Health", href: "/admin/devices", icon: Smartphone, badge: "Live" },
-        { name: "Messages", href: "/admin/messages", icon: MessageSquare },
+        { name: "Riwayat Transaksi", href: "/admin/transactions", icon: CreditCard, badge: "Midtrans" },
+      ],
+    },
+    {
+      title: "Keamanan & Anti-Abuse",
+      items: [
+        { name: "Keyword Firewall", href: "/admin/security", icon: ShieldAlert, badge: "Firewall" },
+      ],
+    },
+    {
+      title: "Engine & Telemetry",
+      items: [
+        { name: "Server & Worker", href: "/admin/telemetry", icon: Activity, badge: "Node" },
+        { name: "Broadcast Monitor", href: "/admin/broadcasts", icon: Radio, badge: "Live" },
+        { name: "Devices & Health", href: "/admin/devices", icon: Smartphone },
+        { name: "Messages Stream", href: "/admin/messages", icon: MessageSquare },
         { name: "System Logs", href: "/admin/logs", icon: ScrollText },
       ],
     },
     {
-      title: "Konfigurasi",
+      title: "Konfigurasi & Data",
       items: [
+        { name: "Backup Center", href: "/admin/backup", icon: Database },
         { name: "Akun Admin", href: "/admin/account", icon: UserCog },
         { name: "Pengaturan Sistem", href: "/admin/settings", icon: Settings },
       ],

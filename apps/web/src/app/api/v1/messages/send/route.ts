@@ -12,6 +12,7 @@ import { applyWatermarkIfFree } from "@/lib/watermark";
 import { canUserSendMessage, recordSentMessage } from "@/lib/messages";
 import { getUserPlanAccess } from "@/lib/billing";
 import { getTemplates, incrementTemplateUsage } from "@/lib/templates";
+import { checkMessageSecurity } from "@/lib/security-guard";
 
 const GATEWAY_URL = process.env.GATEWAY_INTERNAL_URL || "http://localhost:3002";
 const GATEWAY_SECRET = process.env.GATEWAY_SECRET || "waply_internal_gateway_token_key";
@@ -164,6 +165,24 @@ export async function POST(request: Request) {
 
     // 6. Parse Spintax & Dynamic Variables
     const parsedContent = rawContent ? parseSpintax(rawContent, variables || {}) : "";
+
+    // 6b. Global Keyword Security & Anti-Abuse Check
+    const secCheck = checkMessageSecurity(
+      parsedContent || rawContent,
+      { id: userId, email: auth.user.email, name: auth.user.name },
+      recipient
+    );
+    if (!secCheck.isAllowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: secCheck.message,
+          code: "KEYWORD_BLOCKED",
+          matchedKeyword: secCheck.matchedKeyword,
+        },
+        { status: 400 }
+      );
+    }
 
     // 7. Apply Watermark for Free/Trial Plan Users
     const { finalMessage: finalContent, isWatermarked } = applyWatermarkIfFree(
