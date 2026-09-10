@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { Check, Copy, Code2, ArrowRight } from "lucide-react";
@@ -248,10 +248,13 @@ export function LandingCodePreview() {
           {/* Footer Highlights */}
           <div className="px-4 sm:px-6 py-3 bg-slate-950/70 border-t border-slate-800/80 flex flex-wrap items-center justify-between text-[11px] text-slate-400 gap-2">
             <div className="flex items-center gap-4">
-              <span>⚡ Base URL: <strong className="text-slate-200">https://ardp.my.id</strong></span>
-              <span>🔒 Auth: <strong className="text-slate-200">Bearer Token</strong></span>
+              <span>Base URL: <strong className="text-slate-200">https://ardp.my.id</strong></span>
+              <span>Auth: <strong className="text-slate-200">Bearer Token</strong></span>
             </div>
-            <span className="text-emerald-400 font-medium">✓ Mendukung Spintax & Auto-Rotate</span>
+            <span className="text-emerald-400 font-medium flex items-center gap-1">
+              <Check className="w-3.5 h-3.5" />
+              Mendukung Spintax & Auto-Rotate
+            </span>
           </div>
         </div>
       </div>

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import {
@@ -83,10 +83,10 @@ export function LandingChatMockup() {
           <div className="flex justify-end">
             <div className="max-w-[88%] rounded-2xl rounded-tr-xs bg-[#005c4b] text-white p-3 shadow-xs space-y-2">
               <div className="text-xs leading-relaxed">
-                <span className="font-bold text-amber-300 transition-all">{currentGreeting}</span> Kak <strong className="text-emerald-200">Budi Santoso</strong>! 🙏
+                <span className="font-bold text-amber-300 transition-all">{currentGreeting}</span> Kak <strong className="text-emerald-200">Budi Santoso</strong>.
                 <br /><br />
                 Terima kasih, pembayaran sebesar <strong>Rp 350.000</strong> telah berhasil kami terima.
-                Pesanan Anda sedang dipersiapkan oleh tim gudang.
+                Pesanan Anda sedang dipersiapkan oleh tim logistik.
               </div>
 
               {/* PDF Invoice Document Box */}
