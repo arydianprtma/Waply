@@ -1,7 +1,6 @@
 ﻿"use client";
 
 import React from "react";
-import Image from "next/image";
 import { Lock, Zap, Receipt, ShieldCheck } from "lucide-react";
 
 interface PaymentLogoItem {
@@ -9,8 +8,6 @@ interface PaymentLogoItem {
   name: string;
   category: string;
   src: string;
-  width: number;
-  height: number;
 }
 
 const PAYMENT_LOGOS: PaymentLogoItem[] = [
@@ -18,81 +15,61 @@ const PAYMENT_LOGOS: PaymentLogoItem[] = [
     id: "midtrans",
     name: "Midtrans",
     category: "Payment Gateway",
-    src: "/icons/payments/midtrans.png",
-    width: 130,
-    height: 38,
+    src: "/icons/payments/midtrans.svg",
   },
   {
     id: "qris",
     name: "QRIS",
     category: "Semua E-Wallet & Bank",
-    src: "/icons/payments/qris.png",
-    width: 90,
-    height: 38,
+    src: "/icons/payments/qris.svg",
   },
   {
     id: "bca",
     name: "BCA Virtual Account",
     category: "Bank Transfer",
-    src: "/icons/payments/bca.png",
-    width: 100,
-    height: 36,
+    src: "/icons/payments/bca.svg",
   },
   {
     id: "mandiri",
     name: "Mandiri Bill",
     category: "Bank Transfer",
-    src: "/icons/payments/mandiri.png",
-    width: 110,
-    height: 36,
+    src: "/icons/payments/mandiri.svg",
   },
   {
     id: "bri",
     name: "BRI (BRIVA)",
     category: "Bank Transfer",
-    src: "/icons/payments/bri.png",
-    width: 90,
-    height: 36,
+    src: "/icons/payments/bri.svg",
   },
   {
     id: "bni",
     name: "BNI Virtual Account",
     category: "Bank Transfer",
-    src: "/icons/payments/bni.png",
-    width: 90,
-    height: 36,
+    src: "/icons/payments/bni.svg",
   },
   {
     id: "permata",
     name: "Permata Bank",
     category: "Bank Transfer",
-    src: "/icons/payments/permata_bank.png",
-    width: 110,
-    height: 36,
+    src: "/icons/payments/permata.svg",
   },
   {
     id: "cimb",
     name: "CIMB Niaga",
     category: "Bank Transfer",
-    src: "/icons/payments/cimbniaga.png",
-    width: 120,
-    height: 36,
+    src: "/icons/payments/cimb-niaga.svg",
   },
   {
     id: "gopay",
     name: "GoPay",
     category: "E-Wallet Instan",
-    src: "/icons/payments/gopay.png",
-    width: 100,
-    height: 36,
+    src: "/icons/payments/gopay.svg",
   },
   {
     id: "shopeepay",
     name: "ShopeePay",
     category: "E-Wallet Instan",
-    src: "/icons/payments/shopeepay.png",
-    width: 105,
-    height: 36,
+    src: "/icons/payments/shopee-pay.svg",
   },
 ];
 
@@ -153,12 +130,13 @@ export function LandingPaymentTrust() {
               {marqueeItems.map((item, index) => (
                 <div
                   key={`${item.id}-${index}`}
-                  className="flex items-center justify-center px-6 py-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs hover:shadow-md hover:border-primary/40 transition-all shrink-0 min-w-[160px] h-[72px]"
+                  className="flex items-center justify-center px-6 py-3 rounded-2xl bg-white border border-slate-200 shadow-2xs hover:shadow-md hover:border-primary/40 transition-all shrink-0 min-w-[150px] h-[64px]"
+                  title={item.name}
                 >
                   <img
                     src={item.src}
-                    alt={`${item.name} Logo`}
-                    className="max-h-8 max-w-[120px] w-auto h-auto object-contain transition-transform duration-200 hover:scale-105"
+                    alt={item.name}
+                    className="max-h-7 max-w-[110px] w-auto h-auto object-contain transition-transform duration-200 hover:scale-105"
                     loading="lazy"
                   />
                 </div>
