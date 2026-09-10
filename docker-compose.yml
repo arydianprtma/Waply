@@ -1,38 +1,68 @@
-version: "3.8"
-
 services:
-  waply-web:
-    build:
-      context: .
-      dockerfile: ./apps/web/Dockerfile
-    container_name: waply-web
-    restart: unless-stopped
-    ports:
-      - "3001:3001"
-    environment:
-      - PORT=3001
-      - NODE_ENV=production
-      - NEXT_PUBLIC_APP_URL=http://localhost:3001
-      - GATEWAY_INTERNAL_URL=http://waply-gateway:3002
-    volumes:
-      - waply-data:/app/apps/web/.waply-data
-    depends_on:
-      - waply-gateway
-
   waply-gateway:
     build:
       context: .
       dockerfile: ./apps/gateway/Dockerfile
     container_name: waply-gateway
-    restart: unless-stopped
+    restart: always
     ports:
       - "3002:3002"
     environment:
       - PORT=3002
       - NODE_ENV=production
+      - CORS_ORIGIN=http://localhost:3001,https://ardp.my.id
+      - DATABASE_URL=${DATABASE_URL}
+      - DIRECT_URL=${DIRECT_URL}
     volumes:
       - gateway-sessions:/app/apps/gateway/.sessions
+      - waply-shared-data:/app/.waply-data
+    networks:
+      - waply-net
+
+  waply-web:
+    build:
+      context: .
+      dockerfile: ./apps/web/Dockerfile
+    container_name: waply-web
+    restart: always
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - NODE_ENV=production
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-https://ardp.my.id}
+      - GATEWAY_INTERNAL_URL=http://waply-gateway:3002
+      - DATABASE_URL=${DATABASE_URL}
+      - DIRECT_URL=${DIRECT_URL}
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - MIDTRANS_SERVER_KEY=${MIDTRANS_SERVER_KEY}
+      - MIDTRANS_CLIENT_KEY=${MIDTRANS_CLIENT_KEY}
+      - MIDTRANS_IS_PRODUCTION=${MIDTRANS_IS_PRODUCTION:-true}
+      - JWT_SECRET=${JWT_SECRET}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - SMTP_FROM=${SMTP_FROM}
+    volumes:
+      - waply-web-data:/app/apps/web/.waply-data
+      - waply-shared-data:/app/.waply-data
+    depends_on:
+      - waply-gateway
+    networks:
+      - waply-net
 
 volumes:
-  waply-data:
   gateway-sessions:
+    name: waply_gateway_sessions
+  waply-web-data:
+    name: waply_web_data
+  waply-shared-data:
+    name: waply_shared_data
+
+networks:
+  waply-net:
+    name: waply_network
+    driver: bridge

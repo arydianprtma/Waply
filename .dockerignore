@@ -1,0 +1,12 @@
+node_modules
+.next
+dist
+.git
+.gitignore
+.env*.local
+.waply-data
+.sessions
+*.log
+npm-debug.log*
+.DS_Store
+.turbo
