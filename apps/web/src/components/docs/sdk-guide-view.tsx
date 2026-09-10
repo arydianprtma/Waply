@@ -321,7 +321,13 @@ Future<void> launchBroadcastCampaign() async {
   final campaignId = data['data']['id'];
 
   // Trigger antrean pengiriman background
-      webhookSnippet: `import 'dart:convert';
+  await http.post(
+    Uri.parse('${originUrl}/api/broadcast/\$campaignId/start'),
+    headers: {'Authorization': 'Bearer snd_live_YOUR_API_KEY'},
+  );
+  print('Broadcast berjalan ID: \$campaignId');
+}\`,
+      webhookSnippet: \`import 'dart:convert';
 import 'package:crypto/crypto.dart';
 
 /// 1. Verifikasi HMAC-SHA256 signature Webhook di Dart / Shelf / Flutter Backend
