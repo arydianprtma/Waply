@@ -19,8 +19,10 @@ import {
   Radio,
   Clock,
   Filter,
+  Trash2,
 } from "lucide-react";
 import clsx from "clsx";
+import { useConfirm, useAlert } from "@/components/confirm-dialog";
 
 interface UserLog {
   id: string;
@@ -38,11 +40,15 @@ interface UserLog {
 export default function UserLogsPage() {
   const [logs, setLogs] = useState<UserLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [clearing, setClearing] = useState(false);
   const [filterLevel, setFilterLevel] = useState<string>("ALL");
   const [filterCategory, setFilterCategory] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const confirm = useConfirm();
+  const showAlert = useAlert();
 
   const fetchLogs = async () => {
     setLoading(true);
@@ -56,6 +62,39 @@ export default function UserLogsPage() {
       console.error("Failed to fetch user logs:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleClearLogs = async () => {
+    const isConfirmed = await confirm({
+      title: "Bersihkan Riwayat Log",
+      message:
+        "Apakah Anda yakin ingin menghapus seluruh riwayat log aktivitas webhook, bot auto-reply, dan pesan? Tindakan ini tidak dapat dibatalkan.",
+      confirmText: "Ya, Bersihkan Log",
+      variant: "danger",
+    });
+    if (!isConfirmed) return;
+
+    setClearing(true);
+    try {
+      const res = await fetch("/api/logs", { method: "DELETE" });
+      const json = await res.json();
+      if (json.success) {
+        setLogs([]);
+        await showAlert({
+          title: "Log Berhasil Dibersihkan",
+          message: "Seluruh riwayat log aktivitas telah dihapus dengan aman.",
+          variant: "success",
+        });
+      }
+    } catch (err) {
+      await showAlert({
+        title: "Gagal Membersihkan Log",
+        message: (err as Error).message || "Terjadi kesalahan jaringan",
+        variant: "danger",
+      });
+    } finally {
+      setClearing(false);
     }
   };
 
@@ -145,14 +184,27 @@ export default function UserLogsPage() {
           </p>
         </div>
 
-        <button
-          onClick={fetchLogs}
-          disabled={loading}
-          className="btn btn-outline btn-sm gap-2 self-start sm:self-auto rounded-xl shadow-2xs"
-        >
-          <RefreshCw className={clsx("w-3.5 h-3.5", loading && "animate-spin")} />
-          Refresh Log
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          {logs.length > 0 && (
+            <button
+              onClick={handleClearLogs}
+              disabled={clearing || loading}
+              className="btn btn-ghost btn-sm text-rose-600 hover:bg-rose-50 border border-rose-200 rounded-xl gap-1.5 shadow-2xs"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Bersihkan Log
+            </button>
+          )}
+
+          <button
+            onClick={fetchLogs}
+            disabled={loading}
+            className="btn btn-outline btn-sm gap-2 rounded-xl shadow-2xs"
+          >
+            <RefreshCw className={clsx("w-3.5 h-3.5", loading && "animate-spin")} />
+            Refresh Log
+          </button>
+        </div>
       </div>
 
       {/* Summary Stat Cards */}

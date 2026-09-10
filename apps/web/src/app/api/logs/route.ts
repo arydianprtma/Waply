@@ -162,3 +162,61 @@ export async function GET() {
     );
   }
 }
+
+export async function DELETE() {
+  try {
+    const user = await requireActiveUser();
+    const isAdmin = user.role === "admin";
+
+    // Clear user-scoped webhook logs
+    try {
+      if (fs.existsSync(WEBHOOK_LOGS_FILE)) {
+        if (isAdmin) {
+          fs.writeFileSync(WEBHOOK_LOGS_FILE, JSON.stringify([]));
+        } else {
+          const raw = fs.readFileSync(WEBHOOK_LOGS_FILE, "utf-8");
+          const whLogs: any[] = JSON.parse(raw || "[]");
+          const remaining = whLogs.filter((l) => l.userId !== user.id && l.userId !== user.email);
+          fs.writeFileSync(WEBHOOK_LOGS_FILE, JSON.stringify(remaining, null, 2));
+        }
+      }
+    } catch {}
+
+    // Clear user-scoped autoreply logs
+    try {
+      const AUTOREPLY_LOGS_FILE = path.join(DATA_DIR, "autoreply_logs.json");
+      if (fs.existsSync(AUTOREPLY_LOGS_FILE)) {
+        if (isAdmin) {
+          fs.writeFileSync(AUTOREPLY_LOGS_FILE, JSON.stringify([]));
+        } else {
+          const raw = fs.readFileSync(AUTOREPLY_LOGS_FILE, "utf-8");
+          const arLogs: any[] = JSON.parse(raw || "[]");
+          const remaining = arLogs.filter((l) => l.userId !== user.id);
+          fs.writeFileSync(AUTOREPLY_LOGS_FILE, JSON.stringify(remaining, null, 2));
+        }
+      }
+    } catch {}
+
+    // Clear user-scoped messages
+    try {
+      const MESSAGES_FILE = path.join(DATA_DIR, "messages.json");
+      if (fs.existsSync(MESSAGES_FILE)) {
+        if (isAdmin) {
+          fs.writeFileSync(MESSAGES_FILE, JSON.stringify([]));
+        } else {
+          const raw = fs.readFileSync(MESSAGES_FILE, "utf-8");
+          const msgs: any[] = JSON.parse(raw || "[]");
+          const remaining = msgs.filter((m) => m.userId !== user.id);
+          fs.writeFileSync(MESSAGES_FILE, JSON.stringify(remaining, null, 2));
+        }
+      }
+    } catch {}
+
+    return NextResponse.json({ success: true, message: "Log aktivitas berhasil dibersihkan" });
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, error: error.message || "Gagal membersihkan log" },
+      { status: error.status || 500 }
+    );
+  }
+}
