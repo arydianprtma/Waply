@@ -17,8 +17,13 @@ import "prismjs/components/prism-csharp";
 import "prismjs/components/prism-bash";
 import "prismjs/components/prism-json";
 
+// Disable Prism's automatic DOM scanner in client to prevent hydration mismatches
+if (typeof window !== "undefined") {
+  (Prism as any).manual = true;
+}
+
 export interface CodeBlockProps {
-  code: string;
+  code?: string | null;
   language?: string;
   filename?: string;
   showLineNumbers?: boolean;
@@ -59,21 +64,24 @@ export function CodeBlock({
   const [copied, setCopied] = useState(false);
 
   const normalizedLang = languageMap[language.toLowerCase()] || "typescript";
+  const safeCode = typeof code === "string" ? code : "";
 
   const highlightedHtml = useMemo(() => {
+    if (!safeCode) return "";
     const grammar = Prism.languages[normalizedLang] || Prism.languages.javascript;
     try {
-      return Prism.highlight(code, grammar, normalizedLang);
+      return Prism.highlight(safeCode, grammar, normalizedLang);
     } catch {
-      return code
+      return safeCode
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
     }
-  }, [code, normalizedLang]);
+  }, [safeCode, normalizedLang]);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(code);
+    if (!safeCode) return;
+    navigator.clipboard.writeText(safeCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -153,8 +161,12 @@ export function CodeBlock({
 
       {/* VS Code Dark+ Code Body */}
       <div className="p-4 sm:p-5 overflow-x-auto text-[#d4d4d4] leading-relaxed text-xs">
-        <pre className="vscode-dark-theme font-mono whitespace-pre-wrap break-words m-0 p-0">
+        <pre
+          suppressHydrationWarning
+          className={`vscode-dark-theme font-mono whitespace-pre-wrap break-words m-0 p-0 language-${normalizedLang}`}
+        >
           <code
+            suppressHydrationWarning
             dangerouslySetInnerHTML={{ __html: highlightedHtml }}
             className={`language-${normalizedLang}`}
           />
