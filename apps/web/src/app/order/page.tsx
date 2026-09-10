@@ -1491,19 +1491,37 @@ function OrderContent() {
                       <div className="flex items-center gap-2">
                         <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
                         <h3 className="font-extrabold text-sm text-slate-900">
-                          Fitur & Akses Paket {currentPlan.name}
+                          Fitur & Akses{" "}
+                          {currentPlan.name.toLowerCase().startsWith("paket")
+                            ? currentPlan.name
+                            : `Paket ${currentPlan.name}`}
                         </h3>
                       </div>
-                      <span className="text-xs text-slate-400 font-medium shrink-0">Akses Penuh</span>
+                      {(() => {
+                        const totalFeatures = detailedFeatures.length;
+                        const includedFeatures = detailedFeatures.filter((f) => f.included).length;
+                        const isFull = includedFeatures === totalFeatures;
+                        return isFull ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                            Akses Penuh
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                            <Lock className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                            {includedFeatures} dari {totalFeatures} Fitur Aktif
+                          </span>
+                        );
+                      })()}
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                      {detailedFeatures.slice(0, 8).map((feat, idx) => (
+                      {detailedFeatures.map((feat, idx) => (
                         <div
                           key={idx}
                           className={`flex items-center gap-2.5 p-2.5 rounded-xl border ${
                             feat.included
-                              ? "bg-slate-50/80 border-slate-200/80 text-slate-800"
+                              ? "bg-slate-50/80 border-slate-200/80 text-slate-800 font-medium"
                               : "bg-slate-50/30 border-slate-100 text-slate-400 line-through opacity-60"
                           }`}
                         >
@@ -1514,7 +1532,7 @@ function OrderContent() {
                               ✕
                             </span>
                           )}
-                          <span className="font-semibold truncate">{feat.label}</span>
+                          <span className="truncate">{feat.label}</span>
                         </div>
                       ))}
                     </div>
