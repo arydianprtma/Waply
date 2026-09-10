@@ -19,41 +19,82 @@ import {
   RefreshCw,
   KeyRound,
   ExternalLink,
+  MessageSquare,
+  Inbox,
+  CheckCheck,
+  Eye,
+  Smartphone,
+  WifiOff,
+  Check,
 } from "lucide-react";
 import { WebhookConfig, WebhookEvent, WebhookLog } from "@/lib/webhooks";
 import { PlanFeatureGuard } from "@/components/dashboard/PlanFeatureGuard";
 import { CardGridSkeleton, TableSkeleton } from "@/components/ui/SkeletonLoaders";
 
-const ALL_EVENTS: { id: WebhookEvent; label: string; desc: string }[] = [
+interface EventItem {
+  id: WebhookEvent;
+  label: string;
+  name: string;
+  desc: string;
+  category: "message" | "device";
+  badge: string;
+  icon: any;
+}
+
+const ALL_EVENTS: EventItem[] = [
   {
     id: "message.received",
     label: "message.received",
-    desc: "Dipicu saat ada pesan WhatsApp baru masuk dari customer.",
+    name: "Pesan Masuk (Inbound)",
+    desc: "Dipicu seketika saat ada pesan WhatsApp baru masuk dari customer.",
+    category: "message",
+    badge: "Inbound",
+    icon: Inbox,
   },
   {
     id: "message.sent",
     label: "message.sent",
-    desc: "Dipicu saat pesan WhatsApp berhasil dikirim dari sistem.",
+    name: "Pesan Terkirim (Outbound)",
+    desc: "Dipicu saat pesan WhatsApp berhasil diproses & dikirim oleh gateway.",
+    category: "message",
+    badge: "Outbound",
+    icon: Send,
   },
   {
     id: "message.delivered",
     label: "message.delivered",
-    desc: "Dipicu saat pesan berhasil tersampaikan ke HP penerima (centang 2).",
+    name: "Pesan Tersampaikan",
+    desc: "Dipicu saat pesan sampai di perangkat penerima (centang 2 abu-abu).",
+    category: "message",
+    badge: "Delivered",
+    icon: CheckCheck,
   },
   {
     id: "message.read",
     label: "message.read",
-    desc: "Dipicu saat pesan dibaca oleh penerima (centang biru).",
+    name: "Pesan Telah Dibaca",
+    desc: "Dipicu saat pesan dibuka & dibaca oleh penerima (centang 2 biru).",
+    category: "message",
+    badge: "Read",
+    icon: Eye,
   },
   {
     id: "device.connected",
     label: "device.connected",
-    desc: "Dipicu saat sesi WhatsApp berhasil terhubung.",
+    name: "Device Terhubung",
+    desc: "Dipicu saat sesi nomor WhatsApp berhasil tersambung secara online.",
+    category: "device",
+    badge: "Connected",
+    icon: Smartphone,
   },
   {
     id: "device.disconnected",
     label: "device.disconnected",
-    desc: "Dipicu saat sesi WhatsApp terputus.",
+    name: "Device Terputus",
+    desc: "Dipicu saat sesi WhatsApp logout atau koneksi perangkat terputus.",
+    category: "device",
+    badge: "Disconnected",
+    icon: WifiOff,
   },
 ];
 
@@ -488,17 +529,26 @@ export default function WebhooksPage() {
       {/* Modal: Setup / Edit Webhook */}
       {isModalOpen && (
         <ModalPortal>
-          <div className="fixed inset-0 z-[99999] bg-black/60 flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150">
-            <div className="bg-base-100 rounded-3xl max-w-xl w-full p-6 md:p-8 space-y-5 shadow-2xl border border-base-200 my-auto animate-in zoom-in-95 duration-150">
-              <div className="flex items-center justify-between">
-                <h3 className="font-bold text-lg flex items-center gap-2">
-                  <Webhook className="w-5 h-5 text-primary" />
-                  {editingWebhook ? "Edit Webhook Endpoint" : "Tambah Webhook Endpoint"}
-                </h3>
+          <div className="fixed inset-0 z-[99999] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150">
+            <div className="bg-base-100 rounded-3xl max-w-2xl w-full p-6 md:p-8 space-y-5 shadow-2xl border border-base-200 my-auto max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-150">
+              <div className="flex items-center justify-between pb-1 border-b border-base-200">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                    <Webhook className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-base md:text-lg text-base-content">
+                      {editingWebhook ? "Edit Webhook Endpoint" : "Tambah Webhook Endpoint"}
+                    </h3>
+                    <p className="text-xs text-base-content/60">
+                      Konfigurasi tujuan penerimaan event real-time WhatsApp Anda
+                    </p>
+                  </div>
+                </div>
                 <button
                   type="button"
                   onClick={() => !saving && setIsModalOpen(false)}
-                  className="btn btn-ghost btn-circle btn-xs text-base-content/50"
+                  className="btn btn-ghost btn-circle btn-sm text-base-content/50 hover:text-base-content"
                 >
                   ✕
                 </button>
@@ -544,27 +594,191 @@ export default function WebhooksPage() {
                 </div>
 
                 {/* Subscribed Events */}
-                <div className="form-control space-y-2">
-                  <label className="label p-0 text-xs font-semibold">Pilih Events yang Diberlangganankan:</label>
-                  <div className="space-y-2 p-3.5 rounded-2xl bg-base-200/40 border border-base-300">
-                    {ALL_EVENTS.map((ev) => (
-                      <label key={ev.id} className="flex items-start gap-3 cursor-pointer py-1">
-                        <input
-                          type="checkbox"
-                          className="checkbox checkbox-primary checkbox-xs mt-0.5"
-                          checked={selectedEvents.includes(ev.id)}
-                          onChange={() => handleToggleEvent(ev.id)}
-                        />
-                        <div>
-                          <div className="font-mono text-xs font-bold text-base-content">{ev.label}</div>
-                          <div className="text-[11px] text-base-content/60">{ev.desc}</div>
-                        </div>
+                <div className="space-y-3 pt-1">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs font-bold text-base-content">
+                        Pilih Events yang Diberlangganankan
                       </label>
-                    ))}
+                      <span
+                        className={`badge badge-sm font-mono text-[10px] font-bold ${
+                          selectedEvents.length > 0
+                            ? "badge-primary text-primary-content"
+                            : "badge-ghost text-base-content/50"
+                        }`}
+                      >
+                        {selectedEvents.length} dipilih
+                      </span>
+                    </div>
+
+                    {/* Quick Presets */}
+                    <div className="flex items-center gap-1 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedEvents(ALL_EVENTS.map((e) => e.id))}
+                        className="btn btn-ghost btn-xs text-[11px] h-6 min-h-0 px-2 font-medium"
+                      >
+                        Pilih Semua
+                      </button>
+                      <span className="text-base-content/20">•</span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setSelectedEvents(
+                            ALL_EVENTS.filter((e) => e.category === "message").map((e) => e.id)
+                          )
+                        }
+                        className="btn btn-ghost btn-xs text-[11px] h-6 min-h-0 px-2 font-medium"
+                      >
+                        Pesan Saja
+                      </button>
+                      <span className="text-base-content/20">•</span>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedEvents([])}
+                        className="btn btn-ghost btn-xs text-[11px] h-6 min-h-0 px-2 font-medium text-base-content/60 hover:text-error"
+                      >
+                        Kosongkan
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    {/* Category 1: Pesan */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-1.5 text-[11px] font-bold text-base-content/60 uppercase tracking-wider">
+                        <MessageSquare className="w-3.5 h-3.5 text-primary" />
+                        <span>Siklus Pesan & Chat</span>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {ALL_EVENTS.filter((e) => e.category === "message").map((ev) => {
+                          const isSelected = selectedEvents.includes(ev.id);
+                          const Icon = ev.icon;
+                          return (
+                            <div
+                              key={ev.id}
+                              onClick={() => handleToggleEvent(ev.id)}
+                              className={`group relative flex items-start gap-2.5 p-2.5 rounded-xl border transition-all duration-150 cursor-pointer select-none text-left ${
+                                isSelected
+                                  ? "bg-primary/[0.07] dark:bg-primary/[0.12] border-primary/50 shadow-xs ring-1 ring-primary/20"
+                                  : "bg-base-200/40 hover:bg-base-200/80 border-base-300/60 hover:border-base-300"
+                              }`}
+                            >
+                              <div className="pt-0.5">
+                                <div
+                                  className={`w-4 h-4 rounded flex items-center justify-center border transition-colors ${
+                                    isSelected
+                                      ? "bg-primary border-primary text-primary-content"
+                                      : "border-base-content/30 bg-base-100 group-hover:border-primary/50"
+                                  }`}
+                                >
+                                  {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                                </div>
+                              </div>
+                              <div className="flex-1 min-w-0 space-y-0.5">
+                                <div className="flex items-center justify-between gap-1">
+                                  <div className="flex items-center gap-1.5 min-w-0">
+                                    <Icon
+                                      className={`w-3.5 h-3.5 shrink-0 ${
+                                        isSelected ? "text-primary" : "text-base-content/50"
+                                      }`}
+                                    />
+                                    <span className="font-semibold text-xs text-base-content truncate">
+                                      {ev.name}
+                                    </span>
+                                  </div>
+                                  <span
+                                    className={`text-[9px] font-semibold font-mono px-1.5 py-0.5 rounded border shrink-0 ${
+                                      isSelected
+                                        ? "bg-primary/15 text-primary border-primary/30"
+                                        : "bg-base-300/60 text-base-content/60 border-transparent"
+                                    }`}
+                                  >
+                                    {ev.badge}
+                                  </span>
+                                </div>
+                                <div className="font-mono text-[10px] text-base-content/70 truncate">
+                                  {ev.label}
+                                </div>
+                                <p className="text-[11px] leading-tight text-base-content/60">
+                                  {ev.desc}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Category 2: Status Perangkat */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-1.5 text-[11px] font-bold text-base-content/60 uppercase tracking-wider">
+                        <Smartphone className="w-3.5 h-3.5 text-primary" />
+                        <span>Konektivitas Device WhatsApp</span>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {ALL_EVENTS.filter((e) => e.category === "device").map((ev) => {
+                          const isSelected = selectedEvents.includes(ev.id);
+                          const Icon = ev.icon;
+                          return (
+                            <div
+                              key={ev.id}
+                              onClick={() => handleToggleEvent(ev.id)}
+                              className={`group relative flex items-start gap-2.5 p-2.5 rounded-xl border transition-all duration-150 cursor-pointer select-none text-left ${
+                                isSelected
+                                  ? "bg-primary/[0.07] dark:bg-primary/[0.12] border-primary/50 shadow-xs ring-1 ring-primary/20"
+                                  : "bg-base-200/40 hover:bg-base-200/80 border-base-300/60 hover:border-base-300"
+                              }`}
+                            >
+                              <div className="pt-0.5">
+                                <div
+                                  className={`w-4 h-4 rounded flex items-center justify-center border transition-colors ${
+                                    isSelected
+                                      ? "bg-primary border-primary text-primary-content"
+                                      : "border-base-content/30 bg-base-100 group-hover:border-primary/50"
+                                  }`}
+                                >
+                                  {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                                </div>
+                              </div>
+                              <div className="flex-1 min-w-0 space-y-0.5">
+                                <div className="flex items-center justify-between gap-1">
+                                  <div className="flex items-center gap-1.5 min-w-0">
+                                    <Icon
+                                      className={`w-3.5 h-3.5 shrink-0 ${
+                                        isSelected ? "text-primary" : "text-base-content/50"
+                                      }`}
+                                    />
+                                    <span className="font-semibold text-xs text-base-content truncate">
+                                      {ev.name}
+                                    </span>
+                                  </div>
+                                  <span
+                                    className={`text-[9px] font-semibold font-mono px-1.5 py-0.5 rounded border shrink-0 ${
+                                      isSelected
+                                        ? "bg-primary/15 text-primary border-primary/30"
+                                        : "bg-base-300/60 text-base-content/60 border-transparent"
+                                    }`}
+                                  >
+                                    {ev.badge}
+                                  </span>
+                                </div>
+                                <div className="font-mono text-[10px] text-base-content/70 truncate">
+                                  {ev.label}
+                                </div>
+                                <p className="text-[11px] leading-tight text-base-content/60">
+                                  {ev.desc}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-2 pt-2">
+                <div className="flex items-center justify-end gap-2 pt-3 border-t border-base-200">
                   <button
                     type="button"
                     className="btn btn-ghost btn-sm"
@@ -575,7 +789,7 @@ export default function WebhooksPage() {
                   </button>
                   <button
                     type="submit"
-                    className="btn btn-primary btn-sm gap-2"
+                    className="btn btn-primary btn-sm gap-2 px-4"
                     disabled={saving || !name.trim() || !url.trim() || selectedEvents.length === 0}
                   >
                     {saving && <Loader2 className="w-4 h-4 animate-spin" />}
