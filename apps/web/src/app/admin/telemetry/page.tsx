@@ -16,6 +16,7 @@ import {
   Database,
   Radio,
   ExternalLink,
+  Info,
 } from "lucide-react";
 import { SystemTelemetry } from "@/lib/admin-telemetry";
 
@@ -335,8 +336,11 @@ export default function AdminTelemetryPage() {
                 </div>
               </div>
 
-              <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-800 dark:text-emerald-300">
-                💡 <strong>Rekomendasi Operasional:</strong> Gunakan menu <em>Backup Center</em> secara berkala untuk mengekspor snapshot registri data sebelum melakukan upgrade versi aplikasi.
+              <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-800 dark:text-emerald-300 flex items-start gap-2.5">
+                <Info className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                <div className="leading-relaxed">
+                  <strong>Rekomendasi Operasional:</strong> Gunakan menu <em>Backup Center</em> secara berkala untuk mengekspor snapshot registri data sebelum melakukan upgrade versi aplikasi.
+                </div>
               </div>
             </div>
           </div>
