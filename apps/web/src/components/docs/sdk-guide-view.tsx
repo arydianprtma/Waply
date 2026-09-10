@@ -1364,13 +1364,36 @@ public async Task<IActionResult> HandleWebhook([FromHeader(Name = "X-Waply-Signa
       </section>
 
       {/* 5. Example: Webhook Signature Verification */}
-      <section className="space-y-3 pb-12">
-        <h3 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
-          <Webhook className="w-4 h-4 text-indigo-600" /> 5. Verifikasi Webhook HMAC-SHA256
-        </h3>
-        <p className="text-xs text-slate-600 leading-relaxed font-normal">
-          Amankan endpoint webhook Anda dari pemalsuan data dengan mencocokkan signature header <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-800">X-Waply-Signature</code> menggunakan Secret Key akun Anda.
-        </p>
+      <section className="space-y-4 pb-12">
+        <div className="space-y-1">
+          <h3 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
+            <Webhook className="w-4 h-4 text-indigo-600" /> 5. Verifikasi Webhook HMAC-SHA256
+          </h3>
+          <p className="text-xs text-slate-600 leading-relaxed font-normal">
+            Amankan endpoint webhook server Anda dari pemalsuan data dengan mencocokkan signature header <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-800">X-Waply-Signature</code> menggunakan Secret Key akun Anda.
+          </p>
+        </div>
+
+        {/* HMAC Concept Box */}
+        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/90 text-xs space-y-2 text-slate-700">
+          <div className="flex items-center gap-1.5 font-bold text-slate-900 text-xs">
+            <ShieldCheck className="w-4 h-4 text-emerald-600" /> Apa itu HMAC Signature &amp; Mengapa Wajib Digunakan?
+          </div>
+          <p className="leading-relaxed text-[11px]">
+            <b>HMAC (Hash-based Message Authentication Code) SHA-256</b> adalah mekanisme keamanan untuk memvalidasi bahwa payload webhook yang masuk ke server Anda <b>100% otentik dari server Waply</b> dan tidak diubah di perjalanan (Anti-Spoofing / Anti-Man-In-The-Middle).
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 font-mono text-[11px]">
+            <div className="p-2 bg-white rounded-lg border border-slate-200">
+              <span className="font-bold text-slate-800 block text-[10px] uppercase">Header Dikirim Waply:</span>
+              <code className="text-emerald-700 text-[10px] break-all">X-Waply-Signature: sha256=&lt;hash&gt;</code>
+            </div>
+            <div className="p-2 bg-white rounded-lg border border-slate-200">
+              <span className="font-bold text-slate-800 block text-[10px] uppercase">Formula Hash Server:</span>
+              <code className="text-emerald-700 text-[10px] break-all">HMAC_SHA256(RawBody, SecretKey)</code>
+            </div>
+          </div>
+        </div>
+
         <CodeBlock
           code={selectedCodes.webhookSnippet}
           language={selectedLang}

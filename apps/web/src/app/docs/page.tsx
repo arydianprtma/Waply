@@ -52,7 +52,7 @@ export default function PublicDocsPage() {
   const [selectedBroadcastLang, setSelectedBroadcastLang] = useState<CodeLang>("curl");
   const [selectedTemplateLang, setSelectedTemplateLang] = useState<CodeLang>("curl");
   const [selectedAutoReplyLang, setSelectedAutoReplyLang] = useState<CodeLang>("curl");
-  const [selectedWebhookLang, setSelectedWebhookLang] = useState<"nodejs" | "php" | "python">("nodejs");
+  const [selectedWebhookLang, setSelectedWebhookLang] = useState<"nodejs" | "php" | "python" | "dart">("nodejs");
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
   const [activeNav, setActiveNav] = useState<string>("intro");
   const [originUrl, setOriginUrl] = useState<string>("http://localhost:3001");
@@ -562,7 +562,43 @@ async def handle_waply_webhook(request: Request):
         print(f"Chat dari {data.get('sender', {}).get('number')}: {data.get('text')}")
         
     # 3. Respon 200 OK
-    return {"status": "received"}`
+    return {"status": "received"}`,
+      dart: `import 'dart:convert';
+import 'package:crypto/crypto.dart';
+
+/// 1. Verifikasi HMAC-SHA256 signature di Dart / Shelf Backend
+bool verifyWaplyWebhook({
+  required String rawBody,
+  required String signatureHeader,
+  required String webhookSecret,
+}) {
+  final cleanSignature = signatureHeader.replaceFirst('sha256=', '').trim();
+  final hmacSha256 = Hmac(sha256, utf8.encode(webhookSecret));
+  final digest = hmacSha256.convert(utf8.encode(rawBody));
+  return digest.toString().toLowerCase() == cleanSignature.toLowerCase();
+}
+
+/// 2. Contoh Handler Webhook Masuk
+void handleIncomingWebhook(String rawPayload, String signatureHeader) {
+  const secret = 'whsec_YOUR_WEBHOOK_SECRET';
+
+  if (!verifyWaplyWebhook(
+    rawBody: rawPayload,
+    signatureHeader: signatureHeader,
+    webhookSecret: secret,
+  )) {
+    print('Signature webhook tidak valid (Unauthorized)!');
+    return;
+  }
+
+  final payload = jsonDecode(rawPayload) as Map<String, dynamic>;
+  final event = payload['event'];
+  final data = payload['data'];
+
+  if (event == 'message.received') {
+    print('Pesan masuk dari \${data['sender']['number']}: \${data['text']}');
+  }
+}`
     },
   };
 
@@ -1885,32 +1921,156 @@ async def handle_waply_webhook(request: Request):
           </section>
 
           {/* 12. Webhooks */}
-          <section id="webhooks" className="space-y-5 scroll-mt-24 border-t border-slate-200 pt-8">
-            <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-slate-900">
-              <Webhook className="w-5 h-5 text-emerald-600" /> 12. Webhooks & HMAC Signature
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
-              Dengarkan event WhatsApp secara real-time ke URL server Anda dengan verifikasi keamanan HMAC SHA-256:
-            </p>
+          <section id="webhooks" className="space-y-6 scroll-mt-24 border-t border-slate-200 pt-8">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-slate-900">
+                  <Webhook className="w-5 h-5 text-emerald-600" /> 12. Webhooks &amp; HMAC Signature
+                </h2>
+                <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-mono font-semibold px-2.5 py-1 rounded-lg">
+                  POST /api/webhooks
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
+                Webhook memungkinkan server backend aplikasi Anda menerima notifikasi instan secara <i>real-time</i> saat ada pesan WhatsApp masuk, status centang terkirim/dibaca, atau saat perangkat WhatsApp terputus.
+              </p>
+            </div>
+
+            {/* Apa itu HMAC Signature & Mengapa Sangat Penting? */}
+            <div className="p-5 bg-white border border-slate-200/90 rounded-2xl space-y-4 shadow-xs">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 font-bold">
+                  <ShieldCheck className="w-5 h-5 text-emerald-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900">
+                    Apa itu HMAC Signature &amp; Mengapa Wajib Digunakan?
+                  </h3>
+                  <p className="text-xs text-slate-500 font-normal">
+                    Standar otentikasi kriptografi SHA-256 untuk memvalidasi keaslian pengirim webhook
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                <div className="p-3.5 bg-slate-50/80 border border-slate-200/80 rounded-xl space-y-1.5">
+                  <span className="font-bold text-slate-900 flex items-center gap-1.5 text-xs">
+                    <Lock className="w-3.5 h-3.5 text-emerald-600" /> 1. Anti-Spoofing &amp; Fake Data
+                  </span>
+                  <p className="text-slate-600 text-[11px] leading-relaxed">
+                    URL endpoint webhook Anda berada di domain publik. Tanpa verifikasi signature, siapa saja / hacker dapat menembak URL Anda dengan data transaksi atau pesan palsu.
+                  </p>
+                </div>
+
+                <div className="p-3.5 bg-slate-50/80 border border-slate-200/80 rounded-xl space-y-1.5">
+                  <span className="font-bold text-slate-900 flex items-center gap-1.5 text-xs">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> 2. Integritas Data 100%
+                  </span>
+                  <p className="text-slate-600 text-[11px] leading-relaxed">
+                    HMAC-SHA256 mengunci isi pesan (*payload*). Jika ada pihak ketiga di jaringan yang memodifikasi 1 karakter data saja, hasil kalkulasi hash akan berbeda dan request langsung ditolak.
+                  </p>
+                </div>
+
+                <div className="p-3.5 bg-slate-50/80 border border-slate-200/80 rounded-xl space-y-1.5">
+                  <span className="font-bold text-slate-900 flex items-center gap-1.5 text-xs">
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-600" /> 3. Standar Industri Global
+                  </span>
+                  <p className="text-slate-600 text-[11px] leading-relaxed">
+                    Metode ini merupakan standar keamanan baku yang sama persis digunakan oleh raksasa teknologi seperti <b>GitHub, Stripe, Shopify, dan Midtrans</b>.
+                  </p>
+                </div>
+              </div>
+
+              {/* Alur Kerja Verifikasi */}
+              <div className="p-4 bg-emerald-50/60 border border-emerald-200/80 rounded-xl text-xs space-y-2.5">
+                <span className="font-bold text-emerald-950 flex items-center gap-1.5">
+                  <Zap className="w-4 h-4 text-emerald-700" /> Alur Kerja Verifikasi Signature:
+                </span>
+                <ol className="list-decimal list-inside space-y-1 text-slate-700 leading-relaxed text-[11px]">
+                  <li>
+                    Saat ada event WhatsApp, server Waply mengenkripsi data <i>Raw JSON Body</i> menggunakan <b>Secret Key</b> webhook akun Anda dengan algoritma <b>HMAC-SHA256</b>.
+                  </li>
+                  <li>
+                    Hasil hash disertakan pada HTTP Header request: <code className="bg-white border border-emerald-200 px-1 py-0.5 rounded font-mono font-bold text-emerald-900">X-Waply-Signature: sha256=&lt;hash_hex&gt;</code>.
+                  </li>
+                  <li>
+                    Server Anda membaca raw body pesan dan menghitung ulang hash dengan Secret Key yang sama.
+                  </li>
+                  <li>
+                    Jika kedua hash <b>cocok (*match*)</b>, proses data dan kembalikan <code className="bg-white border border-emerald-200 px-1 py-0.5 rounded font-mono font-bold text-emerald-900">200 OK</code>. Jika tidak cocok, tolak dengan <code className="bg-white border border-emerald-200 px-1 py-0.5 rounded font-mono font-bold text-rose-700">401 Unauthorized</code>.
+                  </li>
+                </ol>
+              </div>
+            </div>
+
+            {/* Inbound Webhook Events Table */}
+            <div className="p-4 sm:p-5 bg-white border border-slate-200/90 rounded-2xl space-y-3 shadow-xs">
+              <h3 className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Radio className="w-4 h-4 text-emerald-600" /> Daftar Event Webhook yang Didukung
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left font-mono text-[11px] border border-slate-200 rounded-xl overflow-hidden">
+                  <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+                    <tr>
+                      <th className="p-2.5">Event ID</th>
+                      <th className="p-2.5 font-sans">Kapan Dipicu</th>
+                      <th className="p-2.5 font-sans">Contoh Kegunaan</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-slate-600">
+                    <tr>
+                      <td className="p-2.5 font-bold text-emerald-700">message.received</td>
+                      <td className="p-2.5 font-sans">Pesan WhatsApp baru masuk dari pelanggan</td>
+                      <td className="p-2.5 font-sans">Chatbot AI, ticketing CS, simpan riwayat chat</td>
+                    </tr>
+                    <tr>
+                      <td className="p-2.5 font-bold text-sky-700">message.sent</td>
+                      <td className="p-2.5 font-sans">Pesan berhasil dikirim keluar dari HP gateway</td>
+                      <td className="p-2.5 font-sans">Update status antrean CRM ke TERKIRIM</td>
+                    </tr>
+                    <tr>
+                      <td className="p-2.5 font-bold text-indigo-700">message.delivered</td>
+                      <td className="p-2.5 font-sans">Pesan telah sampai di HP penerima (centang dua abu-abu)</td>
+                      <td className="p-2.5 font-sans">Konfirmasi penerimaan OTP / invoice</td>
+                    </tr>
+                    <tr>
+                      <td className="p-2.5 font-bold text-purple-700">message.read</td>
+                      <td className="p-2.5 font-sans">Pesan telah dibuka dan dibaca penerima (centang biru)</td>
+                      <td className="p-2.5 font-sans">Analisis tingkat keterbacaan kampanye marketing</td>
+                    </tr>
+                    <tr>
+                      <td className="p-2.5 font-bold text-teal-700">device.connected</td>
+                      <td className="p-2.5 font-sans">Nomor WhatsApp berhasil terhubung ke server</td>
+                      <td className="p-2.5 font-sans">Notifikasi status sistem online</td>
+                    </tr>
+                    <tr>
+                      <td className="p-2.5 font-bold text-rose-700">device.disconnected</td>
+                      <td className="p-2.5 font-sans">Koneksi WhatsApp HP terputus atau logout</td>
+                      <td className="p-2.5 font-sans">Kirim alert darurat via email ke admin server</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
 
             {/* Signature Verification Code Switcher */}
-            <div className="space-y-2.5">
+            <div className="space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <h4 className="font-bold text-xs sm:text-sm text-slate-900 flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" /> Contoh Handler Verifikasi Signature:
+                  <Code2 className="w-4 h-4 text-emerald-600" /> Contoh Kode Verifikasi HMAC-SHA256:
                 </h4>
-                <div className="flex bg-slate-100 p-1 rounded-xl text-xs font-semibold gap-1 self-start sm:self-auto border border-slate-200">
-                  {(["nodejs", "php", "python"] as const).map((lang) => (
+                <div className="flex flex-wrap bg-slate-100 p-1 rounded-xl text-xs font-semibold gap-1 self-start sm:self-auto border border-slate-200">
+                  {(["nodejs", "php", "python", "dart"] as const).map((lang) => (
                     <button
                       key={lang}
                       onClick={() => setSelectedWebhookLang(lang)}
-                      className={`px-2.5 py-0.5 rounded-lg transition-all cursor-pointer ${
+                      className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
                         selectedWebhookLang === lang
                           ? "bg-white text-slate-900 shadow-2xs font-bold"
                           : "text-slate-600 hover:text-slate-900"
                       }`}
                     >
-                      {lang === "nodejs" ? "Node.js (Express)" : lang === "php" ? "PHP (Laravel / Native)" : "Python (FastAPI)"}
+                      {lang === "nodejs" ? "Node.js (Express)" : lang === "php" ? "PHP (Laravel / Native)" : lang === "python" ? "Python (FastAPI)" : "Flutter / Dart (Shelf)"}
                     </button>
                   ))}
                 </div>
@@ -1919,7 +2079,7 @@ async def handle_waply_webhook(request: Request):
               <CodeBlock
                 code={snippets.webhookVerify[selectedWebhookLang]}
                 language={selectedWebhookLang}
-                filename={`webhook_handler.${selectedWebhookLang === "nodejs" ? "ts" : selectedWebhookLang === "php" ? "php" : "py"}`}
+                filename={`webhook_handler.${selectedWebhookLang === "nodejs" ? "ts" : selectedWebhookLang === "php" ? "php" : selectedWebhookLang === "python" ? "py" : "dart"}`}
               />
             </div>
           </section>
