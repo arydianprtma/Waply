@@ -19,6 +19,7 @@ export interface PlanFeatureAccess {
   apiDocs: boolean;
   apiKeys: boolean;
   webhooks: boolean;
+  systemLogs?: boolean;
 
   // Backward-compat aliases
   apiAccess?: boolean;
@@ -38,6 +39,7 @@ export const DEFAULT_FREE_ACCESS: PlanFeatureAccess = {
   apiDocs: true,
   apiKeys: true,
   webhooks: true,
+  systemLogs: true,
 };
 
 export const FEATURE_ACCESS_CATEGORIES = [
@@ -71,6 +73,7 @@ export const FEATURE_ACCESS_CATEGORIES = [
       { key: "apiDocs" as keyof PlanFeatureAccess, label: "API Documentation & Playground" },
       { key: "apiKeys" as keyof PlanFeatureAccess, label: "API Keys Developer" },
       { key: "webhooks" as keyof PlanFeatureAccess, label: "Webhook Integration & Events" },
+      { key: "systemLogs" as keyof PlanFeatureAccess, label: "System & Activity Logs" },
     ],
   },
 ];
@@ -88,6 +91,7 @@ export const FEATURE_ACCESS_LABELS: Record<string, string> = {
   apiDocs: "API Documentation & Playground",
   apiKeys: "API Keys Developer",
   webhooks: "Webhook Integration & Events",
+  systemLogs: "System & Activity Logs",
 };
 
 export interface DetailedPlanFeature {

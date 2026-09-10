@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/auth-user";
 import { getWebhooks, createWebhook } from "@/lib/webhooks";
+import { hasUserPlanFeature } from "@/lib/billing";
 import crypto from "crypto";
 
 export async function GET(req: NextRequest) {
@@ -16,6 +17,17 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const user = await getAuthUser();
+    if (!hasUserPlanFeature(user.id, "webhooks", user.role)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Fitur Webhook Integration terkunci pada paket Anda. Silakan upgrade paket langganan Anda.",
+          code: "PLAN_FEATURE_LOCKED",
+        },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
 
     if (!body.name || !body.url) {

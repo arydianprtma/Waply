@@ -24,6 +24,7 @@ import {
   Lock,
   X,
   Headphones,
+  ScrollText,
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -95,6 +96,7 @@ export function Sidebar() {
         { name: "API Docs", href: "/docs", icon: Code2, badge: "v1.1.2", accessKey: "apiDocs" },
         { name: "API Keys", href: "/dashboard/api-keys", icon: KeyRound, accessKey: "apiKeys" },
         { name: "Webhooks", href: "/dashboard/webhooks", icon: Webhook, accessKey: "webhooks" },
+        { name: "System Logs", href: "/dashboard/logs", icon: ScrollText, badge: "Live", accessKey: "systemLogs" },
       ],
     },
     {

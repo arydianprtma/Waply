@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/auth-user";
 import { getAutoReplyRules, createAutoReplyRule } from "@/lib/autoreply";
+import { hasUserPlanFeature } from "@/lib/billing";
 
 export async function GET(req: NextRequest) {
   try {
@@ -18,6 +19,17 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const user = await getAuthUser();
+    if (!hasUserPlanFeature(user.id, "autoReply", user.role)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Fitur Auto Reply Bot terkunci pada paket Anda. Silakan upgrade paket langganan Anda.",
+          code: "PLAN_FEATURE_LOCKED",
+        },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
 
     if (!body.name || !body.replyMessage) {

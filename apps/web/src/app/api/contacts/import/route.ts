@@ -1,10 +1,22 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth-user";
 import { importContactsBulk } from "@/lib/contacts";
+import { hasUserPlanFeature } from "@/lib/billing";
 
 export async function POST(request: Request) {
   try {
     const user = await getSessionUser();
+    if (!hasUserPlanFeature(user.id, "contacts", user.role)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Fitur Manajemen Kontak terkunci pada paket Anda. Silakan upgrade paket langganan Anda.",
+          code: "PLAN_FEATURE_LOCKED",
+        },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json().catch(() => ({}));
     const items = body.contacts || body.items || [];
 

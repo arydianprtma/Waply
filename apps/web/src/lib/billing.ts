@@ -332,10 +332,25 @@ export function getUserPlanAccess(userId: string): PlanFeatureAccess {
       apiDocs: true,
       apiKeys: true,
       webhooks: true,
+      systemLogs: true,
     });
   } catch {
     return DEFAULT_FREE_ACCESS;
   }
+}
+
+/**
+ * Check if a user has access to a specific feature key.
+ * If userRole is "admin", always returns true.
+ */
+export function hasUserPlanFeature(
+  userId: string,
+  feature: keyof PlanFeatureAccess,
+  userRole?: string
+): boolean {
+  if (userRole === "admin") return true;
+  const access = getUserPlanAccess(userId);
+  return Boolean(access[feature]);
 }
 
 // ─── Invoice CRUD ─────────────────────────────────────────────────────────────

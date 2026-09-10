@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth-user";
 import { getLocalCampaigns, createBroadcastCampaign } from "@/lib/broadcast";
+import { hasUserPlanFeature } from "@/lib/billing";
 
 export async function GET() {
   try {
@@ -15,6 +16,17 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const user = await getSessionUser();
+    if (!hasUserPlanFeature(user.id, "broadcast", user.role)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Fitur Broadcast Massal terkunci pada paket Anda. Silakan upgrade paket langganan Anda.",
+          code: "PLAN_FEATURE_LOCKED",
+        },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json().catch(() => ({}));
 
     if (!body.name?.trim()) {

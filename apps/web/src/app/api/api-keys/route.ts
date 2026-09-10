@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth-user";
 import { generateApiKey, listApiKeys } from "@/lib/api-auth";
+import { hasUserPlanFeature } from "@/lib/billing";
 
 export async function GET() {
   try {
@@ -16,6 +17,17 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const user = await getSessionUser();
+    if (!hasUserPlanFeature(user.id, "apiKeys", user.role)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Fitur API Keys Developer terkunci pada paket Anda. Silakan upgrade paket langganan Anda.",
+          code: "PLAN_FEATURE_LOCKED",
+        },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json().catch(() => ({}));
     const name = body.name?.trim() || "Default API Key";
 

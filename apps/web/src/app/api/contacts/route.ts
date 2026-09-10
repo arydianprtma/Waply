@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireActiveUser } from "@/lib/auth-user";
 import { getLocalContacts, createContact } from "@/lib/contacts";
 import { sanitizePhoneNumber, sanitizeText } from "@/lib/sanitizer";
+import { hasUserPlanFeature } from "@/lib/billing";
 
 export async function GET(request: Request) {
   try {
@@ -35,6 +36,17 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const user = await requireActiveUser();
+    if (!hasUserPlanFeature(user.id, "contacts", user.role)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Fitur Manajemen Kontak terkunci pada paket Anda. Silakan upgrade paket langganan Anda.",
+          code: "PLAN_FEATURE_LOCKED",
+        },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json().catch(() => ({}));
 
     if (!body.phoneNumber) {
