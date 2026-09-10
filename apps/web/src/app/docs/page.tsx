@@ -56,11 +56,24 @@ export default function PublicDocsPage() {
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
   const [activeNav, setActiveNav] = useState<string>("intro");
   const [originUrl, setOriginUrl] = useState<string>("http://localhost:3001");
+  const [plansList, setPlansList] = useState<any[]>([]);
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.location.origin) {
       setOriginUrl(window.location.origin);
     }
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/billing/plans")
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success && json.data) {
+          const list = Object.values(json.data).filter((p: any) => p.isActive !== false);
+          setPlansList(list);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const sectionsRef = useRef<{ [key: string]: HTMLElement | null }>({});
@@ -2120,9 +2133,14 @@ void handleIncomingWebhook(String rawPayload, String signatureHeader) {
 
           {/* 15. Rate Limits */}
           <section id="rate-limits" className="space-y-4 scroll-mt-24 border-t border-slate-200 pt-8">
-            <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-slate-900">
-              <Clock className="w-5 h-5 text-emerald-600" /> 15. Rate Limits & Kuota Paket
-            </h2>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-slate-900">
+                <Clock className="w-5 h-5 text-emerald-600" /> 15. Rate Limits & Kuota Paket
+              </h2>
+              <span className="text-xs text-slate-500 font-medium">
+                Sesuai konfigurasi paket aktif Waply
+              </span>
+            </div>
             <div className="overflow-x-auto border border-slate-200 rounded-xl shadow-xs bg-white">
               <table className="w-full text-left border-collapse text-xs">
                 <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
@@ -2130,34 +2148,59 @@ void handleIncomingWebhook(String rawPayload, String signatureHeader) {
                     <th className="p-3">Paket</th>
                     <th className="p-3">Batas Request / Menit</th>
                     <th className="p-3">Maksimal Devices</th>
-                    <th className="p-3">Kuota Bulanan</th>
+                    <th className="p-3">Kuota Pesan</th>
                   </tr>
                 </thead>
-                <tbody className="font-mono text-xs divide-y divide-slate-100 text-slate-900">
-                  <tr className="hover:bg-slate-50/50">
-                    <td className="font-bold p-3">Free Trial</td>
-                    <td className="p-3">10 req / min</td>
-                    <td className="p-3">1 Device</td>
-                    <td className="p-3">100 pesan</td>
-                  </tr>
-                  <tr className="hover:bg-slate-50/50">
-                    <td className="font-bold text-sky-700 p-3">Starter</td>
-                    <td className="p-3">60 req / min</td>
-                    <td className="p-3">2 Devices</td>
-                    <td className="p-3">5.000 pesan</td>
-                  </tr>
-                  <tr className="hover:bg-slate-50/50">
-                    <td className="font-bold text-emerald-700 p-3">Business</td>
-                    <td className="p-3">300 req / min</td>
-                    <td className="p-3">5 Devices</td>
-                    <td className="p-3">25.000 pesan</td>
-                  </tr>
-                  <tr className="hover:bg-slate-50/50">
-                    <td className="font-bold text-indigo-700 p-3">Pro Unlimited</td>
-                    <td className="p-3">1.000 req / min</td>
-                    <td className="p-3">10 Devices</td>
-                    <td className="p-3">100.000 pesan</td>
-                  </tr>
+                <tbody className="text-xs divide-y divide-slate-100 text-slate-900 font-medium">
+                  {plansList.length > 0 ? (
+                    plansList.map((p: any) => {
+                      const isFree = p.price === 0 || p.id === "FREE";
+                      const rateLimit = isFree
+                        ? "10 req / min"
+                        : p.maxDevices <= 2
+                        ? "60 req / min"
+                        : p.maxDevices <= 5
+                        ? "300 req / min"
+                        : "1.000 req / min";
+                      const periodLabel =
+                        p.period === "day"
+                          ? "hari"
+                          : p.period === "week"
+                          ? "minggu"
+                          : p.period === "year"
+                          ? "tahun"
+                          : "bulan";
+                      const quotaLabel =
+                        p.monthlyMessages === -1
+                          ? "Unlimited"
+                          : `${(p.monthlyMessages || 0).toLocaleString("id-ID")} pesan / ${periodLabel}`;
+
+                      return (
+                        <tr key={p.id} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="p-3 font-bold text-slate-900 flex items-center gap-2">
+                            <span>{p.name}</span>
+                            {isFree && (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600">
+                                Free
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-3 font-mono text-slate-700">{rateLimit}</td>
+                          <td className="p-3 font-mono text-slate-700">
+                            {p.maxDevices} Device{p.maxDevices > 1 ? "s" : ""}
+                          </td>
+                          <td className="p-3 font-mono text-slate-700">{quotaLabel}</td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr className="hover:bg-slate-50/50">
+                      <td className="font-bold p-3">Memuat data paket...</td>
+                      <td className="p-3">-</td>
+                      <td className="p-3">-</td>
+                      <td className="p-3">-</td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
