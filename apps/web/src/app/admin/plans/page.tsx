@@ -704,19 +704,30 @@ export default function AdminPlansPage() {
 
                 {/* Harga */}
                 <div className="form-control">
-                  <label className="label py-1">
-                    <span className="label-text font-bold text-xs">Harga (Rp)</span>
-                  </label>
+                  <div className="flex items-center justify-between py-1">
+                    <label className="label-text font-bold text-xs">Harga (Rp)</label>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, price: 0, hasDiscount: false, watermarkEnabled: true })}
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border transition-colors cursor-pointer ${
+                        formData.price === 0
+                          ? "bg-emerald-50 border-emerald-300 text-emerald-700"
+                          : "bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200"
+                      }`}
+                    >
+                      {formData.price === 0 ? "✓ Paket Gratis" : "Set Gratis (Rp 0)"}
+                    </button>
+                  </div>
                   <input
                     type="number"
                     min={0}
                     step={1}
-                    className="input input-bordered input-sm"
+                    className="input input-bordered input-sm font-semibold"
                     placeholder="0"
-                    value={formData.price === 0 ? "" : formData.price}
+                    value={formData.price}
                     onChange={(e) => {
-                      const val = e.target.value.replace(/^0+(?=\d)/, "");
-                      const newPrice = val === "" ? 0 : Number(val);
+                      const val = e.target.value.trim();
+                      const newPrice = val === "" ? 0 : Math.max(0, Number(val));
                       let updatedOrig = formData.originalPrice;
                       let updatedDisc = formData.discountPercent;
 
@@ -738,6 +749,11 @@ export default function AdminPlansPage() {
                     }}
                     required
                   />
+                  {formData.price === 0 && (
+                    <span className="text-[11px] text-emerald-600 font-semibold mt-1">
+                      Paket ini diatur sebagai Paket Gratis (Free Trial / Rp 0)
+                    </span>
+                  )}
                 </div>
 
                 {/* Periode */}
@@ -769,10 +785,10 @@ export default function AdminPlansPage() {
                     step={1}
                     className="input input-bordered input-sm"
                     placeholder="1"
-                    value={formData.maxDevices === 0 ? "" : formData.maxDevices}
+                    value={formData.maxDevices}
                     onChange={(e) => {
-                      const val = e.target.value.replace(/^0+(?=\d)/, "");
-                      setFormData({ ...formData, maxDevices: val === "" ? 0 : Number(val) });
+                      const val = e.target.value.trim();
+                      setFormData({ ...formData, maxDevices: val === "" ? 1 : Math.max(1, Number(val)) });
                     }}
                     required
                   />
@@ -804,13 +820,11 @@ export default function AdminPlansPage() {
                     value={
                       formData.isUnlimitedMessages
                         ? ""
-                        : formData.monthlyMessages === 0
-                        ? ""
                         : formData.monthlyMessages
                     }
                     onChange={(e) => {
-                      const val = e.target.value.replace(/^0+(?=\d)/, "");
-                      setFormData({ ...formData, monthlyMessages: val === "" ? 0 : Number(val) });
+                      const val = e.target.value.trim();
+                      setFormData({ ...formData, monthlyMessages: val === "" ? 0 : Math.max(0, Number(val)) });
                     }}
                     required={!formData.isUnlimitedMessages}
                   />
