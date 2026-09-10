@@ -184,18 +184,20 @@ export function AnnouncementPopupModal() {
           /* ================= SIDE-BY-SIDE LAYOUT ================= */
           <div className="grid grid-cols-1 md:grid-cols-12 min-h-[380px]">
             {/* Left Column: Image Banner */}
-            <div className="md:col-span-5 relative bg-slate-950 overflow-hidden flex items-center justify-center min-h-[220px] md:min-h-full border-b md:border-b-0 md:border-r border-slate-200/80 dark:border-slate-800">
+            <div className="md:col-span-5 relative bg-slate-950 overflow-hidden flex items-center justify-center min-h-[240px] md:min-h-full p-4 sm:p-6 border-b md:border-b-0 md:border-r border-slate-200/80 dark:border-slate-800">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={popup.popupImage}
                 alt={popup.title}
-                className="w-full h-full object-cover object-center max-h-[280px] md:max-h-none"
+                className={`w-full h-full max-h-[280px] md:max-h-[360px] ${
+                  popup.popupImageRatio === "16:9" ? "object-cover md:object-contain" : "object-contain"
+                } object-center rounded-xl transition-all duration-300`}
                 onError={(e) => {
                   const parent = (e.target as HTMLElement).parentElement;
                   if (parent) parent.style.display = "none";
                 }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent md:hidden pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/50 via-transparent to-transparent md:hidden pointer-events-none" />
             </div>
 
             {/* Right Column: Content */}
@@ -293,11 +295,11 @@ export function AnnouncementPopupModal() {
               <div
                 className={`relative w-full overflow-hidden bg-slate-950 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-center ${
                   popup.popupImageRatio === "1:1"
-                    ? "aspect-square max-h-[300px]"
+                    ? "p-4 sm:p-6 max-h-[300px]"
                     : popup.popupImageRatio === "4:3"
-                    ? "aspect-[4/3] max-h-[320px]"
+                    ? "p-3 sm:p-4 max-h-[320px]"
                     : popup.popupImageRatio === "AUTO"
-                    ? "max-h-[360px]"
+                    ? "p-3 max-h-[360px]"
                     : "aspect-[16/9] max-h-[260px]"
                 }`}
               >
@@ -305,9 +307,9 @@ export function AnnouncementPopupModal() {
                 <img
                   src={popup.popupImage}
                   alt={popup.title}
-                  className={`w-full h-full ${
-                    popup.popupImageRatio === "AUTO" ? "object-contain max-h-[360px]" : "object-cover"
-                  } object-center`}
+                  className={`w-full h-full max-h-[320px] ${
+                    popup.popupImageRatio === "16:9" ? "object-cover" : "object-contain"
+                  } object-center rounded-lg`}
                   onError={(e) => {
                     const parent = (e.target as HTMLElement).parentElement;
                     if (parent) parent.style.display = "none";
