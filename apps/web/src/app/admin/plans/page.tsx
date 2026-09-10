@@ -139,16 +139,16 @@ export default function AdminPlansPage() {
   const [formData, setFormData] = useState<{
     id: string;
     name: string;
-    price: number;
+    price: number | string;
     hasDiscount: boolean;
-    originalPrice: number;
-    discountPercent: number;
+    originalPrice: number | string;
+    discountPercent: number | string;
     discountBadge: string;
     discountStartDate: string | null;
     discountEndDate: string | null;
-    period: "month" | "week" | "year" | "day";
-    maxDevices: number;
-    monthlyMessages: number;
+    period: "month" | "year" | "week" | "day";
+    maxDevices: number | string;
+    monthlyMessages: number | string;
     isUnlimitedMessages: boolean;
     featuresText: string;
     access: PlanFeatureAccess;
@@ -205,8 +205,8 @@ export default function AdminPlansPage() {
       name: "Paket Kustom",
       price: 99000,
       hasDiscount: false,
-      originalPrice: 0,
-      discountPercent: 0,
+      originalPrice: "",
+      discountPercent: "",
       discountBadge: "",
       discountStartDate: null,
       discountEndDate: null,
@@ -235,8 +235,8 @@ export default function AdminPlansPage() {
       name: p.name,
       price: p.price,
       hasDiscount: hasDisc,
-      originalPrice: hasDisc ? (p.originalPrice || 0) : 0,
-      discountPercent: hasDisc ? (p.discountPercent || calcPercent) : 0,
+      originalPrice: hasDisc ? (p.originalPrice || "") : "",
+      discountPercent: hasDisc ? (p.discountPercent || calcPercent) : "",
       discountBadge: hasDisc ? (p.discountBadge || `DISKON ${calcPercent}%`) : "",
       discountStartDate: p.discountStartDate || null,
       discountEndDate: p.discountEndDate || null,
@@ -262,9 +262,11 @@ export default function AdminPlansPage() {
         : formData.period === "year"
         ? "tahun"
         : "bulan";
+    const numDevices = Number(formData.maxDevices) || 1;
+    const numMessages = Number(formData.monthlyMessages) || 0;
     const bullets = [
-      `${formData.maxDevices} WhatsApp Device${formData.maxDevices > 1 ? "s" : ""}`,
-      `${formData.isUnlimitedMessages ? "Unlimited" : formData.monthlyMessages.toLocaleString("id-ID")} Pesan / ${periodLabel}`,
+      `${numDevices} WhatsApp Device${numDevices > 1 ? "s" : ""}`,
+      `${formData.isUnlimitedMessages ? "Unlimited" : numMessages.toLocaleString("id-ID")} Pesan / ${periodLabel}`,
     ];
 
     FEATURE_ACCESS_CATEGORIES.forEach((cat) => {
@@ -285,18 +287,24 @@ export default function AdminPlansPage() {
     e.preventDefault();
     setSaving(true);
     try {
+      const cleanPrice = formData.price === "" ? 0 : Number(formData.price) || 0;
+      const cleanOrig = formData.hasDiscount && formData.originalPrice !== "" ? Number(formData.originalPrice) || 0 : undefined;
+      const cleanDisc = formData.hasDiscount && formData.discountPercent !== "" ? Number(formData.discountPercent) || 0 : undefined;
+      const cleanDevices = formData.maxDevices === "" ? 1 : Math.max(1, Number(formData.maxDevices) || 1);
+      const cleanMessages = formData.isUnlimitedMessages ? -1 : (formData.monthlyMessages === "" ? 0 : Number(formData.monthlyMessages) || 0);
+
       const payload: Partial<Plan> = {
         id: formData.id,
         name: formData.name,
-        price: formData.price,
-        originalPrice: formData.hasDiscount ? formData.originalPrice : undefined,
-        discountPercent: formData.hasDiscount ? formData.discountPercent : undefined,
+        price: cleanPrice,
+        originalPrice: cleanOrig && cleanOrig > 0 ? cleanOrig : undefined,
+        discountPercent: cleanDisc && cleanDisc > 0 ? cleanDisc : undefined,
         discountBadge: formData.hasDiscount && formData.discountBadge ? formData.discountBadge : undefined,
         discountStartDate: formData.hasDiscount && formData.discountStartDate ? formData.discountStartDate : undefined,
         discountEndDate: formData.hasDiscount && formData.discountEndDate ? formData.discountEndDate : undefined,
         period: formData.period,
-        maxDevices: formData.maxDevices,
-        monthlyMessages: formData.isUnlimitedMessages ? -1 : formData.monthlyMessages,
+        maxDevices: cleanDevices,
+        monthlyMessages: cleanMessages,
         features: formData.featuresText.split("\n").filter(Boolean),
         access: formData.access,
         isPopular: formData.isPopular,
@@ -710,26 +718,26 @@ export default function AdminPlansPage() {
                       type="button"
                       onClick={() => setFormData({ ...formData, price: 0, hasDiscount: false, watermarkEnabled: true })}
                       className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border transition-colors cursor-pointer ${
-                        formData.price === 0
+                        formData.price === 0 || formData.price === "0"
                           ? "bg-emerald-50 border-emerald-300 text-emerald-700"
                           : "bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200"
                       }`}
                     >
-                      {formData.price === 0 ? "✓ Paket Gratis" : "Set Gratis (Rp 0)"}
+                      {formData.price === 0 || formData.price === "0" ? "✓ Paket Gratis" : "Set Gratis (Rp 0)"}
                     </button>
                   </div>
                   <input
-                    type="number"
-                    min={0}
-                    step={1}
+                    type="text"
+                    inputMode="numeric"
                     className="input input-bordered input-sm font-semibold"
                     placeholder="0"
                     value={formData.price}
                     onChange={(e) => {
-                      const val = e.target.value.trim();
-                      const newPrice = val === "" ? 0 : Math.max(0, Number(val));
-                      let updatedOrig = formData.originalPrice;
-                      let updatedDisc = formData.discountPercent;
+                      let raw = e.target.value.replace(/[^\d]/g, "");
+                      if (/^0\d+/.test(raw)) raw = raw.replace(/^0+/, "");
+                      const newPrice = raw === "" ? 0 : Number(raw);
+                      let updatedOrig = Number(formData.originalPrice) || 0;
+                      let updatedDisc = Number(formData.discountPercent) || 0;
 
                       if (formData.hasDiscount) {
                         if (updatedOrig && updatedOrig > newPrice) {
@@ -741,15 +749,20 @@ export default function AdminPlansPage() {
 
                       setFormData({
                         ...formData,
-                        price: newPrice,
-                        originalPrice: updatedOrig,
-                        discountPercent: updatedDisc,
+                        price: raw,
+                        originalPrice: updatedOrig || "",
+                        discountPercent: updatedDisc || "",
                         discountBadge: formData.hasDiscount && updatedDisc > 0 ? `DISKON ${updatedDisc}%` : formData.discountBadge,
                       });
                     }}
+                    onBlur={() => {
+                      if (formData.price === "") {
+                        setFormData((prev) => ({ ...prev, price: 0 }));
+                      }
+                    }}
                     required
                   />
-                  {formData.price === 0 && (
+                  {(formData.price === 0 || formData.price === "0") && (
                     <span className="text-[11px] text-emerald-600 font-semibold mt-1">
                       Paket ini diatur sebagai Paket Gratis (Free Trial / Rp 0)
                     </span>
@@ -779,16 +792,20 @@ export default function AdminPlansPage() {
                     <span className="label-text font-bold text-xs">Maksimal WhatsApp Device</span>
                   </label>
                   <input
-                    type="number"
-                    min={1}
-                    max={100}
-                    step={1}
+                    type="text"
+                    inputMode="numeric"
                     className="input input-bordered input-sm"
                     placeholder="1"
                     value={formData.maxDevices}
                     onChange={(e) => {
-                      const val = e.target.value.trim();
-                      setFormData({ ...formData, maxDevices: val === "" ? 1 : Math.max(1, Number(val)) });
+                      let raw = e.target.value.replace(/[^\d]/g, "");
+                      if (/^0\d+/.test(raw)) raw = raw.replace(/^0+/, "");
+                      setFormData({ ...formData, maxDevices: raw });
+                    }}
+                    onBlur={() => {
+                      if (!formData.maxDevices || Number(formData.maxDevices) < 1) {
+                        setFormData((prev) => ({ ...prev, maxDevices: 1 }));
+                      }
                     }}
                     required
                   />
@@ -811,20 +828,21 @@ export default function AdminPlansPage() {
                     </label>
                   </label>
                   <input
-                    type="number"
-                    min={0}
-                    step={1}
+                    type="text"
+                    inputMode="numeric"
                     disabled={formData.isUnlimitedMessages}
                     className="input input-bordered input-sm disabled:opacity-50"
                     placeholder="Contoh: 10000"
-                    value={
-                      formData.isUnlimitedMessages
-                        ? ""
-                        : formData.monthlyMessages
-                    }
+                    value={formData.isUnlimitedMessages ? "" : formData.monthlyMessages}
                     onChange={(e) => {
-                      const val = e.target.value.trim();
-                      setFormData({ ...formData, monthlyMessages: val === "" ? 0 : Math.max(0, Number(val)) });
+                      let raw = e.target.value.replace(/[^\d]/g, "");
+                      if (/^0\d+/.test(raw)) raw = raw.replace(/^0+/, "");
+                      setFormData({ ...formData, monthlyMessages: raw });
+                    }}
+                    onBlur={() => {
+                      if (formData.monthlyMessages === "" && !formData.isUnlimitedMessages) {
+                        setFormData((prev) => ({ ...prev, monthlyMessages: 0 }));
+                      }
                     }}
                     required={!formData.isUnlimitedMessages}
                   />
@@ -845,15 +863,16 @@ export default function AdminPlansPage() {
                       checked={formData.hasDiscount}
                       onChange={(e) => {
                         const checked = e.target.checked;
-                        const orig = formData.originalPrice && formData.originalPrice > formData.price
-                          ? formData.originalPrice
+                        const currPrice = Number(formData.price) || 0;
+                        const orig = formData.originalPrice && Number(formData.originalPrice) > currPrice
+                          ? Number(formData.originalPrice)
                           : 0;
-                        const disc = orig > formData.price ? Math.round(((orig - formData.price) / orig) * 100) : 0;
+                        const disc = orig > currPrice ? Math.round(((orig - currPrice) / orig) * 100) : 0;
                         setFormData({
                           ...formData,
                           hasDiscount: checked,
-                          originalPrice: orig,
-                          discountPercent: disc,
+                          originalPrice: orig || "",
+                          discountPercent: disc || "",
                           discountBadge: checked && disc > 0 ? `DISKON ${disc}%` : "",
                         });
                       }}
@@ -867,7 +886,7 @@ export default function AdminPlansPage() {
                       </p>
                     </div>
                   </label>
-                  {formData.hasDiscount && formData.discountPercent > 0 && (
+                  {formData.hasDiscount && Number(formData.discountPercent) > 0 && (
                     <span className="badge badge-sm bg-rose-50 border-rose-200 text-rose-700 font-bold text-[11px] px-2 py-0.5">
                       Hemat {formData.discountPercent}%
                     </span>
@@ -885,20 +904,21 @@ export default function AdminPlansPage() {
                           </span>
                         </label>
                         <input
-                          type="number"
-                          min={0}
-                          step={1}
+                          type="text"
+                          inputMode="numeric"
                           className="input input-bordered input-sm bg-white text-xs"
                           placeholder="Misal: 79000"
-                          value={!formData.originalPrice || formData.originalPrice === 0 ? "" : formData.originalPrice}
+                          value={formData.originalPrice}
                           onChange={(e) => {
-                            const val = e.target.value.replace(/^0+(?=\d)/, "");
-                            const orig = val === "" ? 0 : Number(val);
-                            const disc = orig > formData.price ? Math.round(((orig - formData.price) / orig) * 100) : 0;
+                            let raw = e.target.value.replace(/[^\d]/g, "");
+                            if (/^0\d+/.test(raw)) raw = raw.replace(/^0+/, "");
+                            const orig = raw === "" ? 0 : Number(raw);
+                            const currPrice = Number(formData.price) || 0;
+                            const disc = orig > currPrice ? Math.round(((orig - currPrice) / orig) * 100) : 0;
                             setFormData({
                               ...formData,
-                              originalPrice: orig,
-                              discountPercent: disc,
+                              originalPrice: raw,
+                              discountPercent: disc || "",
                               discountBadge: disc > 0 ? `DISKON ${disc}%` : formData.discountBadge,
                             });
                           }}
@@ -933,8 +953,8 @@ export default function AdminPlansPage() {
                               key={preset}
                               type="button"
                               onClick={() => {
-                                let newPrice = formData.price;
-                                let newOrig = formData.originalPrice;
+                                let newPrice = Number(formData.price) || 0;
+                                let newOrig = Number(formData.originalPrice) || 0;
                                 if (newOrig && newOrig > 0) {
                                   newPrice = Math.round((newOrig * (1 - preset / 100)) / 100) * 100;
                                 } else if (newPrice > 0) {
@@ -945,7 +965,7 @@ export default function AdminPlansPage() {
                                   ...formData,
                                   discountPercent: finalDisc,
                                   price: newPrice,
-                                  originalPrice: newOrig,
+                                  originalPrice: newOrig || "",
                                   discountBadge: `DISKON ${finalDisc}%`,
                                 });
                               }}
@@ -957,18 +977,17 @@ export default function AdminPlansPage() {
                         </div>
                       </div>
                       <input
-                        type="number"
-                        min={0}
-                        max={100}
-                        step={1}
+                        type="text"
+                        inputMode="numeric"
                         className="input input-bordered input-sm bg-white text-xs"
                         placeholder="0"
-                        value={!formData.discountPercent || formData.discountPercent === 0 ? "" : formData.discountPercent}
+                        value={formData.discountPercent}
                         onChange={(e) => {
-                          const val = e.target.value.replace(/^0+(?=\d)/, "");
-                          const pct = val === "" ? 0 : Number(val);
-                          let newPrice = formData.price;
-                          let newOrig = formData.originalPrice;
+                          let raw = e.target.value.replace(/[^\d]/g, "");
+                          if (/^0\d+/.test(raw)) raw = raw.replace(/^0+/, "");
+                          const pct = Math.min(100, raw === "" ? 0 : Number(raw));
+                          let newPrice = Number(formData.price) || 0;
+                          let newOrig = Number(formData.originalPrice) || 0;
 
                           if (newOrig && newOrig > 0) {
                             newPrice = Math.round((newOrig * (1 - pct / 100)) / 100) * 100;
@@ -978,9 +997,9 @@ export default function AdminPlansPage() {
 
                           setFormData({
                             ...formData,
-                            discountPercent: pct,
+                            discountPercent: raw === "" ? "" : pct,
                             price: newPrice,
-                            originalPrice: newOrig,
+                            originalPrice: newOrig || "",
                             discountBadge: pct > 0 ? `DISKON ${pct}%` : "",
                           });
                         }}
