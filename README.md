@@ -104,8 +104,8 @@ WhatsApp-Gateway/
 
 ### 1. Clone Repositori
 ```bash
-git clone https://github.com/arydianprtma/WhatsApp-Gateway.git
-cd WhatsApp-Gateway
+git clone https://github.com/arydianprtma/Waply.git
+cd Waply
 ```
 
 ### 2. Install Dependencies

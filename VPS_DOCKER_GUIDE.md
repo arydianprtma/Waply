@@ -44,7 +44,7 @@ docker compose version
 cd /opt
 
 # 2. Clone repository Anda
-git clone https://github.com/arydianprtma/WhatsApp-Gateway.git waply
+git clone https://github.com/arydianprtma/Waply.git waply
 cd waply
 
 # 3. Buat file .env dari template
