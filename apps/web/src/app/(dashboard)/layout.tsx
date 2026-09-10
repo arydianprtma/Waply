@@ -1,13 +1,19 @@
 import { Suspense } from "react";
+import dynamic from "next/dynamic";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { Navbar } from "@/components/dashboard/Navbar";
 import { ForbiddenBanner } from "@/components/dashboard/ForbiddenBanner";
 import { AccountStatusBanner } from "@/components/dashboard/AccountStatusBanner";
 import { MaintenanceBanner } from "@/components/dashboard/MaintenanceBanner";
-import { AnnouncementPopupModal } from "@/components/dashboard/AnnouncementPopupModal";
 import { DashboardContentGuard } from "@/components/dashboard/DashboardContentGuard";
-
 import { MobileNavProvider } from "@/lib/mobile-nav-context";
+
+const AnnouncementPopupModal = dynamic(
+  () =>
+    import("@/components/dashboard/AnnouncementPopupModal").then(
+      (m) => m.AnnouncementPopupModal
+    )
+);
 
 export default function DashboardLayout({
   children,
