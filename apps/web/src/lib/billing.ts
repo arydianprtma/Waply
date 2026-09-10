@@ -139,13 +139,38 @@ function getAllSubscriptions(): Record<string, Subscription> {
 export function getSubscription(userId: string): Subscription {
   ensureDataDir();
   const cleanId = userId ? userId.trim() : "";
-  const all = getAllSubscriptions();
-
-  if (cleanId && all[cleanId]) {
-    return all[cleanId];
+  if (!cleanId) {
+    return {
+      userId: "anonymous",
+      planId: "FREE",
+      status: "FREE",
+      startDate: null,
+      endDate: null,
+      updatedAt: new Date().toISOString(),
+    };
   }
 
-  // Fallback: Check users_registry.json for user's assigned plan
+  const all = getAllSubscriptions();
+
+  // 1. Direct match by exact key or case-insensitive key
+  if (all[cleanId]) {
+    const sub = all[cleanId];
+    if (sub.status === "ACTIVE" && sub.endDate && new Date(sub.endDate) < new Date()) {
+      return { ...sub, status: "EXPIRED" };
+    }
+    return sub;
+  }
+
+  const matchedKey = Object.keys(all).find((k) => k.toLowerCase() === cleanId.toLowerCase());
+  if (matchedKey && all[matchedKey]) {
+    const sub = all[matchedKey];
+    if (sub.status === "ACTIVE" && sub.endDate && new Date(sub.endDate) < new Date()) {
+      return { ...sub, status: "EXPIRED" };
+    }
+    return sub;
+  }
+
+  // 2. Check users_registry.json to cross-reference user ID <-> email
   try {
     const usersFile = path.join(DATA_DIR, "users_registry.json");
     if (fs.existsSync(usersFile)) {
@@ -153,23 +178,54 @@ export function getSubscription(userId: string): Subscription {
       const found = users.find(
         (u) =>
           u.id === cleanId ||
-          (cleanId.includes("@") && u.email?.toLowerCase() === cleanId.toLowerCase())
+          u.id?.toLowerCase() === cleanId.toLowerCase() ||
+          (u.email && u.email.toLowerCase() === cleanId.toLowerCase())
       );
       if (found) {
-        return {
-          userId: found.id,
-          planId: (found.planId as PlanId) || "FREE",
-          status: (found.planStatus as SubscriptionStatus) || (found.planId === "FREE" ? "FREE" : "ACTIVE"),
-          startDate: null,
-          endDate: null,
-          updatedAt: new Date().toISOString(),
-        };
+        // Try looking up in subscriptions by found.id, then found.email
+        if (found.id && all[found.id]) {
+          const sub = all[found.id];
+          if (sub.status === "ACTIVE" && sub.endDate && new Date(sub.endDate) < new Date()) {
+            return { ...sub, status: "EXPIRED" };
+          }
+          return sub;
+        }
+        if (found.email && all[found.email.toLowerCase()]) {
+          const sub = all[found.email.toLowerCase()];
+          if (sub.status === "ACTIVE" && sub.endDate && new Date(sub.endDate) < new Date()) {
+            return { ...sub, status: "EXPIRED" };
+          }
+          return sub;
+        }
+
+        // If user in registry has an active plan
+        if (found.planId && found.planId !== "FREE") {
+          const isExpired = found.endDate && new Date(found.endDate) < new Date();
+          return {
+            userId: found.id || cleanId,
+            planId: found.planId as PlanId,
+            status: isExpired ? "EXPIRED" : ((found.planStatus || "ACTIVE") as SubscriptionStatus),
+            startDate: found.startDate || null,
+            endDate: found.endDate || null,
+            updatedAt: found.updatedAt || new Date().toISOString(),
+          };
+        }
       }
     }
   } catch {}
 
+  // 3. Search inside subscription objects values
+  for (const sub of Object.values(all)) {
+    if (sub.userId && sub.userId.toLowerCase() === cleanId.toLowerCase()) {
+      if (sub.status === "ACTIVE" && sub.endDate && new Date(sub.endDate) < new Date()) {
+        return { ...sub, status: "EXPIRED" };
+      }
+      return sub;
+    }
+  }
+
   return {
-    userId: cleanId || "anonymous",
+    userId: cleanId,
     planId: "FREE",
     status: "FREE",
     startDate: null,
@@ -183,6 +239,31 @@ export function saveSubscription(data: Subscription): void {
   const all = getAllSubscriptions();
   if (data.userId) {
     all[data.userId] = data;
+
+    // Cross-sync by user ID and email if known
+    try {
+      const usersFile = path.join(DATA_DIR, "users_registry.json");
+      if (fs.existsSync(usersFile)) {
+        const users: any[] = JSON.parse(fs.readFileSync(usersFile, "utf-8"));
+        const idx = users.findIndex(
+          (u) =>
+            u.id === data.userId ||
+            u.id?.toLowerCase() === data.userId.toLowerCase() ||
+            (u.email && u.email.toLowerCase() === data.userId.toLowerCase())
+        );
+        if (idx !== -1) {
+          if (users[idx].id) all[users[idx].id] = { ...data, userId: users[idx].id };
+          if (users[idx].email) all[users[idx].email.toLowerCase()] = { ...data, userId: users[idx].email.toLowerCase() };
+
+          users[idx].planId = data.planId;
+          users[idx].planStatus = data.status;
+          users[idx].subscriptionStatus = data.status;
+          if (data.endDate) users[idx].endDate = data.endDate;
+          fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
+        }
+      }
+    } catch {}
+
     fs.writeFileSync(SUBSCRIPTION_FILE, JSON.stringify(all, null, 2));
   }
 }
@@ -226,26 +307,6 @@ export function activateSubscription(
     updatedAt: now.toISOString(),
   };
   saveSubscription(sub);
-
-  // Also sync user in users_registry.json if present
-  try {
-    const usersFile = path.join(DATA_DIR, "users_registry.json");
-    if (fs.existsSync(usersFile)) {
-      const users: any[] = JSON.parse(fs.readFileSync(usersFile, "utf-8"));
-      const idx = users.findIndex(
-        (u) =>
-          u.id === userId ||
-          (userId.includes("@") && u.email?.toLowerCase() === userId.toLowerCase())
-      );
-      if (idx !== -1) {
-        users[idx].planId = planId;
-        users[idx].planStatus = "ACTIVE";
-        users[idx].subscriptionStatus = "ACTIVE";
-        users[idx].endDate = endDate.toISOString();
-        fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
-      }
-    }
-  } catch {}
 
   return sub;
 }

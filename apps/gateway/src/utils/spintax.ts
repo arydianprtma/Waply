@@ -6,23 +6,40 @@
 
 export function parseSpintax(
   template: string,
-  variables: Record<string, string | number> = {}
+  variables: Record<string, string | number> = {},
+  options: { cleanUnresolved?: boolean } = { cleanUnresolved: true }
 ): string {
   if (!template) return "";
 
   let result = template;
 
-  // 1. Ganti variabel dinamis {{key}} atau {key} jika ada di dict variables
-  for (const [key, value] of Object.entries(variables)) {
+  // 1. Variabel kontekstual bawaan sistem
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+  const dateStr = now.toLocaleDateString("id-ID", { dateStyle: "medium" });
+  const yearStr = String(now.getFullYear());
+
+  const mergedVariables: Record<string, string | number> = {
+    date: dateStr,
+    tanggal: dateStr,
+    time: timeStr,
+    jam: timeStr,
+    year: yearStr,
+    tahun: yearStr,
+    ...variables,
+  };
+
+  // 2. Ganti variabel dinamis {{key}} atau {key}
+  for (const [key, value] of Object.entries(mergedVariables)) {
     const regexDouble = new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, "gi");
     const regexSingle = new RegExp(`\\{${key}\\}`, "gi");
-    result = result.replace(regexDouble, String(value));
-    result = result.replace(regexSingle, String(value));
+    result = result.replace(regexDouble, String(value ?? ""));
+    result = result.replace(regexSingle, String(value ?? ""));
   }
 
-  // 2. Parser Spintax: mencari pola {pilihan1|pilihan2|...} yang memiliki setidaknya satu pipe '|'
+  // 3. Parser Spintax: mencari pola {pilihan1|pilihan2|...}
   const spintaxRegex = /\{([^{}]*\|[^{}]*)\}/;
-  let maxLoop = 30; // Safety guard against infinite loops
+  let maxLoop = 30;
 
   while (maxLoop > 0 && spintaxRegex.test(result)) {
     result = result.replace(spintaxRegex, (_, choicesStr) => {
@@ -31,6 +48,11 @@ export function parseSpintax(
       return choices[randomIndex] ?? "";
     });
     maxLoop--;
+  }
+
+  // 4. Bersihkan sisa placeholder {{unknown_var}}
+  if (options.cleanUnresolved) {
+    result = result.replace(/\{\{\s*[\w.-]+\s*\}\}/g, "");
   }
 
   return result;

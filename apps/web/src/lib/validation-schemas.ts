@@ -37,6 +37,10 @@ export const sendMessageSchema = z.object({
     .max(4096, "Pesan maksimal 4096 karakter")
     .transform((val) => sanitizeHtml(sanitizeText(val)))
     .optional(),
+  mediaUrl: z.string().url("Format mediaUrl harus URL yang valid (http/https)").optional(),
+  mediaType: z.enum(["image", "document", "video", "audio", "auto"]).optional(),
+  fileName: z.string().max(255).optional(),
+  mimetype: z.string().max(100).optional(),
   variables: z.record(z.union([z.string(), z.number()])).optional(),
 });
 

@@ -65,6 +65,23 @@ export function getAllManagedUsers(): ManagedUser[] {
       list = JSON.parse(raw);
     }
 
+    // Deduplicate user list by email
+    const dedupedMap = new Map<string, ManagedUser>();
+    for (const u of list) {
+      const key = (u.email || u.id).toLowerCase();
+      if (!dedupedMap.has(key)) {
+        dedupedMap.set(key, u);
+      } else {
+        // Merge preferring active plan, newer login, or fuller name
+        const existing = dedupedMap.get(key)!;
+        const preferU = (u.planId && u.planId !== "FREE") || (!existing.name && u.name) || (u.lastLoginAt && (!existing.lastLoginAt || new Date(u.lastLoginAt) > new Date(existing.lastLoginAt)));
+        if (preferU) {
+          dedupedMap.set(key, { ...existing, ...u });
+        }
+      }
+    }
+    list = Array.from(dedupedMap.values());
+
     // Calculate duplicate IP count for every user
     const ipCounts = new Map<string, number>();
     for (const u of list) {
@@ -78,17 +95,20 @@ export function getAllManagedUsers(): ManagedUser[] {
       const ip = u.lastLoginIp || u.registeredIp;
       const count = ip && ip !== "127.0.0.1" && ip !== "::1" ? (ipCounts.get(ip) || 1) : 1;
       
-      // Dynamic live subscription resolution
-      const sub = getSubscription(u.id) || (u.email ? getSubscription(u.email) : null);
-      const effectivePlanId = (sub && sub.planId) || u.planId || "FREE";
+      // Dynamic live subscription resolution: check ID, then email
+      let sub = getSubscription(u.id);
+      if ((!sub || sub.planId === "FREE") && u.email) {
+        const subByEmail = getSubscription(u.email);
+        if (subByEmail && subByEmail.planId !== "FREE") {
+          sub = subByEmail;
+        }
+      }
+
+      const effectivePlanId = (sub && sub.planId !== "FREE" ? sub.planId : u.planId) || "FREE";
       let effectivePlanStatus: "ACTIVE" | "EXPIRED" | "FREE" | "PENDING" =
-        sub && sub.status === "ACTIVE"
-          ? "ACTIVE"
-          : sub && sub.status === "EXPIRED"
-          ? "EXPIRED"
-          : sub && sub.status === "FREE"
-          ? "FREE"
-          : u.planStatus || "FREE";
+        sub && sub.planId !== "FREE"
+          ? (sub.status as any)
+          : u.planStatus || (effectivePlanId === "FREE" ? "FREE" : "ACTIVE");
 
       return {
         ...u,
@@ -116,14 +136,24 @@ export function registerOrSyncUser(user: {
 }): ManagedUser {
   const users = getAllManagedUsers();
   const existingIdx = users.findIndex(
-    (u) => u.id === user.id || u.email.toLowerCase() === user.email.toLowerCase()
+    (u) =>
+      u.id === user.id ||
+      (user.email && u.email && u.email.toLowerCase() === user.email.toLowerCase())
   );
 
-  const sub = getSubscription(user.id) || (user.email ? getSubscription(user.email) : null);
+  let sub = getSubscription(user.id);
+  if ((!sub || sub.planId === "FREE") && user.email) {
+    const subByEmail = getSubscription(user.email);
+    if (subByEmail && subByEmail.planId !== "FREE") {
+      sub = subByEmail;
+    }
+  }
+
   const cleanIp = user.ipAddress && user.ipAddress.trim() ? user.ipAddress.trim() : null;
 
   if (existingIdx >= 0) {
-    const prevRegIp = users[existingIdx].registeredIp;
+    const existing = users[existingIdx];
+    const prevRegIp = existing.registeredIp;
     const isPrevRegLocal = !prevRegIp || prevRegIp === "127.0.0.1" || prevRegIp === "::1";
     const updatedRegIp =
       cleanIp && cleanIp !== "127.0.0.1" && isPrevRegLocal
@@ -132,17 +162,20 @@ export function registerOrSyncUser(user: {
     const updatedLastIp =
       cleanIp && cleanIp !== "127.0.0.1"
         ? cleanIp
-        : cleanIp || users[existingIdx].lastLoginIp || "127.0.0.1";
+        : cleanIp || existing.lastLoginIp || "127.0.0.1";
 
-    const effectivePlanId = (sub && sub.planId) || users[existingIdx].planId || "FREE";
-    const effectivePlanStatus = (sub && sub.status === "ACTIVE" ? "ACTIVE" : sub && sub.status === "EXPIRED" ? "EXPIRED" : "FREE");
+    const effectivePlanId = (sub && sub.planId !== "FREE" ? sub.planId : existing.planId) || "FREE";
+    const effectivePlanStatus =
+      sub && sub.planId !== "FREE"
+        ? (sub.status as any)
+        : existing.planStatus || (effectivePlanId === "FREE" ? "FREE" : "ACTIVE");
 
     users[existingIdx] = {
-      ...users[existingIdx],
-      id: user.id || users[existingIdx].id,
-      name: user.name || users[existingIdx].name,
-      email: user.email,
-      role: user.role || users[existingIdx].role,
+      ...existing,
+      id: user.id || existing.id,
+      name: user.name || existing.name,
+      email: user.email || existing.email,
+      role: user.role || existing.role,
       planId: effectivePlanId,
       planStatus: effectivePlanStatus,
       lastLoginAt: new Date().toISOString(),
@@ -153,6 +186,9 @@ export function registerOrSyncUser(user: {
     return users[existingIdx];
   }
 
+  const effectivePlanId = (sub && sub.planId) || "FREE";
+  const effectivePlanStatus = sub && sub.status === "ACTIVE" ? "ACTIVE" : (effectivePlanId === "FREE" ? "FREE" : "ACTIVE");
+
   const newUser: ManagedUser = {
     id: user.id,
     email: user.email,
@@ -160,8 +196,8 @@ export function registerOrSyncUser(user: {
     role: user.role || (user.email === "admin@waply.id" ? "admin" : "user"),
     status: "ACTIVE",
     banReason: null,
-    planId: sub.planId || "FREE",
-    planStatus: sub.status === "ACTIVE" ? "ACTIVE" : "FREE",
+    planId: effectivePlanId,
+    planStatus: effectivePlanStatus,
     messagesUsed: 0,
     devicesCount: 0,
     createdAt: new Date().toISOString(),

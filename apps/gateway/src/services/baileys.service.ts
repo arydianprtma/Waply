@@ -131,6 +131,7 @@ export class BaileysInstance {
           const error = lastDisconnect?.error as Boom | undefined;
           const statusCode = error?.output?.statusCode;
           const isLoggedOut = statusCode === DisconnectReason.loggedOut || statusCode === 401;
+          const isRestartRequired = statusCode === DisconnectReason.restartRequired || statusCode === 515;
 
           this.qrCode = undefined;
           this.qrDataUrl = undefined;
@@ -148,19 +149,37 @@ export class BaileysInstance {
 
           this.lastError = error?.message || "Connection closed";
 
+          // 3a. Khusus Stream Error 515 / Restart Required: langsung re-inisialisasi socket tanpa penundaan panjang
+          if (isRestartRequired) {
+            logger.info(
+              { sessionId: this.id },
+              "Baileys stream restart required (515). Re-initializing socket immediately in 800ms..."
+            );
+            setTimeout(() => this.initialize(), 800);
+            return;
+          }
+
           if (this.reconnectAttempts < this.maxReconnectAttempts) {
             this.reconnectAttempts++;
-            const delay = Math.min(this.reconnectAttempts * 3000, 15000);
+            const delay = Math.min(this.reconnectAttempts * 3000, 20000);
             logger.warn(
-              { sessionId: this.id, attempt: this.reconnectAttempts, delay },
+              { sessionId: this.id, attempt: this.reconnectAttempts, delay, statusCode },
               `WhatsApp disconnected. Reconnecting in ${delay / 1000}s...`
             );
             setTimeout(() => this.initialize(), delay);
           } else {
             logger.error(
               { sessionId: this.id, attempts: this.reconnectAttempts },
-              "Max reconnect attempts reached or permanent disconnect."
+              "Max reconnect attempts reached. Scheduled for soft self-healing watchdog."
             );
+            // Soft self-healing background recovery after 60s
+            setTimeout(() => {
+              if (this.status !== "CONNECTED") {
+                logger.info({ sessionId: this.id }, "Watchdog attempting soft session recovery...");
+                this.reconnectAttempts = 0;
+                this.initialize();
+              }
+            }, 60000);
           }
         }
       });
@@ -297,6 +316,123 @@ export class BaileysInstance {
 
     const messageId = result?.key?.id || `msg_${Date.now()}`;
     logger.info({ sessionId: this.id, messageId, recipient: cleanNumber }, "✅ Message sent successfully!");
+
+    return {
+      messageId,
+      status: "SENT",
+    };
+  }
+
+  /**
+   * Mengirim pesan media (gambar, video, audio, atau dokumen) dengan timeout guard 10 detik
+   */
+  async sendMediaMessage(
+    recipientNumber: string,
+    mediaUrl: string,
+    options: {
+      mediaType?: "image" | "document" | "video" | "audio" | "auto";
+      fileName?: string;
+      caption?: string;
+      mimetype?: string;
+    } = {}
+  ): Promise<{ messageId: string; status: string }> {
+    if (!this.socket || this.status !== "CONNECTED") {
+      throw new Error(`Device WhatsApp belum terhubung (Status: ${this.status})`);
+    }
+
+    let formattedJid = "";
+    let cleanNumber = "";
+    if (recipientNumber.includes("@lid") || recipientNumber.includes("@s.whatsapp.net") || recipientNumber.includes("@g.us")) {
+      formattedJid = recipientNumber;
+      cleanNumber = recipientNumber.split("@")[0];
+    } else {
+      cleanNumber = recipientNumber.replace(/\D/g, "");
+      if (cleanNumber.startsWith("0")) {
+        cleanNumber = "62" + cleanNumber.slice(1);
+      } else if (cleanNumber.startsWith("8")) {
+        cleanNumber = "62" + cleanNumber;
+      }
+      formattedJid = `${cleanNumber}@s.whatsapp.net`;
+    }
+
+    this.lastRecipientPhone = cleanNumber;
+    this.recentRecipients.set(cleanNumber, cleanNumber);
+    this.recentRecipients.set(formattedJid, cleanNumber);
+
+    logger.info({ sessionId: this.id, recipient: formattedJid, mediaUrl }, "Fetching media with 10s timeout guard...");
+
+    // 1. Download media with 10s AbortSignal timeout
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+
+    let mediaBuffer: Buffer;
+    let detectedMime = options.mimetype || "";
+
+    try {
+      const res = await fetch(mediaUrl, { signal: controller.signal });
+      clearTimeout(timeout);
+
+      if (!res.ok) {
+        throw new Error(`Gagal mengunduh media dari URL (HTTP ${res.status}: ${res.statusText})`);
+      }
+
+      const arrayBuf = await res.arrayBuffer();
+      mediaBuffer = Buffer.from(arrayBuf);
+      if (!detectedMime) {
+        detectedMime = res.headers.get("content-type") || "";
+      }
+    } catch (fetchErr: any) {
+      clearTimeout(timeout);
+      if (fetchErr.name === "AbortError") {
+        throw new Error("Unduhan media timeout (melebihi batas 10 detik). Pastikan server hosting media dapat diakses cepat.");
+      }
+      throw new Error(`Kesalahan unduh media: ${fetchErr.message}`);
+    }
+
+    // 2. Tentukan Tipe Media
+    let type = options.mediaType || "auto";
+    if (type === "auto") {
+      if (detectedMime.startsWith("image/")) type = "image";
+      else if (detectedMime.startsWith("video/")) type = "video";
+      else if (detectedMime.startsWith("audio/")) type = "audio";
+      else type = "document";
+    }
+
+    const caption = options.caption || "";
+    if (caption) {
+      await SafetyEngine.simulateTyping(this.socket, formattedJid, caption.length);
+    }
+
+    let payload: any;
+    const fileName = options.fileName || (mediaUrl.split("/").pop()?.split("?")[0] || "file");
+
+    if (type === "image") {
+      payload = { image: mediaBuffer, caption: caption || undefined, mimetype: detectedMime || "image/jpeg" };
+    } else if (type === "video") {
+      payload = { video: mediaBuffer, caption: caption || undefined, mimetype: detectedMime || "video/mp4" };
+    } else if (type === "audio") {
+      payload = { audio: mediaBuffer, mimetype: detectedMime || "audio/mp4", ptt: false };
+    } else {
+      payload = {
+        document: mediaBuffer,
+        mimetype: detectedMime || "application/octet-stream",
+        fileName,
+        caption: caption || undefined,
+      };
+    }
+
+    const result = await this.socket.sendMessage(formattedJid, payload);
+
+    if (result?.key?.id && result?.message) {
+      this.msgStore.set(result.key.id, result.message);
+      if (this.msgStore.size > 2000) {
+        const firstKey = this.msgStore.keys().next().value;
+        if (firstKey) this.msgStore.delete(firstKey);
+      }
+    }
+
+    const messageId = result?.key?.id || `msg_${Date.now()}`;
+    logger.info({ sessionId: this.id, messageId, recipient: cleanNumber, type }, "✅ Media message sent successfully!");
 
     return {
       messageId,

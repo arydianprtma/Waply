@@ -182,44 +182,64 @@ export function findMatchingRule(
 
   let matchedRule: AutoReplyRule | null = null;
 
-  // 1. Check specific rules first (EXACT, CONTAINS, STARTS_WITH, REGEX)
-  for (const rule of rules) {
-    if (rule.deviceId && deviceId && rule.deviceId !== deviceId) {
-      continue; // device mismatch
-    }
+  // Filter rules compatible with this device
+  const eligibleRules = rules.filter((r) => !r.deviceId || !deviceId || r.deviceId === deviceId);
 
+  // Tier 1: EXACT match (Highest Priority)
+  for (const rule of eligibleRules) {
     if (rule.matchType === "EXACT") {
       const match = rule.keywords.some((k) => k.trim().toLowerCase() === cleanText);
       if (match) {
         matchedRule = rule;
         break;
       }
-    } else if (rule.matchType === "CONTAINS") {
-      const match = rule.keywords.some((k) => cleanText.includes(k.trim().toLowerCase()));
-      if (match) {
-        matchedRule = rule;
-        break;
-      }
-    } else if (rule.matchType === "STARTS_WITH") {
-      const match = rule.keywords.some((k) => cleanText.startsWith(k.trim().toLowerCase()));
-      if (match) {
-        matchedRule = rule;
-        break;
-      }
-    } else if (rule.matchType === "REGEX") {
-      try {
-        const regex = new RegExp(rule.keywords[0] || "", "i");
-        if (regex.test(incomingText)) {
-          matchedRule = rule;
-          break;
-        }
-      } catch {}
     }
   }
 
-  // 2. If no rule matched, check if there is a FALLBACK rule
+  // Tier 2: STARTS_WITH match (Prefix commands like /info, !menu)
   if (!matchedRule) {
-    matchedRule = rules.find((r) => r.matchType === "FALLBACK" && (!r.deviceId || r.deviceId === deviceId)) || null;
+    for (const rule of eligibleRules) {
+      if (rule.matchType === "STARTS_WITH") {
+        const match = rule.keywords.some((k) => cleanText.startsWith(k.trim().toLowerCase()));
+        if (match) {
+          matchedRule = rule;
+          break;
+        }
+      }
+    }
+  }
+
+  // Tier 3: CONTAINS match (Keyword search within sentence)
+  if (!matchedRule) {
+    for (const rule of eligibleRules) {
+      if (rule.matchType === "CONTAINS") {
+        const match = rule.keywords.some((k) => cleanText.includes(k.trim().toLowerCase()));
+        if (match) {
+          matchedRule = rule;
+          break;
+        }
+      }
+    }
+  }
+
+  // Tier 4: REGEX match
+  if (!matchedRule) {
+    for (const rule of eligibleRules) {
+      if (rule.matchType === "REGEX") {
+        try {
+          const regex = new RegExp(rule.keywords[0] || "", "i");
+          if (regex.test(incomingText)) {
+            matchedRule = rule;
+            break;
+          }
+        } catch {}
+      }
+    }
+  }
+
+  // Tier 5: FALLBACK rule (Default responder)
+  if (!matchedRule) {
+    matchedRule = eligibleRules.find((r) => r.matchType === "FALLBACK") || null;
   }
 
   if (!matchedRule) return null;

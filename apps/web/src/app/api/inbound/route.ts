@@ -6,6 +6,7 @@ import { saveAutoReplyLog } from "@/lib/autoreply-logs";
 import { getAllUserDeviceRecords } from "@/lib/user-devices";
 import { getUserPlanAccess } from "@/lib/billing";
 import { fetchGateway } from "@/lib/gateway-client";
+import { skipBlacklistedRecipientInCampaigns } from "@/lib/broadcast";
 
 // Keywords that trigger auto opt-out → auto-blacklist
 const OPT_OUT_KEYWORDS = ["stop", "berhenti", "unsubscribe", "hentikan", "keluar", "off"];
@@ -61,6 +62,11 @@ export async function POST(req: NextRequest) {
       }
       if (userId !== "admin-default-user") {
         await addToBlacklist("admin-default-user", cleanSender, "UNSUBSCRIBE_KEYWORD");
+      }
+      // Instantly skip this number in any active broadcast campaign queue
+      skipBlacklistedRecipientInCampaigns(userId, cleanSender);
+      if (userId !== "admin-master-waply-01") {
+        skipBlacklistedRecipientInCampaigns("admin-master-waply-01", cleanSender);
       }
       console.log(`[Inbound] Auto opt-out: ${cleanSender} added to blacklist (keyword: "${text}")`);
 

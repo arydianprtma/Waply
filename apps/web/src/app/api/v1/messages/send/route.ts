@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     const auth = await authenticateApiRequest(request);
     if (!auth.authenticated || !auth.user) {
       return NextResponse.json(
-        { success: false, error: auth.error || "Unauthorized" },
+        { success: false, error: auth.error || "Unauthorized", code: "UNAUTHORIZED" },
         { status: auth.status || 401 }
       );
     }
@@ -53,6 +53,7 @@ export async function POST(request: Request) {
         {
           success: false,
           error: quotaCheck.reason || "Kuota pengiriman pesan akun Anda telah habis. Silakan upgrade paket untuk melanjutkan.",
+          code: "QUOTA_EXCEEDED",
         },
         { status: 403 }
       );
@@ -67,24 +68,25 @@ export async function POST(request: Request) {
         {
           success: false,
           error: validation.message,
+          code: "VALIDATION_ERROR",
           details: validation.errors,
         },
         { status: 400 }
       );
     }
 
-    const { deviceId, recipient: rawRecipient, to, message, template, templateId, variables } = validation.data;
+    const { deviceId, recipient: rawRecipient, to, message, template, templateId, mediaUrl, mediaType, fileName, mimetype, variables } = validation.data;
     const targetRecipient = rawRecipient || to;
 
     if (!targetRecipient) {
       return NextResponse.json(
-        { success: false, error: "Nomor WhatsApp penerima ('to' atau 'recipient') wajib diisi" },
+        { success: false, error: "Nomor WhatsApp penerima ('to' atau 'recipient') wajib diisi", code: "MISSING_RECIPIENT" },
         { status: 400 }
       );
     }
 
     // Resolve template if template / templateId is supplied
-    let rawContent = message;
+    let rawContent = message || "";
     if (template || templateId) {
       const tKey = template || templateId;
       const userTemplates = getTemplates(userId);
@@ -97,6 +99,7 @@ export async function POST(request: Request) {
           {
             success: false,
             error: `Template '${tKey}' tidak ditemukan pada akun Anda. Pastikan ID atau Shortcode sesuai dengan yang ada di menu Templates.`,
+            code: "TEMPLATE_NOT_FOUND",
           },
           { status: 404 }
         );
@@ -106,9 +109,9 @@ export async function POST(request: Request) {
       incrementTemplateUsage(foundTemplate.id);
     }
 
-    if (!rawContent || !rawContent.trim()) {
+    if (!rawContent.trim() && !mediaUrl) {
       return NextResponse.json(
-        { success: false, error: "Harap sertakan parameter 'message' atau 'template' (shortcode / templateId)." },
+        { success: false, error: "Harap sertakan parameter 'message', 'template' (shortcode / templateId), atau 'mediaUrl'.", code: "MISSING_MESSAGE_CONTENT" },
         { status: 400 }
       );
     }
@@ -117,7 +120,7 @@ export async function POST(request: Request) {
 
     if (!isValidPhoneNumber(recipient)) {
       return NextResponse.json(
-        { success: false, error: `Format nomor WhatsApp '${targetRecipient}' tidak valid. Gunakan format internasional (contoh: 6281234567890).` },
+        { success: false, error: `Format nomor WhatsApp '${targetRecipient}' tidak valid. Gunakan format internasional (contoh: 6281234567890).`, code: "INVALID_PHONE_NUMBER" },
         { status: 400 }
       );
     }
@@ -138,6 +141,7 @@ export async function POST(request: Request) {
         {
           success: false,
           error: `Nomor penerima ${recipient} terdaftar di Blacklist / Do-Not-Disturb (Opt-Out). Pesan dibatalkan demi keamanan akun WhatsApp Anda.`,
+          code: "RECIPIENT_BLACKLISTED",
         },
         { status: 400 }
       );
@@ -152,13 +156,14 @@ export async function POST(request: Request) {
         {
           success: false,
           error: "Tidak ada perangkat WhatsApp yang terhubung. Silakan scan QR device di dashboard.",
+          code: "DEVICE_OFFLINE",
         },
         { status: 404 }
       );
     }
 
     // 6. Parse Spintax & Dynamic Variables
-    const parsedContent = parseSpintax(rawContent, variables || {});
+    const parsedContent = rawContent ? parseSpintax(rawContent, variables || {}) : "";
 
     // 7. Apply Watermark for Free/Trial Plan Users
     const { finalMessage: finalContent, isWatermarked } = applyWatermarkIfFree(
@@ -184,6 +189,10 @@ export async function POST(request: Request) {
         body: JSON.stringify({
           to: recipient,
           message: finalContent,
+          mediaUrl,
+          mediaType,
+          fileName,
+          mimetype,
         }),
       });
       const data = await response.json().catch(() => ({}));

@@ -6,6 +6,7 @@ import { getNextRotatedDevice } from "./device-rotation";
 import { fetchGateway } from "./gateway-client";
 import { applyWatermarkIfFree } from "./watermark";
 import { canUserSendMessage, recordSentMessage } from "./messages";
+import { isBlacklisted } from "./blacklist";
 
 export type BroadcastStatus = "DRAFT" | "RUNNING" | "PAUSED" | "COMPLETED" | "CANCELLED";
 
@@ -273,6 +274,16 @@ export async function startBroadcastCampaign(userId: string, campaignId: string)
           continue;
         }
 
+        // Live Blacklist & DND Check (in case recipient unsubscribed during campaign run)
+        if (isBlacklisted(campaign.userId, recipient.phoneNumber)) {
+          recipient.status = "SKIPPED_BLACKLIST";
+          recipient.error = "Dilewati otomatis (Nomor melakukan Opt-Out/Blacklist)";
+          campaign.skippedCount++;
+          campaign.updatedAt = new Date().toISOString();
+          saveLocalCampaigns(campaigns);
+          continue;
+        }
+
         // Render spintax and variables for this specific recipient
         const vars = {
           name: recipient.name,
@@ -312,7 +323,7 @@ export async function startBroadcastCampaign(userId: string, campaignId: string)
               message: finalMessage,
             }),
           });
-          const json = await res.json();
+          const json = await res.json().catch(() => ({}));
 
           if (json.success) {
             recipient.status = "SENT";
@@ -331,8 +342,20 @@ export async function startBroadcastCampaign(userId: string, campaignId: string)
               sentAt: recipient.sentAt,
             });
           } else {
+            const errStr = json.error || "";
+            // Auto-pause campaign if WhatsApp device is disconnected
+            if (errStr.includes("CONNECTED") || errStr.includes("tidak terhubung") || errStr.includes("not initialized")) {
+              console.warn(`[Broadcast] Device ${sendDeviceId} disconnected. Auto-pausing campaign ${campaignId}`);
+              recipient.error = "Pengiriman ditunda: Device WhatsApp terputus.";
+              campaign.status = "PAUSED";
+              campaign.updatedAt = new Date().toISOString();
+              saveLocalCampaigns(campaigns);
+              activeRunners.delete(campaignId);
+              break;
+            }
+
             recipient.status = "FAILED";
-            recipient.error = json.error || "Gagal dikirim via gateway";
+            recipient.error = errStr || "Gagal dikirim via gateway";
             campaign.failedCount++;
           }
         } catch (sendErr: any) {
@@ -377,4 +400,31 @@ export async function startBroadcastCampaign(userId: string, campaignId: string)
   })();
 
   return { success: true };
+}
+
+/**
+ * Skip a recipient across all pending/running campaigns when they opt-out
+ */
+export function skipBlacklistedRecipientInCampaigns(userId: string, phoneNumber: string): void {
+  const clean = phoneNumber.replace(/\D/g, "");
+  const campaigns = readAllCampaigns();
+  let modified = false;
+
+  for (const camp of campaigns) {
+    if (camp.userId === userId && (camp.status === "RUNNING" || camp.status === "PAUSED" || camp.status === "DRAFT")) {
+      for (const rec of camp.recipients) {
+        if (rec.status === "PENDING" && rec.phoneNumber.replace(/\D/g, "") === clean) {
+          rec.status = "SKIPPED_BLACKLIST";
+          rec.error = "Dilewati otomatis (Nomor melakukan Opt-Out)";
+          camp.skippedCount++;
+          camp.updatedAt = new Date().toISOString();
+          modified = true;
+        }
+      }
+    }
+  }
+
+  if (modified) {
+    writeAllCampaigns(campaigns);
+  }
 }

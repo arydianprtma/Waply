@@ -6,16 +6,16 @@ import { parseSpintax } from "../utils/spintax.js";
 export const messageRouter = Router();
 const sessionManager = SessionManager.getInstance();
 
-// POST /api/sessions/:id/send - Send text message
+// POST /api/sessions/:id/send - Send text or media message
 messageRouter.post("/:id/send", async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id);
-    const { to, message, variables } = req.body;
+    const { to, message, mediaUrl, mediaType, fileName, mimetype, variables } = req.body;
 
-    if (!to || !message) {
+    if (!to || (!message && !mediaUrl)) {
       res.status(400).json({
         success: false,
-        error: "Parameters 'to' (recipient number) and 'message' are required",
+        error: "Parameter 'to' (recipient number) dan minimal salah satu dari 'message' atau 'mediaUrl' wajib diisi",
       });
       return;
     }
@@ -37,10 +37,20 @@ messageRouter.post("/:id/send", async (req: Request, res: Response) => {
       return;
     }
 
-    // Parse spintax & dynamic variables
-    const finalMessage = parseSpintax(message, variables || {});
+    // Parse spintax & dynamic variables for text/caption
+    const finalMessage = message ? parseSpintax(message, variables || {}) : "";
 
-    const result = await session.sendTextMessage(to, finalMessage);
+    let result;
+    if (mediaUrl) {
+      result = await session.sendMediaMessage(to, mediaUrl, {
+        mediaType,
+        fileName,
+        caption: finalMessage,
+        mimetype,
+      });
+    } else {
+      result = await session.sendTextMessage(to, finalMessage);
+    }
 
     res.json({
       success: true,
@@ -49,6 +59,7 @@ messageRouter.post("/:id/send", async (req: Request, res: Response) => {
         status: result.status,
         recipient: to,
         sentContent: finalMessage,
+        mediaUrl: mediaUrl || undefined,
         sentAt: new Date().toISOString(),
       },
     });
