@@ -321,16 +321,43 @@ Future<void> launchBroadcastCampaign() async {
   final campaignId = data['data']['id'];
 
   // Trigger antrean pengiriman background
-  await http.post(
-    Uri.parse('${originUrl}/api/broadcast/\$campaignId/start'),
-    headers: {'Authorization': 'Bearer snd_live_YOUR_API_KEY'},
-  );
-  print('Broadcast berjalan ID: \$campaignId');
+      webhookSnippet: `import 'dart:convert';
+import 'package:crypto/crypto.dart';
+
+/// 1. Verifikasi HMAC-SHA256 signature Webhook di Dart / Shelf / Flutter Backend
+bool verifyWaplyWebhook({
+  required String rawBody,
+  required String signatureHeader,
+  required String webhookSecret,
+}) {
+  final cleanSignature = signatureHeader.replaceFirst('sha256=', '').trim();
+  final hmacSha256 = Hmac(sha256, utf8.encode(webhookSecret));
+  final digest = hmacSha256.convert(utf8.encode(rawBody));
+  return digest.toString().toLowerCase() == cleanSignature.toLowerCase();
+}
+
+/// 2. Contoh Handler Webhook Masuk (Dart / Shelf Server)
+void handleIncomingWebhook(String rawPayload, String signatureHeader) {
+  const secret = 'whsec_YOUR_WEBHOOK_SECRET';
+
+  if (!verifyWaplyWebhook(
+    rawBody: rawPayload,
+    signatureHeader: signatureHeader,
+    webhookSecret: secret,
+  )) {
+    print('Signature webhook tidak valid (Unauthorized)!');
+    return;
+  }
+
+  final payload = jsonDecode(rawPayload) as Map<String, dynamic>;
+  final event = payload['event'];
+  final data = payload['data'];
+
+  if (event == 'message.received') {
+    print('Pesan masuk dari \${data['sender']['number']}: \${data['text']}');
+    // Opsional: Kirim push notification ke aplikasi Flutter via FCM / WebSocket
+  }
 }`,
-      webhookSnippet: `// Catatan untuk Flutter / Mobile:
-// Webhook Waply dikirimkan ke server backend Anda (Node.js/Laravel/FastAPI)
-// Aplikasi Flutter Anda dapat menerima update real-time via WebSocket / Firebase Cloud Messaging (FCM) 
-// yang dipicu oleh backend setelah menerima webhook 'message.received' dari Waply.`,
     },
 
     nodejs: {
@@ -1001,8 +1028,20 @@ val payload = JSONObject().apply {
 }`,
       broadcastSnippet: `// Broadcast massal via OkHttpClient di Android / Kotlin Backend:
 // POST ke '${originUrl}/api/broadcast'`,
-      webhookSnippet: `// Di Ktor / Spring Boot, verifikasi header 'X-Waply-Signature'
-// menggunakan Mac.getInstance("HmacSHA256") dengan webhook secret Anda.`,
+      webhookSnippet: `import javax.crypto.Mac
+import javax.crypto.spec.SecretKeySpec
+import java.security.MessageDigest
+
+// Verifikasi Signature HMAC-SHA256 di Kotlin / Ktor / Spring Boot:
+fun verifyWaplyWebhook(rawBody: String, signatureHeader: String, webhookSecret: String): Boolean {
+    val cleanSig = signatureHeader.removePrefix("sha256=").trim()
+    val mac = Mac.getInstance("HmacSHA256")
+    val secretKey = SecretKeySpec(webhookSecret.toByteArray(Charsets.UTF_8), "HmacSHA256")
+    mac.init(secretKey)
+    val hash = mac.doFinal(rawBody.toByteArray(Charsets.UTF_8))
+    val calculatedSig = hash.joinToString("") { "%02x".format(it) }
+    return MessageDigest.isEqual(calculatedSig.toByteArray(), cleanSig.toByteArray())
+}`,
     },
 
     csharp: {
@@ -1093,15 +1132,29 @@ var result = await waply.SendTemplateMessageAsync(
 );`,
       broadcastSnippet: `// Buat Broadcast Campaign di ASP.NET Core:
 // POST ke '${originUrl}/api/broadcast' dan start via '${originUrl}/api/broadcast/{id}/start'`,
-      webhookSnippet: `// ASP.NET Core Controller:
+      webhookSnippet: `// ASP.NET Core Controller (Webhook HMAC-SHA256 Verification):
+using System.Security.Cryptography;
+using System.Text;
+
 [HttpPost("webhook/waply")]
 public async Task<IActionResult> HandleWebhook([FromHeader(Name = "X-Waply-Signature")] string signature)
 {
     using var reader = new StreamReader(Request.Body);
     var body = await reader.ReadToEndAsync();
+    var secret = "whsec_YOUR_WEBHOOK_SECRET";
     
-    // Verifikasi HMAC-SHA256 signature...
-    return Ok(new { status = "received" });
+    // Verifikasi HMAC-SHA256 signature
+    var cleanSig = signature?.Replace("sha256=", "").Trim();
+    using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret));
+    var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(body));
+    var calculatedSig = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+
+    if (!string.Equals(calculatedSig, cleanSig, StringComparison.OrdinalIgnoreCase))
+    {
+        return Unauthorized(new { error = "Invalid signature" });
+    }
+    
+    return Ok(new { status = "acknowledged" });
 }`,
     },
   };
@@ -1314,7 +1367,7 @@ public async Task<IActionResult> HandleWebhook([FromHeader(Name = "X-Waply-Signa
         </p>
         <CodeBlock
           code={selectedCodes.webhookSnippet}
-          language={selectedLang === "flutter" ? "typescript" : selectedLang}
+          language={selectedLang}
           filename={`webhook_handler.${selectedLang === "flutter" ? "dart" : selectedLang === "nodejs" ? "ts" : selectedLang === "php" ? "php" : selectedLang === "python" ? "py" : selectedLang === "go" ? "go" : selectedLang === "kotlin" ? "kt" : "cs"}`}
         />
       </section>
