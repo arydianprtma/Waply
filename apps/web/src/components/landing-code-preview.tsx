@@ -166,31 +166,31 @@ export function LandingCodePreview() {
   };
 
   return (
-    <section id="developer-api" className="py-12 sm:py-20 px-4 md:px-12 bg-slate-950 text-slate-100 border-t border-slate-800">
+    <section id="developer-api" className="py-12 sm:py-20 px-4 md:px-12 bg-base-100 border-t border-base-200">
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 sm:mb-12 gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 font-bold text-xs border border-emerald-500/20 mb-3">
-              <Code2 className="w-4 h-4 text-emerald-400" /> Developer-First REST API
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-bold text-xs border border-emerald-500/20 mb-3">
+              <Code2 className="w-4 h-4 text-emerald-600" /> Developer-First REST API
             </div>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-white">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-base-content">
               Kirim Pesan dalam 3 Baris Kode
             </h2>
-            <p className="text-slate-400 mt-2 text-xs sm:text-sm max-w-xl leading-relaxed">
+            <p className="text-base-content/70 mt-2 text-xs sm:text-sm max-w-xl leading-relaxed">
               Integrasikan ke aplikasi web, backend, atau mobile Anda dengan HTTP standard. Sudah tersedia contoh siap pakai untuk berbagai stack populer.
             </p>
           </div>
 
           <Link
             href="/docs"
-            className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-emerald-400 hover:text-emerald-300 transition-colors shrink-0"
+            className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-primary hover:text-primary/80 transition-colors shrink-0"
           >
             Buka Dokumentasi Lengkap SDK <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
         {/* Code Playground Box */}
-        <div className="rounded-2xl sm:rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl overflow-hidden">
+        <div className="rounded-2xl sm:rounded-3xl bg-slate-900 border border-slate-800 shadow-xl overflow-hidden">
           {/* Header Bar with Language Tabs */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800 px-4 py-2.5 bg-slate-900/90 backdrop-blur-md gap-2">
             {/* macOS Window dots & Tabs */}
