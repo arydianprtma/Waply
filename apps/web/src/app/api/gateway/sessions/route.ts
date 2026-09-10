@@ -8,7 +8,7 @@ import {
   getAllUserDeviceRecords,
 } from "@/lib/user-devices";
 import { getAllDevicesSentTodayMap } from "@/lib/messages";
-import { getAllManagedUsers } from "@/lib/admin-users";
+import { getAllManagedUsers, ManagedUser } from "@/lib/admin-users";
 
 export async function GET() {
   try {
@@ -32,12 +32,20 @@ export async function GET() {
       userSessions = allSessions.filter((s: any) => userSessionIds.includes(s.id));
     }
 
-    const deviceRecords = getAllUserDeviceRecords();
-    const managedUsers = getAllManagedUsers();
-    const userMap = new Map(managedUsers.map((u) => [u.id.toLowerCase(), u]));
-    managedUsers.forEach((u) => {
-      if (u.email) userMap.set(u.email.toLowerCase(), u);
-    });
+    const deviceRecords = (getAllUserDeviceRecords && getAllUserDeviceRecords()) || {};
+    let managedUsers: ManagedUser[] = [];
+    try {
+      managedUsers = (getAllManagedUsers && getAllManagedUsers()) || [];
+    } catch {
+      managedUsers = [];
+    }
+    const userMap = new Map<string, ManagedUser>();
+    if (Array.isArray(managedUsers)) {
+      managedUsers.forEach((u) => {
+        if (u?.id) userMap.set(String(u.id).toLowerCase(), u);
+        if (u?.email) userMap.set(String(u.email).toLowerCase(), u);
+      });
+    }
 
     const sentTodayMap = getAllDevicesSentTodayMap();
     const enrichedSessions = userSessions.map((s: any) => {
