@@ -33,6 +33,7 @@ import clsx from "clsx";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import { useBillingPlan } from "@/lib/use-billing-plan";
 import { setCachedUser, getCachedUser } from "@/lib/use-user-session";
+import QRCode from "qrcode";
 
 interface Profile {
   name: string;
@@ -133,6 +134,22 @@ export default function SettingsPage() {
   const [twoFACode, setTwoFACode] = useState("");
   const [twoFAVerifying, setTwoFAVerifying] = useState(false);
   const [sessionsRevoked, setSessionsRevoked] = useState(false);
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
+  const USER_2FA_SECRET = "SNDR-7X9K-2M4Q-8W1P";
+
+  useEffect(() => {
+    if (show2FAModal) {
+      const cleanSecret = USER_2FA_SECRET.replace(/[^A-Z0-9]/gi, "").toUpperCase();
+      const otpauth = `otpauth://totp/Waply:${encodeURIComponent(settings.profile.email || "user@waply.id")}?secret=${cleanSecret}&issuer=Waply`;
+      QRCode.toDataURL(otpauth, {
+        width: 240,
+        margin: 1,
+        color: { dark: "#0f172a", light: "#ffffff" },
+      })
+        .then((url) => setQrCodeDataUrl(url))
+        .catch((err) => console.error("Failed to generate User 2FA QR:", err));
+    }
+  }, [show2FAModal, settings.profile.email]);
 
   // Avatar Upload State
   const [avatarUploading, setAvatarUploading] = useState(false);
@@ -1027,18 +1044,28 @@ export default function SettingsPage() {
                 2. Pindai kode QR di bawah ini atau masukkan Secret Key secara manual.
               </p>
 
-              {/* QR Code Mockup */}
-              <div className="p-5 bg-white border-2 border-dashed border-primary/30 rounded-2xl flex flex-col items-center justify-center gap-3">
-                <div className="w-36 h-36 bg-slate-900 rounded-2xl flex items-center justify-center text-white font-mono text-center p-2 shadow-inner">
-                  <div className="space-y-1">
-                    <QrCode className="w-16 h-16 mx-auto text-primary" />
-                    <span className="text-[10px] tracking-wider block font-bold text-emerald-400">WAPLY 2FA</span>
+              {/* QR Code Scannable */}
+              <div className="p-5 bg-base-200/50 border border-base-300 rounded-2xl flex flex-col items-center justify-center gap-3">
+                {qrCodeDataUrl ? (
+                  <div className="p-2.5 bg-white rounded-2xl shadow-md border border-base-300 flex items-center justify-center">
+                    <img
+                      src={qrCodeDataUrl}
+                      alt="QR Code Authenticator"
+                      className="w-44 h-44 object-contain rounded-lg"
+                    />
                   </div>
-                </div>
-                <div className="text-center">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Secret Key Manual</span>
-                  <p className="font-mono text-xs font-bold text-slate-800 bg-slate-100 px-3 py-1 rounded-lg mt-0.5 select-all border border-slate-200">
-                    SNDR-7X9K-2M4Q-8W1P
+                ) : (
+                  <div className="w-44 h-44 bg-base-200 rounded-2xl flex flex-col items-center justify-center gap-2">
+                    <span className="loading loading-spinner loading-md text-primary" />
+                    <span className="text-[11px] text-base-content/50 font-medium">Membuat barcode 2FA...</span>
+                  </div>
+                )}
+                <div className="text-center space-y-1">
+                  <span className="text-[10px] font-bold text-base-content/50 uppercase tracking-wider block">
+                    Secret Key Manual
+                  </span>
+                  <p className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200 bg-base-100 px-3 py-1 rounded-lg select-all border border-base-300">
+                    {USER_2FA_SECRET}
                   </p>
                 </div>
               </div>

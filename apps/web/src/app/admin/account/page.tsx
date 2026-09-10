@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useUserSession } from "@/lib/use-user-session";
 import { ModalPortal } from "@/components/ui/ModalPortal";
+import QRCode from "qrcode";
 
 export default function AdminAccountPage() {
   const { user: currentUser } = useUserSession();
@@ -53,6 +54,22 @@ export default function AdminAccountPage() {
   const [show2FAModal, setShow2FAModal] = useState(false);
   const [twoFACode, setTwoFACode] = useState("");
   const [twoFAVerifying, setTwoFAVerifying] = useState(false);
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
+  const SECRET_2FA_KEY = "SNDR-ADM8-99K2-X1P7";
+
+  useEffect(() => {
+    if (show2FAModal) {
+      const cleanSecret = SECRET_2FA_KEY.replace(/[^A-Z0-9]/gi, "").toUpperCase();
+      const otpauth = `otpauth://totp/Waply:${encodeURIComponent(email || "admin@waply.id")}?secret=${cleanSecret}&issuer=Waply`;
+      QRCode.toDataURL(otpauth, {
+        width: 240,
+        margin: 1,
+        color: { dark: "#0f172a", light: "#ffffff" },
+      })
+        .then((url) => setQrCodeDataUrl(url))
+        .catch((err) => console.error("Failed to generate Admin 2FA QR:", err));
+    }
+  }, [show2FAModal, email]);
 
   // Admin Notification Prefs
   const [notifGatewayError, setNotifGatewayError] = useState(true);
@@ -499,12 +516,29 @@ export default function AdminAccountPage() {
                 2. Scan QR code di bawah ini atau masukkan Secret Key secara manual.
               </p>
 
-              <div className="p-4 bg-slate-900 rounded-2xl flex flex-col items-center justify-center gap-2 text-white">
-                <QrCode className="w-20 h-20 text-emerald-400" />
-                <span className="text-[10px] tracking-widest text-emerald-300 font-bold uppercase">WAPLY SUPER ADMIN 2FA</span>
-                <p className="font-mono text-xs font-bold text-slate-300 bg-slate-800 px-3 py-1 rounded-lg select-all border border-slate-700 mt-1">
-                  SNDR-ADM8-99K2-X1P7
-                </p>
+              <div className="p-4 bg-slate-900 rounded-2xl flex flex-col items-center justify-center gap-3 text-white">
+                {qrCodeDataUrl ? (
+                  <div className="p-2.5 bg-white rounded-2xl shadow-lg border border-slate-700 flex items-center justify-center">
+                    <img
+                      src={qrCodeDataUrl}
+                      alt="QR Code Authenticator"
+                      className="w-44 h-44 object-contain rounded-lg"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-44 h-44 bg-slate-800 rounded-2xl flex flex-col items-center justify-center gap-2">
+                    <span className="loading loading-spinner loading-md text-emerald-400" />
+                    <span className="text-[11px] text-slate-400 font-medium">Membuat barcode 2FA...</span>
+                  </div>
+                )}
+                <div className="text-center space-y-1">
+                  <span className="text-[10px] tracking-widest text-emerald-300 font-bold uppercase block">
+                    WAPLY SUPER ADMIN 2FA
+                  </span>
+                  <p className="font-mono text-xs font-bold text-slate-200 bg-slate-800 px-3 py-1 rounded-lg select-all border border-slate-700">
+                    {SECRET_2FA_KEY}
+                  </p>
+                </div>
               </div>
 
               <div className="space-y-2">
