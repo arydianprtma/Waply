@@ -119,7 +119,7 @@ export default function LandingPricing({ plans }: LandingPricingProps) {
               ? "Gratis"
               : `Rp${discStatus.effectivePrice.toLocaleString("id-ID")}`;
             const periodLabel = isFree
-              ? "selamanya"
+              ? "(Trial)"
               : plan.period === "day"
               ? "/hari"
               : plan.period === "week"
