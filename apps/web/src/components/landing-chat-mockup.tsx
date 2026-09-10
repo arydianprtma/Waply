@@ -69,28 +69,31 @@ export function LandingChatMockup() {
         </div>
 
         <div className="space-y-3">
-          {/* Customer Message (Incoming) */}
-          <div className="flex justify-start">
-            <div className="max-w-[85%] rounded-2xl rounded-tl-xs bg-[#202c33] text-slate-100 p-3 shadow-xs space-y-1">
+          {/* 1. Customer / User Message (Outgoing from user perspective - Right) */}
+          <div className="flex justify-end">
+            <div className="max-w-[85%] rounded-2xl rounded-tr-xs bg-[#005c4b] text-white p-3 shadow-xs space-y-1">
               <p className="text-xs leading-relaxed">
-                Halo admin, tolong kirim rincian order <span className="font-mono text-emerald-400">#INV-2026-9812</span> dan bukti pembayarannya ya.
+                Halo admin, tolong kirim rincian order <span className="font-mono text-emerald-200 font-semibold">#INV-2026-9812</span> dan bukti pembayarannya ya.
               </p>
-              <div className="text-right text-[10px] text-slate-400">10:42</div>
+              <div className="flex items-center justify-end gap-1 text-[10px] text-emerald-200/80">
+                <span>10:42</span>
+                <CheckCheck className="w-3.5 h-3.5 text-[#53bdeb]" />
+              </div>
             </div>
           </div>
 
-          {/* Bot Response (Outgoing) with Spintax & PDF */}
-          <div className="flex justify-end">
-            <div className="max-w-[88%] rounded-2xl rounded-tr-xs bg-[#005c4b] text-white p-3 shadow-xs space-y-2">
+          {/* 2. System / Bot Auto-Reply with Spintax & Invoice PDF (Incoming to user - Left) */}
+          <div className="flex justify-start">
+            <div className="max-w-[88%] rounded-2xl rounded-tl-xs bg-[#202c33] text-slate-100 p-3 shadow-xs space-y-2">
               <div className="text-xs leading-relaxed">
-                <span className="font-bold text-amber-300 transition-all">{currentGreeting}</span> Kak <strong className="text-emerald-200">Budi Santoso</strong>.
+                <span className="font-bold text-amber-400 transition-all">{currentGreeting}</span> Kak <strong className="text-emerald-400">Budi Santoso</strong>.
                 <br /><br />
                 Terima kasih, pembayaran sebesar <strong>Rp 350.000</strong> telah berhasil kami terima.
                 Pesanan Anda sedang dipersiapkan oleh tim logistik.
               </div>
 
               {/* PDF Invoice Document Box */}
-              <div className="p-2.5 rounded-xl bg-black/25 border border-white/10 flex items-center justify-between gap-3">
+              <div className="p-2.5 rounded-xl bg-black/40 border border-white/10 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="w-8 h-8 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0">
                     <FileText className="w-4 h-4" />
@@ -99,18 +102,17 @@ export function LandingChatMockup() {
                     <div className="font-mono text-[11px] font-bold text-slate-100 truncate">
                       Invoice-INV-9812.pdf
                     </div>
-                    <div className="text-[10px] text-slate-300">1 lembar • 142 KB • PDF</div>
+                    <div className="text-[10px] text-slate-400">1 lembar • 142 KB • PDF</div>
                   </div>
                 </div>
 
-                <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white shrink-0">
+                <div className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 transition-colors flex items-center justify-center text-white shrink-0">
                   <Download className="w-3.5 h-3.5" />
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-1 text-[10px] text-emerald-200/80 pt-0.5">
-                <span>10:42</span>
-                <CheckCheck className="w-3.5 h-3.5 text-[#53bdeb]" />
+              <div className="text-right text-[10px] text-slate-400 pt-0.5">
+                10:42 • Auto-Reply
               </div>
             </div>
           </div>
