@@ -20,7 +20,7 @@ export function WaplyIcon({ size = 36, className }: { size?: number; className?:
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src="/icon.png"
+      src="/icon.svg"
       alt="Waply Icon"
       width={size}
       height={size}
@@ -42,10 +42,10 @@ export function WaplyLogo({
   variant = "auto",
 }: WaplyLogoProps) {
   const sizeMap = {
-    sm: { height: 32, icon: 28, badge: "text-[9px] px-1.5 py-0.5" },
-    md: { height: 42, icon: 36, badge: "text-[10px] px-2 py-0.5" },
-    lg: { height: 56, icon: 46, badge: "text-[11px] px-2.5 py-0.5" },
-    xl: { height: 72, icon: 58, badge: "text-xs px-3 py-1" },
+    sm: { height: 32, width: 108, icon: 28, badge: "text-[9px] px-1.5 py-0.5" },
+    md: { height: 42, width: 140, icon: 36, badge: "text-[10px] px-2 py-0.5" },
+    lg: { height: 56, width: 188, icon: 46, badge: "text-[11px] px-2.5 py-0.5" },
+    xl: { height: 72, width: 242, icon: 58, badge: "text-xs px-3 py-1" },
   };
 
   const currentSize = sizeMap[size];
@@ -60,6 +60,8 @@ export function WaplyLogo({
           <img
             src="/waply_brand_logo_mockup.png"
             alt="Waply - WhatsApp Gateway & API"
+            width={currentSize.width}
+            height={currentSize.height}
             className="object-contain"
             style={{ height: currentSize.height, width: "auto" }}
           />
