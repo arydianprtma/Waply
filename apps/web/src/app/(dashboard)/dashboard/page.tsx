@@ -79,17 +79,6 @@ const EMPTY: AnalyticsData = {
   totalWebhookLogs: 0,
   messageTrend: [],
   recentActivity: [],
-  quota: {
-    planId: "FREE",
-    planName: "Free Trial",
-    maxMessages: 100,
-    isUnlimitedMessages: false,
-    usedMessages: 0,
-    remainingMessages: 100,
-    maxDevices: 1,
-    usedDevices: 0,
-    remainingDevices: 1,
-  },
 };
 
 function fmt(n: number) {
@@ -108,31 +97,28 @@ function timeAgo(iso: string): string {
 export default function DashboardOverviewPage() {
   const [data, setData] = useState<AnalyticsData>(EMPTY);
   const [loading, setLoading] = useState(true);
+  const [initialLoaded, setInitialLoaded] = useState(false);
   const [timeRange, setTimeRange] = useState<"24h" | "7d" | "30d">("7d");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const fetchAnalytics = async (range = timeRange) => {
     setLoading(true);
     try {
       const res = await fetch(`/api/analytics?range=${range}`);
       const json = await res.json();
-      if (json.success) setData(json.data);
+      if (json.success && json.data) {
+        setData(json.data);
+      }
     } catch {
       //
     } finally {
       setLoading(false);
+      setInitialLoaded(true);
     }
   };
 
   useEffect(() => {
     fetchAnalytics(timeRange);
   }, [timeRange]);
-
-  const quota = data.quota || EMPTY.quota!;
 
   const metricCards = [
     {
@@ -178,7 +164,7 @@ export default function DashboardOverviewPage() {
     { href: "/dashboard/devices", label: "Connect Device", icon: Smartphone },
   ];
 
-  if (loading && !mounted) {
+  if (!initialLoaded) {
     return <DashboardOverviewSkeleton />;
   }
 
