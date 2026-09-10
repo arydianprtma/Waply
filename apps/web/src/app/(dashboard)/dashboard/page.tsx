@@ -212,9 +212,9 @@ export default function DashboardOverviewPage() {
         </div>
       </div>
 
-      {/* Quota & Subscription Status Card */}
-      {data.quota && (
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 shadow-sm">
+      {/* Quota & Subscription Status Card (Stable container to eliminate CLS) */}
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 shadow-sm min-h-[140px]">
+        {data.quota ? (
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             {/* Left: Plan details */}
             <div className="space-y-1.5 max-w-sm">
@@ -331,8 +331,20 @@ export default function DashboardOverviewPage() {
               </Link>
             </div>
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 animate-pulse">
+            <div className="space-y-2 max-w-sm">
+              <div className="h-5 w-28 bg-slate-100 rounded-full" />
+              <div className="h-6 w-48 bg-slate-100 rounded-lg" />
+              <div className="h-4 w-64 bg-slate-100 rounded" />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1 lg:max-w-2xl">
+              <div className="h-24 bg-slate-100/70 border border-slate-200/50 rounded-xl" />
+              <div className="h-24 bg-slate-100/70 border border-slate-200/50 rounded-xl" />
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">

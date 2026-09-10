@@ -42,29 +42,22 @@ export function WaplyLogo({
   variant = "auto",
 }: WaplyLogoProps) {
   const sizeMap = {
-    sm: { height: 32, width: 108, icon: 28, badge: "text-[9px] px-1.5 py-0.5" },
-    md: { height: 42, width: 140, icon: 36, badge: "text-[10px] px-2 py-0.5" },
-    lg: { height: 56, width: 188, icon: 46, badge: "text-[11px] px-2.5 py-0.5" },
-    xl: { height: 72, width: 242, icon: 58, badge: "text-xs px-3 py-1" },
+    sm: { icon: 26, titleSize: "text-lg", badge: "text-[9px] px-1.5 py-0.5" },
+    md: { icon: 32, titleSize: "text-xl", badge: "text-[10px] px-2 py-0.5" },
+    lg: { icon: 42, titleSize: "text-2xl", badge: "text-[11px] px-2.5 py-0.5" },
+    xl: { icon: 54, titleSize: "text-3xl", badge: "text-xs px-3 py-1" },
   };
 
   const currentSize = sizeMap[size];
 
   const content = (
-    <div className={clsx("inline-flex items-center gap-2 select-none transition-transform hover:opacity-95", className)}>
-      {iconOnly ? (
-        <WaplyIcon size={currentSize.icon} />
-      ) : (
+    <div className={clsx("inline-flex items-center gap-2.5 select-none transition-transform hover:opacity-95", className)}>
+      <WaplyIcon size={currentSize.icon} />
+      {!iconOnly && (
         <div className="flex items-center gap-2">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/waply_brand_logo_mockup.png"
-            alt="Waply - WhatsApp Gateway & API"
-            width={currentSize.width}
-            height={currentSize.height}
-            className="object-contain"
-            style={{ height: currentSize.height, width: "auto" }}
-          />
+          <span className={clsx("font-extrabold tracking-tight text-slate-900 dark:text-white leading-none", currentSize.titleSize)}>
+            Waply
+          </span>
 
           {badge && (
             <span
