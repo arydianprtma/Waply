@@ -2036,6 +2036,10 @@ function OrderContent() {
                   <Server className="w-4 h-4 text-sky-600 shrink-0" />
                   <span>Garansi Ketersediaan Server 99.9% Uptime</span>
                 </div>
+                <div className="flex items-center gap-2">
+                  <Lock className="w-4 h-4 text-indigo-600 shrink-0" />
+                  <span>Terenkripsi Aman dengan Midtrans</span>
+                </div>
               </div>
             </div>
           </div>
