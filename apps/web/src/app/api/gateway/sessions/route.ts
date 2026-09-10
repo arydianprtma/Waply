@@ -5,8 +5,10 @@ import {
   getUserDeviceLimit,
   getUserSessionIds,
   registerUserDevice,
+  getAllUserDeviceRecords,
 } from "@/lib/user-devices";
 import { getAllDevicesSentTodayMap } from "@/lib/messages";
+import { getAllManagedUsers } from "@/lib/admin-users";
 
 export async function GET() {
   try {
@@ -30,8 +32,31 @@ export async function GET() {
       userSessions = allSessions.filter((s: any) => userSessionIds.includes(s.id));
     }
 
+    const deviceRecords = getAllUserDeviceRecords();
+    const managedUsers = getAllManagedUsers();
+    const userMap = new Map(managedUsers.map((u) => [u.id.toLowerCase(), u]));
+    managedUsers.forEach((u) => {
+      if (u.email) userMap.set(u.email.toLowerCase(), u);
+    });
+
     const sentTodayMap = getAllDevicesSentTodayMap();
     const enrichedSessions = userSessions.map((s: any) => {
+      const devRecord = deviceRecords[s.id];
+      let ownerUserId = devRecord?.userId || s.userId || null;
+      let ownerUserEmail = devRecord?.userEmail || s.userEmail || null;
+      let ownerUserName = devRecord?.name || s.name || null;
+
+      if (ownerUserId || ownerUserEmail) {
+        const found =
+          userMap.get((ownerUserId || "").toLowerCase()) ||
+          userMap.get((ownerUserEmail || "").toLowerCase());
+        if (found) {
+          ownerUserName = found.name || ownerUserName;
+          ownerUserEmail = found.email || ownerUserEmail;
+          ownerUserId = found.id || ownerUserId;
+        }
+      }
+
       const sentToday = sentTodayMap[s.id] || 0;
       let warmupStage: "Cold" | "Warm" | "Active" | "Mature" = "Cold";
       let dailyLimit = 50;
@@ -49,6 +74,9 @@ export async function GET() {
 
       return {
         ...s,
+        ownerUserId,
+        ownerUserEmail,
+        ownerUserName,
         sentToday,
         warmupStage,
         dailyLimit,

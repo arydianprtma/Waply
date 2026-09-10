@@ -15,6 +15,7 @@ import {
   Shield,
   Copy,
   Check,
+  User,
 } from "lucide-react";
 
 interface Device {
@@ -26,6 +27,9 @@ interface Device {
   sentCountToday?: number;
   warmupStage?: "Cold" | "Warm" | "Active" | "Mature";
   dailyLimit?: number;
+  ownerUserId?: string | null;
+  ownerUserName?: string | null;
+  ownerUserEmail?: string | null;
 }
 
 export default function AdminDevicesPage() {
@@ -64,7 +68,7 @@ export default function AdminDevicesPage() {
       const res = await fetch("/api/gateway/sessions");
       const json = await res.json();
       if (json.success && Array.isArray(json.data)) {
-        // Map and enrich with warmup data
+        // Map and enrich with warmup and owner data
         const enriched: Device[] = json.data.map((d: any) => {
           const rawStatus = String(d.status || "").toUpperCase();
           const status: "CONNECTED" | "DISCONNECTED" | "CONNECTING" | "PAUSED" =
@@ -85,6 +89,9 @@ export default function AdminDevicesPage() {
             sentCountToday: typeof d.sentToday === "number" ? d.sentToday : 0,
             warmupStage: d.warmupStage || "Cold",
             dailyLimit: d.dailyLimit || 50,
+            ownerUserId: d.ownerUserId || null,
+            ownerUserName: d.ownerUserName || null,
+            ownerUserEmail: d.ownerUserEmail || null,
           };
         });
         setDevices(enriched);
@@ -214,6 +221,7 @@ export default function AdminDevicesPage() {
                 <thead>
                   <tr className="bg-base-200/50 text-xs">
                     <th>Device</th>
+                    <th>Pemilik Akun (User)</th>
                     <th>Nomor HP</th>
                     <th>Status</th>
                     <th>Warm-Up Stage</th>
@@ -229,7 +237,55 @@ export default function AdminDevicesPage() {
                       <tr key={d.id} className="hover:bg-base-50">
                         <td>
                           <p className="font-semibold text-xs text-slate-900">{d.name}</p>
-                          <p className="text-[10px] text-base-content/40 font-mono">{d.id}</p>
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <span className="text-[10px] text-base-content/50 font-mono bg-base-200/60 px-1.5 py-0.5 rounded">
+                              {d.id}
+                            </span>
+                            <button
+                              onClick={() => handleCopy(d.id, `dev-${d.id}`)}
+                              className="btn btn-ghost btn-xs btn-circle h-4 w-4 min-h-0 text-slate-400 hover:text-slate-700"
+                              title="Salin Device ID"
+                            >
+                              {copiedId === `dev-${d.id}` ? (
+                                <Check className="w-2.5 h-2.5 text-emerald-600" />
+                              ) : (
+                                <Copy className="w-2.5 h-2.5" />
+                              )}
+                            </button>
+                          </div>
+                        </td>
+                        <td>
+                          {d.ownerUserId ? (
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <User className="w-3 h-3 text-slate-400" />
+                                <p className="font-semibold text-xs text-slate-900">{d.ownerUserName || "Pengguna"}</p>
+                              </div>
+                              <p className="text-[10px] text-base-content/60 pl-4.5">{d.ownerUserEmail || "-"}</p>
+                              <div className="flex items-center gap-1 mt-1 pl-4.5">
+                                <span className="text-[9px] font-mono text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">
+                                  ID: {d.ownerUserId.length > 12 ? `${d.ownerUserId.slice(0, 10)}...` : d.ownerUserId}
+                                </span>
+                                <button
+                                  onClick={() => handleCopy(d.ownerUserId!, `user-${d.id}`)}
+                                  className="btn btn-ghost btn-xs btn-circle h-4 w-4 min-h-0 text-slate-400 hover:text-slate-700"
+                                  title={`Salin User ID (${d.ownerUserId})`}
+                                >
+                                  {copiedId === `user-${d.id}` ? (
+                                    <Check className="w-2.5 h-2.5 text-emerald-600" />
+                                  ) : (
+                                    <Copy className="w-2.5 h-2.5" />
+                                  )}
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div>
+                              <span className="badge badge-sm badge-ghost text-[10px] font-medium text-slate-500">
+                                Super Admin / Sistem
+                              </span>
+                            </div>
+                          )}
                         </td>
                         <td>
                           {d.phoneNumber && d.phoneNumber !== "-" ? (
@@ -340,7 +396,22 @@ export default function AdminDevicesPage() {
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <p className="font-semibold text-sm text-slate-900">{d.name}</p>
-                        <p className="text-[10px] text-base-content/40 font-mono">{d.id}</p>
+                        <div className="flex items-center gap-1 mt-0.5">
+                          <span className="text-[10px] text-base-content/50 font-mono bg-base-200/60 px-1.5 py-0.5 rounded">
+                            {d.id}
+                          </span>
+                          <button
+                            onClick={() => handleCopy(d.id, `dev-mob-${d.id}`)}
+                            className="text-slate-400 hover:text-slate-700 p-0.5"
+                            title="Salin Device ID"
+                          >
+                            {copiedId === `dev-mob-${d.id}` ? (
+                              <Check className="w-2.5 h-2.5 text-emerald-600" />
+                            ) : (
+                              <Copy className="w-2.5 h-2.5" />
+                            )}
+                          </button>
+                        </div>
                       </div>
                       <span
                         className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold shrink-0 ${
@@ -358,6 +429,38 @@ export default function AdminDevicesPage() {
                         />
                         {isConnected ? "CONNECTED" : d.status}
                       </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs pt-1 border-t border-base-200/50">
+                      <span className="text-base-content/60 flex items-center gap-1">
+                        <User className="w-3 h-3 text-slate-400" /> Pemilik:
+                      </span>
+                      <div className="text-right">
+                        <p className="font-semibold text-xs text-slate-800">
+                          {d.ownerUserName || (d.ownerUserId ? "Pengguna" : "Super Admin")}
+                        </p>
+                        {d.ownerUserEmail && (
+                          <p className="text-[10px] text-base-content/50">{d.ownerUserEmail}</p>
+                        )}
+                        {d.ownerUserId && (
+                          <div className="flex items-center justify-end gap-1 mt-0.5">
+                            <span className="text-[9px] font-mono text-slate-500 bg-slate-100 border border-slate-200 px-1 py-0.2 rounded">
+                              ID: {d.ownerUserId.slice(0, 8)}...
+                            </span>
+                            <button
+                              onClick={() => handleCopy(d.ownerUserId!, `user-mob-${d.id}`)}
+                              className="text-slate-400 hover:text-slate-600 p-0.5"
+                              title="Salin User ID"
+                            >
+                              {copiedId === `user-mob-${d.id}` ? (
+                                <Check className="w-2.5 h-2.5 text-emerald-600" />
+                              ) : (
+                                <Copy className="w-2.5 h-2.5" />
+                              )}
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div className="flex items-center justify-between text-xs pt-1 border-t border-base-200/50">
