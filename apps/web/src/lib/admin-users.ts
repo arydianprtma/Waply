@@ -348,8 +348,47 @@ export function deleteUser(userId: string): { success: boolean; error?: string }
     return { success: false, error: "Akun Super Admin utama tidak dapat dihapus!" };
   }
 
+  // 1. Remove from managed users list
   const remaining = users.filter((u) => u.id !== target.id && u.email.toLowerCase() !== target.email.toLowerCase());
   saveManagedUsers(remaining);
+
+  // 2. Clean up user subscription & settings cache
+  try {
+    saveSubscription({
+      userId: target.id,
+      planId: "FREE",
+      status: "EXPIRED",
+      startDate: null,
+      endDate: null,
+      updatedAt: new Date().toISOString(),
+    });
+  } catch {}
+
+  // 3. Delete user in Supabase Auth backend if service role key is present
+  const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (sbUrl && sbKey) {
+    try {
+      import("@supabase/supabase-js").then(({ createClient }) => {
+        const supabaseAdmin = createClient(sbUrl, sbKey, {
+          auth: { autoRefreshToken: false, persistSession: false },
+        });
+
+        if (target.id && !target.id.startsWith("usr_")) {
+          supabaseAdmin.auth.admin.deleteUser(target.id).catch(() => {});
+        } else if (target.email) {
+          supabaseAdmin.auth.admin.listUsers().then(({ data }) => {
+            const match = data?.users?.find(
+              (u) => u.email?.toLowerCase() === target.email.toLowerCase()
+            );
+            if (match) {
+              supabaseAdmin.auth.admin.deleteUser(match.id).catch(() => {});
+            }
+          }).catch(() => {});
+        }
+      }).catch(() => {});
+    } catch {}
+  }
 
   return { success: true };
 }

@@ -147,6 +147,13 @@ function LoginForm() {
         </div>
       )}
 
+      {authError === "account_deleted" && (
+        <div className="alert alert-error text-xs py-2.5 mb-4 font-medium flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>Akun Anda telah dihapus oleh Administrator. Seluruh sesi dan cache telah dibersihkan.</span>
+        </div>
+      )}
+
       {errorMsg && (
         <div className="alert alert-error text-xs py-2.5 mb-4 font-medium flex items-center gap-2">
           <AlertCircle className="w-4 h-4 flex-shrink-0" />

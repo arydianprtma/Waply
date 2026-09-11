@@ -51,6 +51,10 @@ export async function getSessionUser(): Promise<SessionUser> {
       const email = demoEmail || "guest@waply.id";
       const dbUser = getUserByEmail(email) || (demoId ? getUserById(demoId) : null);
 
+      if (!dbUser && email !== "admin@waply.id") {
+        throw new Error("401 Unauthorized: Akun ini telah dihapus oleh Administrator.");
+      }
+
       const role: "admin" | "user" =
         dbUser?.role || (email === "admin@waply.id" ? "admin" : "user");
       const userId =
@@ -63,7 +67,7 @@ export async function getSessionUser(): Promise<SessionUser> {
         demoName ||
         (role === "admin" ? "Waply Admin" : email.split("@")[0] || "Waply User");
 
-      // Always sync to update lastLoginIp with the latest client IP
+      // Only update last login info for existing users
       const managed = registerOrSyncUser({
         id: dbUser?.id || userId,
         email: dbUser?.email || email,

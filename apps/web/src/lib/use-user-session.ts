@@ -31,21 +31,43 @@ export function setCachedUser(user: CachedUser | null) {
   listeners.forEach((cb) => cb(user));
 }
 
-export function fetchUserSession(): Promise<CachedUser | null> {
-  if (cachedUser) return Promise.resolve(cachedUser);
-  if (fetchPromise) return fetchPromise;
+export function fetchUserSession(forceRefresh = false): Promise<CachedUser | null> {
+  if (cachedUser && !forceRefresh) return Promise.resolve(cachedUser);
+  if (fetchPromise && !forceRefresh) return fetchPromise;
 
-  fetchPromise = fetch("/api/auth/me")
-    .then((r) => r.json())
+  fetchPromise = fetch("/api/auth/me", { cache: "no-store" })
+    .then((r) => {
+      if (r.status === 401 || r.status === 403) {
+        throw new Error("unauthorized");
+      }
+      return r.json();
+    })
     .then((d) => {
       if (d.success && d.user) {
         cachedUser = d.user;
         listeners.forEach((cb) => cb(d.user));
         return d.user;
       }
+      throw new Error("user_not_found");
+    })
+    .catch(() => {
+      // Account deleted by Admin or session terminated: Wipe local cache & perform forced logout
+      setCachedUser(null);
+      if (typeof window !== "undefined") {
+        const isAuthPage =
+          window.location.pathname.startsWith("/login") ||
+          window.location.pathname.startsWith("/register") ||
+          window.location.pathname.startsWith("/reset-password") ||
+          window.location.pathname === "/";
+
+        if (!isAuthPage) {
+          import("@/lib/auth-logout").then(({ performLogout }) => {
+            performLogout("/login?error=account_deleted");
+          });
+        }
+      }
       return null;
     })
-    .catch(() => null)
     .finally(() => {
       fetchPromise = null;
     });
@@ -74,9 +96,18 @@ export function useUserSession() {
 
     const handler = (u: CachedUser | null) => setUser(u);
     listeners.add(handler);
-    fetchUserSession();
+    fetchUserSession(true);
+
+    // Periodic heartbeat (every 15s) to detect if admin deleted or banned this account
+    const interval = setInterval(() => {
+      if (typeof document !== "undefined" && document.visibilityState === "visible") {
+        fetchUserSession(true);
+      }
+    }, 15000);
+
     return () => {
       listeners.delete(handler);
+      clearInterval(interval);
     };
   }, []);
 
