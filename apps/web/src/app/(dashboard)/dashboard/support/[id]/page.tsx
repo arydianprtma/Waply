@@ -21,10 +21,15 @@ import {
   Bot,
   UserCheck,
   Info,
+  Paperclip,
+  X,
+  FileText,
+  AlertTriangle,
 } from "lucide-react";
-import type { SupportTicket, TicketCategory, TicketPriority, TicketStatus } from "@/lib/support-tickets";
+import type { SupportTicket, TicketCategory, TicketPriority, TicketStatus, TicketAttachment } from "@/lib/support-tickets";
 import { useUserSession } from "@/lib/use-user-session";
 import { ChatMessageContent } from "@/components/support/ChatMessageContent";
+import { validateAttachmentFile } from "@/lib/file-security";
 
 const CATEGORY_LABELS: Record<TicketCategory, string> = {
   TECHNICAL: "Kendala Teknis & Gateway",
@@ -58,10 +63,14 @@ export default function UserTicketDetailPage() {
   const [loading, setLoading] = useState(true);
   const [replyMessage, setReplyMessage] = useState("");
   const [sendingReply, setSendingReply] = useState(false);
+  const [pendingAttachments, setPendingAttachments] = useState<TicketAttachment[]>([]);
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
+  const [attachmentError, setAttachmentError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState(false);
   const [statusUpdating, setStatusUpdating] = useState(false);
   const [escalating, setEscalating] = useState(false);
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const prevMsgCountRef = useRef<number>(0);
   const isInitialLoadedRef = useRef<boolean>(false);
@@ -165,12 +174,56 @@ export default function UserTicketDetailPage() {
     }
   }, [ticket?.messages]);
 
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAttachmentError(null);
+
+    // Client-side security check (Anti-Malware & Anti-Injection)
+    const validation = validateAttachmentFile(file.name, file.size, file.type);
+    if (!validation.valid) {
+      setAttachmentError(validation.error || "File tidak diizinkan demi keamanan.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    try {
+      setUploadingAttachment(true);
+      const formData = new FormData();
+      formData.append("file", file);
+      if (ticket) formData.append("ticketId", ticket.id);
+
+      const res = await fetch("/api/tickets/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const json = await res.json();
+      if (json.success && json.attachment) {
+        setPendingAttachments((prev) => [...prev, json.attachment]);
+      } else {
+        setAttachmentError(json.error || "Gagal mengunggah file lampiran.");
+      }
+    } catch {
+      setAttachmentError("Terjadi kesalahan jaringan saat mengunggah file.");
+    } finally {
+      setUploadingAttachment(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const removePendingAttachment = (index: number) => {
+    setPendingAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleSendReply = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!replyMessage.trim() || !ticket) return;
-
     const messageText = replyMessage.trim();
+    if ((!messageText && pendingAttachments.length === 0) || !ticket) return;
+
+    const attachmentsToSend = [...pendingAttachments];
+    setPendingAttachments([]);
     setReplyMessage("");
+    setAttachmentError(null);
 
     // Optimistic UI update: message appears instantly without flickering
     const tempMsg: any = {
@@ -180,7 +233,8 @@ export default function UserTicketDetailPage() {
       senderName: user?.name || "Anda",
       senderEmail: user?.email || "",
       senderRole: "user",
-      message: messageText,
+      message: messageText || (attachmentsToSend.length > 0 ? `[Mengirim ${attachmentsToSend.length} lampiran file]` : ""),
+      attachments: attachmentsToSend.length > 0 ? attachmentsToSend : undefined,
       createdAt: new Date().toISOString(),
       sending: true,
     };
@@ -202,7 +256,10 @@ export default function UserTicketDetailPage() {
       const res = await fetch(`/api/tickets/${ticket.id}/reply`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: messageText }),
+        body: JSON.stringify({
+          message: messageText,
+          attachments: attachmentsToSend,
+        }),
       });
       const json = await res.json();
       if (json.success && json.data) {
@@ -452,7 +509,7 @@ export default function UserTicketDetailPage() {
                           : "bg-white text-slate-800 border border-slate-200 rounded-tl-none font-medium"
                       }`}
                     >
-                      <ChatMessageContent content={msg.message} isUser={isUser} />
+                      <ChatMessageContent content={msg.message} attachments={msg.attachments} isUser={isUser} />
                     </div>
                   </div>
                 </div>
@@ -489,7 +546,7 @@ export default function UserTicketDetailPage() {
           </div>
 
           {/* Chat Reply Input Bar / Closed Session Panel */}
-          <div className="p-4 bg-white border-t border-slate-200">
+          <div className="p-4 bg-white border-t border-slate-200 space-y-3">
             {isResolvedOrClosed ? (
               <div className="p-4 bg-slate-50/90 rounded-2xl border border-slate-200 space-y-3">
                 <div className="flex items-start gap-3">
@@ -522,35 +579,108 @@ export default function UserTicketDetailPage() {
                 </div>
               </div>
             ) : (
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleSendReply();
-                }}
-                className="flex items-center gap-2"
-              >
-                <textarea
-                  value={replyMessage}
-                  onChange={(e) => setReplyMessage(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendReply();
-                    }
+              <div className="space-y-2">
+                {/* Security / Upload Error Alert */}
+                {attachmentError && (
+                  <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center justify-between gap-2 animate-in fade-in duration-200">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600" />
+                      <span className="font-medium text-[11px]">{attachmentError}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setAttachmentError(null)}
+                      className="p-1 text-rose-500 hover:text-rose-700 rounded-md hover:bg-rose-100/50"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Pending Attachments List (Preview Before Send) */}
+                {pendingAttachments.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {pendingAttachments.map((att, idx) => (
+                      <div
+                        key={att.id || idx}
+                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-100 border border-slate-200 rounded-xl text-xs text-slate-800 shadow-2xs animate-in zoom-in-95 duration-150"
+                      >
+                        <FileText className="w-3.5 h-3.5 text-primary shrink-0" />
+                        <span className="truncate max-w-[150px] text-[11px] font-medium">{att.name}</span>
+                        <span className="text-[10px] text-slate-400 font-mono">
+                          ({(att.size / 1024).toFixed(0)} KB)
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removePendingAttachment(idx)}
+                          className="p-0.5 text-slate-400 hover:text-rose-600 rounded-full hover:bg-slate-200 transition-colors"
+                          title="Hapus lampiran"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSendReply();
                   }}
-                  rows={1}
-                  placeholder="Tulis balasan atau penjelasan tambahan... (Enter untuk kirim)"
-                  className="flex-1 text-xs px-4 py-3 rounded-2xl border border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none shadow-xs max-h-32"
-                />
-                <button
-                  type="submit"
-                  disabled={!replyMessage.trim()}
-                  className="p-3 rounded-2xl bg-primary text-white hover:bg-primary/90 active:scale-95 disabled:opacity-40 transition-all shadow-md shadow-primary/25 cursor-pointer shrink-0"
-                  title="Kirim Pesan"
+                  className="flex items-center gap-2"
                 >
-                  <Send className="w-4 h-4" />
-                </button>
-              </form>
+                  {/* Hidden File Input */}
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.log,.zip,.rar,.7z"
+                  />
+
+                  {/* Attachment Button */}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingAttachment}
+                    className="p-3 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-primary transition-all cursor-pointer shrink-0 disabled:opacity-50 shadow-2xs"
+                    title="Lampirkan File / Gambar (Maks 15MB, dilarang file .bat, .exe, script)"
+                  >
+                    {uploadingAttachment ? (
+                      <RefreshCw className="w-4 h-4 animate-spin text-primary" />
+                    ) : (
+                      <Paperclip className="w-4 h-4" />
+                    )}
+                  </button>
+
+                  <textarea
+                    value={replyMessage}
+                    onChange={(e) => setReplyMessage(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendReply();
+                      }
+                    }}
+                    rows={1}
+                    placeholder={
+                      uploadingAttachment
+                        ? "Sedang mengunggah file..."
+                        : "Tulis balasan atau penjelasan... (Enter untuk kirim)"
+                    }
+                    className="flex-1 text-xs px-4 py-3 rounded-2xl border border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none shadow-xs max-h-32"
+                  />
+                  <button
+                    type="submit"
+                    disabled={(!replyMessage.trim() && pendingAttachments.length === 0) || uploadingAttachment}
+                    className="p-3 rounded-2xl bg-primary text-white hover:bg-primary/90 active:scale-95 disabled:opacity-40 transition-all shadow-md shadow-primary/25 cursor-pointer shrink-0"
+                    title="Kirim Pesan"
+                  >
+                    <Send className="w-4 h-4" />
+                  </button>
+                </form>
+              </div>
             )}
           </div>
         </div>

@@ -12,6 +12,15 @@ export type TicketCategory =
 
 export type TicketHandlingMode = "AI" | "HUMAN";
 
+export interface TicketAttachment {
+  id: string;
+  name: string;
+  url: string;
+  size: number; // in bytes
+  type: string; // mime type
+  isImage?: boolean;
+}
+
 export interface TicketMessage {
   id: string;
   ticketId: string;
@@ -20,6 +29,7 @@ export interface TicketMessage {
   senderEmail: string;
   senderRole: "user" | "admin" | "support" | "ai" | "system";
   message: string;
+  attachments?: TicketAttachment[];
   createdAt: string;
 }
 
@@ -191,6 +201,7 @@ export function replyToTicket(
     senderEmail: string;
     senderRole: "user" | "admin" | "support" | "ai" | "system";
     message: string;
+    attachments?: TicketAttachment[];
   }
 ): SupportTicket | null {
   const all = getAllTickets();
@@ -240,6 +251,7 @@ export function replyToTicket(
     senderEmail: reply.senderEmail,
     senderRole: reply.senderRole,
     message: reply.message,
+    attachments: reply.attachments && reply.attachments.length > 0 ? reply.attachments : undefined,
     createdAt: now,
   };
 

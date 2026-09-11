@@ -19,9 +19,11 @@ export async function POST(
     const { id } = await params;
     const body = await req.json();
 
-    const { message } = body;
-    if (!message || !message.trim()) {
-      return NextResponse.json({ success: false, error: "Pesan balasan tidak boleh kosong" }, { status: 400 });
+    const { message, attachments } = body;
+    const cleanMessage = (message || "").trim();
+
+    if (!cleanMessage && (!attachments || attachments.length === 0)) {
+      return NextResponse.json({ success: false, error: "Pesan balasan atau lampiran tidak boleh kosong" }, { status: 400 });
     }
 
     const ticket = getTicketById(id);
@@ -54,7 +56,8 @@ export async function POST(
       senderName,
       senderEmail: user.email,
       senderRole,
-      message: message.trim(),
+      message: cleanMessage || (attachments && attachments.length > 0 ? `[Mengirim ${attachments.length} lampiran file]` : ""),
+      attachments: Array.isArray(attachments) ? attachments : undefined,
     });
 
     if (!updated) {
@@ -64,7 +67,12 @@ export async function POST(
     // If client replied and ticket is currently in AI handling mode, trigger AI follow-up
     if (!isAdmin && updated.handlingMode === "AI") {
       try {
-        const aiResult = await generateAiTicketResponse(updated, message.trim());
+        const attachmentNote = attachments && attachments.length > 0
+          ? ` [Pengguna melampirkan file: ${attachments.map((a: any) => `${a.name}`).join(", ")}]`
+          : "";
+        const aiQuery = (cleanMessage || "Pengguna melampirkan file/gambar") + attachmentNote;
+
+        const aiResult = await generateAiTicketResponse(updated, aiQuery);
         if (aiResult && aiResult.replyText) {
           replyToTicket(id, {
             senderId: "ai_assistant",
