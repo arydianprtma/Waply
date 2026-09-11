@@ -433,6 +433,34 @@ export default function UserTicketDetailPage() {
                 </div>
               );
             })}
+
+            {/* WhatsApp-Style Animated 3-Dots Typing Indicator */}
+            {sendingReply && ticket.handlingMode === "AI" && (
+              <div className="flex gap-3 max-w-[85%] mr-auto animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-xs font-bold shadow-xs bg-purple-600 text-white shadow-purple-200">
+                  <Bot className="w-4 h-4" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 justify-start">
+                    <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
+                      Waply AI
+                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-purple-100 text-purple-700 font-extrabold border border-purple-200">
+                        AI
+                      </span>
+                    </span>
+                    <span className="text-[10px] text-purple-600 font-medium flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
+                      <span>mengetik...</span>
+                    </span>
+                  </div>
+                  <div className="px-4 py-3 bg-white border border-purple-200/90 rounded-2xl rounded-tl-none shadow-xs inline-flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-purple-500 animate-bounce [animation-delay:-0.3s]" />
+                    <span className="w-2 h-2 rounded-full bg-purple-500 animate-bounce [animation-delay:-0.15s]" />
+                    <span className="w-2 h-2 rounded-full bg-purple-500 animate-bounce" />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Chat Reply Input Bar / Closed Session Panel */}

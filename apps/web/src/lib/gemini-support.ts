@@ -49,21 +49,21 @@ Tugas Anda adalah memberikan jawaban yang ramah, sopan, ringkas, solutif, dan sa
    - Paket tersedia: Trial, Starter, Business, Enterprise.
    - Top-up kuota pesan dapat menggunakan Voucher Kode di menu Billing atau upgrade paket.
 
-=== ATURAN MERESPON & HUMAN HANDOVER ===
+=== ATURAN MERESPON (SANGAT PENTING) ===
 
-1. TONE OF VOICE:
-   - Berbahasa Indonesia yang sopan, ramah, profesional, dan to-the-point.
-   - Berikan solusi langkah-demi-langkah yang jelas.
-   - Jangan menggunakan formatting yang terlalu berbelit-belit atau bertele-tele.
+1. GAYA BAHASA & ANTI-ROBOTIK:
+   - JANGAN PERNAH mengulang-ulang sapaan nama pengguna seperti "Halo Kak [Nama]" atau "Hai Kak [Nama]" di setiap balasan! Ini membuat percakapan terasa kaku dan seperti robot.
+   - Pada percakapan yang sedang berjalan (lanjutan chat), LANGSUNG jawab pertanyaan atau berikan solusi secara alami, mengalir, ramah, dan to-the-point seperti staf support profesional yang sedang chatting di WhatsApp (misal: "Bisa banget! Caranya...", "Tentu, untuk kendala tersebut...", "Langkahnya cukup mudah: ...").
+   - Gunakan Bahasa Indonesia yang luwes, santun, solutif, dan mudah dimengerti.
+   - Jangan bertele-tele atau membuat pengantar yang berulang.
 
 2. DETEKSI HUMAN HANDOVER (ESKALASI KE CS MANUSIA):
-   - Anda HARUS menyarankan/mengalihkan ke CS Manusia jika:
-     a) Pengguna secara eksplisit meminta ("mau bicara dengan orang", "hubungkan ke admin", "minta cs manusia", "bicara dengan staf", dll).
-     b) Masalah memerlukan verifikasi database manual oleh admin (misalnya: permintaan refund, verifikasi transfer bank manual, pemulihan akun terkunci/banned, bug teknis server mendalam).
-     c) Masalah di luar lingkup pengetahuan Anda.
+   - Alihkan ke CS Manusia (shouldEscalate: true) HANYA jika:
+     a) Pengguna secara positif meminta berbicara dengan orang/admin (contoh: "minta dihubungkan ke admin", "mau bicara dengan staf manusia", "hubungkan ke customer service asli").
+     b) JANGAN eskalasi jika pengguna berkata "nanti saja", "mau sama kamu dulu", "ngobrol sama AI aja", "jangan ke admin", dsb.
+     c) Masalah memerlukan verifikasi database internal admin (misal: refund dana, cek bukti transfer rekening, permohonan buka banned akun, reset credentials).
    - Format respon pengalihan jika terjadi handover:
-     Awali atau sertakan kalimat pengalihan yang ramah, misalnya:
-     "Baik, saya mengerti. Saya telah mengalihkan tiket ini ke Tim Customer Support kami agar dapat ditangani langsung oleh Admin. Mohon ditunggu sebentar ya."
+     "Baik, saya mengerti. Saya teruskan tiket ini ke Tim Customer Support kami agar dapat ditangani langsung oleh staf Admin ya. Mohon ditunggu sebentar."
 `;
 
 export interface AiResponseResult {
@@ -82,25 +82,40 @@ export async function generateAiTicketResponse(
   }
 
   try {
-    // Check quick heuristics for explicit human request
+    // Check heuristics for explicit human request with negation filtering
     const lower = latestUserMessage.toLowerCase();
-    const explicitHumanKeywords = [
+    
+    // Check if user is saying they DON'T want human/admin or want AI instead
+    const hasNegation = 
+      lower.includes("nanti") ||
+      lower.includes("jangan") ||
+      lower.includes("ga usah") ||
+      lower.includes("gak usah") ||
+      lower.includes("ngga") ||
+      lower.includes("tidak") ||
+      lower.includes("gamau") ||
+      lower.includes("sama kamu") ||
+      lower.includes("sama ai") ||
+      lower.includes("ngobrol sama ai");
+
+    const positiveHumanPhrases = [
       "cs manusia",
-      "orang",
-      "manusia",
-      "admin",
-      "staf",
-      "staff",
-      "operator",
-      "hubungkan",
-      "bicara dengan",
-      "ngomong sama admin",
-      "hubungi admin",
+      "orang asli",
+      "bicara dengan admin",
+      "bicara dengan manusia",
+      "bicara sama admin",
+      "hubungkan ke admin",
+      "hubungkan ke cs",
+      "sambungkan ke admin",
       "panggil admin",
+      "minta cs",
+      "minta admin",
+      "chat admin",
+      "operator manusia",
     ];
 
-    const containsExplicitHuman = explicitHumanKeywords.some((kw) =>
-      lower.includes(kw)
+    const containsExplicitHuman = !hasNegation && positiveHumanPhrases.some((phrase) =>
+      lower.includes(phrase)
     );
 
     // Build conversation context
@@ -112,7 +127,7 @@ export async function generateAiTicketResponse(
             : m.senderRole === "ai"
             ? "Waply AI"
             : "Admin Support";
-        return `[${roleLabel} - ${m.senderName}]: ${m.message}`;
+        return `[${roleLabel}]: ${m.message}`;
       })
       .join("\n");
 
@@ -122,7 +137,6 @@ ${WAPLY_KNOWLEDGE_BASE}
 === INFORMASI TIKET SAAT INI ===
 ID Tiket: ${ticket.id}
 Nama Klien: ${ticket.userName}
-Email: ${ticket.userEmail}
 Kategori: ${ticket.category}
 Prioritas: ${ticket.priority}
 Subjek: ${ticket.subject}
@@ -133,10 +147,10 @@ ${conversationHistory}
 [Pesan Terakhir Klien]: ${latestUserMessage}
 
 === INSTRUKSI OUTPUT ===
-Berikan balasan terbaik Anda dalam format JSON tunggal yang valid:
+Jawab pesan terakhir klien secara langsung dan alami tanpa mengulang sapaan/nama klien jika ini percakapan lanjutan. Berikan balasan dalam format JSON:
 {
-  "reply": "Tuliskan pesan balasan Anda untuk klien di sini...",
-  "shouldEscalate": true/false (set true jika klien minta bicara dengan manusia ATAU masalah butuh tindakan manual admin),
+  "reply": "Tulis balasan langsung, ramah, dan solutif di sini...",
+  "shouldEscalate": true/false (true jika ada permintaan eskalasi atau butuh tindakan admin manual),
   "escalationReason": "Alasan singkat eskalasi (jika shouldEscalate=true)"
 }
 `;
