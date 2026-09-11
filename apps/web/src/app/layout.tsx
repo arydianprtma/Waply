@@ -20,12 +20,12 @@ export const metadata: Metadata = {
   description: "Infrastruktur WhatsApp Gateway & Messaging API tercepat dan aman untuk developer dan bisnis.",
   icons: {
     icon: [
-      { url: "/favicon.png?v=3", type: "image/png" },
-      { url: "/icon.png?v=3", type: "image/png" },
-      { url: "/favicon.ico?v=3" },
+      { url: "/favicon.png?v=5", type: "image/png" },
+      { url: "/icon.png?v=5", type: "image/png" },
+      { url: "/favicon.ico?v=5" },
     ],
-    shortcut: "/favicon.png?v=3",
-    apple: "/apple-touch-icon.png?v=3",
+    shortcut: "/favicon.png?v=5",
+    apple: "/apple-touch-icon.png?v=5",
   },
 };
 
@@ -42,9 +42,9 @@ export default function RootLayout({
     <html lang="id" data-theme="waplyLight" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-        <link rel="icon" type="image/png" href="/favicon.png?v=3" />
-        <link rel="shortcut icon" href="/favicon.png?v=3" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3" />
+        <link rel="icon" type="image/png" href="/favicon.png?v=5" />
+        <link rel="shortcut icon" href="/favicon.png?v=5" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=5" />
       </head>
       <body
         className={`${plusJakartaSans.className} antialiased`}
