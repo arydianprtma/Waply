@@ -346,3 +346,18 @@ code[class*="language-"] ::selection {
   background: #264f78 !important;
   color: #ffffff !important;
 }
+
+/* Hide Next.js Development Indicator & Error Toasts on screen */
+nextjs-portal,
+[data-nextjs-toast],
+[data-nextjs-toast-wrapper],
+#nextjs-dev-overlay,
+div[data-nextjs-dialog-overlay],
+div[data-next-badge],
+div[data-nextjs-toast] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+

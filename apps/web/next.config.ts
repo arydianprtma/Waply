@@ -16,6 +16,7 @@ const appUrlHost = process.env.NEXT_PUBLIC_APP_URL
   : "";
 
 const nextConfig: NextConfig = {
+  devIndicators: false,
   experimental: {
     serverActions: {
       bodySizeLimit: "10mb",
