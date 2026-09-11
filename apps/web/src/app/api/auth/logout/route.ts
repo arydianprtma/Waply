@@ -1,19 +1,29 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 
-export async function POST() {
+export async function POST(request: NextRequest) {
+  return handleLogout(request);
+}
+
+export async function GET(request: NextRequest) {
+  return handleLogout(request);
+}
+
+async function handleLogout(request: NextRequest) {
   try {
     const cookieStore = await cookies();
     const allCookies = cookieStore.getAll();
 
-    // 1. Delete all known waply cookies
+    // 1. Delete all known waply auth cookies
     const authCookieNames = [
       "waply_demo_auth",
       "waply_user_email",
       "waply_user_name",
       "waply_user_role",
       "waply_user_id",
+      "waply_session",
+      "waply_user",
     ];
 
     authCookieNames.forEach((name) => {
@@ -27,31 +37,36 @@ export async function POST() {
         c.name.startsWith("waply_") ||
         c.name.startsWith("sb-") ||
         c.name.includes("supabase") ||
-        c.name.includes("auth")
+        c.name.includes("auth") ||
+        c.name.includes("session")
       ) {
         cookieStore.delete(c.name);
         cookieStore.set(c.name, "", { path: "/", maxAge: 0, expires: new Date(0) });
       }
     });
 
-    // 3. Supabase sign out
+    // 3. Supabase server sign out
     try {
       const supabase = await createClient();
-      await supabase.auth.signOut();
+      await supabase.auth.signOut({ scope: "global" });
     } catch {}
 
     const response = NextResponse.json({ success: true, message: "Logged out successfully" });
 
-    // Explicitly append expired Set-Cookie headers
-    const expiredCookies = [
-      "waply_demo_auth=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; SameSite=Lax",
-      "waply_user_email=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; SameSite=Lax",
-      "waply_user_name=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; SameSite=Lax",
-      "waply_user_role=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; SameSite=Lax",
-      "waply_user_id=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; SameSite=Lax",
-    ];
+    // Explicitly append expired Set-Cookie headers for both host and domains
+    const hostname = request.headers.get("host") || "ardp.my.id";
+    const cleanHost = hostname.split(":")[0];
 
-    expiredCookies.forEach((h) => response.headers.append("Set-Cookie", h));
+    const cookiesToWipe = [...authCookieNames, ...allCookies.map((c) => c.name)];
+    const uniqueCookies = Array.from(new Set(cookiesToWipe));
+
+    uniqueCookies.forEach((name) => {
+      response.headers.append("Set-Cookie", `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; SameSite=Lax`);
+      response.headers.append("Set-Cookie", `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0`);
+      if (cleanHost && !cleanHost.includes("localhost") && !cleanHost.includes("0.0.0.0")) {
+        response.headers.append("Set-Cookie", `${name}=; Path=/; Domain=.${cleanHost}; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; SameSite=Lax`);
+      }
+    });
 
     return response;
   } catch (err: any) {

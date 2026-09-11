@@ -13,12 +13,12 @@ import { createClient } from "@/lib/supabase/client";
  * 6. Hard redirect to /login
  */
 export async function performLogout(redirectTo: string = "/login") {
-  // 1. Clear React in-memory session cache
+  // 1. Clear React in-memory session cache immediately
   try {
     setCachedUser(null);
   } catch {}
 
-  // 2. Clear all client cookies explicitly across multiple path/domain combinations
+  // 2. Wipe client cookies
   if (typeof document !== "undefined") {
     const cookieNames = [
       "waply_demo_auth",
@@ -26,9 +26,10 @@ export async function performLogout(redirectTo: string = "/login") {
       "waply_user_name",
       "waply_user_role",
       "waply_user_id",
+      "waply_session",
+      "waply_user",
     ];
 
-    // Read all existing cookie names in document.cookie
     const existing = document.cookie.split(";");
     for (let i = 0; i < existing.length; i++) {
       const cookie = existing[i].trim();
@@ -54,35 +55,30 @@ export async function performLogout(redirectTo: string = "/login") {
   if (typeof window !== "undefined") {
     try {
       sessionStorage.clear();
-      localStorage.removeItem("waply_user");
-      localStorage.removeItem("waply_session");
-      localStorage.removeItem("supabase.auth.token");
-      // Remove any Supabase localStorage keys
-      for (let i = localStorage.length - 1; i >= 0; i--) {
-        const key = localStorage.key(i);
-        if (key && (key.startsWith("sb-") || key.includes("supabase") || key.startsWith("waply_"))) {
-          localStorage.removeItem(key);
-        }
-      }
+      localStorage.clear();
     } catch {}
   }
 
-  // 4. Call server-side logout route
+  // 4. Supabase sign out
+  try {
+    const supabase = createClient();
+    await supabase.auth.signOut({ scope: "global" });
+  } catch {}
+
+  // 5. Call server-side logout route to clear server httpOnly cookies
   try {
     await fetch("/api/auth/logout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      cache: "no-store",
     });
   } catch {}
 
-  // 5. Supabase sign out
-  try {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-  } catch {}
-
-  // 6. Hard redirect to /login
+  // 6. Hard redirect to /login with cache busting / replace
   if (typeof window !== "undefined") {
-    window.location.href = redirectTo;
+    const target = redirectTo.includes("?")
+      ? `${redirectTo}&logged_out=true&t=${Date.now()}`
+      : `${redirectTo}?logged_out=true&t=${Date.now()}`;
+    window.location.replace(target);
   }
 }

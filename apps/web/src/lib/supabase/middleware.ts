@@ -22,6 +22,21 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse;
   }
 
+  // Handle explicit logout route or query parameter
+  if (request.nextUrl.pathname === "/logout" || request.nextUrl.searchParams.get("logged_out") === "true") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.searchParams.delete("logged_out");
+    url.searchParams.delete("t");
+    const res = NextResponse.redirect(url);
+    // Purge all cookies
+    request.cookies.getAll().forEach((c) => {
+      res.cookies.delete(c.name);
+      res.cookies.set(c.name, "", { path: "/", maxAge: 0, expires: new Date(0) });
+    });
+    return res;
+  }
+
   // 1. Check local session cookies first (instant, zero network latency)
   const isDemoAuth = request.cookies.get("waply_demo_auth")?.value === "true";
   const rawEmail = request.cookies.get("waply_user_email")?.value || "";
