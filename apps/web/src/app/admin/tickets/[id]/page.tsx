@@ -79,6 +79,7 @@ export default function AdminTicketDetailPage() {
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const prevMsgCountRef = useRef<number>(0);
   const isInitialLoadedRef = useRef<boolean>(false);
+  const sendingReplyRef = useRef<boolean>(false);
 
   const handleTakeOver = async () => {
     if (!ticket || takingOver) return;
@@ -116,7 +117,25 @@ export default function AdminTicketDetailPage() {
       const res = await fetch(`/api/tickets/${ticketId}`);
       const json = await res.json();
       if (json.success && json.data) {
-        setTicket(json.data);
+        setTicket((prev) => {
+          if (!prev) return json.data;
+          const pendingTemp = prev.messages.filter((m) => (m as any).sending || m.id.startsWith("temp-"));
+          if (pendingTemp.length === 0) return json.data;
+
+          const mergedMessages = [...json.data.messages];
+          for (const temp of pendingTemp) {
+            const existsInServer = mergedMessages.some(
+              (m) => m.senderRole === temp.senderRole && m.message === temp.message
+            );
+            if (!existsInServer) {
+              mergedMessages.push(temp);
+            }
+          }
+          return {
+            ...json.data,
+            messages: mergedMessages,
+          };
+        });
         markTicketLocallyAsRead(ticketId);
       }
     } catch {
@@ -130,12 +149,14 @@ export default function AdminTicketDetailPage() {
     fetchTicketDetail();
   }, [fetchTicketDetail]);
 
-  // Live Auto Polling every 2 seconds
+  // Live Auto Polling every 2.5 seconds (paused while sending reply)
   useEffect(() => {
     if (!ticketId) return;
     const interval = setInterval(() => {
-      fetchTicketDetail(true);
-    }, 2000);
+      if (!sendingReplyRef.current) {
+        fetchTicketDetail(true);
+      }
+    }, 2500);
     return () => clearInterval(interval);
   }, [ticketId, fetchTicketDetail]);
 
@@ -164,7 +185,7 @@ export default function AdminTicketDetailPage() {
     const msg = replyMessage.trim();
     setReplyMessage("");
 
-    // Optimistic UI update: message appears instantly
+    // Optimistic UI update: message appears instantly without flickering
     const tempMsg: any = {
       id: `temp-${Date.now()}`,
       ticketId: ticket.id,
@@ -186,6 +207,7 @@ export default function AdminTicketDetailPage() {
     });
     setTimeout(() => scrollToBottom(true), 20);
 
+    sendingReplyRef.current = true;
     setSendingReply(true);
 
     try {
@@ -200,8 +222,9 @@ export default function AdminTicketDetailPage() {
         setTimeout(() => scrollToBottom(true), 50);
       }
     } catch (err) {
-      console.error("Gagal mengirim balasan:", err);
+      console.error("Gagal mengirim balasan admin:", err);
     } finally {
+      sendingReplyRef.current = false;
       setSendingReply(false);
     }
   };

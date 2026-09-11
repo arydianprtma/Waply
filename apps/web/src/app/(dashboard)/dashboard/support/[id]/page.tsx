@@ -65,6 +65,7 @@ export default function UserTicketDetailPage() {
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const prevMsgCountRef = useRef<number>(0);
   const isInitialLoadedRef = useRef<boolean>(false);
+  const sendingReplyRef = useRef<boolean>(false);
 
   const handleEscalateToHuman = async () => {
     if (!ticket || escalating) return;
@@ -102,7 +103,26 @@ export default function UserTicketDetailPage() {
       const res = await fetch(`/api/tickets/${ticketId}`);
       const json = await res.json();
       if (json.success && json.data) {
-        setTicket(json.data);
+        setTicket((prev) => {
+          if (!prev) return json.data;
+          // Reconcile optimistic/pending messages to prevent flickering
+          const pendingTemp = prev.messages.filter((m) => (m as any).sending || m.id.startsWith("temp-"));
+          if (pendingTemp.length === 0) return json.data;
+
+          const mergedMessages = [...json.data.messages];
+          for (const temp of pendingTemp) {
+            const existsInServer = mergedMessages.some(
+              (m) => m.senderRole === temp.senderRole && m.message === temp.message
+            );
+            if (!existsInServer) {
+              mergedMessages.push(temp);
+            }
+          }
+          return {
+            ...json.data,
+            messages: mergedMessages,
+          };
+        });
       }
     } catch {
       // ignore silent fetch errors
@@ -116,12 +136,14 @@ export default function UserTicketDetailPage() {
     fetchTicketDetail();
   }, [fetchTicketDetail]);
 
-  // Live Auto Polling every 2 seconds
+  // Live Auto Polling every 2.5 seconds (paused while user is actively awaiting reply)
   useEffect(() => {
     if (!ticketId) return;
     const interval = setInterval(() => {
-      fetchTicketDetail(true);
-    }, 2000);
+      if (!sendingReplyRef.current) {
+        fetchTicketDetail(true);
+      }
+    }, 2500);
     return () => clearInterval(interval);
   }, [ticketId, fetchTicketDetail]);
 
@@ -150,7 +172,7 @@ export default function UserTicketDetailPage() {
     const messageText = replyMessage.trim();
     setReplyMessage("");
 
-    // Optimistic UI update: message appears instantly
+    // Optimistic UI update: message appears instantly without flickering
     const tempMsg: any = {
       id: `temp-${Date.now()}`,
       ticketId: ticket.id,
@@ -173,6 +195,7 @@ export default function UserTicketDetailPage() {
     });
     setTimeout(() => scrollToBottom(true), 20);
 
+    sendingReplyRef.current = true;
     setSendingReply(true);
 
     try {
@@ -189,6 +212,7 @@ export default function UserTicketDetailPage() {
     } catch (err) {
       console.error("Gagal mengirim balasan:", err);
     } finally {
+      sendingReplyRef.current = false;
       setSendingReply(false);
     }
   };
