@@ -17,6 +17,7 @@ import {
   X,
 } from "lucide-react";
 import { SecurityConfig, SecurityViolationLog } from "@/lib/security-guard";
+import { Top4xxPathsCard } from "@/components/admin/Top4xxPathsCard";
 
 const PRESET_KEYWORDS = [
   "slot gacor",
@@ -300,6 +301,9 @@ export default function AdminSecurityPage() {
           )}
         </div>
       </div>
+
+      {/* Top 4xx Paths / URL Probe Scanner */}
+      <Top4xxPathsCard />
 
       {/* Audit Logs Table */}
       <div className="bg-base-100 rounded-3xl border border-base-200 shadow-xs overflow-hidden">

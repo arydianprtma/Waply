@@ -42,6 +42,7 @@ import {
   BarChart,
   Bar,
 } from "recharts";
+import { Top4xxPathsCard } from "@/components/admin/Top4xxPathsCard";
 
 interface AdminStats {
   overview: {
@@ -795,6 +796,9 @@ export default function AdminOverviewPage() {
           )}
         </div>
       </div>
+
+      {/* Top 4xx Paths & URL Probe Tracking Widget */}
+      <Top4xxPathsCard />
     </div>
   );
 }
