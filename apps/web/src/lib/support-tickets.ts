@@ -327,6 +327,13 @@ export function updateTicketStatus(
 
   if (status === "RESOLVED" || status === "CLOSED") {
     all[index].resolvedAt = now;
+    // Auto-learn from resolved ticket if there was an admin solution
+    try {
+      const { autoLearnFromTicket } = require("./ai-knowledge");
+      autoLearnFromTicket(all[index]);
+    } catch {
+      // ignore
+    }
   }
 
   saveTickets(all);

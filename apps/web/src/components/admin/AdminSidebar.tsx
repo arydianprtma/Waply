@@ -23,6 +23,7 @@ import {
   Radio,
   Database,
   X,
+  Sparkles,
 } from "lucide-react";
 import clsx from "clsx";
 import { performLogout } from "@/lib/auth-logout";
@@ -66,6 +67,7 @@ export function AdminSidebar() {
           badge: unreadCount > 0 ? `${unreadCount}` : "CS",
           isTicketItem: true,
         },
+        { name: "AI Knowledge Base", href: "/admin/ai-knowledge", icon: Sparkles, badge: "AI" },
         { name: "Pengumuman", href: "/admin/announcements", icon: Megaphone, badge: "Broadcast" },
         { name: "Layanan & Paket", href: "/admin/plans", icon: Layers, badge: "Plans" },
         { name: "Addon & Top-Up", href: "/admin/addons", icon: PlusCircle, badge: "Addon" },

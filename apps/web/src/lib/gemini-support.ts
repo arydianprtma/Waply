@@ -1,5 +1,6 @@
 import type { TicketMessage, SupportTicket } from "./support-tickets";
 import { getAllPlans } from "./billing";
+import { getRelevantKnowledgeForPrompt } from "./ai-knowledge";
 
 function getDynamicPlansKnowledge(): string {
   try {
@@ -224,12 +225,18 @@ export async function generateAiTicketResponse(
     // Fetch dynamic plans directly from database / storage
     const dynamicPlansKnowledge = getDynamicPlansKnowledge();
 
+    // Fetch relevant knowledge from AI Knowledge Base & Admin SOPs
+    const relevantKnowledge = getRelevantKnowledgeForPrompt(
+      `${ticket.subject} ${latestUserMessage}`,
+      ticket.category
+    );
+
     const prompt = `
 ${WAPLY_STATIC_KNOWLEDGE}
 
 === DAFTAR PAKET LANGGANAN REAL-TIME DARI DATABASE WAPLY ===
 ${dynamicPlansKnowledge}
-
+${relevantKnowledge ? `\n=== BASIS PENGETAHUAN & SOLUSI TERUJI DARI ADMIN (KNOWLEDGE BASE) ===\n${relevantKnowledge}\n` : ""}
 === INFORMASI TIKET SAAT INI ===
 ID Tiket: ${ticket.id}
 Nama Klien: ${ticket.userName}
