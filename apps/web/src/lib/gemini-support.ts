@@ -127,10 +127,11 @@ Tugas Anda adalah memberikan jawaban yang cerdas, ramah, solutif, percaya diri, 
    - Jika terjadi eskalasi valid:
      "Baik, permintaan Anda saya teruskan ke Tim Customer Support kami agar dapat ditangani langsung oleh Admin. Mohon ditunggu sebentar ya! 🙏"
 
-4. MENUTUP / MENYELESAIKAN SESI CHAT (shouldClose: true):
-   - Jika pengguna menyatakan kendala sudah teratasi/selesai, sudah paham, sudah cukup, mengucapkan terima kasih dan mengisyaratkan selesai, atau secara eksplisit meminta menutup chat/tiket (contoh: "sudah jelas terima kasih", "tutup sesi chat", "akhiri sesi", "tutup tiket ini", "sudah cukup makasih ya", "bisa di close", "masalah sudah selesai"):
-     • Set \`"shouldClose": true\`
-     • Tuliskan pesan penutup yang hangat, ramah, dan bersahabat (misal: "Sama-sama! Senang bisa membantu Anda. Sesi tiket bantuan ini saya tandai selesai ya. Jika membutuhkan bantuan lagi di kemudian hari, jangan ragu untuk membuka tiket baru. Semoga harimu menyenangkan! ✨🙏")
+4. MENUTUP / MENYELESAIKAN SESI CHAT (shouldClose):
+   - Standar / Default: "shouldClose": false.
+   - Sesi tiket chat WAJIB TETAP TERBUKA untuk semua percakapan umum, obrolan santai, ucapan terima kasih ("makasih", "terima kasih"), apresiasi/pujian ("bagus juga ya platform ini", "keren"), dan konfirmasi ("ok", "siap", "baik", "noted").
+   - Set "shouldClose": true HANYA jika pengguna SECARA EKSPLISIT DAN TEGAS MEMERINTAHKAN / MEMINTA UNTUK MENUTUP TIKET (contoh perintah langsung: "tolong tutup tiket ini", "tutup sesi chat", "akhiri sesi tiket", "close ticket").
+   - JANGAN PERNAH menutup sesi chat jika pengguna tidak secara gamblang menyuruh menutup tiket!
 `;
 
 export interface AiResponseResult {
@@ -187,31 +188,28 @@ export async function generateAiTicketResponse(
       lower.includes(phrase)
     );
 
-    // Check heuristics for explicit session close request
-    const closePhrases = [
+    // Check heuristics strictly for explicit session close command from user
+    const explicitClosePhrases = [
       "tutup sesi",
       "tutup chat",
       "tutup tiket",
       "akhiri sesi",
       "akhiri chat",
+      "akhiri tiket",
       "akhiri percakapan",
       "close ticket",
+      "close tiket",
       "close chat",
-      "sudah cukup",
-      "sudah selesai",
-      "sudah jelas",
-      "sudah paham",
-      "sudah beres",
-      "bisa ditutup",
-      "bisa di close",
-      "bisa di-close",
       "tolong ditutup",
-      "masalah sudah teratasi",
-      "kendala sudah teratasi",
-      "kendala sudah selesai",
+      "tolong tutup tiket",
+      "bisa ditutup tiket",
+      "bisa tolong ditutup",
+      "bisa di close tiket",
+      "bisa di-close tiket",
+      "selesaikan tiket",
     ];
 
-    const containsCloseIntent = closePhrases.some((phrase) => lower.includes(phrase));
+    const containsExplicitClose = explicitClosePhrases.some((phrase) => lower.includes(phrase));
 
     // Build conversation context
     const conversationHistory = ticket.messages
@@ -257,9 +255,9 @@ ${conversationHistory}
 Jawab pesan terakhir klien secara langsung dan alami tanpa mengulang sapaan/nama klien jika ini percakapan lanjutan. Berikan balasan dalam format JSON:
 {
   "reply": "Tulis balasan langsung, ramah, dan solutif di sini...",
-  "shouldEscalate": true/false (true jika ada permintaan eskalasi atau butuh tindakan admin manual),
+  "shouldEscalate": true/false (true jika ada permintaan eskalasi ke admin manusia),
   "escalationReason": "Alasan singkat eskalasi (jika shouldEscalate=true)",
-  "shouldClose": true/false (true jika klien meminta menutup sesi chat atau menyatakan kendala sudah selesai/cukup),
+  "shouldClose": true/false (HANYA true jika klien secara eksplisit menyuruh menutup/mengakhiri tiket bantuan),
   "closeReason": "Alasan penutupan tiket (jika shouldClose=true)"
 }
 `;
@@ -354,12 +352,15 @@ Jawab pesan terakhir klien secara langsung dan alami tanpa mengulang sapaan/nama
       const parsed = JSON.parse(cleanJson);
       const isExplicitEscalation = containsExplicitHuman && !hasNegation;
       const shouldEscalateFinal = !hasNegation && (Boolean(parsed.shouldEscalate) || isExplicitEscalation);
-      const shouldCloseFinal = Boolean(parsed.shouldClose) || containsCloseIntent;
+      // Strictly require explicit close command from user to close session
+      const shouldCloseFinal = containsExplicitClose || (Boolean(parsed.shouldClose) && containsExplicitClose);
 
       return {
         replyText:
           parsed.reply ||
-          "Sama-sama! Senang bisa membantu Anda. Sesi tiket bantuan ini saya tandai selesai ya. Semoga harimu menyenangkan! ✨🙏",
+          (shouldCloseFinal
+            ? "Sama-sama! Senang bisa membantu Anda. Sesi tiket bantuan ini saya tandai selesai ya. Jika membutuhkan bantuan lagi di kemudian hari, jangan ragu untuk membuka tiket baru. Semoga harimu menyenangkan! ✨🙏"
+            : textContent.trim()),
         shouldEscalate: shouldEscalateFinal,
         escalationReason:
           parsed.escalationReason ||
@@ -372,7 +373,7 @@ Jawab pesan terakhir klien secara langsung dan alami tanpa mengulang sapaan/nama
     } catch {
       // Text fallback if not valid JSON
       const isExplicitEscalation = containsExplicitHuman && !hasNegation;
-      const shouldCloseFinal = containsCloseIntent;
+      const shouldCloseFinal = containsExplicitClose;
       return {
         replyText: textContent.trim(),
         shouldEscalate: isExplicitEscalation,
