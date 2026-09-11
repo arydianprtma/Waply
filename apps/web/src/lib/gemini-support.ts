@@ -1,6 +1,74 @@
 import type { TicketMessage, SupportTicket } from "./support-tickets";
+import { getAllPlans } from "./billing";
 
-const WAPLY_KNOWLEDGE_BASE = `
+function getDynamicPlansKnowledge(): string {
+  try {
+    const plansObj = getAllPlans();
+    const activePlans = Object.values(plansObj).filter((p) => p.isActive !== false);
+
+    if (activePlans.length === 0) {
+      return "Saat ini belum ada paket berbayar yang aktif. Silakan tanyakan ke admin.";
+    }
+
+    const periodMap: Record<string, string> = {
+      day: "hari",
+      week: "minggu",
+      month: "bulan",
+      year: "tahun",
+    };
+
+    const lines = activePlans.map((plan) => {
+      const periodName = periodMap[plan.period || "month"] || "bulan";
+      const priceStr =
+        plan.price === 0
+          ? "Gratis (Rp 0)"
+          : `Rp ${plan.price.toLocaleString("id-ID")}/${periodName}`;
+
+      const discountInfo =
+        plan.originalPrice && plan.discountPercent
+          ? ` (Diskon ${plan.discountPercent}% dari normal Rp ${plan.originalPrice.toLocaleString("id-ID")})`
+          : "";
+
+      const msgQuota =
+        plan.monthlyMessages === -1
+          ? "Unlimited Pesan"
+          : `${(plan.monthlyMessages || 0).toLocaleString("id-ID")} Pesan / ${periodName}`;
+
+      const deviceQuota = `${plan.maxDevices || 1} WhatsApp Device${(plan.maxDevices || 1) > 1 ? "s" : ""}`;
+      const watermarkStr = plan.watermarkEnabled ? "Watermark ON" : "White-Label (Tanpa Watermark)";
+      const popularBadge = plan.isPopular ? " [Pilihan Populer / Best Seller ⭐]" : "";
+
+      // List key active feature capabilities from access
+      const accessBadges: string[] = [];
+      if (plan.access?.broadcast) accessBadges.push("Broadcast Bulk");
+      if (plan.access?.autoReply) accessBadges.push("Auto-Reply Bot");
+      if (plan.access?.webhooks) accessBadges.push("Webhook Real-time");
+      if (plan.access?.warmupHealth) accessBadges.push("Warmup & Anti-Ban Safety");
+      if (plan.access?.contacts) accessBadges.push("Manajemen Kontak & Grup");
+      if (plan.access?.blacklistDnd) accessBadges.push("Blacklist & DND Protection");
+      if (plan.access?.apiKeys) accessBadges.push("API Developer Keys");
+      if (plan.access?.systemLogs) accessBadges.push("System Logs");
+
+      const featuresList =
+        plan.features && plan.features.length > 0
+          ? plan.features.join(", ")
+          : accessBadges.join(", ");
+
+      return `- **${plan.name}** (ID: \`${plan.id}\`)${popularBadge}:
+  • Harga: **${priceStr}**${discountInfo}
+  • Kuota Chat: **${msgQuota}** | Batas Device: **${deviceQuota}** (${watermarkStr})
+  • Fitur & Kemampuan: ${featuresList}
+  • Akses Modul Aktif: ${accessBadges.join(", ") || "Dasar Gateway"}`;
+    });
+
+    return lines.join("\n\n");
+  } catch (err) {
+    console.error("[Gemini Support] Error generating dynamic plans:", err);
+    return "Paket langganan aktif dapat dilihat pada menu Dashboard > Billing.";
+  }
+}
+
+const WAPLY_STATIC_KNOWLEDGE = `
 Anda adalah "Waply AI Assistant", asisten AI resmi dari platform Waply (WhatsApp Gateway & Customer Engagement Platform).
 Tugas Anda adalah memberikan jawaban yang cerdas, ramah, solutif, percaya diri, dan sangat akurat secara teknis kepada pengguna.
 
@@ -10,52 +78,17 @@ Tugas Anda adalah memberikan jawaban yang cerdas, ramah, solutif, percaya diri, 
    - Platform WhatsApp Gateway multi-device & multi-tenant berperforma tinggi tanpa emulator (menggunakan direct Baileys WebSocket engine).
    - Fitur utama: Pengiriman Pesan Teks & Media, Pustaka Template Spintax, Auto-Reply Chatbot, Broadcast Anti-Ban dengan Smart Delay, Manajemen Kontak, dan Webhook Event Real-Time.
 
-2. DAFTAR LENGKAP PAKET LANGGANAN & HARGA WAPLY:
-   Jika pengguna menanyakan tentang paket, harga, perbedaan fitur, kuota, atau rekomendasi paket, jelaskan secara langsung dan detail tanpa menyuruh pengguna melihat sendiri di menu billing!
-
-   A. PAKET HARIAN (Cocok untuk Uji Coba & Event Singkat):
-      - **Starter Harian**: Rp 5.000 / hari
-        • Kapasitas: 1 WhatsApp Device, 500 Pesan / hari
-        • Fitur: Kirim Pesan Manual & API, Message Logs, Template Spintax, Blacklist DND, API Keys & Playground.
-      - **Pro Harian** (Paling Populer Harian): Rp 15.000 / hari
-        • Kapasitas: 3 WhatsApp Devices, 5.000 Pesan / hari
-        • Fitur: Broadcast Blast Massal, Auto-Reply Chatbot, Webhook Real-time, Anti-Ban Warmup Safety, Manajemen Kontak.
-
-   B. PAKET BULANAN (Rekomendasi Utama Bisnis):
-      - **Free Trial**: Rp 0 (Gratis)
-        • Kapasitas: 1 WhatsApp Device, 100 Pesan / bulan
-        • Fitur: Uji coba dasar API, Template Spintax, Webhook dasar.
-      - **Starter**: Rp 49.000 / bulan
-        • Kapasitas: 2 WhatsApp Devices, 5.000 Pesan / bulan
-        • Fitur: Broadcast Blast Massal, Auto-Reply Chatbot, Webhook Integration, Spintax Template, API Keys, Kontak & Grup.
-      - **Business** (Best Seller & Paling Direkomendasikan): Rp 149.000 / bulan
-        • Kapasitas: 5 WhatsApp Devices, 25.000 Pesan / bulan
-        • Fitur: Full Broadcast Bulk, Keyword Auto-Reply Bot, Webhook Real-time Events, Device Health & Warmup Anti-Ban, Kontak Unlimited, Priority Support.
-      - **Pro** (Skala Besar / Enterprise): Rp 299.000 / bulan
-        • Kapasitas: 10 WhatsApp Devices, 200.000 Pesan / bulan
-        • Fitur: Full Multi-Device Rotation, High Performance High-Throughput Gateway, Dedicated Server Queue, Priority Support 24/7.
-
-   C. PAKET TAHUNAN (Hemat 20%):
-      - **Starter Tahunan**: Rp 470.000 / tahun (2 Devices, 60.000 Pesan / tahun)
-      - **Business Tahunan**: Rp 1.430.000 / tahun (5 Devices, 300.000 Pesan / tahun, Termasuk Warmup & Anti-Ban)
-      - **Pro Tahunan**: Rp 2.870.000 / tahun (10 Devices, 2.400.000 Pesan / tahun, Dedicated Route)
-
-   D. CARA UPGRADE & PEMBAYARAN:
-      - Pengguna dapat langsung menuju menu **Dashboard > Billing**, lalu klik tombol **Upgrade** pada paket yang dipilih.
-      - Mendukung pembayaran instan via **QRIS**, **Virtual Account Bank (BCA, Mandiri, BRI, BNI)**, dan **E-Wallet**.
-      - Kuota atau voucher diskon dapat dimasukkan pada kolom **Redeem Voucher** di halaman Billing.
-
-3. PENGHUBUNGAN DEVICE / WHATSAPP:
+2. PENGHUBUNGAN DEVICE / WHATSAPP:
    - Hubungkan nomor melalui menu **Dashboard > Devices > Tambah Perangkat > Scan QR Code** via WhatsApp di ponsel.
    - Jika status Disconnected: Pastikan ponsel terkoneksi internet, lalu klik **Restart Session** atau **Scan Ulang QR**.
 
-4. WARMUP & DEVICE HEALTH (ANTI-BAN METRICS):
+3. WARMUP & DEVICE HEALTH (ANTI-BAN METRICS):
    - **Stage 1: Cold Number (Hari 1-3)** -> Safety delay 8-15 detik/pesan, batas maks 30 pesan/hari untuk membangun Trust Score di Meta.
    - **Stage 2: Warm Number (Hari 4-7)** -> Batas maks 100 pesan/hari.
    - **Stage 3: Active Number (Hari 8-14)** -> Batas maks 500 pesan/hari.
    - **Stage 4: Mature Number (Hari 15+) -> Kecepatan penuh (< 1 detik/pesan) sesuai kuota paket.
 
-5. REST API & BASE URL:
+4. REST API & BASE URL:
    - Base URL Produksi: \`https://ardp.my.id\` (jangan tambahkan subpath pada konfigurasi baseURL).
    - Autentikasi: Header \`Authorization: Bearer snd_live_YOUR_API_KEY\` atau \`X-API-Key: snd_live_YOUR_API_KEY\`.
    - Endpoint Kirim Pesan: \`POST /api/v1/messages/send\`
@@ -63,14 +96,24 @@ Tugas Anda adalah memberikan jawaban yang cerdas, ramah, solutif, percaya diri, 
    - Endpoint Broadcast: \`POST /api/broadcast\`
    - Endpoint Webhook: \`GET/POST /api/webhooks\`
 
+5. CARA UPGRADE & PEMBAYARAN:
+   - Pengguna dapat langsung menuju menu **Dashboard > Billing**, lalu klik tombol **Upgrade** pada paket yang dipilih.
+   - Mendukung pembayaran instan via **QRIS**, **Virtual Account Bank (BCA, Mandiri, BRI, BNI)**, dan **E-Wallet**.
+   - Kuota atau voucher diskon dapat dimasukkan pada kolom **Redeem Voucher** di halaman Billing.
+
 === ATURAN MERESPON (SANGAT PENTING) ===
 
 1. GAYA BAHASA, EMOTICON & FORMAT BOLD:
-   - Gunakan emoticon yang wajar, sopan, dan ramah (contoh: ✨, 🚀, 📱, 💡, 💳, 📦, 👍) untuk membuat pesan terasa hidup dan menyenangkan. Jangan berlebihan (cukup 1-2 per topik).
+   - Gunakan emoticon yang wajar, sopan, dan ramah (contoh: ✨, 🚀, 📱, 💡, 💳, 📦, 👍) untuk membuat pesan terasa hidup dan menyenangkan. Jangan berlebihan (cukup 1-2 per poin).
    - Gunakan **huruf tebal (bold)** dengan format \`**kata**\` pada nama paket, harga, nama menu, limit angka, dan poin-poin penting agar pesan terstruktur rapi dan enak dibaca.
    - JANGAN PERNAH mengulang sapaan nama seperti "Halo Kak [Nama]" di setiap balasan lanjutan! Langsung jawab pertanyaan ke intinya secara mengalir layaknya obrolan WhatsApp yang luwes.
 
-2. JANGAN GAMPANG MELEMPARKAN KE CS MANUSIA (TETAP TANGANI SENDIRI):
+2. PENJELASAN PAKET LANGGANAN (BERDASARKAN DATA REAL-TIME DATABASE):
+   - Jika pengguna menanyakan tentang paket, harga, atau fitur apa saja yang tersedia, jelaskan SECARA LENGKAP DAN DETAIL HANYA paket yang sedang aktif di database (terlampir di bawah).
+   - Jangan menyebutkan paket yang tidak terdaftar di database!
+   - Jangan menyuruh pengguna cek sendiri di menu billing; berikan perbandingan jelas dengan harga, kuota, dan fitur-fiturnya.
+
+3. JANGAN GAMPANG MELEMPARKAN KE CS MANUSIA (TETAP TANGANI SENDIRI):
    - Anda adalah asisten cerdas dan mandiri. Jawablah semua pertanyaan seputar paket, harga, fitur, teknis, API, panduan, dan troubleshooting secara tuntas.
    - JANGAN mengalihkan ke CS Manusia hanya karena pertanyaan seputar harga atau cara langganan!
    - Alihkan ke CS Manusia (\`shouldEscalate: true\`) HANYA jika:
@@ -145,8 +188,14 @@ export async function generateAiTicketResponse(
       })
       .join("\n");
 
+    // Fetch dynamic plans directly from database / storage
+    const dynamicPlansKnowledge = getDynamicPlansKnowledge();
+
     const prompt = `
-${WAPLY_KNOWLEDGE_BASE}
+${WAPLY_STATIC_KNOWLEDGE}
+
+=== DAFTAR PAKET LANGGANAN REAL-TIME DARI DATABASE WAPLY ===
+${dynamicPlansKnowledge}
 
 === INFORMASI TIKET SAAT INI ===
 ID Tiket: ${ticket.id}
