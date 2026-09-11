@@ -28,18 +28,17 @@ function LoginForm() {
   const authError = searchParams.get("error");
   const isVerified = searchParams.get("verified") === "true";
 
-  const performDemoLogin = async (userEmail: string) => {
+  const performLoginSync = async (userEmail: string, userName?: string, userId?: string) => {
     try {
       const cleanEmail = userEmail.trim().toLowerCase();
 
       const res = await fetch("/api/auth/demo-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: cleanEmail }),
+        body: JSON.stringify({ email: cleanEmail, name: userName, id: userId }),
       });
       const json = await res.json();
       if (json.success) {
-        // Set client-side cookies directly to guarantee immediate sync
         const maxAge = 60 * 60 * 24 * 7;
         document.cookie = `waply_demo_auth=true; path=/; max-age=${maxAge}; SameSite=Lax`;
         document.cookie = `waply_user_email=${encodeURIComponent(cleanEmail)}; path=/; max-age=${maxAge}; SameSite=Lax`;
@@ -55,7 +54,6 @@ function LoginForm() {
 
         const userRole = json.user?.role || "user";
         let target = json.redirectTo || (userRole === "admin" ? "/admin" : "/dashboard");
-        // If a regular user had an admin URL in redirectTo, force user dashboard
         if (userRole === "user" && target.startsWith("/admin")) {
           target = "/dashboard";
         }
@@ -82,19 +80,48 @@ function LoginForm() {
       return;
     }
 
-    // Attempt Supabase sign in in parallel if configured (non-blocking)
-    if (isSupabaseConfigured() && password) {
-      try {
-        const supabase = createClient();
-        supabase.auth.signInWithPassword({
-          email: cleanEmail,
-          password,
-        }).catch(() => {});
-      } catch {}
+    if (!password) {
+      setErrorMsg("Silakan masukkan password akun Anda.");
+      setLoading(false);
+      return;
     }
 
-    // Always perform robust database & cookie session login
-    await performDemoLogin(cleanEmail);
+    // If Supabase is active, strictly enforce Supabase password verification & email confirmation
+    if (isSupabaseConfigured() && cleanEmail !== "admin@waply.id") {
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: cleanEmail,
+          password,
+        });
+
+        if (error) {
+          const lower = (error.message || "").toLowerCase();
+          if (lower.includes("email not confirmed")) {
+            setErrorMsg("Akun Anda belum diverifikasi. Silakan periksa inbox email Anda dan klik tautan 'Confirm email address' sebelum login.");
+          } else if (lower.includes("invalid login credentials") || lower.includes("invalid_credentials")) {
+            setErrorMsg("Email atau password yang Anda masukkan salah. Silakan periksa kembali.");
+          } else {
+            setErrorMsg(error.message || "Gagal masuk. Periksa kembali email dan password Anda.");
+          }
+          setLoading(false);
+          return;
+        }
+
+        if (data?.user) {
+          const uName = data.user.user_metadata?.name || data.user.user_metadata?.full_name || cleanEmail.split("@")[0];
+          await performLoginSync(cleanEmail, uName, data.user.id);
+          return;
+        }
+      } catch (err: any) {
+        setErrorMsg(err.message || "Terjadi kesalahan saat memverifikasi akun.");
+        setLoading(false);
+        return;
+      }
+    }
+
+    // For Super Admin master account or offline dev mode
+    await performLoginSync(cleanEmail);
   };
 
   return (
