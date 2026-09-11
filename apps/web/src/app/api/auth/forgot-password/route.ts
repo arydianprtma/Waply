@@ -34,8 +34,13 @@ export async function POST(req: NextRequest) {
     const { token } = createPasswordResetToken(cleanEmail);
 
     // Build reset link
-    const origin = req.headers.get("origin") || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001";
-    const resetUrl = `${origin}/reset-password?token=${token}&email=${encodeURIComponent(cleanEmail)}`;
+    const reqOrigin = req.headers.get("origin") || req.headers.get("x-forwarded-host");
+    const origin =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      (reqOrigin && !reqOrigin.includes("0.0.0.0") && !reqOrigin.includes("localhost")
+        ? (reqOrigin.startsWith("http") ? reqOrigin : `https://${reqOrigin}`)
+        : "https://ardp.my.id");
+    const resetUrl = `${origin.replace(/\/$/, "")}/reset-password?token=${token}&email=${encodeURIComponent(cleanEmail)}`;
 
     // Dispatch custom SMTP email
     const sent = await sendEmailResetPassword({

@@ -42,10 +42,13 @@ export default function RegisterPage() {
 
     try {
       const supabase = createClient();
-      const redirectUrl =
-        typeof window !== "undefined"
-          ? `${window.location.origin}/auth/callback`
-          : undefined;
+      const origin =
+        typeof window !== "undefined" &&
+        !window.location.hostname.includes("0.0.0.0") &&
+        !window.location.hostname.includes("localhost")
+          ? window.location.origin
+          : (process.env.NEXT_PUBLIC_APP_URL || "https://ardp.my.id");
+      const redirectUrl = `${origin.replace(/\/$/, "")}/auth/callback`;
 
       const { data, error } = await supabase.auth.signUp({
         email,

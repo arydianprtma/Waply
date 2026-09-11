@@ -486,10 +486,13 @@ function OrderContent() {
 
         if (isSupabaseConfigured() && customerPassword) {
           const supabase = createClient();
-          const redirectUrl =
-            typeof window !== "undefined"
-              ? `${window.location.origin}/auth/callback?next=/dashboard/billing`
-              : undefined;
+          const origin =
+            typeof window !== "undefined" &&
+            !window.location.hostname.includes("0.0.0.0") &&
+            !window.location.hostname.includes("localhost")
+              ? window.location.origin
+              : (process.env.NEXT_PUBLIC_APP_URL || "https://ardp.my.id");
+          const redirectUrl = `${origin.replace(/\/$/, "")}/auth/callback?next=/dashboard/billing`;
 
           supabase.auth.signUp({
             email: cleanEmail,

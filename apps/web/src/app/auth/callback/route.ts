@@ -5,16 +5,42 @@ import { cookies } from "next/headers";
 import { registerOrSyncUser } from "@/lib/admin-users";
 import { extractClientIp } from "@/lib/ip-utils";
 
+function resolveAppBaseUrl(request: NextRequest): string {
+  // 1. If explicit NEXT_PUBLIC_APP_URL is set and not localhost/0.0.0.0, prioritize it
+  if (
+    process.env.NEXT_PUBLIC_APP_URL &&
+    !process.env.NEXT_PUBLIC_APP_URL.includes("localhost") &&
+    !process.env.NEXT_PUBLIC_APP_URL.includes("0.0.0.0")
+  ) {
+    return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
+  }
+
+  // 2. Check forwarded proxy headers (Cloudflare Tunnel / Nginx)
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  const forwardedProto = request.headers.get("x-forwarded-proto") || "https";
+  if (forwardedHost && !forwardedHost.includes("0.0.0.0") && !forwardedHost.includes("localhost")) {
+    return `${forwardedProto}://${forwardedHost}`.replace(/\/$/, "");
+  }
+
+  // 3. Check Host header
+  const host = request.headers.get("host");
+  if (host && !host.includes("0.0.0.0") && !host.includes("localhost")) {
+    const proto = request.headers.get("x-forwarded-proto") || "https";
+    return `${proto}://${host}`.replace(/\/$/, "");
+  }
+
+  // 4. Default fallback to production live domain
+  return "https://ardp.my.id";
+}
+
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
   const token_hash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
   const next = searchParams.get("next") ?? "/dashboard";
 
-  const forwardedHost = request.headers.get("x-forwarded-host");
-  const isLocalEnv = process.env.NODE_ENV === "development";
-  const baseUrl = isLocalEnv ? origin : forwardedHost ? `https://${forwardedHost}` : origin;
+  const baseUrl = resolveAppBaseUrl(request);
 
   try {
     const supabase = await createClient();
