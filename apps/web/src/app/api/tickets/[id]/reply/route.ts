@@ -4,6 +4,7 @@ import {
   getTicketById,
   replyToTicket,
   escalateTicketToHuman,
+  updateTicketStatus,
 } from "@/lib/support-tickets";
 import { generateAiTicketResponse } from "@/lib/gemini-support";
 
@@ -78,6 +79,9 @@ export async function POST(
               id,
               aiResult.escalationReason || "Eskalasi otomatis oleh AI"
             );
+          } else if (aiResult.shouldClose) {
+            // Automatically mark ticket as resolved when client requests closing session
+            updateTicketStatus(id, "RESOLVED");
           }
 
           updated = getTicketById(id) || updated;

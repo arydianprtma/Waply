@@ -121,12 +121,19 @@ Tugas Anda adalah memberikan jawaban yang cerdas, ramah, solutif, percaya diri, 
      b) Kasus administrasi manual tingkat tinggi yang membutuhkan akses rekening bank admin (seperti: klaim refund transfer uang manual) atau pembukaan banned akun di tingkat basis data.
    - Jika terjadi eskalasi valid:
      "Baik, permintaan Anda saya teruskan ke Tim Customer Support kami agar dapat ditangani langsung oleh Admin. Mohon ditunggu sebentar ya! 🙏"
+
+4. MENUTUP / MENYELESAIKAN SESI CHAT (shouldClose: true):
+   - Jika pengguna menyatakan kendala sudah teratasi/selesai, sudah paham, sudah cukup, mengucapkan terima kasih dan mengisyaratkan selesai, atau secara eksplisit meminta menutup chat/tiket (contoh: "sudah jelas terima kasih", "tutup sesi chat", "akhiri sesi", "tutup tiket ini", "sudah cukup makasih ya", "bisa di close", "masalah sudah selesai"):
+     • Set \`"shouldClose": true\`
+     • Tuliskan pesan penutup yang hangat, ramah, dan bersahabat (misal: "Sama-sama! Senang bisa membantu Anda. Sesi tiket bantuan ini saya tandai selesai ya. Jika membutuhkan bantuan lagi di kemudian hari, jangan ragu untuk membuka tiket baru. Semoga harimu menyenangkan! ✨🙏")
 `;
 
 export interface AiResponseResult {
   replyText: string;
   shouldEscalate: boolean;
   escalationReason?: string;
+  shouldClose?: boolean;
+  closeReason?: string;
 }
 
 export async function generateAiTicketResponse(
@@ -175,6 +182,32 @@ export async function generateAiTicketResponse(
       lower.includes(phrase)
     );
 
+    // Check heuristics for explicit session close request
+    const closePhrases = [
+      "tutup sesi",
+      "tutup chat",
+      "tutup tiket",
+      "akhiri sesi",
+      "akhiri chat",
+      "akhiri percakapan",
+      "close ticket",
+      "close chat",
+      "sudah cukup",
+      "sudah selesai",
+      "sudah jelas",
+      "sudah paham",
+      "sudah beres",
+      "bisa ditutup",
+      "bisa di close",
+      "bisa di-close",
+      "tolong ditutup",
+      "masalah sudah teratasi",
+      "kendala sudah teratasi",
+      "kendala sudah selesai",
+    ];
+
+    const containsCloseIntent = closePhrases.some((phrase) => lower.includes(phrase));
+
     // Build conversation context
     const conversationHistory = ticket.messages
       .map((m) => {
@@ -214,7 +247,9 @@ Jawab pesan terakhir klien secara langsung dan alami tanpa mengulang sapaan/nama
 {
   "reply": "Tulis balasan langsung, ramah, dan solutif di sini...",
   "shouldEscalate": true/false (true jika ada permintaan eskalasi atau butuh tindakan admin manual),
-  "escalationReason": "Alasan singkat eskalasi (jika shouldEscalate=true)"
+  "escalationReason": "Alasan singkat eskalasi (jika shouldEscalate=true)",
+  "shouldClose": true/false (true jika klien meminta menutup sesi chat atau menyatakan kendala sudah selesai/cukup),
+  "closeReason": "Alasan penutupan tiket (jika shouldClose=true)"
 }
 `;
 
@@ -308,24 +343,34 @@ Jawab pesan terakhir klien secara langsung dan alami tanpa mengulang sapaan/nama
       const parsed = JSON.parse(cleanJson);
       const isExplicitEscalation = containsExplicitHuman && !hasNegation;
       const shouldEscalateFinal = !hasNegation && (Boolean(parsed.shouldEscalate) || isExplicitEscalation);
+      const shouldCloseFinal = Boolean(parsed.shouldClose) || containsCloseIntent;
 
       return {
         replyText:
           parsed.reply ||
-          "Halo! Ada yang bisa saya bantu terkait layanan WhatsApp Gateway Waply?",
+          "Sama-sama! Senang bisa membantu Anda. Sesi tiket bantuan ini saya tandai selesai ya. Semoga harimu menyenangkan! ✨🙏",
         shouldEscalate: shouldEscalateFinal,
         escalationReason:
           parsed.escalationReason ||
           (isExplicitEscalation ? "Permintaan langsung dari pengguna" : undefined),
+        shouldClose: shouldCloseFinal,
+        closeReason:
+          parsed.closeReason ||
+          (shouldCloseFinal ? "Permintaan penutupan sesi oleh klien" : undefined),
       };
     } catch {
       // Text fallback if not valid JSON
       const isExplicitEscalation = containsExplicitHuman && !hasNegation;
+      const shouldCloseFinal = containsCloseIntent;
       return {
         replyText: textContent.trim(),
         shouldEscalate: isExplicitEscalation,
         escalationReason: isExplicitEscalation
           ? "Permintaan langsung dari pengguna"
+          : undefined,
+        shouldClose: shouldCloseFinal,
+        closeReason: shouldCloseFinal
+          ? "Permintaan penutupan sesi oleh klien"
           : undefined,
       };
     }
