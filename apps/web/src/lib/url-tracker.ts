@@ -1,4 +1,4 @@
-﻿import fs from 'fs';
+import fs from 'fs';
 import path from 'path';
 
 export interface UrlScanEntry {
@@ -39,36 +39,18 @@ function categorizePath(p: string): UrlScanEntry['category'] {
   return 'COMMON_404';
 }
 
-const SEED_DATA: UrlScanEntry[] = [
-  { path: '/api/pesan', count: 79, method: 'POST', lastStatusCode: 404, statusCodes: [404, 400], lastSeen: new Date().toISOString(), firstSeen: new Date(Date.now() - 86400000 * 3).toISOString(), recentIps: ['114.122.45.12'], category: 'API_MISMATCH' },
-  { path: '/erp/.env', count: 26, method: 'GET', lastStatusCode: 404, statusCodes: [404], lastSeen: new Date().toISOString(), firstSeen: new Date(Date.now() - 86400000 * 4).toISOString(), recentIps: ['185.191.171.10'], category: 'ENV_LEAK_PROBE' },
-  { path: '/development/.env', count: 25, method: 'GET', lastStatusCode: 404, statusCodes: [404], lastSeen: new Date().toISOString(), firstSeen: new Date(Date.now() - 86400000 * 4).toISOString(), recentIps: ['194.26.29.112'], category: 'ENV_LEAK_PROBE' },
-  { path: '/postmark/.env', count: 25, method: 'GET', lastStatusCode: 404, statusCodes: [404], lastSeen: new Date().toISOString(), firstSeen: new Date(Date.now() - 86400000 * 4).toISOString(), recentIps: ['45.154.255.89'], category: 'ENV_LEAK_PROBE' },
-  { path: '/logs/.env', count: 24, method: 'GET', lastStatusCode: 404, statusCodes: [404], lastSeen: new Date().toISOString(), firstSeen: new Date(Date.now() - 86400000 * 3).toISOString(), recentIps: ['185.220.101.5'], category: 'ENV_LEAK_PROBE' },
-  { path: '/mandrill/.env', count: 23, method: 'GET', lastStatusCode: 404, statusCodes: [404], lastSeen: new Date().toISOString(), firstSeen: new Date(Date.now() - 86400000 * 3).toISOString(), recentIps: ['91.240.118.23'], category: 'ENV_LEAK_PROBE' },
-  { path: '/rabbitmq/.env', count: 23, method: 'GET', lastStatusCode: 404, statusCodes: [404], lastSeen: new Date().toISOString(), firstSeen: new Date(Date.now() - 86400000 * 3).toISOString(), recentIps: ['193.106.191.67'], category: 'ENV_LEAK_PROBE' },
-  { path: '/app/.env', count: 22, method: 'GET', lastStatusCode: 404, statusCodes: [404], lastSeen: new Date().toISOString(), firstSeen: new Date(Date.now() - 86400000 * 2).toISOString(), recentIps: ['178.62.204.14'], category: 'ENV_LEAK_PROBE' },
-  { path: '/simulasi', count: 22, method: 'GET', lastStatusCode: 404, statusCodes: [404], lastSeen: new Date().toISOString(), firstSeen: new Date(Date.now() - 86400000 * 2).toISOString(), recentIps: ['36.84.112.90'], category: 'COMMON_404' },
-  { path: '/deploy/.env', count: 22, method: 'GET', lastStatusCode: 404, statusCodes: [404], lastSeen: new Date().toISOString(), firstSeen: new Date(Date.now() - 86400000 * 2).toISOString(), recentIps: ['185.191.171.10'], category: 'ENV_LEAK_PROBE' },
-  { path: '/client/.env', count: 22, method: 'GET', lastStatusCode: 404, statusCodes: [404], lastSeen: new Date().toISOString(), firstSeen: new Date(Date.now() - 86400000 * 2).toISOString(), recentIps: ['194.26.29.112'], category: 'ENV_LEAK_PROBE' },
-  { path: '/smtp/.env', count: 16, method: 'GET', lastStatusCode: 404, statusCodes: [404], lastSeen: new Date().toISOString(), firstSeen: new Date(Date.now() - 86400000 * 1).toISOString(), recentIps: ['45.154.255.89'], category: 'ENV_LEAK_PROBE' },
-  { path: '/wp-login.php', count: 14, method: 'GET', lastStatusCode: 404, statusCodes: [404], lastSeen: new Date().toISOString(), firstSeen: new Date(Date.now() - 86400000 * 2).toISOString(), recentIps: ['185.220.101.5'], category: 'ADMIN_SCAN' },
-  { path: '/api/send-message', count: 12, method: 'POST', lastStatusCode: 404, statusCodes: [404], lastSeen: new Date().toISOString(), firstSeen: new Date(Date.now() - 86400000 * 1).toISOString(), recentIps: ['114.122.45.12'], category: 'API_MISMATCH' },
-  { path: '/.git/config', count: 10, method: 'GET', lastStatusCode: 404, statusCodes: [404], lastSeen: new Date().toISOString(), firstSeen: new Date(Date.now() - 86400000 * 3).toISOString(), recentIps: ['91.240.118.23'], category: 'SOURCE_LEAK' },
-];
-
 export function getAllUrlScans(): UrlScanEntry[] {
   ensureDir();
   try {
     if (!fs.existsSync(SCANS_FILE)) {
-      fs.writeFileSync(SCANS_FILE, JSON.stringify(SEED_DATA, null, 2), 'utf-8');
-      return SEED_DATA;
+      fs.writeFileSync(SCANS_FILE, JSON.stringify([], null, 2), 'utf-8');
+      return [];
     }
     const raw = fs.readFileSync(SCANS_FILE, 'utf-8');
     const data = JSON.parse(raw);
-    return Array.isArray(data) ? data : SEED_DATA;
+    return Array.isArray(data) ? data : [];
   } catch {
-    return SEED_DATA;
+    return [];
   }
 }
 
