@@ -332,62 +332,68 @@ export function updateUserPlan(
   return users[idx];
 }
 
-export function deleteUser(userId: string): { success: boolean; error?: string } {
+export async function deleteUser(userId: string): Promise<{ success: boolean; error?: string }> {
   const users = getAllManagedUsers();
   const target = users.find((u) => u.id === userId || u.email.toLowerCase() === userId.toLowerCase());
 
-  if (!target) {
-    return { success: false, error: "User tidak ditemukan" };
-  }
+  const targetEmail = (target?.email || (userId.includes("@") ? userId : "")).toLowerCase().trim();
+  const targetId = target?.id || userId;
 
   if (
-    target.role === "admin" ||
-    target.email.toLowerCase() === "admin@waply.id" ||
-    target.id === "admin-master-waply-01"
+    target?.role === "admin" ||
+    targetEmail === "admin@waply.id" ||
+    targetId === "admin-master-waply-01"
   ) {
     return { success: false, error: "Akun Super Admin utama tidak dapat dihapus!" };
   }
 
   // 1. Remove from managed users list
-  const remaining = users.filter((u) => u.id !== target.id && u.email.toLowerCase() !== target.email.toLowerCase());
-  saveManagedUsers(remaining);
+  if (target) {
+    const remaining = users.filter((u) => u.id !== target.id && u.email.toLowerCase() !== target.email.toLowerCase());
+    saveManagedUsers(remaining);
 
-  // 2. Clean up user subscription & settings cache
-  try {
-    saveSubscription({
-      userId: target.id,
-      planId: "FREE",
-      status: "EXPIRED",
-      startDate: null,
-      endDate: null,
-      updatedAt: new Date().toISOString(),
-    });
-  } catch {}
+    // 2. Clean up user subscription & settings cache
+    try {
+      saveSubscription({
+        userId: target.id,
+        planId: "FREE",
+        status: "EXPIRED",
+        startDate: null,
+        endDate: null,
+        updatedAt: new Date().toISOString(),
+      });
+    } catch {}
+  }
 
-  // 3. Delete user in Supabase Auth backend if service role key is present
+  // 3. Delete user in Supabase Auth backend
   const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (sbUrl && sbKey) {
     try {
-      import("@supabase/supabase-js").then(({ createClient }) => {
-        const supabaseAdmin = createClient(sbUrl, sbKey, {
-          auth: { autoRefreshToken: false, persistSession: false },
-        });
+      const { createClient } = await import("@supabase/supabase-js");
+      const supabaseAdmin = createClient(sbUrl, sbKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
 
-        if (target.id && !target.id.startsWith("usr_")) {
-          supabaseAdmin.auth.admin.deleteUser(target.id).catch(() => {});
-        } else if (target.email) {
-          supabaseAdmin.auth.admin.listUsers().then(({ data }) => {
-            const match = data?.users?.find(
-              (u) => u.email?.toLowerCase() === target.email.toLowerCase()
-            );
-            if (match) {
-              supabaseAdmin.auth.admin.deleteUser(match.id).catch(() => {});
-            }
-          }).catch(() => {});
+      // Try deleting by direct UUID
+      if (targetId && !targetId.startsWith("usr_") && targetId.includes("-")) {
+        await supabaseAdmin.auth.admin.deleteUser(targetId).catch(() => {});
+      }
+
+      // If email is present, lookup user in Supabase and delete
+      if (targetEmail) {
+        const { data } = await supabaseAdmin.auth.admin.listUsers();
+        const matches = data?.users?.filter(
+          (u) => u.email?.toLowerCase() === targetEmail || u.id === targetId
+        ) || [];
+
+        for (const match of matches) {
+          await supabaseAdmin.auth.admin.deleteUser(match.id);
         }
-      }).catch(() => {});
-    } catch {}
+      }
+    } catch (sbErr: any) {
+      console.error("[deleteUser] Supabase admin deletion error:", sbErr.message);
+    }
   }
 
   return { success: true };

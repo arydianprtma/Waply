@@ -120,11 +120,11 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === "delete_user") {
-      const res = deleteUser(userId);
+      const res = await deleteUser(userId);
       if (!res.success) {
         return NextResponse.json({ success: false, error: res.error || "Gagal menghapus user" }, { status: 400 });
       }
-      return NextResponse.json({ success: true, message: "Pengguna berhasil dihapus secara permanen dari sistem." });
+      return NextResponse.json({ success: true, message: "Pengguna berhasil dihapus secara permanen dari sistem dan Supabase Auth." });
     }
 
     return NextResponse.json({ success: false, error: "Aksi tidak valid" }, { status: 400 });
@@ -144,11 +144,11 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ success: false, error: "User ID diperlukan" }, { status: 400 });
     }
 
-    const res = deleteUser(userId);
+    const res = await deleteUser(userId);
     if (!res.success) {
       return NextResponse.json({ success: false, error: res.error || "Gagal menghapus user" }, { status: 400 });
     }
-    return NextResponse.json({ success: true, message: "Pengguna berhasil dihapus secara permanen dari sistem." });
+    return NextResponse.json({ success: true, message: "Pengguna berhasil dihapus secara permanen dari sistem dan Supabase Auth." });
   } catch (err: any) {
     const status = err.message.includes("403") ? 403 : 500;
     return NextResponse.json({ success: false, error: err.message }, { status });
