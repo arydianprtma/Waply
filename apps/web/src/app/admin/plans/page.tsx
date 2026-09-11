@@ -517,64 +517,61 @@ export default function AdminPlansPage() {
 
                   {/* Plan Name & Price */}
                   <div>
-                    <div className="flex items-center justify-between gap-2">
-                      <h3 className="font-bold text-lg text-slate-900">{p.name}</h3>
-                      {p.discountBadge ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 font-extrabold text-[10px] whitespace-nowrap">
-                          {p.discountBadge}
-                        </span>
-                      ) : p.discountPercent ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 font-extrabold text-[10px] whitespace-nowrap">
-                          -{p.discountPercent}%
-                        </span>
-                      ) : null}
-                    </div>
+                    {(() => {
+                      const status = getPlanDiscountStatus(p, nowMs);
+                      return (
+                        <>
+                          <div className="flex items-center justify-between gap-2">
+                            <h3 className="font-bold text-lg text-slate-900">{p.name}</h3>
+                            {status.isDiscountActive && (p.discountBadge || p.discountPercent) ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 font-extrabold text-[10px] whitespace-nowrap">
+                                {p.discountBadge || `-${p.discountPercent}%`}
+                              </span>
+                            ) : null}
+                          </div>
 
-                    {p.originalPrice && p.originalPrice > p.price && (
-                      <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                        <span className="text-xs text-slate-400 line-through font-semibold">
-                          Rp {p.originalPrice.toLocaleString("id-ID")}
-                        </span>
-                        {p.discountPercent && (
-                          <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.2 rounded border border-rose-200">
-                            Diskon {p.discountPercent}%
-                          </span>
-                        )}
-                        {(() => {
-                          const status = getPlanDiscountStatus(p, nowMs);
-                          if (status.hasSchedule && status.hasTimer && status.isDiscountActive) {
-                            return <PromoCountdownTimer status={status} variant="badge" />;
-                          }
-                          if (status.hasSchedule && status.isUpcoming) {
-                            return (
+                          {status.isDiscountActive && p.originalPrice && p.originalPrice > p.price ? (
+                            <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                              <span className="text-xs text-slate-400 line-through font-semibold">
+                                Rp {p.originalPrice.toLocaleString("id-ID")}
+                              </span>
+                              {p.discountPercent && (
+                                <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.2 rounded border border-rose-200">
+                                  Diskon {p.discountPercent}%
+                                </span>
+                              )}
+                              {status.hasSchedule && status.hasTimer && (
+                                <PromoCountdownTimer status={status} variant="badge" />
+                              )}
+                            </div>
+                          ) : status.hasSchedule && status.isUpcoming ? (
+                            <div className="mt-1 flex flex-wrap items-center gap-1.5">
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
                                 <Clock className="w-3 h-3" />
-                                <span>Terjadwal</span>
+                                <span>Promo Terjadwal</span>
                               </span>
-                            );
-                          }
-                          if (status.hasSchedule && status.isExpired) {
-                            return (
+                            </div>
+                          ) : status.hasSchedule && status.isExpired ? (
+                            <div className="mt-1 flex flex-wrap items-center gap-1.5">
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200">
-                                Expired
+                                Promo Expired (Harga Normal Kembali)
                               </span>
-                            );
-                          }
-                          return null;
-                        })()}
-                      </div>
-                    )}
+                            </div>
+                          ) : null}
 
-                    <div className="mt-1.5 flex items-baseline gap-1.5">
-                      <span className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                        {isFree ? "Gratis" : `Rp ${p.price.toLocaleString("id-ID")}`}
-                      </span>
-                      {!isFree && (
-                        <span className="text-xs text-slate-500 font-medium">
-                          / {periodLabel}
-                        </span>
-                      )}
-                    </div>
+                          <div className="mt-1.5 flex items-baseline gap-1.5">
+                            <span className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                              {isFree ? "Gratis" : `Rp ${status.effectivePrice.toLocaleString("id-ID")}`}
+                            </span>
+                            {!isFree && (
+                              <span className="text-xs text-slate-500 font-medium">
+                                / {periodLabel}
+                              </span>
+                            )}
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
 
                   {/* Limits Badge Box */}

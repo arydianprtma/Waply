@@ -9,6 +9,7 @@ import {
   chargeMidtransCoreApi,
   createInvoice,
   sendEmailInvoiceNotification,
+  getPlanDiscountStatus,
 } from "@/lib/billing";
 import { getAllAddons } from "@/lib/addons";
 import { validateVoucher, recordVoucherUsage } from "@/lib/vouchers";
@@ -68,13 +69,15 @@ export async function POST(req: NextRequest) {
     if (!isAddonOnly && plan) {
       const isYearly = plan.period === "year";
       const isFixedPeriod = plan.period && plan.period !== "month" && !isYearly;
-      baseAmount = plan.price;
+      const discStatus = getPlanDiscountStatus(plan);
+      const effectivePlanPrice = discStatus.effectivePrice;
+      baseAmount = effectivePlanPrice;
 
       if (isYearly) {
         const years = Math.max(1, Math.round(durationMonths / 12));
-        baseAmount = plan.price * years;
+        baseAmount = effectivePlanPrice * years;
       } else if (!isFixedPeriod) {
-        baseAmount = plan.price * durationMonths;
+        baseAmount = effectivePlanPrice * durationMonths;
       }
     }
 

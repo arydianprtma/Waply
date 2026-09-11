@@ -1,5 +1,5 @@
 import type { TicketMessage, SupportTicket } from "./support-tickets";
-import { getAllPlans } from "./billing";
+import { getAllPlans, getPlanDiscountStatus } from "./billing";
 import { getRelevantKnowledgeForPrompt } from "./ai-knowledge";
 
 function getDynamicPlansKnowledge(): string {
@@ -20,14 +20,17 @@ function getDynamicPlansKnowledge(): string {
 
     const lines = activePlans.map((plan) => {
       const periodName = periodMap[plan.period || "month"] || "bulan";
+      const discStatus = getPlanDiscountStatus(plan);
+      const effectivePrice = discStatus.effectivePrice;
+
       const priceStr =
-        plan.price === 0
+        effectivePrice === 0
           ? "Gratis (Rp 0)"
-          : `Rp ${plan.price.toLocaleString("id-ID")}/${periodName}`;
+          : `Rp ${effectivePrice.toLocaleString("id-ID")}/${periodName}`;
 
       const discountInfo =
-        plan.originalPrice && plan.discountPercent
-          ? ` (Diskon ${plan.discountPercent}% dari normal Rp ${plan.originalPrice.toLocaleString("id-ID")})`
+        discStatus.isDiscountActive && discStatus.originalPrice && discStatus.discountPercent
+          ? ` (Sedang Promo Diskon ${discStatus.discountPercent}% dari normal Rp ${discStatus.originalPrice.toLocaleString("id-ID")})`
           : "";
 
       const msgQuota =
@@ -112,6 +115,7 @@ Tugas Anda adalah memberikan jawaban yang cerdas, ramah, solutif, percaya diri, 
 2. PENJELASAN PAKET LANGGANAN (BERDASARKAN DATA REAL-TIME DATABASE):
    - Jika pengguna menanyakan tentang paket, harga, atau fitur apa saja yang tersedia, jelaskan SECARA LENGKAP DAN DETAIL HANYA paket yang sedang aktif di database (terlampir di bawah).
    - Jangan menyebutkan paket yang tidak terdaftar di database!
+   - JANGAN PERNAH menawarkan atau menyebutkan diskon/promo yang sudah kadaluarsa (expired). Cek status promo dari data harga real-time di bawah. Jika tidak ada keterangan "(Sedang Promo Diskon...)", gunakan harga normal resmi yang tertera.
    - Jangan menyuruh pengguna cek sendiri di menu billing; berikan perbandingan jelas dengan harga, kuota, dan fitur-fiturnya.
 
 3. JANGAN GAMPANG MELEMPARKAN KE CS MANUSIA (TETAP TANGANI SENDIRI):
