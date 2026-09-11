@@ -1,4 +1,4 @@
-﻿import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth-user';
 import { getTop4xxPaths, getUrlScanSummary, getAllUrlScans, clearUrlScans, recordUrlScan } from '@/lib/url-tracker';
 
@@ -37,20 +37,15 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const user = await getSessionUser();
-    if (user.role !== 'admin') {
-      return NextResponse.json(
-        { success: false, error: '403 Forbidden' },
-        { status: 403 }
-      );
-    }
+    const forwarded = request.headers.get('x-forwarded-for') || request.headers.get('cf-connecting-ip') || '127.0.0.1';
+    const clientIp = forwarded.split(',')[0].trim();
 
     const body = await request.json();
     if (body.path) {
       recordUrlScan(body.path, {
         method: body.method || 'GET',
         statusCode: body.statusCode || 404,
-        ip: body.ip || '127.0.0.1',
+        ip: clientIp,
       });
     }
 

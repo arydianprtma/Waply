@@ -2,19 +2,16 @@
 
 import React, { useState, useEffect } from "react";
 import {
-  Globe,
   RefreshCw,
   Search,
-  Filter,
   ShieldAlert,
-  AlertTriangle,
-  FileCode,
-  Lock,
-  ExternalLink,
   ChevronRight,
-  Sparkles,
   Info,
-  Layers,
+  Trash2,
+  ExternalLink,
+  Flame,
+  Activity,
+  Globe2,
 } from "lucide-react";
 
 export interface UrlScanItem {
@@ -45,6 +42,7 @@ export function Top4xxPathsCard({ className = "" }: { className?: string }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
   const [selectedItem, setSelectedItem] = useState<UrlScanItem | null>(null);
+  const [isClearing, setIsClearing] = useState(false);
 
   const fetchScans = async () => {
     try {
@@ -58,6 +56,22 @@ export function Top4xxPathsCard({ className = "" }: { className?: string }) {
       console.error("Failed to fetch top 4xx paths:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleClearHistory = async () => {
+    if (!confirm("Apakah Anda yakin ingin mereset seluruh riwayat pemindaian URL 4xx? Data akan mulai dihitung dari nol (0).")) {
+      return;
+    }
+    setIsClearing(true);
+    try {
+      await fetch("/api/admin/url-scans", { method: "DELETE" });
+      await fetchScans();
+      setSelectedItem(null);
+    } catch (err) {
+      console.error("Failed to clear url scans:", err);
+    } finally {
+      setIsClearing(false);
     }
   };
 
@@ -77,82 +91,146 @@ export function Top4xxPathsCard({ className = "" }: { className?: string }) {
   const getCategoryBadge = (cat: UrlScanItem["category"]) => {
     switch (cat) {
       case "ENV_LEAK_PROBE":
-        return { label: ".env Probe", color: "text-rose-600 bg-rose-50 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900" };
+        return {
+          label: "Probe .env",
+          className: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20",
+        };
       case "API_MISMATCH":
-        return { label: "API Typo", color: "text-blue-600 bg-blue-50 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900" };
+        return {
+          label: "Salah Endpoint",
+          className: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+        };
       case "ADMIN_SCAN":
-        return { label: "Admin Scan", color: "text-amber-600 bg-amber-50 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900" };
+        return {
+          label: "Scan Admin",
+          className: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+        };
       case "SOURCE_LEAK":
-        return { label: "Source Probe", color: "text-purple-600 bg-purple-50 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-900" };
+        return {
+          label: "Source Code",
+          className: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
+        };
       default:
-        return { label: "404 Path", color: "text-slate-600 bg-slate-100 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700" };
+        return {
+          label: "404 Umum",
+          className: "bg-base-200 text-base-content/70 border-base-300",
+        };
     }
   };
 
   return (
-    <div className={`bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-sm rounded-2xl p-5 sm:p-6 space-y-4 ${className}`}>
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-100 dark:border-slate-800">
-        <div>
-          <div className="flex items-center gap-2">
-            <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">
-              Top 4xx Paths
-            </h3>
+    <div className={`bg-base-100 rounded-3xl border border-base-200 shadow-xs p-5 sm:p-6 space-y-5 ${className}`}>
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-base-200">
+        <div className="space-y-1">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h2 className="text-base sm:text-lg font-bold text-base-content flex items-center gap-2">
+              <Activity className="w-5 h-5 text-primary" />
+              Top 4xx Paths (URL Probe & Scanner Tracker)
+            </h2>
             {summary && (
-              <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800">
-                {summary.totalHits} Total Hits
+              <span className="badge badge-neutral badge-sm font-mono text-[11px] font-bold">
+                {summary.totalHits.toLocaleString("id-ID")} Total Permintaan
               </span>
             )}
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Jalur URL & endpoint tidak ditemukan yang paling sering dicari atau di-scan.
+          <p className="text-xs text-base-content/60 leading-relaxed max-w-2xl">
+            Merekam jalur URL yang sering dicoba dibuka oleh bot, pemindai keamanan, atau pengguna tetapi menghasilkan status <span className="font-mono font-semibold text-rose-500">404 Not Found</span>.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
           <button
+            type="button"
             onClick={() => {
               setLoading(true);
               fetchScans();
             }}
             disabled={loading}
-            className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors text-xs flex items-center gap-1"
-            title="Refresh Data"
+            className="btn btn-ghost btn-sm border border-base-200 gap-1.5 min-h-[38px] text-xs font-semibold"
+            title="Muat Ulang Data"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-primary" : ""}`} />
             <span className="hidden sm:inline">Refresh</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleClearHistory}
+            disabled={isClearing || paths.length === 0}
+            className="btn btn-ghost btn-sm text-rose-600 hover:bg-rose-500/10 border border-base-200 gap-1.5 min-h-[38px] text-xs font-semibold"
+            title="Reset Riwayat ke 0"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Reset</span>
           </button>
         </div>
       </div>
 
-      {/* Filters & Search */}
-      <div className="flex flex-col sm:flex-row items-center gap-2.5">
-        <div className="relative flex-1 w-full">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+      {/* Summary KPI Strip */}
+      {summary && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="p-3.5 rounded-2xl bg-base-200/50 border border-base-200">
+            <div className="text-[11px] font-semibold text-base-content/60">Total Upaya Akses</div>
+            <div className="text-lg sm:text-xl font-bold font-mono text-base-content mt-0.5">
+              {summary.totalHits.toLocaleString("id-ID")}
+              <span className="text-xs font-normal text-base-content/50 ml-1">hits</span>
+            </div>
+          </div>
+          <div className="p-3.5 rounded-2xl bg-base-200/50 border border-base-200">
+            <div className="text-[11px] font-semibold text-base-content/60">Jalur Unik (Paths)</div>
+            <div className="text-lg sm:text-xl font-bold font-mono text-base-content mt-0.5">
+              {summary.uniquePaths}
+              <span className="text-xs font-normal text-base-content/50 ml-1">target</span>
+            </div>
+          </div>
+          <div className="p-3.5 rounded-2xl bg-rose-500/5 border border-rose-500/10">
+            <div className="text-[11px] font-semibold text-rose-600 dark:text-rose-400">Probe File .env</div>
+            <div className="text-lg sm:text-xl font-bold font-mono text-rose-600 dark:text-rose-400 mt-0.5">
+              {summary.envProbes}
+              <span className="text-xs font-normal opacity-70 ml-1">serangan</span>
+            </div>
+          </div>
+          <div className="p-3.5 rounded-2xl bg-blue-500/5 border border-blue-500/10">
+            <div className="text-[11px] font-semibold text-blue-600 dark:text-blue-400">Salah Ketik API</div>
+            <div className="text-lg sm:text-xl font-bold font-mono text-blue-600 dark:text-blue-400 mt-0.5">
+              {summary.apiMismatches}
+              <span className="text-xs font-normal opacity-70 ml-1">request</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Search & Category Filter Bar */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-1">
+        <div className="relative flex-1">
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-base-content/40 pointer-events-none" />
           <input
             type="text"
-            placeholder="Cari path URL..."
+            placeholder="Cari jalur path (misal: .env, /api, /wp-admin)..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 dark:text-slate-100"
+            className="input input-sm input-bordered w-full pl-9 text-xs rounded-xl h-9"
           />
         </div>
 
-        {/* Category Pills */}
-        <div className="flex items-center gap-1 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
+        {/* Category Pills with horizontal scroll on small screens */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
           {[
             { id: "ALL", label: "Semua" },
-            { id: "ENV_LEAK_PROBE", label: ".env Probe" },
-            { id: "API_MISMATCH", label: "API Typo" },
-            { id: "ADMIN_SCAN", label: "Admin Scan" },
+            { id: "ENV_LEAK_PROBE", label: "Probe .env" },
+            { id: "API_MISMATCH", label: "Salah API" },
+            { id: "ADMIN_SCAN", label: "Scan Admin" },
           ].map((cat) => (
             <button
               key={cat.id}
+              type="button"
               onClick={() => setSelectedCategory(cat.id)}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors shrink-0 min-h-[36px] flex items-center justify-center ${
                 selectedCategory === cat.id
-                  ? "bg-blue-600 text-white shadow-xs"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
+                  ? "bg-primary text-primary-content shadow-xs"
+                  : "bg-base-200 hover:bg-base-300 text-base-content/80"
               }`}
             >
               {cat.label}
@@ -161,96 +239,130 @@ export function Top4xxPathsCard({ className = "" }: { className?: string }) {
         </div>
       </div>
 
-      {/* Path List (Exact Look of the user screenshot) */}
-      <div className="divide-y divide-slate-100 dark:divide-slate-800/60 max-h-[380px] overflow-y-auto pr-1">
+      {/* Info notice about what the numbers mean */}
+      <div className="p-3 rounded-2xl bg-base-200/40 border border-base-200 text-xs text-base-content/70 flex items-start gap-2.5">
+        <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+        <div className="leading-relaxed">
+          <strong className="text-base-content">Arti Angka di Sebelah Kanan:</strong> Angka tersebut menunjukkan <span className="font-semibold text-base-content">Hit Count (frekuensi berapa kali URL dicoba diakses)</span>. Panjang bar horizontal menggambarkan persentase intensitas dibandingkan path terbanyak.
+        </div>
+      </div>
+
+      {/* Main List Table / Rows */}
+      <div className="border border-base-200 rounded-2xl overflow-hidden bg-base-100 divide-y divide-base-200">
         {loading && paths.length === 0 ? (
-          <div className="space-y-3 py-4">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="h-8 bg-slate-100 dark:bg-slate-800/60 rounded-lg animate-pulse" />
+          <div className="p-6 space-y-3">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="h-10 bg-base-200/60 rounded-xl animate-pulse" />
             ))}
           </div>
         ) : filteredPaths.length === 0 ? (
-          <div className="py-10 text-center text-xs text-slate-400 font-medium">
-            Tidak ada path 4xx yang cocok dengan filter pencarian.
+          <div className="py-12 px-4 text-center space-y-2">
+            <Globe2 className="w-8 h-8 text-base-content/30 mx-auto" />
+            <p className="text-xs font-semibold text-base-content/70">
+              Belum ada riwayat path 4xx yang cocok.
+            </p>
+            <p className="text-[11px] text-base-content/50 max-w-sm mx-auto">
+              Ketika ada bot atau user yang membuka URL tidak valid (seperti .env atau typo endpoint), data akan muncul otomatis di sini secara real-time.
+            </p>
           </div>
         ) : (
-          filteredPaths.map((item, idx) => {
+          filteredPaths.map((item) => {
             const catBadge = getCategoryBadge(item.category);
-            return (
-              <div
-                key={item.path + idx}
-                onClick={() => setSelectedItem(selectedItem?.path === item.path ? null : item)}
-                className="py-2.5 px-2 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 rounded-xl transition-all cursor-pointer group flex items-center justify-between gap-4"
-              >
-                {/* Left: Path string */}
-                <div className="min-w-[150px] sm:min-w-[220px] max-w-[260px] sm:max-w-[340px] truncate flex items-center gap-2">
-                  <span className="font-mono text-xs sm:text-[13px] font-bold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
-                    {item.path}
-                  </span>
-                  <span className={`hidden md:inline-block px-1.5 py-0.2 text-[9px] font-bold rounded border shrink-0 ${catBadge.color}`}>
-                    {catBadge.label}
-                  </span>
-                </div>
+            const isSelected = selectedItem?.path === item.path;
 
-                {/* Middle: Horizontal Progress Bar with blue dot accent */}
-                <div className="flex-1 max-w-[280px] hidden sm:flex items-center">
-                  <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden relative">
-                    <div
-                      className="h-full bg-blue-500 rounded-full transition-all duration-500 relative"
-                      style={{ width: `${Math.max(item.percentage, 4)}%` }}
+            return (
+              <div key={item.path} className="transition-colors">
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setSelectedItem(isSelected ? null : item)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      setSelectedItem(isSelected ? null : item);
+                    }
+                  }}
+                  className={`w-full p-3 sm:p-4 text-left flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-base-200/40 transition-colors cursor-pointer select-none ${
+                    isSelected ? "bg-base-200/60" : ""
+                  }`}
+                >
+                  {/* Left Column: Path & Category */}
+                  <div className="flex items-center gap-2.5 min-w-0 sm:w-1/2">
+                    <span className="font-mono text-xs sm:text-sm font-bold text-base-content truncate group-hover:text-primary transition-colors">
+                      {item.path}
+                    </span>
+                    <span
+                      className={`px-2 py-0.5 text-[10px] font-bold rounded-lg border shrink-0 ${catBadge.className}`}
                     >
-                      <span className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-blue-600 ring-2 ring-blue-200 dark:ring-blue-900" />
+                      {catBadge.label}
+                    </span>
+                  </div>
+
+                  {/* Middle: Clean Proportional Progress Bar */}
+                  <div className="flex items-center gap-3 w-full sm:w-1/2 justify-between sm:justify-end">
+                    <div className="flex-1 max-w-[200px] bg-base-200 rounded-full h-2 overflow-hidden">
+                      <div
+                        className="h-full bg-primary rounded-full transition-all duration-300"
+                        style={{ width: `${Math.max(item.percentage, 5)}%` }}
+                      />
+                    </div>
+
+                    {/* Right: Hit Count with Clear Unit Label */}
+                    <div className="flex items-center gap-2 shrink-0 text-right">
+                      <span className="font-mono font-bold text-xs sm:text-sm text-base-content">
+                        {item.count.toLocaleString("id-ID")}{" "}
+                        <span className="text-[11px] font-normal text-base-content/60">
+                          hits
+                        </span>
+                      </span>
+                      <ChevronRight
+                        className={`w-4 h-4 text-base-content/40 transition-transform ${
+                          isSelected ? "rotate-90 text-primary" : ""
+                        }`}
+                      />
                     </div>
                   </div>
                 </div>
 
-                {/* Right: Hit Count */}
-                <div className="flex items-center gap-2 shrink-0 text-right min-w-[45px]">
-                  <span className="font-bold font-mono text-sm sm:text-base text-slate-900 dark:text-slate-100 group-hover:text-blue-600 transition-colors">
-                    {item.count.toLocaleString()}
-                  </span>
-                  <ChevronRight className={`w-3.5 h-3.5 text-slate-400 transition-transform ${selectedItem?.path === item.path ? "rotate-90 text-blue-600" : ""}`} />
-                </div>
+                {/* Expanded Details Drawer */}
+                {isSelected && (
+                  <div className="p-4 bg-base-200/40 border-t border-base-200 space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                      <span className="font-mono font-bold text-base-content flex items-center gap-1.5">
+                        <ShieldAlert className="w-4 h-4 text-primary" />
+                        Log Rinci: {item.path}
+                      </span>
+                      <span className="text-[11px] text-base-content/60">
+                        Terakhir dicoba: {new Date(item.lastSeen).toLocaleString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+                      <div className="bg-base-100 p-2.5 rounded-xl border border-base-200">
+                        <span className="text-[10px] text-base-content/50 block">HTTP Method</span>
+                        <span className="font-mono font-bold text-base-content">{item.method}</span>
+                      </div>
+                      <div className="bg-base-100 p-2.5 rounded-xl border border-base-200">
+                        <span className="text-[10px] text-base-content/50 block">Kode Response</span>
+                        <span className="font-mono font-bold text-rose-500">{item.lastStatusCode} Not Found</span>
+                      </div>
+                      <div className="bg-base-100 p-2.5 rounded-xl border border-base-200">
+                        <span className="text-[10px] text-base-content/50 block">Kategori</span>
+                        <span className="font-bold text-base-content">{catBadge.label}</span>
+                      </div>
+                      <div className="bg-base-100 p-2.5 rounded-xl border border-base-200">
+                        <span className="text-[10px] text-base-content/50 block">IP Terakhir</span>
+                        <span className="font-mono text-[11px] text-base-content/80 truncate block">
+                          {item.recentIps.length > 0 ? item.recentIps.join(", ") : "127.0.0.1"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })
         )}
       </div>
-
-      {/* Detail Accordion for Selected Path */}
-      {selectedItem && (
-        <div className="p-3.5 bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-900 rounded-xl space-y-2 text-xs animate-in fade-in slide-in-from-top-1">
-          <div className="flex items-center justify-between font-semibold text-blue-950 dark:text-blue-200">
-            <span className="flex items-center gap-1.5 font-mono">
-              <ShieldAlert className="w-4 h-4 text-blue-600" />
-              Detail Aktivitas: {selectedItem.path}
-            </span>
-            <span className="text-[11px] font-normal text-slate-500 dark:text-slate-400">
-              Terakhir dilihat: {new Date(selectedItem.lastSeen).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-            </span>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
-            <div className="bg-white/80 dark:bg-slate-900/80 p-2 rounded-lg border border-blue-100 dark:border-blue-900/50">
-              <span className="text-[10px] text-slate-500 block font-medium">HTTP Method</span>
-              <span className="font-bold font-mono text-slate-900 dark:text-slate-100">{selectedItem.method}</span>
-            </div>
-            <div className="bg-white/80 dark:bg-slate-900/80 p-2 rounded-lg border border-blue-100 dark:border-blue-900/50">
-              <span className="text-[10px] text-slate-500 block font-medium">Status Code</span>
-              <span className="font-bold font-mono text-rose-600">{selectedItem.lastStatusCode} Not Found</span>
-            </div>
-            <div className="bg-white/80 dark:bg-slate-900/80 p-2 rounded-lg border border-blue-100 dark:border-blue-900/50">
-              <span className="text-[10px] text-slate-500 block font-medium">Kategori Probe</span>
-              <span className="font-bold text-blue-700 dark:text-blue-300">{getCategoryBadge(selectedItem.category).label}</span>
-            </div>
-            <div className="bg-white/80 dark:bg-slate-900/80 p-2 rounded-lg border border-blue-100 dark:border-blue-900/50">
-              <span className="text-[10px] text-slate-500 block font-medium">Recent IP Probers</span>
-              <span className="font-mono text-slate-800 dark:text-slate-200 text-[11px] truncate block">
-                {selectedItem.recentIps.length > 0 ? selectedItem.recentIps.join(", ") : "127.0.0.1"}
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
