@@ -28,6 +28,7 @@ import {
 import type { SupportTicket, TicketCategory, TicketPriority, TicketStatus } from "@/lib/support-tickets";
 import { useUserSession } from "@/lib/use-user-session";
 import { useAdminTickets } from "@/lib/admin-tickets-context";
+import { ChatMessageContent } from "@/components/support/ChatMessageContent";
 
 const CATEGORY_LABELS: Record<TicketCategory, string> = {
   TECHNICAL: "Kendala Teknis & Gateway",
@@ -520,7 +521,7 @@ export default function AdminTicketDetailPage() {
                       </span>
                     </div>
                     <div
-                      className={`p-4 rounded-2xl text-xs leading-relaxed shadow-xs whitespace-pre-wrap ${
+                      className={`p-4 rounded-2xl text-xs leading-relaxed shadow-xs ${
                         isAdmin
                           ? "bg-slate-900 text-slate-100 rounded-tr-none font-medium"
                           : isAi
@@ -528,7 +529,7 @@ export default function AdminTicketDetailPage() {
                           : "bg-white text-slate-800 border border-slate-200 rounded-tl-none font-medium"
                       }`}
                     >
-                      {msg.message}
+                      <ChatMessageContent content={msg.message} isUser={isAdmin} />
                     </div>
                   </div>
                 </div>

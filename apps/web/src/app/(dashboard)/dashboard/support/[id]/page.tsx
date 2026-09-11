@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import type { SupportTicket, TicketCategory, TicketPriority, TicketStatus } from "@/lib/support-tickets";
 import { useUserSession } from "@/lib/use-user-session";
+import { ChatMessageContent } from "@/components/support/ChatMessageContent";
 
 const CATEGORY_LABELS: Record<TicketCategory, string> = {
   TECHNICAL: "Kendala Teknis & Gateway",
@@ -419,7 +420,7 @@ export default function UserTicketDetailPage() {
                       </span>
                     </div>
                     <div
-                      className={`p-4 rounded-2xl text-xs leading-relaxed shadow-xs whitespace-pre-wrap ${
+                      className={`p-4 rounded-2xl text-xs leading-relaxed shadow-xs ${
                         isUser
                           ? "bg-primary text-white rounded-tr-none font-medium"
                           : isAi
@@ -427,7 +428,7 @@ export default function UserTicketDetailPage() {
                           : "bg-white text-slate-800 border border-slate-200 rounded-tl-none font-medium"
                       }`}
                     >
-                      {msg.message}
+                      <ChatMessageContent content={msg.message} isUser={isUser} />
                     </div>
                   </div>
                 </div>
