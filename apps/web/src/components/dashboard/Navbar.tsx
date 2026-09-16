@@ -24,6 +24,7 @@ import {
 import { useUserSession } from "@/lib/use-user-session";
 import { performLogout } from "@/lib/auth-logout";
 import { useMobileNav } from "@/lib/mobile-nav-context";
+import { GlobalSearchModal } from "@/components/dashboard/GlobalSearchModal";
 
 interface AnnouncementItem {
   id: string;
@@ -42,6 +43,7 @@ export function Navbar() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [adminTicketUnreadCount, setAdminTicketUnreadCount] = useState(0);
   const [loadingAnnouncements, setLoadingAnnouncements] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { user: currentUser } = useUserSession();
   const router = useRouter();
 
@@ -189,6 +191,18 @@ export function Navbar() {
 
   const { toggleNav } = useMobileNav();
 
+  // Global Keyboard Shortcut: Ctrl+K or Cmd+K
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setIsSearchOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   return (
     <header
       suppressHydrationWarning
@@ -206,16 +220,30 @@ export function Navbar() {
           <Menu className="w-5 h-5" />
         </button>
 
-        <div className="form-control hidden md:block w-56 lg:w-72">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Cari pesan, nomor, API key..."
-              className="w-full pl-9 pr-3.5 py-1.5 rounded-xl bg-base-200 border border-base-300 text-base-content placeholder:text-base-content/40 text-xs font-medium focus:bg-base-100 focus:outline-emerald-500 transition-all"
-            />
-            <Search className="w-4 h-4 absolute left-3 top-2 text-base-content/40" />
-          </div>
-        </div>
+        {/* Global Search Bar (Desktop) */}
+        <button
+          type="button"
+          onClick={() => setIsSearchOpen(true)}
+          className="hidden md:flex items-center justify-between w-56 lg:w-72 pl-9 pr-2.5 py-1.5 rounded-xl bg-base-200 hover:bg-base-200/80 border border-base-300 text-base-content placeholder:text-base-content/40 text-xs font-medium relative text-left transition-all cursor-pointer group"
+          title="Cari menu, pesan, nomor, template, API key (Ctrl+K)"
+        >
+          <Search className="w-4 h-4 absolute left-3 top-2 text-base-content/40 group-hover:text-emerald-600 transition-colors" />
+          <span className="text-base-content/40 truncate">Cari pesan, nomor, API key...</span>
+          <kbd className="hidden lg:inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold text-base-content/50 bg-base-100 border border-base-300 rounded">
+            ⌘K
+          </kbd>
+        </button>
+
+        {/* Global Search Button (Mobile) */}
+        <button
+          type="button"
+          onClick={() => setIsSearchOpen(true)}
+          className="btn btn-ghost btn-circle btn-sm md:hidden text-base-content/70 hover:text-base-content flex-shrink-0"
+          title="Pencarian Cepat"
+          aria-label="Pencarian Cepat"
+        >
+          <Search className="w-4 h-4" />
+        </button>
 
         <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 truncate">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0"></span>
@@ -473,6 +501,12 @@ export function Navbar() {
           </div>
         </div>
       </div>
+
+      {/* Global Spotlight Search Modal (Command Palette) */}
+      <GlobalSearchModal
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+      />
     </header>
   );
 }
