@@ -26,7 +26,7 @@ const FAQS: FAQItem[] = [
     category: "Harga",
     question: "Apakah ada Free Trial dan bagaimana kuotanya?",
     answer:
-      "Ya! Setiap pendaftar baru langsung mendapatkan kuota Free Trial sebanyak 100 pesan tanpa perlu memasukkan kartu kredit. Anda bisa langsung mencoba mengirim pesan teks, media gambar/PDF, serta menguji webhook secara instan.",
+      "Ya! Setiap pendaftar baru langsung mendapatkan kuota Free Trial sebanyak 1.500 pesan tanpa perlu memasukkan kartu kredit. Anda bisa langsung mencoba mengirim pesan teks, media gambar/PDF, serta menguji webhook secara instan.",
   },
   {
     category: "Teknis",

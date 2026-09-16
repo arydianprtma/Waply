@@ -86,7 +86,7 @@ export default function RegisterPage() {
       <div className="text-center mb-6">
         <h1 className="text-2xl font-bold">Buat Akun Waply</h1>
         <p className="text-sm text-base-content/60 mt-1">
-          Dapatkan free trial 100 pesan WhatsApp & 1 WhatsApp Device
+          Dapatkan free trial 1.500 pesan WhatsApp & 1 WhatsApp Device
         </p>
       </div>
 

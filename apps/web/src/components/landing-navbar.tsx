@@ -145,7 +145,7 @@ export function LandingNavbar() {
               </Link>
 
               <p className="text-center text-[11px] text-slate-500 font-medium pt-1">
-                Free 100 Pesan • Tanpa Kartu Kredit
+                Free 1.500 Pesan • Tanpa Kartu Kredit
               </p>
             </div>
           </div>

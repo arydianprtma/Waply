@@ -33,8 +33,8 @@ export function getDefaultAnnouncements(): Announcement[] {
   return [
     {
       id: "ann_welcome_01",
-      title: "Selamat Datang di Waply API Gateway! 🎉",
-      message: "Nikmati kuota 100 pesan Free Trial Anda. Silakan hubungkan WhatsApp Device Anda melalui scan QR Code di menu WhatsApp Devices.",
+      title: "Selamat Datang di Waply!",
+      message: "Nikmati kuota 1.500 pesan Free Trial Anda. Silakan hubungkan WhatsApp Device Anda melalui scan QR Code di menu WhatsApp Devices.",
       type: "SUCCESS",
       targetAudience: "ALL",
       isPinned: true,
