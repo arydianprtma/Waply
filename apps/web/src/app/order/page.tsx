@@ -512,110 +512,9 @@ function OrderContent() {
       return;
     }
 
-    // If Snap fallback chosen
-    if (selectedMethod === "snap") {
-      try {
-        const res = await fetch("/api/billing/create-transaction", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            isAddonOnly: isAddonMode,
-            planId: isAddonMode ? "ADDON" : selectedPlanId,
-            durationMonths: isAddonMode ? 0 : effectiveDurationMonths,
-            selectedAddonIds: isAddonMode ? selectedAddonIds : [],
-            customerName: cleanName,
-            customerEmail: cleanEmail,
-            customerPhone: cleanPhone,
-            couponCode: appliedVoucher?.code || undefined,
-          }),
-        });
-
-        const json = await res.json();
-        if (!json.success) {
-          setFormError(json.error || "Gagal membuat transaksi. Silakan coba lagi.");
-          return;
-        }
-
-        const { snapToken, orderId, snapJsUrl, clientKey } = json.data;
-        const targetSnapUrl = snapJsUrl || "https://app.sandbox.midtrans.com/snap/snap.js";
-
-        // Dynamically ensure snap script matches the exact environment (Sandbox vs Production)
-        const existingScript = document.getElementById("midtrans-snap") as HTMLScriptElement | null;
-        if (!existingScript || existingScript.src !== targetSnapUrl || !(window as any).snap) {
-          if (existingScript) existingScript.remove();
-          delete (window as any).snap;
-
-          await new Promise<void>((resolve) => {
-            const script = document.createElement("script");
-            script.id = "midtrans-snap";
-            script.src = targetSnapUrl;
-            if (clientKey) script.setAttribute("data-client-key", clientKey);
-            script.onload = () => resolve();
-            script.onerror = () => resolve();
-            document.head.appendChild(script);
-          });
-        }
-
-        if ((window as any).snap) {
-          (window as any).snap.pay(snapToken, {
-            onSuccess: async () => {
-              await fetch("/api/billing/sync", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ orderId }),
-              });
-              router.push("/dashboard/billing?payment=finish");
-            },
-            onPending: () => {
-              router.push("/dashboard/billing?payment=pending");
-            },
-            onClose: () => {
-              setLoading(false);
-            },
-          });
-        } else if (json.data.redirectUrl) {
-          window.location.href = json.data.redirectUrl;
-        }
-      } catch (err: any) {
-        setFormError(err.message || "Gagal memproses checkout. Silakan periksa koneksi Anda.");
-      } finally {
-        setLoading(false);
-      }
-      return;
-    }
-
-    // Direct Midtrans Core API Charge (Waply Custom UI)
+    // Unified Checkout via Midtrans Snap
     try {
-      let paymentType = "qris";
-      let bank: string | undefined = undefined;
-
-      if (selectedMethod === "qris") {
-        paymentType = "qris";
-      } else if (selectedMethod === "bca_va") {
-        paymentType = "bank_transfer";
-        bank = "bca";
-      } else if (selectedMethod === "mandiri_va") {
-        paymentType = "bank_transfer";
-        bank = "mandiri";
-      } else if (selectedMethod === "bri_va") {
-        paymentType = "bank_transfer";
-        bank = "bri";
-      } else if (selectedMethod === "bni_va") {
-        paymentType = "bank_transfer";
-        bank = "bni";
-      } else if (selectedMethod === "permata_va") {
-        paymentType = "bank_transfer";
-        bank = "permata";
-      } else if (selectedMethod === "cimb_va") {
-        paymentType = "bank_transfer";
-        bank = "cimb";
-      } else if (selectedMethod === "gopay") {
-        paymentType = "gopay";
-      } else if (selectedMethod === "shopeepay") {
-        paymentType = "shopeepay";
-      }
-
-      const res = await fetch("/api/billing/charge", {
+      const res = await fetch("/api/billing/create-transaction", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -623,8 +522,6 @@ function OrderContent() {
           planId: isAddonMode ? "ADDON" : selectedPlanId,
           durationMonths: isAddonMode ? 0 : effectiveDurationMonths,
           selectedAddonIds: isAddonMode ? selectedAddonIds : [],
-          paymentType,
-          bank,
           customerName: cleanName,
           customerEmail: cleanEmail,
           customerPhone: cleanPhone,
@@ -634,15 +531,55 @@ function OrderContent() {
 
       const json = await res.json();
       if (!json.success) {
-        setFormError(json.error || "Gagal memproses pembayaran. Silakan coba beberapa saat lagi.");
+        setFormError(json.error || "Gagal membuat transaksi. Silakan coba lagi.");
         return;
       }
 
-      setChargeData(json.data);
-      setPaymentSuccess(false);
-      setCustomModalOpen(true);
+      const { snapToken, orderId, snapJsUrl, clientKey } = json.data;
+      const targetSnapUrl = snapJsUrl || "https://app.midtrans.com/snap/snap.js";
+
+      // Dynamically ensure snap script matches the exact environment (Sandbox vs Production)
+      const existingScript = document.getElementById("midtrans-snap") as HTMLScriptElement | null;
+      if (!existingScript || existingScript.src !== targetSnapUrl || !(window as any).snap) {
+        if (existingScript) existingScript.remove();
+        delete (window as any).snap;
+
+        await new Promise<void>((resolve) => {
+          const script = document.createElement("script");
+          script.id = "midtrans-snap";
+          script.src = targetSnapUrl;
+          if (clientKey) script.setAttribute("data-client-key", clientKey);
+          script.onload = () => resolve();
+          script.onerror = () => resolve();
+          document.head.appendChild(script);
+        });
+      }
+
+      if ((window as any).snap) {
+        (window as any).snap.pay(snapToken, {
+          onSuccess: async () => {
+            await fetch("/api/billing/sync", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ orderId }),
+            });
+            router.push("/dashboard/billing?payment=finish");
+          },
+          onPending: () => {
+            router.push("/dashboard/billing?payment=pending");
+          },
+          onError: () => {
+            setFormError("Pembayaran gagal atau dibatalkan. Silakan coba lagi.");
+          },
+          onClose: () => {
+            setLoading(false);
+          },
+        });
+      } else if (json.data.redirectUrl) {
+        window.location.href = json.data.redirectUrl;
+      }
     } catch (err: any) {
-      setFormError(err.message || "Terjadi kesalahan saat memproses order. Silakan coba lagi.");
+      setFormError(err.message || "Gagal memproses checkout. Silakan periksa koneksi Anda.");
     } finally {
       setLoading(false);
     }
