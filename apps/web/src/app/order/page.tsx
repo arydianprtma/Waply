@@ -44,6 +44,7 @@ import {
   Loader2,
   PlusCircle,
   Timer,
+  AlertTriangle,
 } from "lucide-react";
 import {
   type Plan,
@@ -696,6 +697,19 @@ function OrderContent() {
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               Gateway Server: Online & Siap Digunakan
             </div>
+          </div>
+        </div>
+
+        {/* Production Live Payment Alert Banner for Demo Users */}
+        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-900 flex items-start gap-3 shadow-xs">
+          <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="space-y-1 text-xs">
+            <p className="font-bold text-amber-950 text-sm">
+              Pemberitahuan Demo: Gateway Pembayaran Mode Production (Live)
+            </p>
+            <p className="text-amber-900/90 leading-relaxed">
+              Payment Gateway saat ini telah aktif menggunakan <strong>Midtrans Production (Live Real Money)</strong>. Bagi teman-teman yang sedang melakukan <strong>uji coba / tester demo</strong>, mohon untuk tidak menyelesaikan pembayaran uji coba karena transaksi akan memotong saldo / uang riil rekening Anda. Anda dapat terus menguji seluruh fitur dengan kuota Free Trial gratis.
+            </p>
           </div>
         </div>
 
