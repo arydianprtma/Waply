@@ -86,9 +86,10 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error: any) {
+    console.error("[Sync Billing Error]:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Gagal sinkronisasi dengan Midtrans" },
-      { status: 500 }
+      { success: false, error: error.message || "Gagal sinkronisasi status pembayaran" },
+      { status: 200 }
     );
   }
 }

@@ -523,20 +523,40 @@ export async function checkMidtransOrderStatus(orderId: string): Promise<any> {
     ? "https://api.midtrans.com/v2"
     : "https://api.sandbox.midtrans.com/v2";
 
-  const res = await fetch(`${baseUrl}/${orderId}/status`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Basic ${auth}`,
-    },
-  });
+  try {
+    const res = await fetch(`${baseUrl}/${orderId}/status`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Basic ${auth}`,
+      },
+    });
 
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Midtrans status error: ${res.status} — ${err}`);
+    if (res.status === 404) {
+      return {
+        transaction_status: "pending",
+        status_code: "201",
+        status_message: "Transaction pending",
+      };
+    }
+
+    if (!res.ok) {
+      const err = await res.text();
+      return {
+        transaction_status: "pending",
+        status_code: String(res.status),
+        status_message: err,
+      };
+    }
+
+    return await res.json();
+  } catch (err: any) {
+    return {
+      transaction_status: "pending",
+      status_code: "500",
+      status_message: err.message,
+    };
   }
-
-  return res.json();
 }
 
 /** Charge payment directly via Midtrans Core API (Headless Custom UI) */

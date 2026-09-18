@@ -210,7 +210,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: any) {
     console.error("Direct Charge error:", error);
-    return NextResponse.json({ success: false, error: error.message || "Gagal memproses pembayaran" }, { status: 500 });
+    return NextResponse.json({ success: false, error: error.message || "Gagal memproses pembayaran" }, { status: 400 });
   }
 }
 
