@@ -37,6 +37,16 @@ export interface AdminSystemSettings {
     merchantId: string;
     clientKey: string;
     serverKey: string;
+    sandbox?: {
+      merchantId: string;
+      clientKey: string;
+      serverKey: string;
+    };
+    production?: {
+      merchantId: string;
+      clientKey: string;
+      serverKey: string;
+    };
     enabled: boolean;
     enabledChannels?: string[];
   };
@@ -69,6 +79,16 @@ function ensureDataDir() {
 }
 
 export function getDefaultAdminSettings(): AdminSystemSettings {
+  const prodMerchantId = process.env.MIDTRANS_PRODUCTION_MERCHANT_ID || process.env.MIDTRANS_MERCHANT_ID || "";
+  const prodClientKey = process.env.NEXT_PUBLIC_MIDTRANS_PRODUCTION_CLIENT_KEY || process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || "";
+  const prodServerKey = process.env.MIDTRANS_PRODUCTION_SERVER_KEY || process.env.MIDTRANS_SERVER_KEY || "";
+
+  const sandMerchantId = process.env.MIDTRANS_SANDBOX_MERCHANT_ID || "";
+  const sandClientKey = process.env.NEXT_PUBLIC_MIDTRANS_SANDBOX_CLIENT_KEY || "";
+  const sandServerKey = process.env.MIDTRANS_SANDBOX_SERVER_KEY || "";
+
+  const isProd = process.env.MIDTRANS_IS_PRODUCTION === "true" || process.env.MIDTRANS_ENVIRONMENT === "production";
+
   return {
     systemProfile: {
       adminName: "Super Administrator",
@@ -90,10 +110,20 @@ export function getDefaultAdminSettings(): AdminSystemSettings {
     },
     paymentConfig: {
       provider: "midtrans",
-      environment: "sandbox",
-      merchantId: process.env.MIDTRANS_MERCHANT_ID || "",
-      clientKey: process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || "",
-      serverKey: process.env.MIDTRANS_SERVER_KEY || "",
+      environment: isProd ? "production" : "sandbox",
+      merchantId: isProd ? prodMerchantId : sandMerchantId,
+      clientKey: isProd ? prodClientKey : sandClientKey,
+      serverKey: isProd ? prodServerKey : sandServerKey,
+      sandbox: {
+        merchantId: sandMerchantId,
+        clientKey: sandClientKey,
+        serverKey: sandServerKey,
+      },
+      production: {
+        merchantId: prodMerchantId,
+        clientKey: prodClientKey,
+        serverKey: prodServerKey,
+      },
       enabled: true,
       enabledChannels: DEFAULT_ENABLED_PAYMENT_CHANNELS,
     },

@@ -423,27 +423,59 @@ export function generateOrderId(planId: PlanId): string {
 export function getMidtransConfig() {
   const adminSettings = getAdminSettings();
   
-  const envServerKey = (process.env.MIDTRANS_SERVER_KEY || "").trim();
-  const envClientKey = (process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || "").trim();
-  const dbServerKey = (adminSettings.paymentConfig?.serverKey || "").trim();
-  const dbClientKey = (adminSettings.paymentConfig?.clientKey || "").trim();
+  const envMode = adminSettings.paymentConfig?.environment || (process.env.MIDTRANS_IS_PRODUCTION === "true" || process.env.MIDTRANS_ENVIRONMENT === "production" ? "production" : "sandbox");
+  const isProduction = envMode === "production";
 
-  // Admin UI settings take precedence over .env
-  const serverKey = dbServerKey || envServerKey;
-  const clientKey = dbClientKey || envClientKey;
+  let serverKey = "";
+  let clientKey = "";
+  let merchantId = "";
 
-  // Respect Admin Settings environment if configured, otherwise infer from key or env
-  let isProduction = false;
-  if (adminSettings.paymentConfig?.environment === "production") {
-    isProduction = true;
-  } else if (adminSettings.paymentConfig?.environment === "sandbox") {
-    isProduction = false;
-  } else if (serverKey.startsWith("Mid-") || serverKey.startsWith("mid-")) {
-    isProduction = true;
-  } else if (serverKey.startsWith("SB-") || serverKey.startsWith("sb-")) {
-    isProduction = false;
+  if (isProduction) {
+    serverKey = (
+      adminSettings.paymentConfig?.production?.serverKey ||
+      (adminSettings.paymentConfig?.serverKey && !adminSettings.paymentConfig.serverKey.startsWith("SB-") ? adminSettings.paymentConfig.serverKey : "") ||
+      process.env.MIDTRANS_PRODUCTION_SERVER_KEY ||
+      process.env.MIDTRANS_SERVER_KEY ||
+      ""
+    ).trim();
+
+    clientKey = (
+      adminSettings.paymentConfig?.production?.clientKey ||
+      (adminSettings.paymentConfig?.clientKey && !adminSettings.paymentConfig.clientKey.startsWith("SB-") ? adminSettings.paymentConfig.clientKey : "") ||
+      process.env.NEXT_PUBLIC_MIDTRANS_PRODUCTION_CLIENT_KEY ||
+      process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY ||
+      ""
+    ).trim();
+
+    merchantId = (
+      adminSettings.paymentConfig?.production?.merchantId ||
+      adminSettings.paymentConfig?.merchantId ||
+      process.env.MIDTRANS_PRODUCTION_MERCHANT_ID ||
+      process.env.MIDTRANS_MERCHANT_ID ||
+      "G804644923"
+    ).trim();
   } else {
-    isProduction = process.env.MIDTRANS_IS_PRODUCTION === "true";
+    serverKey = (
+      adminSettings.paymentConfig?.sandbox?.serverKey ||
+      (adminSettings.paymentConfig?.serverKey?.startsWith("SB-") ? adminSettings.paymentConfig?.serverKey : "") ||
+      process.env.MIDTRANS_SANDBOX_SERVER_KEY ||
+      (process.env.MIDTRANS_SERVER_KEY?.startsWith("SB-") ? process.env.MIDTRANS_SERVER_KEY : "") ||
+      ""
+    ).trim();
+
+    clientKey = (
+      adminSettings.paymentConfig?.sandbox?.clientKey ||
+      (adminSettings.paymentConfig?.clientKey?.startsWith("SB-") ? adminSettings.paymentConfig?.clientKey : "") ||
+      process.env.NEXT_PUBLIC_MIDTRANS_SANDBOX_CLIENT_KEY ||
+      (process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY?.startsWith("SB-") ? process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY : "") ||
+      ""
+    ).trim();
+
+    merchantId = (
+      adminSettings.paymentConfig?.sandbox?.merchantId ||
+      process.env.MIDTRANS_SANDBOX_MERCHANT_ID ||
+      "G804644923"
+    ).trim();
   }
 
   const snapBaseUrl = isProduction
@@ -459,6 +491,7 @@ export function getMidtransConfig() {
     : "https://app.sandbox.midtrans.com/snap/snap.js";
 
   return {
+    merchantId,
     serverKey,
     clientKey,
     isProduction,

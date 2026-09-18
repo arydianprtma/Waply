@@ -56,6 +56,16 @@ interface AdminSystemSettings {
     merchantId: string;
     clientKey: string;
     serverKey: string;
+    sandbox?: {
+      merchantId: string;
+      clientKey: string;
+      serverKey: string;
+    };
+    production?: {
+      merchantId: string;
+      clientKey: string;
+      serverKey: string;
+    };
     enabled: boolean;
     enabledChannels?: string[];
   };
@@ -254,10 +264,67 @@ export default function AdminSettingsPage() {
   };
 
   const updatePayment = (field: string, value: unknown) => {
-    setSettings((prev) => ({
-      ...prev,
-      paymentConfig: { ...prev.paymentConfig, [field]: value },
-    }));
+    setSettings((prev) => {
+      const currentEnv = prev.paymentConfig.environment;
+      const isKeyField = field === "merchantId" || field === "clientKey" || field === "serverKey";
+      
+      let updatedSandbox = prev.paymentConfig.sandbox || { merchantId: "", clientKey: "", serverKey: "" };
+      let updatedProduction = prev.paymentConfig.production || {
+        merchantId: "",
+        clientKey: "",
+        serverKey: "",
+      };
+
+      if (isKeyField && typeof value === "string") {
+        if (currentEnv === "sandbox") {
+          updatedSandbox = { ...updatedSandbox, [field]: value };
+        } else {
+          updatedProduction = { ...updatedProduction, [field]: value };
+        }
+      }
+
+      return {
+        ...prev,
+        paymentConfig: {
+          ...prev.paymentConfig,
+          [field]: value,
+          sandbox: updatedSandbox,
+          production: updatedProduction,
+        },
+      };
+    });
+  };
+
+  const handleEnvironmentSwitch = (newEnv: "sandbox" | "production") => {
+    setSettings((prev) => {
+      const prevEnv = prev.paymentConfig.environment;
+      const currentMerchantId = prev.paymentConfig.merchantId || "";
+      const currentClientKey = prev.paymentConfig.clientKey || "";
+      const currentServerKey = prev.paymentConfig.serverKey || "";
+
+      const updatedSandbox = prevEnv === "sandbox"
+        ? { merchantId: currentMerchantId, clientKey: currentClientKey, serverKey: currentServerKey }
+        : (prev.paymentConfig.sandbox || { merchantId: "", clientKey: "", serverKey: "" });
+
+      const updatedProduction = prevEnv === "production"
+        ? { merchantId: currentMerchantId, clientKey: currentClientKey, serverKey: currentServerKey }
+        : (prev.paymentConfig.production || { merchantId: "", clientKey: "", serverKey: "" });
+
+      const target = newEnv === "sandbox" ? updatedSandbox : updatedProduction;
+
+      return {
+        ...prev,
+        paymentConfig: {
+          ...prev.paymentConfig,
+          environment: newEnv,
+          merchantId: target.merchantId || "",
+          clientKey: target.clientKey || "",
+          serverKey: target.serverKey || "",
+          sandbox: updatedSandbox,
+          production: updatedProduction,
+        },
+      };
+    });
   };
 
   const updateSmtp = (field: string, value: unknown) => {
@@ -649,7 +716,7 @@ export default function AdminSettingsPage() {
               <select
                 className="select select-bordered select-sm font-semibold"
                 value={settings.paymentConfig.environment}
-                onChange={(e) => updatePayment("environment", e.target.value)}
+                onChange={(e) => handleEnvironmentSwitch(e.target.value as "sandbox" | "production")}
               >
                 <option value="sandbox">Sandbox (Testing / Uji Coba)</option>
                 <option value="production">Production (Live Transaksi Nyata)</option>
