@@ -415,6 +415,49 @@ export function generateOrderId(planId: PlanId): string {
   return `WAPLY-${planId}-${Date.now()}`;
 }
 
+/**
+ * Resolve Midtrans Credentials & Base URLs intelligently
+ * Prioritizes Admin Settings UI over .env, and auto-detects Sandbox vs Production
+ * based on the key prefix (SB- vs Mid-) to eliminate 'Unknown Merchant' mismatch errors.
+ */
+export function getMidtransConfig() {
+  const adminSettings = getAdminSettings();
+  
+  // Prioritize Admin Settings if configured, otherwise fallback to process.env
+  const serverKey = (
+    adminSettings.paymentConfig.serverKey ||
+    process.env.MIDTRANS_SERVER_KEY ||
+    ""
+  ).trim();
+
+  // Intelligent auto-detection of environment based on key prefix
+  let isProduction = false;
+  if (serverKey.startsWith("SB-") || serverKey.startsWith("sb-")) {
+    isProduction = false;
+  } else if (serverKey.startsWith("Mid-") || serverKey.startsWith("mid-")) {
+    isProduction = true;
+  } else {
+    isProduction =
+      adminSettings.paymentConfig.environment === "production" ||
+      process.env.MIDTRANS_IS_PRODUCTION === "true";
+  }
+
+  const snapBaseUrl = isProduction
+    ? "https://app.midtrans.com/snap/v1"
+    : "https://app.sandbox.midtrans.com/snap/v1";
+
+  const apiBaseUrl = isProduction
+    ? "https://api.midtrans.com/v2"
+    : "https://api.sandbox.midtrans.com/v2";
+
+  return {
+    serverKey,
+    isProduction,
+    snapBaseUrl,
+    apiBaseUrl,
+  };
+}
+
 /** Create Snap token via Midtrans REST API */
 export async function createSnapToken(params: {
   orderId: string;
@@ -425,17 +468,8 @@ export async function createSnapToken(params: {
   customerPhone?: string;
   itemName?: string;
 }): Promise<{ token: string; redirect_url: string }> {
-  const adminSettings = getAdminSettings();
-  const serverKey = process.env.MIDTRANS_SERVER_KEY || adminSettings.paymentConfig.serverKey;
+  const { serverKey, snapBaseUrl } = getMidtransConfig();
   if (!serverKey) throw new Error("MIDTRANS_SERVER_KEY tidak dikonfigurasi. Silakan isi di Pengaturan Sistem Admin.");
-
-  const isProduction =
-    process.env.MIDTRANS_IS_PRODUCTION === "true" ||
-    adminSettings.paymentConfig.environment === "production";
-
-  const snapBaseUrl = isProduction
-    ? "https://app.midtrans.com/snap/v1"
-    : "https://app.sandbox.midtrans.com/snap/v1";
 
   const auth = Buffer.from(`${serverKey}:`).toString("base64");
   const plan = PLANS[params.planId] || DEFAULT_PLANS[params.planId] || { name: params.planId };
@@ -487,8 +521,7 @@ export function verifyMidtransSignature(params: {
   grossAmount: string;
   signatureKey: string;
 }): boolean {
-  const adminSettings = getAdminSettings();
-  const serverKey = process.env.MIDTRANS_SERVER_KEY || adminSettings.paymentConfig.serverKey || "";
+  const { serverKey } = getMidtransConfig();
   const payload = `${params.orderId}${params.statusCode}${params.grossAmount}${serverKey}`;
   const computed = crypto.createHash("sha512").update(payload).digest("hex");
   return computed === params.signatureKey;
@@ -510,21 +543,13 @@ export function mapMidtransStatus(
 
 /** Query Midtrans API directly for transaction status */
 export async function checkMidtransOrderStatus(orderId: string): Promise<any> {
-  const adminSettings = getAdminSettings();
-  const serverKey = process.env.MIDTRANS_SERVER_KEY || adminSettings.paymentConfig.serverKey;
+  const { serverKey, apiBaseUrl } = getMidtransConfig();
   if (!serverKey) throw new Error("MIDTRANS_SERVER_KEY tidak dikonfigurasi");
 
   const auth = Buffer.from(`${serverKey}:`).toString("base64");
-  const isProduction =
-    process.env.MIDTRANS_IS_PRODUCTION === "true" ||
-    adminSettings.paymentConfig.environment === "production";
-
-  const baseUrl = isProduction
-    ? "https://api.midtrans.com/v2"
-    : "https://api.sandbox.midtrans.com/v2";
 
   try {
-    const res = await fetch(`${baseUrl}/${orderId}/status`, {
+    const res = await fetch(`${apiBaseUrl}/${orderId}/status`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -571,17 +596,8 @@ export async function chargeMidtransCoreApi(params: {
   customerPhone?: string;
   itemName?: string;
 }): Promise<any> {
-  const adminSettings = getAdminSettings();
-  const serverKey = process.env.MIDTRANS_SERVER_KEY || adminSettings.paymentConfig.serverKey;
+  const { serverKey, apiBaseUrl } = getMidtransConfig();
   if (!serverKey) throw new Error("MIDTRANS_SERVER_KEY tidak dikonfigurasi. Silakan isi di Pengaturan Sistem Admin.");
-
-  const isProduction =
-    process.env.MIDTRANS_IS_PRODUCTION === "true" ||
-    adminSettings.paymentConfig.environment === "production";
-
-  const baseUrl = isProduction
-    ? "https://api.midtrans.com/v2"
-    : "https://api.sandbox.midtrans.com/v2";
 
   const auth = Buffer.from(`${serverKey}:`).toString("base64");
   const plan = PLANS[params.planId] || DEFAULT_PLANS[params.planId] || { name: params.planId };
@@ -638,7 +654,7 @@ export async function chargeMidtransCoreApi(params: {
     };
   }
 
-  const res = await fetch(`${baseUrl}/charge`, {
+  const res = await fetch(`${apiBaseUrl}/charge`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
