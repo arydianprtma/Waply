@@ -666,14 +666,16 @@ export async function chargeMidtransCoreApi(params: {
 
   let json = await res.json();
 
-  // If QRIS Gopay fails due to POP ID not configured, try ShopeePay QRIS as fallback
+  // If QRIS fails due to POP ID not configured on direct QRIS aggregator, try standard GoPay QRIS
   if (
     params.paymentType === "qris" &&
     (!res.ok || (json.status_code && json.status_code !== "200" && json.status_code !== "201")) &&
     typeof json.status_message === "string" &&
     json.status_message.toLowerCase().includes("pop id")
   ) {
-    payload.qris = { acquirer: "airpay shopee" };
+    // Try payment_type: "gopay" which generates QRIS QR code for merchants with active GoPay
+    delete payload.qris;
+    payload.payment_type = "gopay";
     res = await fetch(`${apiBaseUrl}/charge`, {
       method: "POST",
       headers: {
@@ -684,6 +686,23 @@ export async function chargeMidtransCoreApi(params: {
       body: JSON.stringify(payload),
     });
     json = await res.json();
+
+    // If GoPay also fails, try ShopeePay QRIS as last resort
+    if (!res.ok || (json.status_code && json.status_code !== "200" && json.status_code !== "201")) {
+      delete payload.payment_type;
+      payload.payment_type = "qris";
+      payload.qris = { acquirer: "airpay shopee" };
+      res = await fetch(`${apiBaseUrl}/charge`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Basic ${auth}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      json = await res.json();
+    }
   }
 
   if (!res.ok || (json.status_code && json.status_code !== "200" && json.status_code !== "201")) {
