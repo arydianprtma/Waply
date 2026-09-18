@@ -392,7 +392,7 @@ export default function AdminUsersPage() {
                 <th className="py-3.5">IP & Keamanan</th>
                 <th className="py-3.5">Status Akun</th>
                 <th className="py-3.5">Paket & Penggunaan</th>
-                <th className="py-3.5">Terdaftar</th>
+                <th className="py-3.5">Terdaftar & Login</th>
                 <th className="py-3.5 pr-5 text-right min-w-[220px]">Aksi Super Admin</th>
               </tr>
             </thead>
@@ -581,23 +581,34 @@ export default function AdminUsersPage() {
                         </div>
                       </td>
 
-                      {/* Registered Date */}
+                      {/* Registered Date & Last Login */}
                       <td className="py-4">
-                        <div className="text-slate-600 text-[11px] space-y-0.5">
-                          <div className="font-medium">
-                            {new Date(u.createdAt).toLocaleDateString("id-ID", {
-                              day: "numeric",
-                              month: "short",
-                              year: "numeric",
-                            })}
+                        <div className="text-slate-600 text-[11px] space-y-1">
+                          <div className="flex items-center gap-1.5 font-medium text-slate-800">
+                            <span className="text-[10px] text-slate-400 font-normal">Daftar:</span>
+                            <span>
+                              {new Date(u.createdAt).toLocaleDateString("id-ID", {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              })}
+                            </span>
                           </div>
-                          <div className="text-[10px] text-slate-400">
-                            {u.lastLoginAt
-                              ? `Login: ${new Date(u.lastLoginAt).toLocaleTimeString("id-ID", {
+                          <div className="flex items-center gap-1.5 text-[10px]">
+                            <span className="text-slate-400">Login:</span>
+                            {u.lastLoginAt ? (
+                              <span className="text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-medium border border-emerald-200/60">
+                                {new Date(u.lastLoginAt).toLocaleDateString("id-ID", {
+                                  day: "numeric",
+                                  month: "short",
+                                })}, {new Date(u.lastLoginAt).toLocaleTimeString("id-ID", {
                                   hour: "2-digit",
                                   minute: "2-digit",
-                                })}`
-                              : "Belum pernah login"}
+                                })}
+                              </span>
+                            ) : (
+                              <span className="text-slate-400 italic">Belum pernah login</span>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -790,11 +801,16 @@ export default function AdminUsersPage() {
                     <span className="text-slate-400 block text-[10px]">Penggunaan:</span>
                     <span className="font-semibold text-slate-700">{u.messagesUsed} pesan / {u.devicesCount} dev</span>
                   </div>
-                  <div className="col-span-2 flex items-center justify-between pt-1 border-t border-slate-200/60 font-mono text-[10px]">
-                    <span className="text-slate-600 truncate max-w-[180px]">IP: {ipAddress}</span>
-                    <span className="text-slate-400">
-                      {new Date(u.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}
-                    </span>
+                  <div className="col-span-2 flex flex-col sm:flex-row sm:items-center justify-between pt-1.5 border-t border-slate-200/60 text-[10px] gap-1">
+                    <span className="text-slate-600 truncate font-mono">IP: {ipAddress}</span>
+                    <div className="flex items-center gap-1.5 text-slate-500 flex-wrap">
+                      <span>Daftar: {new Date(u.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</span>
+                      {u.lastLoginAt && (
+                        <span className="text-emerald-700 font-medium bg-emerald-50 px-1 py-0.5 rounded border border-emerald-200/60">
+                          Login: {new Date(u.lastLoginAt).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}, {new Date(u.lastLoginAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
