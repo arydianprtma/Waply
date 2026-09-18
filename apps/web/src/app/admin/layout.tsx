@@ -10,9 +10,14 @@ import { MobileNavProvider } from "@/lib/mobile-nav-context";
 import { AdminTicketsProvider } from "@/lib/admin-tickets-context";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const user = await getSessionUser();
+  let user;
+  try {
+    user = await getSessionUser();
+  } catch {
+    redirect("/login?redirectTo=/admin");
+  }
 
-  if (user.role !== "admin") {
+  if (!user || user.role !== "admin") {
     redirect("/dashboard?error=forbidden");
   }
 
