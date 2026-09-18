@@ -423,26 +423,27 @@ export function generateOrderId(planId: PlanId): string {
 export function getMidtransConfig() {
   const adminSettings = getAdminSettings();
   
-  // Prioritize active configured key, checking process.env and adminSettings
   const envServerKey = (process.env.MIDTRANS_SERVER_KEY || "").trim();
   const envClientKey = (process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || "").trim();
-  const dbServerKey = (adminSettings.paymentConfig.serverKey || "").trim();
-  const dbClientKey = (adminSettings.paymentConfig.clientKey || "").trim();
+  const dbServerKey = (adminSettings.paymentConfig?.serverKey || "").trim();
+  const dbClientKey = (adminSettings.paymentConfig?.clientKey || "").trim();
 
-  // If envServerKey is explicitly defined in .env.local / .env and differs, use it
-  const serverKey = envServerKey || dbServerKey;
-  const clientKey = envClientKey || dbClientKey;
+  // Admin UI settings take precedence over .env
+  const serverKey = dbServerKey || envServerKey;
+  const clientKey = dbClientKey || envClientKey;
 
-  // Intelligent auto-detection of environment based on key prefix
+  // Respect Admin Settings environment if configured, otherwise infer from key or env
   let isProduction = false;
-  if (serverKey.startsWith("SB-") || serverKey.startsWith("sb-")) {
+  if (adminSettings.paymentConfig?.environment === "production") {
+    isProduction = true;
+  } else if (adminSettings.paymentConfig?.environment === "sandbox") {
     isProduction = false;
   } else if (serverKey.startsWith("Mid-") || serverKey.startsWith("mid-")) {
     isProduction = true;
+  } else if (serverKey.startsWith("SB-") || serverKey.startsWith("sb-")) {
+    isProduction = false;
   } else {
-    isProduction =
-      adminSettings.paymentConfig.environment === "production" ||
-      process.env.MIDTRANS_IS_PRODUCTION === "true";
+    isProduction = process.env.MIDTRANS_IS_PRODUCTION === "true";
   }
 
   const snapBaseUrl = isProduction
