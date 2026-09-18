@@ -1,4 +1,4 @@
-﻿import fs from "fs";
+import fs from "fs";
 import path from "path";
 
 export type DiscountType = "PERCENTAGE" | "FIXED";
@@ -41,83 +41,20 @@ function ensureDataDir() {
   }
 }
 
-export const DEFAULT_VOUCHERS: Voucher[] = [
-  {
-    id: "vcr_waply_hemat_01",
-    code: "WAPLYHEMAT",
-    name: "Diskon Promo Hemat 10%",
-    description: "Potongan harga 10% untuk semua paket bulanan & tahunan",
-    discountType: "PERCENTAGE",
-    discountValue: 10,
-    maxDiscountAmount: 100000,
-    minOrderAmount: 0,
-    applicablePlans: ["ALL"],
-    applicablePeriods: ["ALL"],
-    usageLimit: 500,
-    usedCount: 14,
-    validFrom: "2026-01-01T00:00:00.000Z",
-    validUntil: "2026-12-31T23:59:59.000Z",
-    isActive: true,
-    createdAt: "2026-01-01T00:00:00.000Z",
-    updatedAt: "2026-01-01T00:00:00.000Z",
-  },
-  {
-    id: "vcr_launch_2026_02",
-    code: "LAUNCH2026",
-    name: "Potongan Launching Spesial Rp 15.000",
-    description: "Potongan langsung Rp 15.000 untuk pengguna baru",
-    discountType: "FIXED",
-    discountValue: 15000,
-    maxDiscountAmount: null,
-    minOrderAmount: 45000,
-    applicablePlans: ["ALL"],
-    applicablePeriods: ["ALL"],
-    usageLimit: 200,
-    usedCount: 28,
-    validFrom: "2026-01-01T00:00:00.000Z",
-    validUntil: "2026-12-31T23:59:59.000Z",
-    isActive: true,
-    createdAt: "2026-01-01T00:00:00.000Z",
-    updatedAt: "2026-01-01T00:00:00.000Z",
-  },
-  {
-    id: "vcr_super_promo_03",
-    code: "SUPERPROMO",
-    name: "Voucher Spesial 15%",
-    description: "Diskon 15% khusus paket Business dan Pro",
-    discountType: "PERCENTAGE",
-    discountValue: 15,
-    maxDiscountAmount: 150000,
-    minOrderAmount: 100000,
-    applicablePlans: ["BUSINESS", "PRO"],
-    applicablePeriods: ["ALL"],
-    usageLimit: 100,
-    usedCount: 5,
-    validFrom: "2026-01-01T00:00:00.000Z",
-    validUntil: "2026-12-31T23:59:59.000Z",
-    isActive: true,
-    createdAt: "2026-01-01T00:00:00.000Z",
-    updatedAt: "2026-01-01T00:00:00.000Z",
-  },
-];
+export const DEFAULT_VOUCHERS: Voucher[] = [];
 
 export function getAllVouchers(): Voucher[] {
   ensureDataDir();
   try {
     if (fs.existsSync(VOUCHERS_FILE)) {
       const data = JSON.parse(fs.readFileSync(VOUCHERS_FILE, "utf-8"));
-      if (Array.isArray(data) && data.length > 0) {
+      if (Array.isArray(data)) {
         return data;
       }
     }
   } catch {}
 
-  // Write default vouchers
-  try {
-    fs.writeFileSync(VOUCHERS_FILE, JSON.stringify(DEFAULT_VOUCHERS, null, 2), "utf-8");
-  } catch {}
-
-  return DEFAULT_VOUCHERS;
+  return [];
 }
 
 export function saveVoucher(voucher: Partial<Voucher> & { code: string; discountValue: number }): Voucher {
