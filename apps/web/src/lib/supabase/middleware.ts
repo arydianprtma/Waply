@@ -43,7 +43,10 @@ export async function updateSession(request: NextRequest) {
   const decodedEmail = rawEmail ? decodeURIComponent(rawEmail).trim().toLowerCase() : "";
   const rawRole = request.cookies.get("waply_user_role")?.value || "";
 
-  const isAdmin = rawRole === "admin" || decodedEmail === "admin@waply.id";
+  const isAdmin =
+    rawRole === "admin" ||
+    decodedEmail === "admin@waply.id" ||
+    decodedEmail === "arydianprtma@gmail.com";
 
   if (isDemoAuth || rawEmail) {
     if (isAuthRoute) {
@@ -136,7 +139,7 @@ export async function updateSession(request: NextRequest) {
       const role =
         user.user_metadata?.role ||
         user.app_metadata?.role ||
-        (email === "admin@waply.id" ? "admin" : rawRole || "user");
+        (email === "admin@waply.id" || email === "arydianprtma@gmail.com" ? "admin" : rawRole || "user");
 
       if (role !== "admin") {
         const url = request.nextUrl.clone();
