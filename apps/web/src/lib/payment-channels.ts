@@ -1,19 +1,27 @@
-﻿export interface PaymentChannelDefinition {
+export interface PaymentChannelDefinition {
   id: string;
   name: string;
   description: string;
-  category: "E-Wallet & QR" | "Virtual Account" | "Pop-up Gateway";
+  category: "Virtual Account" | "E-Wallet & QR" | "Kartu & Lainnya";
   badge?: string;
   iconName?: "QrCode" | "Building2" | "Smartphone" | "CreditCard";
 }
 
 export const AVAILABLE_PAYMENT_CHANNELS: PaymentChannelDefinition[] = [
   {
+    id: "bri_va",
+    name: "BRI (BRIVA)",
+    description: "Transfer via BRImo, Internet Banking BRI, atau ATM BRI.",
+    category: "Virtual Account",
+    badge: "AKTIF",
+    iconName: "Building2",
+  },
+  {
     id: "qris",
-    name: "QRIS Nasional",
+    name: "QRIS Semua Bank & E-Wallet",
     description: "BCA Mobile, GoPay, OVO, Dana, ShopeePay, Mandiri Livin, BRImo, dll.",
     category: "E-Wallet & QR",
-    badge: "TERCEPAT & PRAKTIS",
+    badge: "INSTAN",
     iconName: "QrCode",
   },
   {
@@ -28,13 +36,6 @@ export const AVAILABLE_PAYMENT_CHANNELS: PaymentChannelDefinition[] = [
     id: "mandiri_va",
     name: "Mandiri Bill / VA",
     description: "Transfer via Livin by Mandiri atau ATM Mandiri.",
-    category: "Virtual Account",
-    iconName: "Building2",
-  },
-  {
-    id: "bri_va",
-    name: "BRI (BRIVA)",
-    description: "Transfer via BRImo, Internet Banking BRI, atau ATM BRI.",
     category: "Virtual Account",
     iconName: "Building2",
   },
@@ -68,26 +69,20 @@ export const AVAILABLE_PAYMENT_CHANNELS: PaymentChannelDefinition[] = [
   },
   {
     id: "shopeepay",
-    name: "ShopeePay & QRIS",
+    name: "ShopeePay",
     description: "Bayar instan via aplikasi ShopeePay atau scan QR.",
     category: "E-Wallet & QR",
     iconName: "Smartphone",
   },
   {
-    id: "snap",
-    name: "Midtrans Snap Modal (Kartu Kredit & Semua Saluran)",
-    description: "Popup payment modal Midtrans dengan opsi Kartu Kredit, Debit, & alternatif lainnya.",
-    category: "Pop-up Gateway",
+    id: "credit_card",
+    name: "Kartu Kredit / Debit",
+    description: "Visa, MasterCard, JCB, American Express.",
+    category: "Kartu & Lainnya",
     iconName: "CreditCard",
   },
 ];
 
 export const DEFAULT_ENABLED_PAYMENT_CHANNELS = [
-  "qris",
-  "bca_va",
-  "mandiri_va",
   "bri_va",
-  "bni_va",
-  "gopay",
-  "snap",
 ];

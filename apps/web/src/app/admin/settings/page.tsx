@@ -29,6 +29,7 @@ import {
   Sparkles,
   Building2,
 } from "lucide-react";
+import { AVAILABLE_PAYMENT_CHANNELS } from "@/lib/payment-channels";
 
 interface AdminSystemSettings {
   systemProfile: {
@@ -695,8 +696,58 @@ export default function AdminSettingsPage() {
               />
             </div>
 
+            {/* Saluran yang Aktif di Akun Midtrans (Badge Checkout) */}
+            <div className="md:col-span-2 space-y-2 pt-2">
+              <label className="label py-0 flex items-center justify-between">
+                <span className="label-text font-bold text-xs text-slate-700">
+                  Saluran Pembayaran Aktif di Midtrans (Badge Tampilan Checkout)
+                </span>
+                <span className="label-text-alt text-slate-400">
+                  Pilih saluran apa saja yang aktif di Midtrans Anda
+                </span>
+              </label>
+              <div className="flex flex-wrap gap-2 p-3.5 bg-slate-50 border border-slate-200 rounded-2xl">
+                {AVAILABLE_PAYMENT_CHANNELS.map((ch) => {
+                  const currentChannels =
+                    settings.paymentConfig.enabledChannels && Array.isArray(settings.paymentConfig.enabledChannels)
+                      ? settings.paymentConfig.enabledChannels
+                      : ["bri_va"];
+                  const isSelected = currentChannels.includes(ch.id);
+
+                  return (
+                    <button
+                      key={ch.id}
+                      type="button"
+                      onClick={() => {
+                        const exists = currentChannels.includes(ch.id);
+                        const next = exists
+                          ? currentChannels.filter((id) => id !== ch.id)
+                          : [...currentChannels, ch.id];
+                        updatePayment("enabledChannels", next.length > 0 ? next : ["bri_va"]);
+                      }}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border ${
+                        isSelected
+                          ? "bg-emerald-600 text-white border-emerald-600 shadow-xs ring-1 ring-emerald-500/20"
+                          : "bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-100/60"
+                      }`}
+                    >
+                      {isSelected ? (
+                        <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                      ) : (
+                        <span className="w-3.5 h-3.5 rounded-full border border-slate-300 inline-block" />
+                      )}
+                      <span>{ch.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-[11px] text-slate-500 italic">
+                * Badge di halaman order pelanggan akan otomatis menyesuaikan hanya menampilkan saluran yang aktif di atas.
+              </p>
+            </div>
+
             {/* Midtrans Snap Integration Info & Webhook Settings */}
-            <div className="md:col-span-2 pt-6 border-t border-slate-100 space-y-4">
+            <div className="md:col-span-2 pt-4 border-t border-slate-100 space-y-4">
               <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
                 <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
                   <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
