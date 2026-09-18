@@ -56,12 +56,7 @@ import { AddonItem } from "@/lib/addon-types";
 import { WaplyLogo } from "@/components/brand/WaplyLogo";
 import { PromoCountdownTimer } from "@/components/ui/PromoCountdownTimer";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
-import type { PaymentChargeData } from "@/components/order/DirectPaymentModal";
-
-const DirectPaymentModal = dynamic(
-  () => import("@/components/order/DirectPaymentModal"),
-  { ssr: false }
-);
+import DirectPaymentModal, { type PaymentChargeData } from "@/components/order/DirectPaymentModal";
 
 type PaymentMethodOption =
   | "qris"

@@ -162,7 +162,7 @@ export default function DirectPaymentModal({
               <div className="w-10 h-10 rounded-2xl bg-white p-1.5 shadow-xs border border-slate-200/80 flex items-center justify-center shrink-0">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="/icon.png"
+                  src="/waply-icon.png"
                   alt="Waply Icon"
                   width={32}
                   height={32}
@@ -529,6 +529,24 @@ export default function DirectPaymentModal({
                       </a>
                     </div>
                   )}
+
+                  {/* Fallback if no specific payment details match */}
+                  {chargeData.paymentType !== "qris" &&
+                    !chargeData.vaNumber &&
+                    !(chargeData.billerCode && chargeData.billKey) &&
+                    !chargeData.deeplinkUrl && (
+                      <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200/90 text-center space-y-3">
+                        <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto border border-amber-200">
+                          <RefreshCw className="w-6 h-6 animate-spin text-amber-600" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-slate-800 text-sm">Menyiapkan Rincian Pembayaran...</h4>
+                          <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
+                            Sedang memproses instruksi pembayaran dengan gateway perbankan. Silakan klik tombol verifikasi di bawah jika Anda telah melakukan transfer.
+                          </p>
+                        </div>
+                      </div>
+                    )}
                 </div>
 
                 {/* RIGHT COLUMN: Total Nominal + Panduan Pembayaran + Sync Status & Actions */}
@@ -717,6 +735,74 @@ export default function DirectPaymentModal({
                           )}
                         </>
                       )}
+
+                      {/* Permata Instructions */}
+                      {chargeData.bank?.toUpperCase() === "PERMATA" && (
+                        <>
+                          {activeInstructionTab === "mbanking" && (
+                            <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
+                              <li>Buka aplikasi <strong>PermataMobile X</strong> & login.</li>
+                              <li>Pilih menu <strong>Bayar Tagihan</strong> &gt; <strong>Virtual Account</strong>.</li>
+                              <li>Masukkan nomor Permata Virtual Account di atas.</li>
+                              <li>Periksa total nominal dan konfirmasi dengan <strong>PIN Mobile Banking</strong>.</li>
+                            </ol>
+                          )}
+                          {activeInstructionTab === "ibanking" && (
+                            <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
+                              <li>Login ke <strong>PermataNet</strong>.</li>
+                              <li>Pilih menu <strong>Pembayaran</strong> &gt; <strong>Virtual Account</strong>.</li>
+                              <li>Masukkan nomor Virtual Account dan ikuti instruksi otorisasi token.</li>
+                            </ol>
+                          )}
+                          {activeInstructionTab === "atm" && (
+                            <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
+                              <li>Masukkan Kartu ATM Permata & PIN Anda.</li>
+                              <li>Pilih <strong>Transaksi Lainnya</strong> &gt; <strong>Pembayaran</strong> &gt; <strong>Virtual Account</strong>.</li>
+                              <li>Masukkan nomor Virtual Account di atas lalu selesaikan transaksi.</li>
+                            </ol>
+                          )}
+                        </>
+                      )}
+
+                      {/* CIMB Niaga Instructions */}
+                      {chargeData.bank?.toUpperCase() === "CIMB" && (
+                        <>
+                          {activeInstructionTab === "mbanking" && (
+                            <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
+                              <li>Buka aplikasi <strong>OCTO Mobile</strong> & login.</li>
+                              <li>Pilih menu <strong>Transfer</strong> &gt; <strong>Rekening Ponsel / Virtual Account Lainnya</strong>.</li>
+                              <li>Masukkan nomor CIMB Virtual Account di atas.</li>
+                              <li>Periksa rincian tagihan lalu masukkan <strong>PIN OCTO Mobile</strong>.</li>
+                            </ol>
+                          )}
+                          {activeInstructionTab === "ibanking" && (
+                            <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
+                              <li>Login ke <strong>OCTO Clicks</strong>.</li>
+                              <li>Pilih <strong>Bayar Tagihan</strong> &gt; <strong>Virtual Account</strong>.</li>
+                              <li>Masukkan nomor Virtual Account dan konfirmasi SMS OTP.</li>
+                            </ol>
+                          )}
+                          {activeInstructionTab === "atm" && (
+                            <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
+                              <li>Masukkan Kartu ATM CIMB Niaga & PIN Anda.</li>
+                              <li>Pilih <strong>Pembayaran</strong> &gt; <strong>Lanjut</strong> &gt; <strong>Virtual Account</strong>.</li>
+                              <li>Masukkan nomor Virtual Account lalu ikuti petunjuk pada layar.</li>
+                            </ol>
+                          )}
+                        </>
+                      )}
+
+                      {/* Other / General VA Instructions */}
+                      {!["BCA", "MANDIRI", "BRI", "BNI", "PERMATA", "CIMB"].includes(chargeData.bank?.toUpperCase() || "") &&
+                        chargeData.paymentType !== "qris" && (
+                          <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
+                            <li>Buka aplikasi m-Banking atau ATM bank Anda.</li>
+                            <li>Pilih menu <strong>Transfer</strong> &gt; <strong>Ke Rekening Virtual Account</strong> (atau Bank Lain jika antar bank).</li>
+                            <li>Masukkan nomor Virtual Account di atas dan pastikan nama penerima <strong>Waply Gateway</strong>.</li>
+                            <li>Masukkan nominal tagihan tepat sesuai yang tertera di layar.</li>
+                            <li>Selesaikan transaksi. Sistem akan memverifikasi secara otomatis dalam beberapa detik.</li>
+                          </ol>
+                        )}
 
                       {/* QRIS Instructions */}
                       {chargeData.paymentType === "qris" && (

@@ -20,7 +20,7 @@ export function WaplyIcon({ size = 36, className }: { size?: number; className?:
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src="/icon.png"
+      src="/waply-icon.png"
       alt="Waply Icon"
       width={size}
       height={size}
