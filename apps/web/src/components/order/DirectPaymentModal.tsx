@@ -152,11 +152,11 @@ export default function DirectPaymentModal({
 
   return (
     <ModalPortal>
-      <div className="fixed inset-0 z-[99999] bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-        <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150 my-auto relative z-10 max-h-[92vh] flex flex-col overflow-hidden">
+      <div className="fixed inset-0 z-[99999] bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+        <div className="bg-white rounded-3xl max-w-4xl w-full shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150 my-auto relative z-10 max-h-[94vh] flex flex-col overflow-hidden">
           
-          {/* Modal Header */}
-          <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/90 shrink-0">
+          {/* Modal Top Header Bar */}
+          <div className="px-5 sm:px-7 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/90 shrink-0">
             <div className="flex items-center gap-3">
               {/* Official Waply Logo Emblem */}
               <div className="w-10 h-10 rounded-2xl bg-white p-1.5 shadow-xs border border-slate-200/80 flex items-center justify-center shrink-0">
@@ -175,23 +175,23 @@ export default function DirectPaymentModal({
                     {paymentSuccess ? "Pembayaran Berhasil" : "Selesaikan Pembayaran"}
                   </h3>
                   <span className="badge badge-xs bg-emerald-50 text-emerald-700 border-emerald-200/80 font-bold text-[9px] px-1.5">
-                    WAPLY
+                    WAPLY GATEWAY
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-400 font-mono truncate mt-0.5">
-                  Order: {chargeData.orderId}
+                  Order ID: {chargeData.orderId}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2.5 shrink-0">
+            <div className="flex items-center gap-3 shrink-0">
               {!paymentSuccess ? (
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 border border-rose-200/80 text-rose-700 text-xs font-bold font-mono shadow-2xs">
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 border border-rose-200/80 text-rose-700 text-xs font-bold font-mono shadow-2xs">
                   <Clock className="w-3.5 h-3.5 text-rose-500 animate-pulse shrink-0" />
                   <span>{timeRemaining}</span>
                 </div>
               ) : (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-extrabold">
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-extrabold">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Terverifikasi
                 </span>
               )}
@@ -206,14 +206,14 @@ export default function DirectPaymentModal({
             </div>
           </div>
 
-          {/* Modal Body (Scrollable) */}
-          <div className="p-5 sm:p-6 overflow-y-auto space-y-4 flex-1 text-slate-700">
+          {/* Modal Body */}
+          <div className="p-5 sm:p-7 overflow-y-auto flex-1 text-slate-700">
             
             {/* SUCCESS STATE */}
             {paymentSuccess ? (
-              <div className="py-2 text-center space-y-5">
-                {/* Celebration Hero Badge */}
-                <div className="relative inline-block mx-auto mt-2">
+              <div className="py-2 text-center space-y-6 max-w-xl mx-auto">
+                {/* Hero Badge */}
+                <div className="relative inline-block mx-auto mt-1">
                   <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-white flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/30 ring-8 ring-emerald-50">
                     <CheckCircle2 className="w-11 h-11 animate-bounce" />
                   </div>
@@ -226,7 +226,7 @@ export default function DirectPaymentModal({
                   <h4 className="text-2xl font-black tracking-tight text-slate-900">
                     Pembayaran Berhasil!
                   </h4>
-                  <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
+                  <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
                     {chargeData.orderId?.startsWith("WAPLY-ADDON") || isAddonMode ? (
                       <>
                         Terima kasih! Addon{" "}
@@ -240,7 +240,7 @@ export default function DirectPaymentModal({
                       </>
                     ) : (
                       <>
-                        Terima kasih! Paket <strong className="text-slate-900">Waply {currentPlan.name}</strong> Anda telah aktif. Kuota pesan dan akses API gateway langsung dapat digunakan.
+                        Terima kasih! Paket <strong className="text-slate-900">Waply {currentPlan.name}</strong> Anda telah aktif. Kuota pesan dan akses API gateway langsung dapat digunakan sekarang.
                       </>
                     )}
                   </p>
@@ -323,167 +323,114 @@ export default function DirectPaymentModal({
                   )}
                 </div>
 
-                {/* Benefits Pills */}
-                {chargeData.orderId?.startsWith("WAPLY-ADDON") || isAddonMode ? (
-                  <div className="grid grid-cols-3 gap-2 text-[11px] font-bold">
-                    {(() => {
-                      const addedDev = selectedAddonIds.reduce((sum, id) => {
-                        const a = availableAddons.find((item) => item.id === id);
-                        return sum + (a?.type === "DEVICE" ? a.amount : 0);
-                      }, 0);
-                      const addedMsg = selectedAddonIds.reduce((sum, id) => {
-                        const a = availableAddons.find((item) => item.id === id);
-                        return sum + (a?.type === "MESSAGES" ? a.amount : 0);
-                      }, 0);
-
-                      return (
-                        <>
-                          <div className="p-2.5 rounded-xl bg-slate-50 text-slate-700 border border-slate-200 flex flex-col items-center">
-                            <Smartphone className="w-4 h-4 text-emerald-600 mb-1" />
-                            <span>{addedDev > 0 ? `+${addedDev} Device` : "Slot Device"}</span>
-                          </div>
-                          <div className="p-2.5 rounded-xl bg-slate-50 text-slate-700 border border-slate-200 flex flex-col items-center">
-                            <MessageSquare className="w-4 h-4 text-sky-600 mb-1" />
-                            <span>{addedMsg > 0 ? `+${addedMsg.toLocaleString("id-ID")} Pesan` : "Kuota Pesan"}</span>
-                          </div>
-                          <div className="p-2.5 rounded-xl bg-slate-50 text-slate-700 border border-slate-200 flex flex-col items-center">
-                            <Zap className="w-4 h-4 text-amber-500 mb-1" />
-                            <span>Aktif Instan</span>
-                          </div>
-                        </>
-                      );
-                    })()}
+                {/* Unlocked Benefits */}
+                <div className="grid grid-cols-3 gap-2.5 text-[11px] font-bold">
+                  <div className="p-3 rounded-xl bg-slate-50 text-slate-700 border border-slate-200 flex flex-col items-center">
+                    <Smartphone className="w-4 h-4 text-emerald-600 mb-1" />
+                    <span>{currentPlan.maxDevices} Devices</span>
                   </div>
-                ) : (
-                  <div className="grid grid-cols-3 gap-2 text-[11px] font-bold">
-                    <div className="p-2.5 rounded-xl bg-slate-50 text-slate-700 border border-slate-200 flex flex-col items-center">
-                      <Smartphone className="w-4 h-4 text-emerald-600 mb-1" />
-                      <span>{currentPlan.maxDevices} Devices</span>
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-slate-50 text-slate-700 border border-slate-200 flex flex-col items-center">
-                      <MessageSquare className="w-4 h-4 text-sky-600 mb-1" />
-                      <span>
-                        {currentPlan.monthlyMessages === -1
-                          ? "Unlimited"
-                          : currentPlan.monthlyMessages.toLocaleString("id-ID")}{" "}
-                        Pesan
-                      </span>
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-slate-50 text-slate-700 border border-slate-200 flex flex-col items-center">
-                      <Server className="w-4 h-4 text-primary mb-1" />
-                      <span>REST API Siap</span>
-                    </div>
+                  <div className="p-3 rounded-xl bg-slate-50 text-slate-700 border border-slate-200 flex flex-col items-center">
+                    <MessageSquare className="w-4 h-4 text-sky-600 mb-1" />
+                    <span>
+                      {currentPlan.monthlyMessages === -1
+                        ? "Unlimited"
+                        : currentPlan.monthlyMessages.toLocaleString("id-ID")}{" "}
+                      Pesan
+                    </span>
                   </div>
-                )}
+                  <div className="p-3 rounded-xl bg-slate-50 text-slate-700 border border-slate-200 flex flex-col items-center">
+                    <Server className="w-4 h-4 text-primary mb-1" />
+                    <span>REST API Siap</span>
+                  </div>
+                </div>
 
                 {/* Actions */}
-                <div className="pt-2 flex flex-col gap-2.5">
+                <div className="pt-2 flex flex-col sm:flex-row gap-3 justify-center">
                   <Link
                     href="/dashboard"
-                    className="btn btn-primary btn-block rounded-xl text-white font-extrabold shadow-md shadow-primary/20 gap-2 text-sm"
+                    className="btn btn-primary rounded-xl text-white font-extrabold shadow-md shadow-primary/20 gap-2 text-sm px-8"
                   >
                     Buka Dashboard Gateway <ArrowRight className="w-4 h-4" />
                   </Link>
                   <Link
                     href="/dashboard/billing"
-                    className="btn btn-ghost btn-sm text-xs font-bold text-slate-500 hover:text-slate-800"
+                    className="btn btn-ghost btn-sm text-xs font-bold text-slate-500 hover:text-slate-800 self-center"
                   >
-                    Lihat Riwayat & Invoice di Dashboard
+                    Lihat Invoice di Dashboard
                   </Link>
                 </div>
               </div>
             ) : (
-              /* PENDING / INSTRUCTIONS STATE */
-              <div className="space-y-4">
+              /* PENDING 2-COLUMN WIDE LAYOUT */
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6 items-start">
                 
-                {/* Clean Total Tagihan Card */}
-                <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white relative overflow-hidden shadow-sm border border-slate-800">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[11px] uppercase font-bold tracking-wider text-slate-400 flex items-center gap-1.5">
-                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Total Tagihan Pembayaran
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => copyToClipboard(chargeData.grossAmount.toString(), "amount")}
-                      className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white text-[11px] font-bold flex items-center gap-1.5 transition-colors"
-                    >
-                      {copiedAmount ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                      <span>{copiedAmount ? "Tersalin" : "Salin Nominal"}</span>
-                    </button>
-                  </div>
-                  <div className="text-2xl sm:text-3xl font-black text-emerald-400 tracking-tight font-mono">
-                    {formatIDR(chargeData.grossAmount)}
-                  </div>
-                  <p className="text-[11px] text-slate-400 mt-1.5 leading-snug">
-                    Transfer tepat sesuai nominal hingga 3 digit terakhir untuk verifikasi otomatis instan.
-                  </p>
-                </div>
+                {/* LEFT COLUMN: Payment Method Display (QRIS / VA / Mandiri Bill) */}
+                <div className="md:col-span-6 space-y-4">
+                  
+                  {/* 1. QRIS VIEW */}
+                  {chargeData.paymentType === "qris" && (
+                    <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200/90 text-center space-y-4 shadow-xs">
+                      <div className="p-3.5 bg-white border border-slate-200 rounded-2xl inline-block shadow-xs mx-auto">
+                        {chargeData.qrCodeUrl ? (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img
+                            src={chargeData.qrCodeUrl}
+                            alt="QRIS Code Waply"
+                            width={220}
+                            height={220}
+                            className="w-52 h-52 sm:w-56 sm:h-56 object-contain mx-auto rounded-xl"
+                          />
+                        ) : chargeData.qrString ? (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img
+                            src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(
+                              chargeData.qrString
+                            )}`}
+                            alt="QRIS Code Waply"
+                            width={220}
+                            height={220}
+                            className="w-52 h-52 sm:w-56 sm:h-56 object-contain mx-auto rounded-xl"
+                          />
+                        ) : (
+                          <div className="w-52 h-52 flex flex-col items-center justify-center bg-slate-100 rounded-xl text-xs text-slate-400 font-medium gap-2">
+                            <RefreshCw className="w-5 h-5 animate-spin text-slate-400" />
+                            Memuat QRIS...
+                          </div>
+                        )}
+                      </div>
 
-                {/* 1. QRIS VIEW */}
-                {chargeData.paymentType === "qris" && (
-                  <div className="space-y-3.5 text-center bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
-                    <div className="p-3 bg-white border border-slate-200 rounded-2xl inline-block shadow-xs mx-auto">
-                      {chargeData.qrCodeUrl ? (
-                        /* eslint-disable-next-line @next/next/no-img-element */
-                        <img
-                          src={chargeData.qrCodeUrl}
-                          alt="QRIS Code Waply"
-                          width={200}
-                          height={200}
-                          className="w-48 h-48 sm:w-52 sm:h-52 object-contain mx-auto rounded-lg"
-                        />
-                      ) : chargeData.qrString ? (
-                        /* eslint-disable-next-line @next/next/no-img-element */
-                        <img
-                          src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(
-                            chargeData.qrString
-                          )}`}
-                          alt="QRIS Code Waply"
-                          width={200}
-                          height={200}
-                          className="w-48 h-48 sm:w-52 sm:h-52 object-contain mx-auto rounded-lg"
-                        />
-                      ) : (
-                        <div className="w-48 h-48 flex flex-col items-center justify-center bg-slate-100 rounded-lg text-xs text-slate-400 font-medium gap-2">
-                          <RefreshCw className="w-5 h-5 animate-spin text-slate-400" />
-                          Memuat QRIS...
+                      <div className="space-y-1">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                          <QrCode className="w-3.5 h-3.5" /> QRIS Nasional (Semua Bank & E-Wallet)
+                        </div>
+                        <p className="text-[11px] text-slate-500 max-w-xs mx-auto leading-relaxed">
+                          BCA Mobile, Livin Mandiri, BRImo, BNI, GoPay, OVO, DANA, atau ShopeePay.
+                        </p>
+                      </div>
+
+                      {chargeData.qrCodeUrl && (
+                        <div>
+                          <a
+                            href={chargeData.qrCodeUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            download="QRIS-Waply.png"
+                            className="btn btn-outline btn-xs gap-1.5 rounded-lg text-slate-700 font-bold hover:bg-slate-100"
+                          >
+                            <Download className="w-3.5 h-3.5" /> Unduh Gambar QRIS
+                          </a>
                         </div>
                       )}
                     </div>
+                  )}
 
-                    <div className="space-y-1">
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                        <QrCode className="w-3.5 h-3.5" /> QRIS Nasional (Semua Bank & E-Wallet)
-                      </div>
-                      <p className="text-[11px] text-slate-500 max-w-sm mx-auto leading-relaxed">
-                        Scan QR di atas menggunakan BCA Mobile, Livin Mandiri, BRImo, BNI, GoPay, OVO, DANA, atau ShopeePay.
-                      </p>
-                    </div>
-
-                    {chargeData.qrCodeUrl && (
-                      <div>
-                        <a
-                          href={chargeData.qrCodeUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          download="QRIS-Waply.png"
-                          className="btn btn-outline btn-xs gap-1.5 rounded-lg text-slate-700 font-bold"
-                        >
-                          <Download className="w-3.5 h-3.5" /> Unduh Gambar QRIS
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* 2. VIRTUAL ACCOUNT VIEW (BCA, BRI, BNI, PERMATA, CIMB) */}
-                {chargeData.vaNumber && (
-                  <div className="space-y-3">
-                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-3">
+                  {/* 2. VIRTUAL ACCOUNT VIEW (BCA, BRI, BNI, PERMATA, CIMB) */}
+                  {chargeData.vaNumber && (
+                    <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200/90 space-y-4 shadow-xs">
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-2">
                           <Building2 className="w-4 h-4 text-slate-700" />
-                          <span className="font-extrabold text-slate-800">
+                          <span className="font-extrabold text-slate-800 text-sm">
                             {chargeData.bank?.toUpperCase() === "BCA" && "BCA Virtual Account"}
                             {chargeData.bank?.toUpperCase() === "BRI" && "BRI (BRIVA)"}
                             {chargeData.bank?.toUpperCase() === "BNI" && "BNI Virtual Account"}
@@ -493,13 +440,13 @@ export default function DirectPaymentModal({
                               `${chargeData.bank?.toUpperCase()} Virtual Account`}
                           </span>
                         </div>
-                        <span className="px-2 py-0.5 rounded-md bg-slate-200 text-slate-700 font-extrabold text-[10px] uppercase font-mono">
+                        <span className="px-2.5 py-0.5 rounded-md bg-slate-200 text-slate-700 font-extrabold text-[10px] uppercase font-mono">
                           {chargeData.bank || "VA"}
                         </span>
                       </div>
 
                       {/* VA Display Box */}
-                      <div className="p-3.5 bg-white rounded-xl border border-slate-200 space-y-1">
+                      <div className="p-4 bg-white rounded-xl border border-slate-200 space-y-1">
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                           Nomor Virtual Account
                         </span>
@@ -508,11 +455,11 @@ export default function DirectPaymentModal({
                         </div>
                       </div>
 
-                      {/* Copy Button */}
+                      {/* Prominent Copy Button */}
                       <button
                         type="button"
                         onClick={() => copyToClipboard(chargeData.vaNumber!, "va")}
-                        className={`btn btn-sm btn-block rounded-xl font-extrabold gap-1.5 transition-all shadow-xs ${
+                        className={`btn btn-block rounded-xl font-extrabold gap-1.5 transition-all shadow-xs ${
                           copiedVa
                             ? "bg-emerald-600 text-white hover:bg-emerald-700 border-emerald-600"
                             : "btn-primary text-white"
@@ -522,25 +469,23 @@ export default function DirectPaymentModal({
                         {copiedVa ? "Nomor VA Berhasil Disalin!" : "Salin Nomor Virtual Account"}
                       </button>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* 3. MANDIRI BILL VIEW */}
-                {chargeData.billerCode && chargeData.billKey && (
-                  <div className="space-y-3">
-                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-3">
+                  {/* 3. MANDIRI BILL VIEW */}
+                  {chargeData.billerCode && chargeData.billKey && (
+                    <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200/90 space-y-3.5 shadow-xs">
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-2">
                           <Building2 className="w-4 h-4 text-amber-600" />
-                          <span className="font-extrabold text-slate-800">Mandiri Bill Payment</span>
+                          <span className="font-extrabold text-slate-800 text-sm">Mandiri Bill Payment</span>
                         </div>
-                        <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 font-extrabold text-[10px] uppercase font-mono">
+                        <span className="px-2.5 py-0.5 rounded-md bg-amber-100 text-amber-800 font-extrabold text-[10px] uppercase font-mono">
                           MANDIRI
                         </span>
                       </div>
 
                       {/* Biller Code */}
-                      <div className="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between">
+                      <div className="p-3.5 bg-white rounded-xl border border-slate-200 flex items-center justify-between">
                         <div>
                           <div className="text-[10px] text-slate-400 font-bold uppercase">Kode Perusahaan (Biller Code)</div>
                           <div className="text-lg font-black font-mono text-slate-900">{chargeData.billerCode}</div>
@@ -555,7 +500,7 @@ export default function DirectPaymentModal({
                       </div>
 
                       {/* Bill Key */}
-                      <div className="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between">
+                      <div className="p-3.5 bg-white rounded-xl border border-slate-200 flex items-center justify-between">
                         <div>
                           <div className="text-[10px] text-slate-400 font-bold uppercase">Nomor Pelanggan (Bill Key)</div>
                           <div className="text-lg font-black font-mono text-slate-900 select-all">{chargeData.billKey}</div>
@@ -569,298 +514,326 @@ export default function DirectPaymentModal({
                         </button>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* 4. GOPAY DEEPLINK VIEW */}
-                {chargeData.deeplinkUrl && (
-                  <div className="pt-1 text-center space-y-3">
-                    <a
-                      href={chargeData.deeplinkUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="btn btn-primary btn-block rounded-xl text-white font-extrabold shadow-md gap-2"
-                    >
-                      <Smartphone className="w-4 h-4" /> Buka Aplikasi GoPay Sekarang
-                    </a>
-                  </div>
-                )}
-
-                {/* PAYMENT INSTRUCTIONS ACCORDION */}
-                <div className="rounded-2xl border border-slate-200 overflow-hidden bg-slate-50/60">
-                  <div className="px-4 py-2.5 bg-slate-100/80 border-b border-slate-200 flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                      <HelpCircle className="w-3.5 h-3.5 text-primary" /> Panduan Pembayaran
-                    </span>
-                    <div className="flex gap-1 bg-slate-200/60 p-0.5 rounded-lg">
-                      <button
-                        type="button"
-                        onClick={() => setActiveInstructionTab("mbanking")}
-                        className={`px-2 py-0.5 rounded-md text-[11px] font-bold transition-all ${
-                          activeInstructionTab === "mbanking"
-                            ? "bg-white text-slate-900 shadow-2xs"
-                            : "text-slate-500 hover:text-slate-800"
-                        }`}
+                  {/* 4. GOPAY DEEPLINK */}
+                  {chargeData.deeplinkUrl && (
+                    <div className="text-center">
+                      <a
+                        href={chargeData.deeplinkUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn btn-primary btn-block rounded-xl text-white font-extrabold shadow-md gap-2"
                       >
-                        m-Banking
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setActiveInstructionTab("ibanking")}
-                        className={`px-2 py-0.5 rounded-md text-[11px] font-bold transition-all ${
-                          activeInstructionTab === "ibanking"
-                            ? "bg-white text-slate-900 shadow-2xs"
-                            : "text-slate-500 hover:text-slate-800"
-                        }`}
-                      >
-                        Internet
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setActiveInstructionTab("atm")}
-                        className={`px-2 py-0.5 rounded-md text-[11px] font-bold transition-all ${
-                          activeInstructionTab === "atm"
-                            ? "bg-white text-slate-900 shadow-2xs"
-                            : "text-slate-500 hover:text-slate-800"
-                        }`}
-                      >
-                        ATM
-                      </button>
+                        <Smartphone className="w-4 h-4" /> Buka Aplikasi GoPay Sekarang
+                      </a>
                     </div>
-                  </div>
-
-                  <div className="p-3.5 text-xs text-slate-600 bg-white">
-                    {/* BCA Instructions */}
-                    {chargeData.bank?.toUpperCase() === "BCA" && (
-                      <>
-                        {activeInstructionTab === "mbanking" && (
-                          <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
-                            <li>Buka aplikasi <strong>BCA Mobile</strong> &gt; pilih <strong>m-BCA</strong>.</li>
-                            <li>Pilih menu <strong>m-Transfer</strong> &gt; <strong>BCA Virtual Account</strong>.</li>
-                            <li>Masukkan nomor Virtual Account di atas &gt; klik <strong>Send</strong>.</li>
-                            <li>Periksa nama tagihan <strong>WAPLY</strong> dan nominal pembayaran.</li>
-                            <li>Masukkan <strong>PIN m-BCA</strong> Anda. Pembayaran otomatis terverifikasi.</li>
-                          </ol>
-                        )}
-                        {activeInstructionTab === "ibanking" && (
-                          <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
-                            <li>Login ke <strong>KlikBCA Individual</strong>.</li>
-                            <li>Pilih menu <strong>Transfer Dana</strong> &gt; <strong>Transfer ke BCA Virtual Account</strong>.</li>
-                            <li>Masukkan nomor Virtual Account di atas lalu klik <strong>Lanjutkan</strong>.</li>
-                            <li>Masukkan respon <strong>KeyBCA APPLI 1</strong> lalu klik <strong>Kirim</strong>.</li>
-                          </ol>
-                        )}
-                        {activeInstructionTab === "atm" && (
-                          <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
-                            <li>Masukkan <strong>Kartu ATM BCA</strong> & PIN Anda.</li>
-                            <li>Pilih menu <strong>Transaksi Lainnya</strong> &gt; <strong>Transfer</strong> &gt; <strong>Ke Rek BCA Virtual Account</strong>.</li>
-                            <li>Masukkan nomor Virtual Account di atas lalu tekan <strong>Benar</strong>.</li>
-                            <li>Konfirmasi rincian transaksi lalu selesaikan pembayaran.</li>
-                          </ol>
-                        )}
-                      </>
-                    )}
-
-                    {/* Mandiri Instructions */}
-                    {chargeData.bank?.toUpperCase() === "MANDIRI" && (
-                      <>
-                        {activeInstructionTab === "mbanking" && (
-                          <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
-                            <li>Buka aplikasi <strong>Livin&apos; by Mandiri</strong> & login.</li>
-                            <li>Pilih menu <strong>Bayar</strong> &gt; cari penyedia jasa <strong>Midtrans / Waply</strong> ({chargeData.billerCode}).</li>
-                            <li>Masukkan <strong>Nomor Pembayaran (Bill Key)</strong>: {chargeData.billKey}.</li>
-                            <li>Periksa detail tagihan lalu masukkan <strong>PIN Livin&apos;</strong> Anda.</li>
-                          </ol>
-                        )}
-                        {activeInstructionTab === "ibanking" && (
-                          <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
-                            <li>Login ke <strong>Mandiri Online</strong>.</li>
-                            <li>Pilih menu <strong>Bayar</strong> &gt; <strong>Multi Payment</strong>.</li>
-                            <li>Pilih penyedia jasa <strong>Midtrans</strong> lalu masukkan Bill Key.</li>
-                            <li>Konfirmasi dengan Token Mandiri Anda.</li>
-                          </ol>
-                        )}
-                        {activeInstructionTab === "atm" && (
-                          <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
-                            <li>Masukkan Kartu ATM Mandiri & PIN.</li>
-                            <li>Pilih <strong>Bayar/Beli</strong> &gt; <strong>Lainnya</strong> &gt; <strong>Multi Payment</strong>.</li>
-                            <li>Masukkan Kode Perusahaan ({chargeData.billerCode}) & Bill Key ({chargeData.billKey}).</li>
-                            <li>Konfirmasi pembayaran lalu selesaikan transaksi.</li>
-                          </ol>
-                        )}
-                      </>
-                    )}
-
-                    {/* BRI Instructions */}
-                    {chargeData.bank?.toUpperCase() === "BRI" && (
-                      <>
-                        {activeInstructionTab === "mbanking" && (
-                          <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
-                            <li>Buka aplikasi <strong>BRImo</strong> & login akun Anda.</li>
-                            <li>Pilih menu <strong>Tagihan / Pembayaran</strong> &gt; <strong>BRIVA</strong>.</li>
-                            <li>Masukkan nomor BRIVA di atas lalu klik <strong>Lanjutkan</strong>.</li>
-                            <li>Periksa nominal tagihan dan masukkan <strong>PIN BRImo</strong> Anda.</li>
-                          </ol>
-                        )}
-                        {activeInstructionTab === "ibanking" && (
-                          <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
-                            <li>Login ke <strong>Internet Banking BRI</strong>.</li>
-                            <li>Pilih menu <strong>Pembayaran</strong> &gt; <strong>BRIVA</strong>.</li>
-                            <li>Masukkan nomor BRIVA dan konfirmasi dengan m-Token.</li>
-                          </ol>
-                        )}
-                        {activeInstructionTab === "atm" && (
-                          <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
-                            <li>Masukkan Kartu ATM BRI & PIN.</li>
-                            <li>Pilih <strong>Transaksi Lain</strong> &gt; <strong>Pembayaran</strong> &gt; <strong>Lainnya</strong> &gt; <strong>BRIVA</strong>.</li>
-                            <li>Masukkan nomor BRIVA di atas lalu tekan <strong>Ya</strong> untuk konfirmasi.</li>
-                          </ol>
-                        )}
-                      </>
-                    )}
-
-                    {/* BNI Instructions */}
-                    {chargeData.bank?.toUpperCase() === "BNI" && (
-                      <>
-                        {activeInstructionTab === "mbanking" && (
-                          <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
-                            <li>Buka aplikasi <strong>BNI Mobile Banking</strong> & login.</li>
-                            <li>Pilih menu <strong>Pembayaran</strong> &gt; <strong>Virtual Account Billing</strong>.</li>
-                            <li>Pilih Tab <strong>Input Baru</strong> lalu masukkan nomor Virtual Account.</li>
-                            <li>Konfirmasi transaksi dan masukkan <strong>Password Transaksi</strong>.</li>
-                          </ol>
-                        )}
-                        {activeInstructionTab === "ibanking" && (
-                          <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
-                            <li>Login ke <strong>BNI Internet Banking</strong>.</li>
-                            <li>Pilih <strong>Transaksi</strong> &gt; <strong>Virtual Account Billing</strong>.</li>
-                            <li>Masukkan nomor Virtual Account dan otorisasi dengan token BNI.</li>
-                          </ol>
-                        )}
-                        {activeInstructionTab === "atm" && (
-                          <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
-                            <li>Masukkan Kartu ATM BNI & PIN.</li>
-                            <li>Pilih <strong>Menu Lain</strong> &gt; <strong>Pembayaran</strong> &gt; <strong>Menu Berikutnya</strong> &gt; <strong>Virtual Account Billing</strong>.</li>
-                            <li>Masukkan nomor Virtual Account di atas lalu selesaikan transaksi.</li>
-                          </ol>
-                        )}
-                      </>
-                    )}
-
-                    {/* QRIS Instructions */}
-                    {chargeData.paymentType === "qris" && (
-                      <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
-                        <li>Buka aplikasi m-Banking atau E-Wallet (BCA Mobile, Livin, BRImo, BNI, GoPay, OVO, DANA, ShopeePay).</li>
-                        <li>Pilih menu <strong>Scan QRIS / Bayar</strong>.</li>
-                        <li>Arahkan kamera ke QR Code di atas (atau unggah gambar jika diunduh).</li>
-                        <li>Pastikan nominal tagihan dan nama penerima <strong>Waply Gateway</strong> sesuai.</li>
-                        <li>Konfirmasi pembayaran dan masukkan PIN transaksi Anda.</li>
-                      </ol>
-                    )}
-                  </div>
+                  )}
                 </div>
 
-                {/* Status Indicator Bar */}
-                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shrink-0" />
-                    <span className="font-bold text-slate-700">Menunggu Pembayaran</span>
-                  </div>
-                  <span className="text-[10px] text-slate-400 font-mono">
-                    Sinkronisasi Otomatis 3 Detik
-                  </span>
-                </div>
-
-                {/* Feedback Notice */}
-                {syncNotice && (
-                  <div
-                    className={`p-3.5 rounded-xl border text-xs space-y-1 animate-in fade-in zoom-in-95 duration-150 ${
-                      syncNotice.type === "warning"
-                        ? "bg-amber-50 border-amber-200 text-amber-900"
-                        : syncNotice.type === "error"
-                        ? "bg-rose-50 border-rose-200 text-rose-900"
-                        : "bg-sky-50 border-sky-200 text-sky-900"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between font-bold">
-                      <div className="flex items-center gap-1.5">
-                        <Clock className="w-3.5 h-3.5 text-amber-600 animate-pulse shrink-0" />
-                        <span>{syncNotice.title}</span>
-                      </div>
+                {/* RIGHT COLUMN: Total Nominal + Panduan Pembayaran + Sync Status & Actions */}
+                <div className="md:col-span-6 space-y-4">
+                  
+                  {/* Total Tagihan Card */}
+                  <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white relative overflow-hidden shadow-xs border border-slate-800">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[11px] uppercase font-bold tracking-wider text-slate-400 flex items-center gap-1.5">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Total Tagihan Pembayaran
+                      </span>
                       <button
                         type="button"
-                        onClick={() => setSyncNotice(null)}
-                        className="text-slate-400 hover:text-slate-600 p-0.5 rounded-md hover:bg-black/5"
+                        onClick={() => copyToClipboard(chargeData.grossAmount.toString(), "amount")}
+                        className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white text-[11px] font-bold flex items-center gap-1.5 transition-colors"
                       >
-                        <X className="w-3.5 h-3.5" />
+                        {copiedAmount ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                        <span>{copiedAmount ? "Tersalin" : "Salin Nominal"}</span>
                       </button>
                     </div>
-                    <p className="text-[11px] leading-relaxed opacity-90">
-                      {syncNotice.message}
+                    <div className="text-2xl sm:text-3xl font-black text-emerald-400 tracking-tight font-mono">
+                      {formatIDR(chargeData.grossAmount)}
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-1.5 leading-snug">
+                      Transfer tepat sesuai nominal hingga 3 digit terakhir untuk verifikasi otomatis instan.
                     </p>
                   </div>
-                )}
 
-                {/* Manual Action Buttons */}
-                <div className="flex items-center justify-between pt-1 gap-2">
-                  <button
-                    type="button"
-                    disabled={syncChecking}
-                    onClick={async () => {
-                      setSyncChecking(true);
-                      setSyncNotice(null);
-                      try {
-                        const res = await fetch("/api/billing/sync", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ orderId: chargeData.orderId }),
-                        });
-                        const json = await res.json();
-                        if (json.success && json.data?.status === "PAID") {
-                          setPaymentSuccess(true);
-                        } else {
-                          const currentStatus = json.data?.transactionStatus || json.data?.status || "PENDING";
-                          setSyncNotice({
-                            type: "warning",
-                            title: `Status: ${currentStatus.toUpperCase()}`,
-                            message:
-                              "Pembayaran belum terdeteksi masuk. Jika Anda baru saja menyelesaikan transfer, mohon tunggu 5-10 detik agar sistem perbankan mengirim konfirmasi. Halaman otomatis beralih saat sukses.",
+                  {/* Panduan Pembayaran Accordion */}
+                  <div className="rounded-2xl border border-slate-200 overflow-hidden bg-slate-50/60">
+                    <div className="px-4 py-2.5 bg-slate-100/80 border-b border-slate-200 flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                        <HelpCircle className="w-3.5 h-3.5 text-primary" /> Panduan Pembayaran
+                      </span>
+                      <div className="flex gap-1 bg-slate-200/60 p-0.5 rounded-lg">
+                        <button
+                          type="button"
+                          onClick={() => setActiveInstructionTab("mbanking")}
+                          className={`px-2 py-0.5 rounded-md text-[11px] font-bold transition-all ${
+                            activeInstructionTab === "mbanking"
+                              ? "bg-white text-slate-900 shadow-2xs"
+                              : "text-slate-500 hover:text-slate-800"
+                          }`}
+                        >
+                          m-Banking
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveInstructionTab("ibanking")}
+                          className={`px-2 py-0.5 rounded-md text-[11px] font-bold transition-all ${
+                            activeInstructionTab === "ibanking"
+                              ? "bg-white text-slate-900 shadow-2xs"
+                              : "text-slate-500 hover:text-slate-800"
+                          }`}
+                        >
+                          Internet
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveInstructionTab("atm")}
+                          className={`px-2 py-0.5 rounded-md text-[11px] font-bold transition-all ${
+                            activeInstructionTab === "atm"
+                              ? "bg-white text-slate-900 shadow-2xs"
+                              : "text-slate-500 hover:text-slate-800"
+                          }`}
+                        >
+                          ATM
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="p-3.5 text-xs text-slate-600 bg-white">
+                      {/* BCA Instructions */}
+                      {chargeData.bank?.toUpperCase() === "BCA" && (
+                        <>
+                          {activeInstructionTab === "mbanking" && (
+                            <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
+                              <li>Buka aplikasi <strong>BCA Mobile</strong> &gt; pilih <strong>m-BCA</strong>.</li>
+                              <li>Pilih menu <strong>m-Transfer</strong> &gt; <strong>BCA Virtual Account</strong>.</li>
+                              <li>Masukkan nomor Virtual Account di atas &gt; klik <strong>Send</strong>.</li>
+                              <li>Periksa nama tagihan <strong>WAPLY</strong> dan nominal pembayaran.</li>
+                              <li>Masukkan <strong>PIN m-BCA</strong> Anda. Pembayaran otomatis terverifikasi.</li>
+                            </ol>
+                          )}
+                          {activeInstructionTab === "ibanking" && (
+                            <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
+                              <li>Login ke <strong>KlikBCA Individual</strong>.</li>
+                              <li>Pilih menu <strong>Transfer Dana</strong> &gt; <strong>Transfer ke BCA Virtual Account</strong>.</li>
+                              <li>Masukkan nomor Virtual Account di atas lalu klik <strong>Lanjutkan</strong>.</li>
+                              <li>Masukkan respon <strong>KeyBCA APPLI 1</strong> lalu klik <strong>Kirim</strong>.</li>
+                            </ol>
+                          )}
+                          {activeInstructionTab === "atm" && (
+                            <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
+                              <li>Masukkan <strong>Kartu ATM BCA</strong> & PIN Anda.</li>
+                              <li>Pilih menu <strong>Transaksi Lainnya</strong> &gt; <strong>Transfer</strong> &gt; <strong>Ke Rek BCA Virtual Account</strong>.</li>
+                              <li>Masukkan nomor Virtual Account di atas lalu tekan <strong>Benar</strong>.</li>
+                              <li>Konfirmasi rincian transaksi lalu selesaikan pembayaran.</li>
+                            </ol>
+                          )}
+                        </>
+                      )}
+
+                      {/* Mandiri Instructions */}
+                      {chargeData.bank?.toUpperCase() === "MANDIRI" && (
+                        <>
+                          {activeInstructionTab === "mbanking" && (
+                            <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
+                              <li>Buka aplikasi <strong>Livin&apos; by Mandiri</strong> & login.</li>
+                              <li>Pilih menu <strong>Bayar</strong> &gt; cari penyedia jasa <strong>Midtrans / Waply</strong> ({chargeData.billerCode}).</li>
+                              <li>Masukkan <strong>Nomor Pembayaran (Bill Key)</strong>: {chargeData.billKey}.</li>
+                              <li>Periksa detail tagihan lalu masukkan <strong>PIN Livin&apos;</strong> Anda.</li>
+                            </ol>
+                          )}
+                          {activeInstructionTab === "ibanking" && (
+                            <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
+                              <li>Login ke <strong>Mandiri Online</strong>.</li>
+                              <li>Pilih menu <strong>Bayar</strong> &gt; <strong>Multi Payment</strong>.</li>
+                              <li>Pilih penyedia jasa <strong>Midtrans</strong> lalu masukkan Bill Key.</li>
+                              <li>Konfirmasi dengan Token Mandiri Anda.</li>
+                            </ol>
+                          )}
+                          {activeInstructionTab === "atm" && (
+                            <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
+                              <li>Masukkan Kartu ATM Mandiri & PIN.</li>
+                              <li>Pilih <strong>Bayar/Beli</strong> &gt; <strong>Lainnya</strong> &gt; <strong>Multi Payment</strong>.</li>
+                              <li>Masukkan Kode Perusahaan ({chargeData.billerCode}) & Bill Key ({chargeData.billKey}).</li>
+                              <li>Konfirmasi pembayaran lalu selesaikan transaksi.</li>
+                            </ol>
+                          )}
+                        </>
+                      )}
+
+                      {/* BRI Instructions */}
+                      {chargeData.bank?.toUpperCase() === "BRI" && (
+                        <>
+                          {activeInstructionTab === "mbanking" && (
+                            <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
+                              <li>Buka aplikasi <strong>BRImo</strong> & login akun Anda.</li>
+                              <li>Pilih menu <strong>Tagihan / Pembayaran</strong> &gt; <strong>BRIVA</strong>.</li>
+                              <li>Masukkan nomor BRIVA di atas lalu klik <strong>Lanjutkan</strong>.</li>
+                              <li>Periksa nominal tagihan dan masukkan <strong>PIN BRImo</strong> Anda.</li>
+                            </ol>
+                          )}
+                          {activeInstructionTab === "ibanking" && (
+                            <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
+                              <li>Login ke <strong>Internet Banking BRI</strong>.</li>
+                              <li>Pilih menu <strong>Pembayaran</strong> &gt; <strong>BRIVA</strong>.</li>
+                              <li>Masukkan nomor BRIVA dan konfirmasi dengan m-Token.</li>
+                            </ol>
+                          )}
+                          {activeInstructionTab === "atm" && (
+                            <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
+                              <li>Masukkan Kartu ATM BRI & PIN.</li>
+                              <li>Pilih <strong>Transaksi Lain</strong> &gt; <strong>Pembayaran</strong> &gt; <strong>Lainnya</strong> &gt; <strong>BRIVA</strong>.</li>
+                              <li>Masukkan nomor BRIVA di atas lalu tekan <strong>Ya</strong> untuk konfirmasi.</li>
+                            </ol>
+                          )}
+                        </>
+                      )}
+
+                      {/* BNI Instructions */}
+                      {chargeData.bank?.toUpperCase() === "BNI" && (
+                        <>
+                          {activeInstructionTab === "mbanking" && (
+                            <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
+                              <li>Buka aplikasi <strong>BNI Mobile Banking</strong> & login.</li>
+                              <li>Pilih menu <strong>Pembayaran</strong> &gt; <strong>Virtual Account Billing</strong>.</li>
+                              <li>Pilih Tab <strong>Input Baru</strong> lalu masukkan nomor Virtual Account.</li>
+                              <li>Konfirmasi transaksi dan masukkan <strong>Password Transaksi</strong>.</li>
+                            </ol>
+                          )}
+                          {activeInstructionTab === "ibanking" && (
+                            <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
+                              <li>Login ke <strong>BNI Internet Banking</strong>.</li>
+                              <li>Pilih <strong>Transaksi</strong> &gt; <strong>Virtual Account Billing</strong>.</li>
+                              <li>Masukkan nomor Virtual Account dan otorisasi dengan token BNI.</li>
+                            </ol>
+                          )}
+                          {activeInstructionTab === "atm" && (
+                            <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
+                              <li>Masukkan Kartu ATM BNI & PIN.</li>
+                              <li>Pilih <strong>Menu Lain</strong> &gt; <strong>Pembayaran</strong> &gt; <strong>Menu Berikutnya</strong> &gt; <strong>Virtual Account Billing</strong>.</li>
+                              <li>Masukkan nomor Virtual Account di atas lalu selesaikan transaksi.</li>
+                            </ol>
+                          )}
+                        </>
+                      )}
+
+                      {/* QRIS Instructions */}
+                      {chargeData.paymentType === "qris" && (
+                        <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
+                          <li>Buka aplikasi m-Banking atau E-Wallet (BCA Mobile, Livin, BRImo, BNI, GoPay, OVO, DANA, ShopeePay).</li>
+                          <li>Pilih menu <strong>Scan QRIS / Bayar</strong>.</li>
+                          <li>Arahkan kamera ke QR Code di samping (atau unduh gambar QRIS).</li>
+                          <li>Pastikan nominal tagihan dan nama penerima <strong>Waply Gateway</strong> sesuai.</li>
+                          <li>Konfirmasi pembayaran dan masukkan PIN transaksi Anda.</li>
+                        </ol>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Status Indicator Bar */}
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shrink-0" />
+                      <span className="font-bold text-slate-700">Menunggu Pembayaran</span>
+                    </div>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      Sinkronisasi Otomatis 3 Detik
+                    </span>
+                  </div>
+
+                  {/* Feedback Notice */}
+                  {syncNotice && (
+                    <div
+                      className={`p-3.5 rounded-xl border text-xs space-y-1 animate-in fade-in zoom-in-95 duration-150 ${
+                        syncNotice.type === "warning"
+                          ? "bg-amber-50 border-amber-200 text-amber-900"
+                          : syncNotice.type === "error"
+                          ? "bg-rose-50 border-rose-200 text-rose-900"
+                          : "bg-sky-50 border-sky-200 text-sky-900"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between font-bold">
+                        <div className="flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-amber-600 animate-pulse shrink-0" />
+                          <span>{syncNotice.title}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setSyncNotice(null)}
+                          className="text-slate-400 hover:text-slate-600 p-0.5 rounded-md hover:bg-black/5"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <p className="text-[11px] leading-relaxed opacity-90">
+                        {syncNotice.message}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="flex items-center justify-between pt-1 gap-2.5">
+                    <button
+                      type="button"
+                      disabled={syncChecking}
+                      onClick={async () => {
+                        setSyncChecking(true);
+                        setSyncNotice(null);
+                        try {
+                          const res = await fetch("/api/billing/sync", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ orderId: chargeData.orderId }),
                           });
+                          const json = await res.json();
+                          if (json.success && json.data?.status === "PAID") {
+                            setPaymentSuccess(true);
+                          } else {
+                            const currentStatus = json.data?.transactionStatus || json.data?.status || "PENDING";
+                            setSyncNotice({
+                              type: "warning",
+                              title: `Status: ${currentStatus.toUpperCase()}`,
+                              message:
+                                "Pembayaran belum terdeteksi masuk. Jika Anda baru saja menyelesaikan transfer, mohon tunggu 5-10 detik agar sistem perbankan mengirim konfirmasi. Halaman otomatis beralih saat sukses.",
+                            });
+                          }
+                        } catch {
+                          setSyncNotice({
+                            type: "error",
+                            title: "Gagal Menghubungi Server",
+                            message:
+                              "Koneksi terputus saat memeriksa status. Sistem tetap mencoba sinkronisasi otomatis di latar belakang.",
+                          });
+                        } finally {
+                          setSyncChecking(false);
                         }
-                      } catch {
-                        setSyncNotice({
-                          type: "error",
-                          title: "Gagal Menghubungi Server",
-                          message:
-                            "Koneksi terputus saat memeriksa status. Sistem tetap mencoba sinkronisasi otomatis di latar belakang.",
-                        });
-                      } finally {
-                        setSyncChecking(false);
-                      }
-                    }}
-                    className="btn btn-outline btn-sm rounded-xl text-xs font-bold gap-1.5 flex-1 shadow-2xs hover:bg-slate-900 hover:text-white transition-colors"
-                  >
-                    {syncChecking ? (
-                      <>
-                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                        Memeriksa Status...
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCw className="w-3.5 h-3.5" />
-                        Saya Sudah Bayar
-                      </>
-                    )}
-                  </button>
+                      }}
+                      className="btn btn-outline btn-sm rounded-xl text-xs font-bold gap-1.5 flex-1 shadow-2xs hover:bg-slate-900 hover:text-white transition-colors"
+                    >
+                      {syncChecking ? (
+                        <>
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                          Memeriksa Status...
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="w-3.5 h-3.5" />
+                          Saya Sudah Bayar
+                        </>
+                      )}
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="btn btn-ghost btn-sm text-xs text-slate-500 hover:text-slate-800 font-semibold"
-                  >
-                    Tutup / Bayar Nanti
-                  </button>
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      className="btn btn-ghost btn-sm text-xs text-slate-500 hover:text-slate-800 font-semibold"
+                    >
+                      Tutup / Bayar Nanti
+                    </button>
+                  </div>
                 </div>
+
               </div>
             )}
           </div>
