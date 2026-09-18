@@ -638,8 +638,8 @@ export async function chargeMidtransCoreApi(params: {
     if (params.bank === "mandiri") {
       payload.payment_type = "echannel";
       payload.echannel = {
-        bill_info1: "Waply Gateway",
-        bill_info2: params.itemName || "Langganan Paket",
+        bill_info1: "Waply",
+        bill_info2: (params.itemName || "Langganan Paket").slice(0, 30),
       };
     } else if (params.bank === "permata") {
       payload.payment_type = "permata";
@@ -674,6 +674,27 @@ export async function chargeMidtransCoreApi(params: {
   });
 
   let json = await res.json();
+
+  // If Mandiri echannel fails with not active / invalid, try standard Mandiri bank_transfer
+  if (
+    params.paymentType === "bank_transfer" &&
+    params.bank === "mandiri" &&
+    (!res.ok || (json.status_code && json.status_code !== "200" && json.status_code !== "201"))
+  ) {
+    delete payload.echannel;
+    payload.payment_type = "bank_transfer";
+    payload.bank_transfer = { bank: "mandiri" };
+    res = await fetch(`${apiBaseUrl}/charge`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Basic ${auth}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    json = await res.json();
+  }
 
   // If QRIS fails due to POP ID not configured on direct QRIS aggregator, try standard GoPay QRIS
   if (
