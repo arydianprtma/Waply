@@ -512,113 +512,9 @@ function OrderContent() {
       return;
     }
 
-    // If Snap fallback chosen
-    if (selectedMethod === "snap") {
-      try {
-        const res = await fetch("/api/billing/create-transaction", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            isAddonOnly: isAddonMode,
-            planId: isAddonMode ? "ADDON" : selectedPlanId,
-            durationMonths: isAddonMode ? 0 : effectiveDurationMonths,
-            selectedAddonIds: isAddonMode ? selectedAddonIds : [],
-            customerName: cleanName,
-            customerEmail: cleanEmail,
-            customerPhone: cleanPhone,
-            couponCode: appliedVoucher?.code || undefined,
-          }),
-        });
-
-        const json = await res.json();
-        if (!json.success) {
-          setFormError(json.error || "Gagal membuat transaksi. Silakan coba lagi.");
-          return;
-        }
-
-        const { snapToken, orderId, snapJsUrl, clientKey } = json.data;
-        const targetSnapUrl = snapJsUrl || "https://app.midtrans.com/snap/snap.js";
-
-        // Dynamically ensure snap script matches the exact environment (Sandbox vs Production)
-        const existingScript = document.getElementById("midtrans-snap") as HTMLScriptElement | null;
-        if (!existingScript || existingScript.src !== targetSnapUrl || !(window as any).snap) {
-          if (existingScript) existingScript.remove();
-          delete (window as any).snap;
-
-          await new Promise<void>((resolve) => {
-            const script = document.createElement("script");
-            script.id = "midtrans-snap";
-            script.src = targetSnapUrl;
-            if (clientKey) script.setAttribute("data-client-key", clientKey);
-            script.onload = () => resolve();
-            script.onerror = () => resolve();
-            document.head.appendChild(script);
-          });
-        }
-
-        if ((window as any).snap) {
-          (window as any).snap.pay(snapToken, {
-            onSuccess: async () => {
-              await fetch("/api/billing/sync", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ orderId }),
-              });
-              router.push("/dashboard/billing?payment=finish");
-            },
-            onPending: () => {
-              router.push("/dashboard/billing?payment=pending");
-            },
-            onError: () => {
-              setFormError("Pembayaran gagal atau dibatalkan. Silakan coba lagi.");
-            },
-            onClose: () => {
-              setLoading(false);
-            },
-          });
-        } else if (json.data.redirectUrl) {
-          window.location.href = json.data.redirectUrl;
-        }
-      } catch (err: any) {
-        setFormError(err.message || "Gagal memproses checkout. Silakan periksa koneksi Anda.");
-      } finally {
-        setLoading(false);
-      }
-      return;
-    }
-
-    // Direct Custom Payment Modal (Direct Core API UI)
+    // Direct Midtrans Snap Checkout
     try {
-      let paymentType = "qris";
-      let bank: string | undefined = undefined;
-
-      if (selectedMethod === "qris") {
-        paymentType = "qris";
-      } else if (selectedMethod === "bca_va") {
-        paymentType = "bank_transfer";
-        bank = "bca";
-      } else if (selectedMethod === "mandiri_va") {
-        paymentType = "bank_transfer";
-        bank = "mandiri";
-      } else if (selectedMethod === "bri_va") {
-        paymentType = "bank_transfer";
-        bank = "bri";
-      } else if (selectedMethod === "bni_va") {
-        paymentType = "bank_transfer";
-        bank = "bni";
-      } else if (selectedMethod === "permata_va") {
-        paymentType = "bank_transfer";
-        bank = "permata";
-      } else if (selectedMethod === "cimb_va") {
-        paymentType = "bank_transfer";
-        bank = "cimb";
-      } else if (selectedMethod === "gopay") {
-        paymentType = "gopay";
-      } else if (selectedMethod === "shopeepay") {
-        paymentType = "shopeepay";
-      }
-
-      const res = await fetch("/api/billing/charge", {
+      const res = await fetch("/api/billing/create-transaction", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -626,8 +522,6 @@ function OrderContent() {
           planId: isAddonMode ? "ADDON" : selectedPlanId,
           durationMonths: isAddonMode ? 0 : effectiveDurationMonths,
           selectedAddonIds: isAddonMode ? selectedAddonIds : [],
-          paymentType,
-          bank,
           customerName: cleanName,
           customerEmail: cleanEmail,
           customerPhone: cleanPhone,
@@ -637,15 +531,55 @@ function OrderContent() {
 
       const json = await res.json();
       if (!json.success) {
-        setFormError(json.error || "Gagal memproses pembayaran. Silakan coba beberapa saat lagi.");
+        setFormError(json.error || "Gagal membuat transaksi. Silakan coba lagi.");
         return;
       }
 
-      setChargeData(json.data);
-      setPaymentSuccess(false);
-      setCustomModalOpen(true);
+      const { snapToken, orderId, snapJsUrl, clientKey } = json.data;
+      const targetSnapUrl = snapJsUrl || "https://app.midtrans.com/snap/snap.js";
+
+      // Dynamically ensure snap script matches the exact environment (Sandbox vs Production)
+      const existingScript = document.getElementById("midtrans-snap") as HTMLScriptElement | null;
+      if (!existingScript || existingScript.src !== targetSnapUrl || !(window as any).snap) {
+        if (existingScript) existingScript.remove();
+        delete (window as any).snap;
+
+        await new Promise<void>((resolve) => {
+          const script = document.createElement("script");
+          script.id = "midtrans-snap";
+          script.src = targetSnapUrl;
+          if (clientKey) script.setAttribute("data-client-key", clientKey);
+          script.onload = () => resolve();
+          script.onerror = () => resolve();
+          document.head.appendChild(script);
+        });
+      }
+
+      if ((window as any).snap) {
+        (window as any).snap.pay(snapToken, {
+          onSuccess: async () => {
+            await fetch("/api/billing/sync", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ orderId }),
+            });
+            router.push("/dashboard/billing?payment=finish");
+          },
+          onPending: () => {
+            router.push("/dashboard/billing?payment=pending");
+          },
+          onError: () => {
+            setFormError("Pembayaran gagal atau dibatalkan. Silakan coba lagi.");
+          },
+          onClose: () => {
+            setLoading(false);
+          },
+        });
+      } else if (json.data.redirectUrl) {
+        window.location.href = json.data.redirectUrl;
+      }
     } catch (err: any) {
-      setFormError(err.message || "Terjadi kesalahan saat memproses order. Silakan coba lagi.");
+      setFormError(err.message || "Gagal memproses checkout. Silakan periksa koneksi Anda.");
     } finally {
       setLoading(false);
     }
@@ -1032,17 +966,17 @@ function OrderContent() {
                 </div>
               </div>
 
-              {/* SECTION 2: Pilihan Metode Pembayaran (Custom Waply UI Options) */}
+              {/* SECTION 2: Metode Pembayaran (Midtrans Secured Gateway) */}
               <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
                 <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between gap-2 flex-wrap">
                   <div className="flex items-center gap-2">
                     <CreditCard className="w-4 h-4 text-emerald-600 shrink-0" />
                     <h2 className="font-extrabold text-sm text-slate-900">
-                      2. Pilih Metode Pembayaran
+                      2. Metode Pembayaran
                     </h2>
                   </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 shrink-0">
-                    Midtrans Powered
+                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 shrink-0 flex items-center gap-1">
+                    <ShieldCheck className="w-3 h-3 text-emerald-600" /> Midtrans Official Gateway
                   </span>
                 </div>
 
@@ -1058,74 +992,31 @@ function OrderContent() {
                       </div>
                     </div>
                   ) : (
-                    <>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {(() => {
-                          const activeChannelKeys = Object.keys(PAYMENT_CHANNELS_DATA).filter((k) =>
-                            enabledChannels.includes(k)
-                          );
-                          const channelsToRender =
-                            activeChannelKeys.length > 0
-                              ? activeChannelKeys
-                              : ["qris", "bca_va", "mandiri_va", "bri_va", "bni_va", "gopay"];
-
-                          return channelsToRender.map((channelKey) => {
-                            const ch = PAYMENT_CHANNELS_DATA[channelKey];
-                            if (!ch) return null;
-                            const isSelected = selectedMethod === channelKey;
-
-                            return (
-                              <button
-                                key={channelKey}
-                                type="button"
-                                onClick={() => setSelectedMethod(channelKey as PaymentMethodOption)}
-                                className={`p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between ${
-                                  isSelected
-                                    ? "bg-emerald-50/50 border-emerald-500 ring-2 ring-emerald-500/20 shadow-sm"
-                                    : "bg-white border-slate-200 hover:border-slate-300"
-                                }`}
-                              >
-                                {ch.badge && (
-                                  <span className="absolute -top-2.5 right-3 px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-600 text-white shadow-xs">
-                                    {ch.badge}
-                                  </span>
-                                )}
-                                <div>
-                                  <div className="flex items-center justify-between mb-1.5">
-                                    <span className="font-black text-xs text-slate-900 flex items-center gap-1.5">
-                                      {ch.icon(`w-4 h-4 ${ch.colorCls}`)} {ch.name}
-                                    </span>
-                                    <div
-                                      className={`w-3.5 h-3.5 rounded-full border ${
-                                        isSelected
-                                          ? "border-emerald-600 bg-emerald-600"
-                                          : "border-slate-300"
-                                      }`}
-                                    />
-                                  </div>
-                                  <p className="text-[11px] text-slate-500">
-                                    {ch.description}
-                                  </p>
-                                </div>
-                              </button>
-                            );
-                          });
-                        })()}
+                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                      <div className="flex items-start gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                          <Zap className="w-4 h-4" />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="font-bold text-xs sm:text-sm text-slate-900">
+                            Pembayaran Otomatis & Terverifikasi Real-Time
+                          </p>
+                          <p className="text-[11px] sm:text-xs text-slate-600 leading-relaxed">
+                            Pilihan metode pembayaran lengkap (QRIS, Bank Transfer VA, GoPay, ShopeePay, Kartu Kredit, Alfamart/Indomaret) akan langsung tampil di jendela aman <strong>Midtrans Popup</strong> saat Anda menekan tombol <strong>Bayar Sekarang</strong>.
+                          </p>
+                        </div>
                       </div>
 
-                      {enabledChannels.includes("snap") && (
-                        <div className="pt-2 flex items-center justify-between text-xs text-slate-400 flex-wrap gap-2">
-                          <span>Ingin bayar dengan Kartu Kredit atau saluran lain?</span>
-                          <button
-                            type="button"
-                            onClick={() => setSelectedMethod("snap")}
-                            className={`font-bold hover:underline ${selectedMethod === "snap" ? "text-primary font-black" : "text-slate-600"}`}
-                          >
-                            {selectedMethod === "snap" ? "✓ Mode Snap Modal Aktif" : "Buka Midtrans Snap Klasik"}
-                          </button>
-                        </div>
-                      )}
-                    </>
+                      <div className="pt-2 border-t border-slate-200/80 flex flex-wrap items-center gap-1.5 text-[11px] text-slate-700 font-semibold">
+                        <span className="text-slate-400 font-normal">Mendukung:</span>
+                        <span className="px-2 py-0.5 bg-white border border-slate-200 rounded-lg shadow-2xs">QRIS Semua Bank & E-Wallet</span>
+                        <span className="px-2 py-0.5 bg-white border border-slate-200 rounded-lg shadow-2xs">BRI (BRIVA)</span>
+                        <span className="px-2 py-0.5 bg-white border border-slate-200 rounded-lg shadow-2xs">Mandiri Bill / VA</span>
+                        <span className="px-2 py-0.5 bg-white border border-slate-200 rounded-lg shadow-2xs">BNI Virtual Account</span>
+                        <span className="px-2 py-0.5 bg-white border border-slate-200 rounded-lg shadow-2xs">BCA VA & Permata</span>
+                        <span className="px-2 py-0.5 bg-white border border-slate-200 rounded-lg shadow-2xs">GoPay & ShopeePay</span>
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>
@@ -1768,7 +1659,7 @@ function OrderContent() {
                     </div>
                     <div className="flex items-center justify-between text-slate-600">
                       <span>Metode Bayar:</span>
-                      <span className="font-bold text-slate-900 uppercase">{selectedMethod.replace("_", " ")}</span>
+                      <span className="font-bold text-emerald-600">Midtrans Otomatis (QRIS / VA)</span>
                     </div>
 
                     <div className="space-y-1.5 py-2 border-y border-dashed border-slate-200">
@@ -1820,7 +1711,7 @@ function OrderContent() {
                     </div>
                     <div className="flex items-center justify-between text-slate-600">
                       <span>Metode Bayar:</span>
-                      <span className="font-bold text-slate-900 uppercase">{selectedMethod.replace("_", " ")}</span>
+                      <span className="font-bold text-emerald-600">Midtrans Otomatis (QRIS / VA)</span>
                     </div>
                     <div className="flex items-center justify-between text-slate-600">
                       <span>
