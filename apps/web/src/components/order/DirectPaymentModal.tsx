@@ -178,9 +178,12 @@ export default function DirectPaymentModal({
                     WAPLY GATEWAY
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-400 font-mono truncate mt-0.5">
-                  Order ID: {chargeData.orderId}
-                </p>
+                <div className="flex items-center gap-1.5 text-xs font-mono mt-0.5">
+                  <span className="text-slate-500 font-bold text-[11px]">Order ID:</span>
+                  <span className="text-slate-900 font-black tracking-wide select-all bg-slate-200/80 px-1.5 py-0.5 rounded text-[11px] border border-slate-300/60 shadow-2xs">
+                    {chargeData.orderId}
+                  </span>
+                </div>
               </div>
             </div>
 
