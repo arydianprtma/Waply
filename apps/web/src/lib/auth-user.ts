@@ -49,24 +49,24 @@ export async function getSessionUser(): Promise<SessionUser> {
 
     if (isDemoAuth || demoEmail) {
       const email = demoEmail || "guest@waply.id";
-      const isSuperAdmin = email === "admin@waply.id" || email === "arydianprtma@gmail.com";
+      const isSystemAdmin = email === "admin@waply.id";
       const dbUser = getUserByEmail(email) || (demoId ? getUserById(demoId) : null);
 
-      if (!dbUser && !isSuperAdmin) {
+      if (!dbUser && !isSystemAdmin) {
         throw new Error("401 Unauthorized: Akun ini telah dihapus oleh Administrator.");
       }
 
       const role: "admin" | "user" =
-        dbUser?.role || (isSuperAdmin ? "admin" : "user");
+        dbUser?.role || (isSystemAdmin ? "admin" : "user");
       const userId =
         dbUser?.id ||
-        (email === "admin@waply.id"
+        (isSystemAdmin
           ? "admin-master-waply-01"
           : `usr_${email.replace(/[^a-zA-Z0-9]/g, "_")}`);
       const name =
         dbUser?.name ||
         demoName ||
-        (role === "admin" ? (isSuperAdmin ? "Waply Super Admin" : "Waply Admin") : email.split("@")[0] || "Waply User");
+        (role === "admin" ? "Waply Super Admin" : email.split("@")[0] || "Waply User");
 
       // Only update last login info for existing users
       const managed = registerOrSyncUser({

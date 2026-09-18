@@ -45,8 +45,7 @@ export async function updateSession(request: NextRequest) {
 
   const isAdmin =
     rawRole === "admin" ||
-    decodedEmail === "admin@waply.id" ||
-    decodedEmail === "arydianprtma@gmail.com";
+    decodedEmail === "admin@waply.id";
 
   if (isDemoAuth || rawEmail) {
     if (isAuthRoute) {
@@ -139,7 +138,7 @@ export async function updateSession(request: NextRequest) {
       const role =
         user.user_metadata?.role ||
         user.app_metadata?.role ||
-        (email === "admin@waply.id" || email === "arydianprtma@gmail.com" ? "admin" : rawRole || "user");
+        (email === "admin@waply.id" ? "admin" : rawRole || "user");
 
       if (role !== "admin") {
         const url = request.nextUrl.clone();
