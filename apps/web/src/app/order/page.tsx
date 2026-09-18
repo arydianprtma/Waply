@@ -514,17 +514,6 @@ function OrderContent() {
     // If Snap fallback chosen
     if (selectedMethod === "snap") {
       try {
-        if (typeof window !== "undefined" && !window.snap) {
-          await new Promise<void>((resolve) => {
-            const script = document.createElement("script");
-            script.src = "https://app.sandbox.midtrans.com/snap/snap.js";
-            script.setAttribute("data-client-key", process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || "");
-            script.onload = () => resolve();
-            script.onerror = () => resolve();
-            document.head.appendChild(script);
-          });
-        }
-
         const res = await fetch("/api/billing/create-transaction", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -546,9 +535,28 @@ function OrderContent() {
           return;
         }
 
-        const { snapToken, orderId } = json.data;
-        if (window.snap) {
-          window.snap.pay(snapToken, {
+        const { snapToken, orderId, snapJsUrl, clientKey } = json.data;
+        const targetSnapUrl = snapJsUrl || "https://app.sandbox.midtrans.com/snap/snap.js";
+
+        // Dynamically ensure snap script matches the exact environment (Sandbox vs Production)
+        const existingScript = document.getElementById("midtrans-snap") as HTMLScriptElement | null;
+        if (!existingScript || existingScript.src !== targetSnapUrl || !(window as any).snap) {
+          if (existingScript) existingScript.remove();
+          delete (window as any).snap;
+
+          await new Promise<void>((resolve) => {
+            const script = document.createElement("script");
+            script.id = "midtrans-snap";
+            script.src = targetSnapUrl;
+            if (clientKey) script.setAttribute("data-client-key", clientKey);
+            script.onload = () => resolve();
+            script.onerror = () => resolve();
+            document.head.appendChild(script);
+          });
+        }
+
+        if ((window as any).snap) {
+          (window as any).snap.pay(snapToken, {
             onSuccess: async () => {
               await fetch("/api/billing/sync", {
                 method: "POST",
@@ -564,6 +572,8 @@ function OrderContent() {
               setLoading(false);
             },
           });
+        } else if (json.data.redirectUrl) {
+          window.location.href = json.data.redirectUrl;
         }
       } catch (err: any) {
         setFormError(err.message || "Gagal memproses checkout. Silakan periksa koneksi Anda.");

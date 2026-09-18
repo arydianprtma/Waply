@@ -423,12 +423,15 @@ export function generateOrderId(planId: PlanId): string {
 export function getMidtransConfig() {
   const adminSettings = getAdminSettings();
   
-  // Prioritize Admin Settings if configured, otherwise fallback to process.env
-  const serverKey = (
-    adminSettings.paymentConfig.serverKey ||
-    process.env.MIDTRANS_SERVER_KEY ||
-    ""
-  ).trim();
+  // Prioritize active configured key, checking process.env and adminSettings
+  const envServerKey = (process.env.MIDTRANS_SERVER_KEY || "").trim();
+  const envClientKey = (process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || "").trim();
+  const dbServerKey = (adminSettings.paymentConfig.serverKey || "").trim();
+  const dbClientKey = (adminSettings.paymentConfig.clientKey || "").trim();
+
+  // If envServerKey is explicitly defined in .env.local / .env and differs, use it
+  const serverKey = envServerKey || dbServerKey;
+  const clientKey = envClientKey || dbClientKey;
 
   // Intelligent auto-detection of environment based on key prefix
   let isProduction = false;
@@ -450,11 +453,17 @@ export function getMidtransConfig() {
     ? "https://api.midtrans.com/v2"
     : "https://api.sandbox.midtrans.com/v2";
 
+  const snapJsUrl = isProduction
+    ? "https://app.midtrans.com/snap/snap.js"
+    : "https://app.sandbox.midtrans.com/snap/snap.js";
+
   return {
     serverKey,
+    clientKey,
     isProduction,
     snapBaseUrl,
     apiBaseUrl,
+    snapJsUrl,
   };
 }
 

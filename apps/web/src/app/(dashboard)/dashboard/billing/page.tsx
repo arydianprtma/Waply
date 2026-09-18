@@ -141,7 +141,6 @@ function BillingContent() {
   const [loading, setLoading] = useState(true);
   const [upgrading, setUpgrading] = useState<PlanId | null>(null);
   const [syncingOrderId, setSyncingOrderId] = useState<string | null>(null);
-  const [snapLoaded, setSnapLoaded] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"subscription" | "addons" | "invoices">("subscription");
@@ -178,20 +177,6 @@ function BillingContent() {
       });
     }
   }, [selectedPeriodTab]);
-
-  // Load Snap.js script
-  useEffect(() => {
-    if (document.getElementById("midtrans-snap")) {
-      setSnapLoaded(true);
-      return;
-    }
-    const script = document.createElement("script");
-    script.id = "midtrans-snap";
-    script.src = "https://app.sandbox.midtrans.com/snap/snap.js";
-    script.dataset.clientKey = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || "";
-    script.onload = () => setSnapLoaded(true);
-    document.head.appendChild(script);
-  }, []);
 
   const fetchStatus = useCallback(async () => {
     try {

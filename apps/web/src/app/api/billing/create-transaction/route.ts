@@ -9,6 +9,7 @@ import {
   createSnapToken,
   createInvoice,
   getPlanDiscountStatus,
+  getMidtransConfig,
 } from "@/lib/billing";
 import { validateVoucher, recordVoucherUsage } from "@/lib/vouchers";
 import { getAllAddons } from "@/lib/addons";
@@ -141,6 +142,8 @@ export async function POST(req: NextRequest) {
       addonsAmount,
     });
 
+    const { snapJsUrl, clientKey } = getMidtransConfig();
+
     return NextResponse.json({
       success: true,
       data: {
@@ -149,6 +152,8 @@ export async function POST(req: NextRequest) {
         orderId,
         finalAmount,
         durationMonths,
+        snapJsUrl,
+        clientKey,
       },
     });
   } catch (error: any) {
