@@ -19,6 +19,7 @@ import {
   MessageSquare,
   Server,
   ArrowRight,
+  ShieldCheck,
 } from "lucide-react";
 import { Plan } from "@/lib/billing-types";
 import { AddonItem } from "@/lib/addon-types";
@@ -80,7 +81,7 @@ export default function DirectPaymentModal({
 }: DirectPaymentModalProps) {
   const [copiedVa, setCopiedVa] = useState(false);
   const [copiedAmount, setCopiedAmount] = useState(false);
-  const [activeInstructionTab, setActiveInstructionTab] = useState<"mbanking" | "ibanking" | "atm" | null>("mbanking");
+  const [activeInstructionTab, setActiveInstructionTab] = useState<"mbanking" | "ibanking" | "atm">("mbanking");
   const [timeRemaining, setTimeRemaining] = useState<string>("23:59:59");
   const [syncChecking, setSyncChecking] = useState(false);
   const [syncNotice, setSyncNotice] = useState<{ type: "info" | "warning" | "error"; title: string; message: string } | null>(null);
@@ -151,43 +152,54 @@ export default function DirectPaymentModal({
 
   return (
     <ModalPortal>
-      <div className="fixed inset-0 z-[99999] bg-black/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+      <div className="fixed inset-0 z-[99999] bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
         <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150 my-auto relative z-10 max-h-[92vh] flex flex-col overflow-hidden">
-          {/* Modal Top Bar */}
-          <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/80 shrink-0">
-            <div className="flex items-center gap-2.5">
-              <div
-                className={`w-8 h-8 rounded-xl ${
-                  paymentSuccess ? "bg-emerald-600" : "bg-gradient-to-tr from-emerald-600 to-teal-500"
-                } text-white flex items-center justify-center font-black text-sm shadow-xs`}
-              >
-                {paymentSuccess ? <Check className="w-4 h-4" /> : "W"}
+          
+          {/* Modal Header */}
+          <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/90 shrink-0">
+            <div className="flex items-center gap-3">
+              {/* Official Waply Logo Emblem */}
+              <div className="w-10 h-10 rounded-2xl bg-white p-1.5 shadow-xs border border-slate-200/80 flex items-center justify-center shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/icon.png"
+                  alt="Waply Icon"
+                  width={32}
+                  height={32}
+                  className="w-full h-full object-contain select-none"
+                />
               </div>
-              <div>
-                <h3 className="font-extrabold text-sm text-slate-900 leading-tight">
-                  {paymentSuccess ? "Pembayaran Berhasil" : "Selesaikan Pembayaran"}
-                </h3>
-                <div className="flex items-center gap-2 text-[10px] text-slate-400 font-mono mt-0.5">
-                  <span>Order: {chargeData.orderId}</span>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-extrabold text-sm sm:text-base text-slate-900 leading-tight">
+                    {paymentSuccess ? "Pembayaran Berhasil" : "Selesaikan Pembayaran"}
+                  </h3>
+                  <span className="badge badge-xs bg-emerald-50 text-emerald-700 border-emerald-200/80 font-bold text-[9px] px-1.5">
+                    WAPLY
+                  </span>
                 </div>
+                <p className="text-[11px] text-slate-400 font-mono truncate mt-0.5">
+                  Order: {chargeData.orderId}
+                </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5 shrink-0">
               {!paymentSuccess ? (
-                <div className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-50 border border-rose-200 text-rose-700 text-[11px] font-bold font-mono">
-                  <Clock className="w-3 h-3 text-rose-500 animate-pulse" />
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 border border-rose-200/80 text-rose-700 text-xs font-bold font-mono shadow-2xs">
+                  <Clock className="w-3.5 h-3.5 text-rose-500 animate-pulse shrink-0" />
                   <span>{timeRemaining}</span>
                 </div>
               ) : (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase">
-                  <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Terverifikasi
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-extrabold">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Terverifikasi
                 </span>
               )}
               <button
                 type="button"
                 onClick={onClose}
                 className="w-8 h-8 rounded-full border border-slate-200 hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700 transition-colors"
+                aria-label="Tutup Modal"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -195,7 +207,8 @@ export default function DirectPaymentModal({
           </div>
 
           {/* Modal Body (Scrollable) */}
-          <div className="p-5 sm:p-6 overflow-y-auto space-y-5 flex-1">
+          <div className="p-5 sm:p-6 overflow-y-auto space-y-4 flex-1 text-slate-700">
+            
             {/* SUCCESS STATE */}
             {paymentSuccess ? (
               <div className="py-2 text-center space-y-5">
@@ -204,7 +217,7 @@ export default function DirectPaymentModal({
                   <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-white flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/30 ring-8 ring-emerald-50">
                     <CheckCircle2 className="w-11 h-11 animate-bounce" />
                   </div>
-                  <span className="absolute -bottom-2 -right-2 px-2 py-0.5 rounded-full bg-slate-900 text-emerald-400 text-[9px] font-black uppercase tracking-wider shadow-sm border border-slate-700">
+                  <span className="absolute -bottom-2 -right-2 px-2 py-0.5 rounded-full bg-slate-900 text-emerald-400 text-[9px] font-black uppercase tracking-wider shadow-xs border border-slate-700">
                     LUNAS
                   </span>
                 </div>
@@ -223,18 +236,18 @@ export default function DirectPaymentModal({
                             .filter(Boolean)
                             .join(", ") || "Top-Up Kuota"}
                         </strong>{" "}
-                        Anda telah aktif dan kuota langsung ditambahkan ke akun Anda.
+                        telah aktif dan kuota langsung ditambahkan ke akun Anda.
                       </>
                     ) : (
                       <>
-                        Terima kasih! Paket <strong className="text-slate-900">Waply {currentPlan.name}</strong> Anda telah aktif. Kuota pesan & akses API gateway langsung dapat digunakan sekarang.
+                        Terima kasih! Paket <strong className="text-slate-900">Waply {currentPlan.name}</strong> Anda telah aktif. Kuota pesan dan akses API gateway langsung dapat digunakan.
                       </>
                     )}
                   </p>
                 </div>
 
                 {/* Digital Receipt Card */}
-                <div className="p-5 bg-slate-50/90 rounded-3xl border border-slate-200/90 text-xs space-y-3.5 text-left shadow-xs relative overflow-hidden">
+                <div className="p-4 sm:p-5 bg-slate-50 rounded-2xl border border-slate-200/90 text-xs space-y-3.5 text-left shadow-xs relative overflow-hidden">
                   <div className="flex items-center justify-between pb-3 border-b border-slate-200/80">
                     <div>
                       <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
@@ -300,18 +313,17 @@ export default function DirectPaymentModal({
                     </div>
                   </div>
 
-                  {/* Email Notification Badge */}
                   {customerEmail && (
                     <div className="pt-2 border-t border-slate-200/80 flex items-center gap-2 text-[11px] text-emerald-800 bg-emerald-50/70 p-2.5 rounded-xl border border-emerald-200/60 font-medium">
                       <Mail className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                       <span>
-                        Rincian invoice & bukti bayar resmi dikirimkan ke Email: <strong>{customerEmail}</strong>
+                        Bukti bayar dan rincian invoice dikirimkan ke: <strong>{customerEmail}</strong>
                       </span>
                     </div>
                   )}
                 </div>
 
-                {/* Unlocked Benefits Quick Pills */}
+                {/* Benefits Pills */}
                 {chargeData.orderId?.startsWith("WAPLY-ADDON") || isAddonMode ? (
                   <div className="grid grid-cols-3 gap-2 text-[11px] font-bold">
                     {(() => {
@@ -326,16 +338,16 @@ export default function DirectPaymentModal({
 
                       return (
                         <>
-                          <div className="p-2 rounded-xl bg-slate-100/80 text-slate-700 border border-slate-200 flex flex-col items-center">
-                            <Smartphone className="w-3.5 h-3.5 text-emerald-600 mb-0.5" />
-                            <span>{addedDev > 0 ? `+${addedDev} Device` : "Slot Perangkat"}</span>
+                          <div className="p-2.5 rounded-xl bg-slate-50 text-slate-700 border border-slate-200 flex flex-col items-center">
+                            <Smartphone className="w-4 h-4 text-emerald-600 mb-1" />
+                            <span>{addedDev > 0 ? `+${addedDev} Device` : "Slot Device"}</span>
                           </div>
-                          <div className="p-2 rounded-xl bg-slate-100/80 text-slate-700 border border-slate-200 flex flex-col items-center">
-                            <MessageSquare className="w-3.5 h-3.5 text-sky-600 mb-0.5" />
+                          <div className="p-2.5 rounded-xl bg-slate-50 text-slate-700 border border-slate-200 flex flex-col items-center">
+                            <MessageSquare className="w-4 h-4 text-sky-600 mb-1" />
                             <span>{addedMsg > 0 ? `+${addedMsg.toLocaleString("id-ID")} Pesan` : "Kuota Pesan"}</span>
                           </div>
-                          <div className="p-2 rounded-xl bg-slate-100/80 text-slate-700 border border-slate-200 flex flex-col items-center">
-                            <Zap className="w-3.5 h-3.5 text-amber-500 mb-0.5" />
+                          <div className="p-2.5 rounded-xl bg-slate-50 text-slate-700 border border-slate-200 flex flex-col items-center">
+                            <Zap className="w-4 h-4 text-amber-500 mb-1" />
                             <span>Aktif Instan</span>
                           </div>
                         </>
@@ -344,12 +356,12 @@ export default function DirectPaymentModal({
                   </div>
                 ) : (
                   <div className="grid grid-cols-3 gap-2 text-[11px] font-bold">
-                    <div className="p-2 rounded-xl bg-slate-100/80 text-slate-700 border border-slate-200 flex flex-col items-center">
-                      <Smartphone className="w-3.5 h-3.5 text-emerald-600 mb-0.5" />
+                    <div className="p-2.5 rounded-xl bg-slate-50 text-slate-700 border border-slate-200 flex flex-col items-center">
+                      <Smartphone className="w-4 h-4 text-emerald-600 mb-1" />
                       <span>{currentPlan.maxDevices} Devices</span>
                     </div>
-                    <div className="p-2 rounded-xl bg-slate-100/80 text-slate-700 border border-slate-200 flex flex-col items-center">
-                      <MessageSquare className="w-3.5 h-3.5 text-sky-600 mb-0.5" />
+                    <div className="p-2.5 rounded-xl bg-slate-50 text-slate-700 border border-slate-200 flex flex-col items-center">
+                      <MessageSquare className="w-4 h-4 text-sky-600 mb-1" />
                       <span>
                         {currentPlan.monthlyMessages === -1
                           ? "Unlimited"
@@ -357,18 +369,18 @@ export default function DirectPaymentModal({
                         Pesan
                       </span>
                     </div>
-                    <div className="p-2 rounded-xl bg-slate-100/80 text-slate-700 border border-slate-200 flex flex-col items-center">
-                      <Server className="w-3.5 h-3.5 text-primary mb-0.5" />
+                    <div className="p-2.5 rounded-xl bg-slate-50 text-slate-700 border border-slate-200 flex flex-col items-center">
+                      <Server className="w-4 h-4 text-primary mb-1" />
                       <span>REST API Siap</span>
                     </div>
                   </div>
                 )}
 
-                {/* Action Buttons */}
+                {/* Actions */}
                 <div className="pt-2 flex flex-col gap-2.5">
                   <Link
                     href="/dashboard"
-                    className="btn btn-primary btn-block rounded-2xl text-white font-extrabold shadow-lg shadow-primary/25 gap-2 text-sm"
+                    className="btn btn-primary btn-block rounded-xl text-white font-extrabold shadow-md shadow-primary/20 gap-2 text-sm"
                   >
                     Buka Dashboard Gateway <ArrowRight className="w-4 h-4" />
                   </Link>
@@ -382,100 +394,95 @@ export default function DirectPaymentModal({
               </div>
             ) : (
               /* PENDING / INSTRUCTIONS STATE */
-              <div className="space-y-5">
-                {/* Expiry Mobile Banner */}
-                <div className="sm:hidden flex items-center justify-between px-3 py-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold">
-                  <span className="flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5 text-rose-500" /> Batas Waktu Bayar:
-                  </span>
-                  <span className="font-mono text-sm">{timeRemaining}</span>
-                </div>
-
-                {/* Total Amount Box */}
-                <div className="p-4 bg-slate-900 rounded-2xl text-white relative overflow-hidden shadow-md">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
-                      Total Tagihan Pembayaran
+              <div className="space-y-4">
+                
+                {/* Clean Total Tagihan Card */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white relative overflow-hidden shadow-sm border border-slate-800">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[11px] uppercase font-bold tracking-wider text-slate-400 flex items-center gap-1.5">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Total Tagihan Pembayaran
                     </span>
                     <button
                       type="button"
                       onClick={() => copyToClipboard(chargeData.grossAmount.toString(), "amount")}
-                      className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-[11px] font-bold flex items-center gap-1.5 transition-colors"
+                      className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white text-[11px] font-bold flex items-center gap-1.5 transition-colors"
                     >
-                      {copiedAmount ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                      {copiedAmount ? "Nominal Tersalin" : "Salin Nominal"}
+                      {copiedAmount ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedAmount ? "Tersalin" : "Salin Nominal"}</span>
                     </button>
                   </div>
-                  <div className="text-2xl font-black text-emerald-400 tracking-tight font-mono">
+                  <div className="text-2xl sm:text-3xl font-black text-emerald-400 tracking-tight font-mono">
                     {formatIDR(chargeData.grossAmount)}
                   </div>
-                  <p className="text-[10px] text-slate-400 mt-1">
-                    Transfer tepat sesuai nominal hingga digit terakhir untuk verifikasi instan.
+                  <p className="text-[11px] text-slate-400 mt-1.5 leading-snug">
+                    Transfer tepat sesuai nominal hingga 3 digit terakhir untuk verifikasi otomatis instan.
                   </p>
                 </div>
 
                 {/* 1. QRIS VIEW */}
                 {chargeData.paymentType === "qris" && (
-                  <div className="space-y-4 text-center">
-                    <div className="p-5 bg-white border-2 border-slate-200 rounded-3xl inline-block shadow-md mx-auto relative group">
+                  <div className="space-y-3.5 text-center bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
+                    <div className="p-3 bg-white border border-slate-200 rounded-2xl inline-block shadow-xs mx-auto">
                       {chargeData.qrCodeUrl ? (
                         /* eslint-disable-next-line @next/next/no-img-element */
                         <img
                           src={chargeData.qrCodeUrl}
                           alt="QRIS Code Waply"
-                          width={224}
-                          height={224}
-                          className="w-56 h-56 object-contain mx-auto rounded-xl"
+                          width={200}
+                          height={200}
+                          className="w-48 h-48 sm:w-52 sm:h-52 object-contain mx-auto rounded-lg"
                         />
                       ) : chargeData.qrString ? (
                         /* eslint-disable-next-line @next/next/no-img-element */
                         <img
-                          src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(
                             chargeData.qrString
                           )}`}
                           alt="QRIS Code Waply"
-                          width={224}
-                          height={224}
-                          className="w-56 h-56 object-contain mx-auto rounded-xl"
+                          width={200}
+                          height={200}
+                          className="w-48 h-48 sm:w-52 sm:h-52 object-contain mx-auto rounded-lg"
                         />
                       ) : (
-                        <div className="w-56 h-56 flex flex-col items-center justify-center bg-slate-100 rounded-xl text-xs text-slate-400 font-medium gap-2">
-                          <RefreshCw className="w-6 h-6 animate-spin text-slate-400" />
+                        <div className="w-48 h-48 flex flex-col items-center justify-center bg-slate-100 rounded-lg text-xs text-slate-400 font-medium gap-2">
+                          <RefreshCw className="w-5 h-5 animate-spin text-slate-400" />
                           Memuat QRIS...
                         </div>
                       )}
                     </div>
 
-                    <div className="space-y-1.5">
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <div className="space-y-1">
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">
                         <QrCode className="w-3.5 h-3.5" /> QRIS Nasional (Semua Bank & E-Wallet)
                       </div>
-                      <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
-                        Buka BCA Mobile, Livin Mandiri, BRImo, BNI Mobile, GoPay, OVO, Dana, atau ShopeePay lalu scan QR di atas.
+                      <p className="text-[11px] text-slate-500 max-w-sm mx-auto leading-relaxed">
+                        Scan QR di atas menggunakan BCA Mobile, Livin Mandiri, BRImo, BNI, GoPay, OVO, DANA, atau ShopeePay.
                       </p>
                     </div>
 
                     {chargeData.qrCodeUrl && (
-                      <a
-                        href={chargeData.qrCodeUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        download="QRIS-Waply.png"
-                        className="btn btn-outline btn-xs gap-1.5 rounded-xl text-slate-700 font-bold"
-                      >
-                        <Download className="w-3.5 h-3.5" /> Unduh Gambar QRIS
-                      </a>
+                      <div>
+                        <a
+                          href={chargeData.qrCodeUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          download="QRIS-Waply.png"
+                          className="btn btn-outline btn-xs gap-1.5 rounded-lg text-slate-700 font-bold"
+                        >
+                          <Download className="w-3.5 h-3.5" /> Unduh Gambar QRIS
+                        </a>
+                      </div>
                     )}
                   </div>
                 )}
 
-                {/* 2. VIRTUAL ACCOUNT VIEW (BCA, BRI, BNI, PERMATA) */}
+                {/* 2. VIRTUAL ACCOUNT VIEW (BCA, BRI, BNI, PERMATA, CIMB) */}
                 {chargeData.vaNumber && (
                   <div className="space-y-3">
-                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-3">
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-2">
-                          <Building2 className="w-4 h-4 text-slate-600" />
+                          <Building2 className="w-4 h-4 text-slate-700" />
                           <span className="font-extrabold text-slate-800">
                             {chargeData.bank?.toUpperCase() === "BCA" && "BCA Virtual Account"}
                             {chargeData.bank?.toUpperCase() === "BRI" && "BRI (BRIVA)"}
@@ -486,13 +493,13 @@ export default function DirectPaymentModal({
                               `${chargeData.bank?.toUpperCase()} Virtual Account`}
                           </span>
                         </div>
-                        <span className="px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 font-extrabold text-[10px] uppercase font-mono">
+                        <span className="px-2 py-0.5 rounded-md bg-slate-200 text-slate-700 font-extrabold text-[10px] uppercase font-mono">
                           {chargeData.bank || "VA"}
                         </span>
                       </div>
 
                       {/* VA Display Box */}
-                      <div className="p-3.5 bg-white rounded-xl border border-slate-200 space-y-1.5">
+                      <div className="p-3.5 bg-white rounded-xl border border-slate-200 space-y-1">
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                           Nomor Virtual Account
                         </span>
@@ -521,13 +528,13 @@ export default function DirectPaymentModal({
                 {/* 3. MANDIRI BILL VIEW */}
                 {chargeData.billerCode && chargeData.billKey && (
                   <div className="space-y-3">
-                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-3">
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-2">
                           <Building2 className="w-4 h-4 text-amber-600" />
                           <span className="font-extrabold text-slate-800">Mandiri Bill Payment</span>
                         </div>
-                        <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-extrabold text-[10px] uppercase font-mono">
+                        <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 font-extrabold text-[10px] uppercase font-mono">
                           MANDIRI
                         </span>
                       </div>
@@ -567,31 +574,31 @@ export default function DirectPaymentModal({
 
                 {/* 4. GOPAY DEEPLINK VIEW */}
                 {chargeData.deeplinkUrl && (
-                  <div className="pt-2 text-center space-y-3">
+                  <div className="pt-1 text-center space-y-3">
                     <a
                       href={chargeData.deeplinkUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="btn btn-primary btn-block rounded-2xl text-white font-extrabold shadow-md gap-2"
+                      className="btn btn-primary btn-block rounded-xl text-white font-extrabold shadow-md gap-2"
                     >
                       <Smartphone className="w-4 h-4" /> Buka Aplikasi GoPay Sekarang
                     </a>
                   </div>
                 )}
 
-                {/* COLLAPSIBLE PAYMENT INSTRUCTIONS ACCORDION */}
-                <div className="rounded-2xl border border-slate-200 overflow-hidden bg-slate-50/50">
-                  <div className="px-4 py-3 bg-slate-100/80 border-b border-slate-200 flex items-center justify-between">
-                    <span className="text-xs font-black text-slate-800 flex items-center gap-1.5">
-                      <HelpCircle className="w-3.5 h-3.5 text-primary" /> Panduan Cara Pembayaran
+                {/* PAYMENT INSTRUCTIONS ACCORDION */}
+                <div className="rounded-2xl border border-slate-200 overflow-hidden bg-slate-50/60">
+                  <div className="px-4 py-2.5 bg-slate-100/80 border-b border-slate-200 flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                      <HelpCircle className="w-3.5 h-3.5 text-primary" /> Panduan Pembayaran
                     </span>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 bg-slate-200/60 p-0.5 rounded-lg">
                       <button
                         type="button"
                         onClick={() => setActiveInstructionTab("mbanking")}
-                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                        className={`px-2 py-0.5 rounded-md text-[11px] font-bold transition-all ${
                           activeInstructionTab === "mbanking"
-                            ? "bg-white text-slate-900 shadow-xs border border-slate-200"
+                            ? "bg-white text-slate-900 shadow-2xs"
                             : "text-slate-500 hover:text-slate-800"
                         }`}
                       >
@@ -600,9 +607,9 @@ export default function DirectPaymentModal({
                       <button
                         type="button"
                         onClick={() => setActiveInstructionTab("ibanking")}
-                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                        className={`px-2 py-0.5 rounded-md text-[11px] font-bold transition-all ${
                           activeInstructionTab === "ibanking"
-                            ? "bg-white text-slate-900 shadow-xs border border-slate-200"
+                            ? "bg-white text-slate-900 shadow-2xs"
                             : "text-slate-500 hover:text-slate-800"
                         }`}
                       >
@@ -611,9 +618,9 @@ export default function DirectPaymentModal({
                       <button
                         type="button"
                         onClick={() => setActiveInstructionTab("atm")}
-                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                        className={`px-2 py-0.5 rounded-md text-[11px] font-bold transition-all ${
                           activeInstructionTab === "atm"
-                            ? "bg-white text-slate-900 shadow-xs border border-slate-200"
+                            ? "bg-white text-slate-900 shadow-2xs"
                             : "text-slate-500 hover:text-slate-800"
                         }`}
                       >
@@ -622,33 +629,33 @@ export default function DirectPaymentModal({
                     </div>
                   </div>
 
-                  <div className="p-4 text-xs text-slate-600 bg-white">
+                  <div className="p-3.5 text-xs text-slate-600 bg-white">
                     {/* BCA Instructions */}
                     {chargeData.bank?.toUpperCase() === "BCA" && (
                       <>
                         {activeInstructionTab === "mbanking" && (
-                          <ol className="list-decimal pl-4 space-y-1.5 text-[11px] leading-relaxed">
-                            <li>Buka aplikasi <strong>BCA Mobile</strong> & login m-BCA.</li>
+                          <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
+                            <li>Buka aplikasi <strong>BCA Mobile</strong> &gt; pilih <strong>m-BCA</strong>.</li>
                             <li>Pilih menu <strong>m-Transfer</strong> &gt; <strong>BCA Virtual Account</strong>.</li>
-                            <li>Masukkan nomor Virtual Account di atas & klik <strong>Send</strong>.</li>
-                            <li>Periksa nama penerima <strong>WAPLY / MIDTRANS</strong> dan total nominal.</li>
-                            <li>Masukkan <strong>PIN m-BCA</strong> Anda. Transaksi selesai & gateway langsung aktif.</li>
+                            <li>Masukkan nomor Virtual Account di atas &gt; klik <strong>Send</strong>.</li>
+                            <li>Periksa nama tagihan <strong>WAPLY</strong> dan nominal pembayaran.</li>
+                            <li>Masukkan <strong>PIN m-BCA</strong> Anda. Pembayaran otomatis terverifikasi.</li>
                           </ol>
                         )}
                         {activeInstructionTab === "ibanking" && (
-                          <ol className="list-decimal pl-4 space-y-1.5 text-[11px] leading-relaxed">
-                            <li>Login ke <strong>KlikBCA Individual</strong> (https://ibank.klikbca.com).</li>
+                          <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
+                            <li>Login ke <strong>KlikBCA Individual</strong>.</li>
                             <li>Pilih menu <strong>Transfer Dana</strong> &gt; <strong>Transfer ke BCA Virtual Account</strong>.</li>
                             <li>Masukkan nomor Virtual Account di atas lalu klik <strong>Lanjutkan</strong>.</li>
                             <li>Masukkan respon <strong>KeyBCA APPLI 1</strong> lalu klik <strong>Kirim</strong>.</li>
                           </ol>
                         )}
                         {activeInstructionTab === "atm" && (
-                          <ol className="list-decimal pl-4 space-y-1.5 text-[11px] leading-relaxed">
+                          <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
                             <li>Masukkan <strong>Kartu ATM BCA</strong> & PIN Anda.</li>
                             <li>Pilih menu <strong>Transaksi Lainnya</strong> &gt; <strong>Transfer</strong> &gt; <strong>Ke Rek BCA Virtual Account</strong>.</li>
                             <li>Masukkan nomor Virtual Account di atas lalu tekan <strong>Benar</strong>.</li>
-                            <li>Konfirmasi jumlah dan rincian transaksi lalu selesaikan pembayaran.</li>
+                            <li>Konfirmasi rincian transaksi lalu selesaikan pembayaran.</li>
                           </ol>
                         )}
                       </>
@@ -658,15 +665,15 @@ export default function DirectPaymentModal({
                     {chargeData.bank?.toUpperCase() === "MANDIRI" && (
                       <>
                         {activeInstructionTab === "mbanking" && (
-                          <ol className="list-decimal pl-4 space-y-1.5 text-[11px] leading-relaxed">
+                          <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
                             <li>Buka aplikasi <strong>Livin&apos; by Mandiri</strong> & login.</li>
-                            <li>Pilih menu <strong>Bayar</strong> &gt; cari <strong>Midtrans / Waply</strong> (Kode: {chargeData.billerCode}).</li>
-                            <li>Masukkan <strong>Bill Key / Nomor Pembayaran</strong>: {chargeData.billKey}.</li>
-                            <li>Konfirmasi detail pembayaran lalu masukkan <strong>PIN Livin&apos;</strong> Anda.</li>
+                            <li>Pilih menu <strong>Bayar</strong> &gt; cari penyedia jasa <strong>Midtrans / Waply</strong> ({chargeData.billerCode}).</li>
+                            <li>Masukkan <strong>Nomor Pembayaran (Bill Key)</strong>: {chargeData.billKey}.</li>
+                            <li>Periksa detail tagihan lalu masukkan <strong>PIN Livin&apos;</strong> Anda.</li>
                           </ol>
                         )}
                         {activeInstructionTab === "ibanking" && (
-                          <ol className="list-decimal pl-4 space-y-1.5 text-[11px] leading-relaxed">
+                          <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
                             <li>Login ke <strong>Mandiri Online</strong>.</li>
                             <li>Pilih menu <strong>Bayar</strong> &gt; <strong>Multi Payment</strong>.</li>
                             <li>Pilih penyedia jasa <strong>Midtrans</strong> lalu masukkan Bill Key.</li>
@@ -674,11 +681,11 @@ export default function DirectPaymentModal({
                           </ol>
                         )}
                         {activeInstructionTab === "atm" && (
-                          <ol className="list-decimal pl-4 space-y-1.5 text-[11px] leading-relaxed">
+                          <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
                             <li>Masukkan Kartu ATM Mandiri & PIN.</li>
                             <li>Pilih <strong>Bayar/Beli</strong> &gt; <strong>Lainnya</strong> &gt; <strong>Multi Payment</strong>.</li>
                             <li>Masukkan Kode Perusahaan ({chargeData.billerCode}) & Bill Key ({chargeData.billKey}).</li>
-                            <li>Konfirmasi pembayaran lalu tekan <strong>Ya</strong>.</li>
+                            <li>Konfirmasi pembayaran lalu selesaikan transaksi.</li>
                           </ol>
                         )}
                       </>
@@ -688,22 +695,22 @@ export default function DirectPaymentModal({
                     {chargeData.bank?.toUpperCase() === "BRI" && (
                       <>
                         {activeInstructionTab === "mbanking" && (
-                          <ol className="list-decimal pl-4 space-y-1.5 text-[11px] leading-relaxed">
-                            <li>Buka aplikasi <strong>BRImo</strong> & login.</li>
+                          <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
+                            <li>Buka aplikasi <strong>BRImo</strong> & login akun Anda.</li>
                             <li>Pilih menu <strong>Tagihan / Pembayaran</strong> &gt; <strong>BRIVA</strong>.</li>
                             <li>Masukkan nomor BRIVA di atas lalu klik <strong>Lanjutkan</strong>.</li>
-                            <li>Periksa data transaksi dan masukkan <strong>PIN BRImo</strong> Anda.</li>
+                            <li>Periksa nominal tagihan dan masukkan <strong>PIN BRImo</strong> Anda.</li>
                           </ol>
                         )}
                         {activeInstructionTab === "ibanking" && (
-                          <ol className="list-decimal pl-4 space-y-1.5 text-[11px] leading-relaxed">
+                          <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
                             <li>Login ke <strong>Internet Banking BRI</strong>.</li>
                             <li>Pilih menu <strong>Pembayaran</strong> &gt; <strong>BRIVA</strong>.</li>
-                            <li>Masukkan nomor BRIVA dan konfirmasi dengan token m-Token.</li>
+                            <li>Masukkan nomor BRIVA dan konfirmasi dengan m-Token.</li>
                           </ol>
                         )}
                         {activeInstructionTab === "atm" && (
-                          <ol className="list-decimal pl-4 space-y-1.5 text-[11px] leading-relaxed">
+                          <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
                             <li>Masukkan Kartu ATM BRI & PIN.</li>
                             <li>Pilih <strong>Transaksi Lain</strong> &gt; <strong>Pembayaran</strong> &gt; <strong>Lainnya</strong> &gt; <strong>BRIVA</strong>.</li>
                             <li>Masukkan nomor BRIVA di atas lalu tekan <strong>Ya</strong> untuk konfirmasi.</li>
@@ -716,7 +723,7 @@ export default function DirectPaymentModal({
                     {chargeData.bank?.toUpperCase() === "BNI" && (
                       <>
                         {activeInstructionTab === "mbanking" && (
-                          <ol className="list-decimal pl-4 space-y-1.5 text-[11px] leading-relaxed">
+                          <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
                             <li>Buka aplikasi <strong>BNI Mobile Banking</strong> & login.</li>
                             <li>Pilih menu <strong>Pembayaran</strong> &gt; <strong>Virtual Account Billing</strong>.</li>
                             <li>Pilih Tab <strong>Input Baru</strong> lalu masukkan nomor Virtual Account.</li>
@@ -724,14 +731,14 @@ export default function DirectPaymentModal({
                           </ol>
                         )}
                         {activeInstructionTab === "ibanking" && (
-                          <ol className="list-decimal pl-4 space-y-1.5 text-[11px] leading-relaxed">
+                          <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
                             <li>Login ke <strong>BNI Internet Banking</strong>.</li>
                             <li>Pilih <strong>Transaksi</strong> &gt; <strong>Virtual Account Billing</strong>.</li>
                             <li>Masukkan nomor Virtual Account dan otorisasi dengan token BNI.</li>
                           </ol>
                         )}
                         {activeInstructionTab === "atm" && (
-                          <ol className="list-decimal pl-4 space-y-1.5 text-[11px] leading-relaxed">
+                          <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
                             <li>Masukkan Kartu ATM BNI & PIN.</li>
                             <li>Pilih <strong>Menu Lain</strong> &gt; <strong>Pembayaran</strong> &gt; <strong>Menu Berikutnya</strong> &gt; <strong>Virtual Account Billing</strong>.</li>
                             <li>Masukkan nomor Virtual Account di atas lalu selesaikan transaksi.</li>
@@ -742,42 +749,42 @@ export default function DirectPaymentModal({
 
                     {/* QRIS Instructions */}
                     {chargeData.paymentType === "qris" && (
-                      <ol className="list-decimal pl-4 space-y-1.5 text-[11px] leading-relaxed">
-                        <li>Buka aplikasi mobile banking atau e-wallet pilihan Anda (BCA Mobile, Livin&apos;, BRImo, GoPay, OVO, Dana, dll).</li>
+                      <ol className="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
+                        <li>Buka aplikasi m-Banking atau E-Wallet (BCA Mobile, Livin, BRImo, BNI, GoPay, OVO, DANA, ShopeePay).</li>
                         <li>Pilih menu <strong>Scan QRIS / Bayar</strong>.</li>
-                        <li>Arahkan kamera ke QR Code di atas (atau unggah dari galeri jika diunduh).</li>
-                        <li>Periksa nominal tagihan & nama merchant <strong>Waply Gateway</strong>.</li>
-                        <li>Konfirmasi dan masukkan PIN transaksi Anda. Verifikasi akan terdeteksi otomatis dalam 1-3 detik.</li>
+                        <li>Arahkan kamera ke QR Code di atas (atau unggah gambar jika diunduh).</li>
+                        <li>Pastikan nominal tagihan dan nama penerima <strong>Waply Gateway</strong> sesuai.</li>
+                        <li>Konfirmasi pembayaran dan masukkan PIN transaksi Anda.</li>
                       </ol>
                     )}
                   </div>
                 </div>
 
                 {/* Status Indicator Bar */}
-                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-between text-xs">
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
-                    <span className="font-bold text-slate-700">Menunggu Pembayaran...</span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shrink-0" />
+                    <span className="font-bold text-slate-700">Menunggu Pembayaran</span>
                   </div>
-                  <span className="text-[11px] text-slate-400 font-mono">
-                    Sinkronisasi Otomatis Tiap 3 Detik
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    Sinkronisasi Otomatis 3 Detik
                   </span>
                 </div>
 
-                {/* In-Modal Feedback Notice */}
+                {/* Feedback Notice */}
                 {syncNotice && (
                   <div
-                    className={`p-4 rounded-2xl border text-xs space-y-1.5 animate-in fade-in zoom-in-95 duration-150 ${
+                    className={`p-3.5 rounded-xl border text-xs space-y-1 animate-in fade-in zoom-in-95 duration-150 ${
                       syncNotice.type === "warning"
-                        ? "bg-amber-50/90 border-amber-200 text-amber-900"
+                        ? "bg-amber-50 border-amber-200 text-amber-900"
                         : syncNotice.type === "error"
-                        ? "bg-rose-50/90 border-rose-200 text-rose-900"
-                        : "bg-sky-50/90 border-sky-200 text-sky-900"
+                        ? "bg-rose-50 border-rose-200 text-rose-900"
+                        : "bg-sky-50 border-sky-200 text-sky-900"
                     }`}
                   >
-                    <div className="flex items-center justify-between font-extrabold">
+                    <div className="flex items-center justify-between font-bold">
                       <div className="flex items-center gap-1.5">
-                        <Clock className="w-4 h-4 text-amber-600 animate-pulse shrink-0" />
+                        <Clock className="w-3.5 h-3.5 text-amber-600 animate-pulse shrink-0" />
                         <span>{syncNotice.title}</span>
                       </div>
                       <button
@@ -817,7 +824,7 @@ export default function DirectPaymentModal({
                             type: "warning",
                             title: `Status: ${currentStatus.toUpperCase()}`,
                             message:
-                              "Pembayaran belum terverifikasi oleh gateway. Jika Anda baru saja menyelesaikan transfer, mohon tunggu 5-15 detik agar sistem perbankan mengirim webhook konfirmasi ke gateway. Halaman akan otomatis beralih setelah lunas.",
+                              "Pembayaran belum terdeteksi masuk. Jika Anda baru saja menyelesaikan transfer, mohon tunggu 5-10 detik agar sistem perbankan mengirim konfirmasi. Halaman otomatis beralih saat sukses.",
                           });
                         }
                       } catch {
@@ -825,18 +832,18 @@ export default function DirectPaymentModal({
                           type: "error",
                           title: "Gagal Menghubungi Server",
                           message:
-                            "Koneksi terputus saat memeriksa status. Sistem tetap akan mencoba sinkronisasi otomatis di latar belakang.",
+                            "Koneksi terputus saat memeriksa status. Sistem tetap mencoba sinkronisasi otomatis di latar belakang.",
                         });
                       } finally {
                         setSyncChecking(false);
                       }
                     }}
-                    className="btn btn-outline btn-sm rounded-xl text-xs font-bold gap-1.5 flex-1 shadow-xs"
+                    className="btn btn-outline btn-sm rounded-xl text-xs font-bold gap-1.5 flex-1 shadow-2xs hover:bg-slate-900 hover:text-white transition-colors"
                   >
                     {syncChecking ? (
                       <>
                         <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                        Memeriksa...
+                        Memeriksa Status...
                       </>
                     ) : (
                       <>
@@ -849,7 +856,7 @@ export default function DirectPaymentModal({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="btn btn-ghost btn-sm text-xs text-slate-400 hover:text-slate-700 font-semibold"
+                    className="btn btn-ghost btn-sm text-xs text-slate-500 hover:text-slate-800 font-semibold"
                   >
                     Tutup / Bayar Nanti
                   </button>
