@@ -654,7 +654,7 @@ export async function chargeMidtransCoreApi(params: {
     };
   }
 
-  const res = await fetch(`${apiBaseUrl}/charge`, {
+  let res = await fetch(`${apiBaseUrl}/charge`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -664,9 +664,41 @@ export async function chargeMidtransCoreApi(params: {
     body: JSON.stringify(payload),
   });
 
-  const json = await res.json();
+  let json = await res.json();
+
+  // If QRIS Gopay fails due to POP ID not configured, try ShopeePay QRIS as fallback
+  if (
+    params.paymentType === "qris" &&
+    (!res.ok || (json.status_code && json.status_code !== "200" && json.status_code !== "201")) &&
+    typeof json.status_message === "string" &&
+    json.status_message.toLowerCase().includes("pop id")
+  ) {
+    payload.qris = { acquirer: "airpay shopee" };
+    res = await fetch(`${apiBaseUrl}/charge`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Basic ${auth}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    json = await res.json();
+  }
+
   if (!res.ok || (json.status_code && json.status_code !== "200" && json.status_code !== "201")) {
-    throw new Error(json.status_message || `Gagal memproses charge Midtrans (${res.status})`);
+    const rawMsg = json.status_message || `Gagal memproses charge Midtrans (${res.status})`;
+    if (typeof rawMsg === "string" && rawMsg.toLowerCase().includes("pop id")) {
+      throw new Error(
+        "Metode QRIS / GoPay belum aktif di akun Midtrans Anda (Merchant POP ID belum terhubung). Silakan aktifkan di Dashboard Midtrans > Settings > Payment Methods, atau gunakan metode Virtual Account (BCA, BRI, Mandiri, BNI, Permata)."
+      );
+    }
+    if (typeof rawMsg === "string" && (rawMsg.toLowerCase().includes("not active") || rawMsg.toLowerCase().includes("not enabled") || rawMsg.toLowerCase().includes("denied"))) {
+      throw new Error(
+        `Metode pembayaran ini belum diaktifkan di akun Midtrans Anda: ${rawMsg}. Silakan aktifkan di Dashboard Midtrans > Settings > Payment Methods atau gunakan Virtual Account.`
+      );
+    }
+    throw new Error(rawMsg);
   }
 
   return json;
