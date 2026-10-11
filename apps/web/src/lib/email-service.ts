@@ -448,7 +448,7 @@ function generateResetPasswordEmailHtml(params: EmailResetPasswordParams): strin
           <tr>
             <td style="padding: 20px 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
               <p style="margin: 0; font-size: 12px; color: #94a3b8; line-height: 1.5;">
-                Dikirim oleh sistem keamanan Waply &bull; <a href="https://waply.web.id" style="color: #64748b; text-decoration: none;">waply.web.id</a>
+                Dikirim oleh sistem keamanan Waply &bull; <a href="${appUrl}" style="color: #64748b; text-decoration: none;">${appUrl.replace(/^https?:\/\//, "")}</a>
               </p>
             </td>
           </tr>
@@ -511,7 +511,7 @@ export interface EmailVerificationParams {
 }
 
 function generateVerificationEmailHtml(params: EmailVerificationParams): string {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://waply.web.id";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://ardp.my.id";
 
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="id">
@@ -597,7 +597,7 @@ function generateVerificationEmailHtml(params: EmailVerificationParams): string 
           <tr>
             <td style="padding: 20px 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
               <p style="margin: 0; font-size: 12px; color: #94a3b8; line-height: 1.5;">
-                Dikirim oleh sistem keamanan Waply &bull; <a href="https://waply.web.id" style="color: #64748b; text-decoration: none;">waply.web.id</a>
+                Dikirim oleh sistem keamanan Waply &bull; <a href="${appUrl}" style="color: #64748b; text-decoration: none;">${appUrl.replace(/^https?:\/\//, "")}</a>
               </p>
             </td>
           </tr>
@@ -740,7 +740,7 @@ function generateOtpEmailHtml(params: EmailOtpParams): string {
           <tr>
             <td style="padding: 20px 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
               <p style="margin: 0; font-size: 12px; color: #94a3b8; line-height: 1.5;">
-                Dikirim oleh sistem keamanan Waply &bull; <a href="https://waply.web.id" style="color: #64748b; text-decoration: none;">waply.web.id</a>
+                Dikirim oleh sistem keamanan Waply &bull; <a href="${appUrl}" style="color: #64748b; text-decoration: none;">${appUrl.replace(/^https?:\/\//, "")}</a>
               </p>
             </td>
           </tr>
