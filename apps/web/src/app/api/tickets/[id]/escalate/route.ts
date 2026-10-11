@@ -38,6 +38,24 @@ export async function POST(
       return NextResponse.json({ success: false, error: "Gagal mengalihkan tiket" }, { status: 500 });
     }
 
+    // Notify Admin via Resend SMTP
+    try {
+      const { sendEmailTicketNotification } = await import("@/lib/email-service");
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://waply.web.id";
+      await sendEmailTicketNotification({
+        recipientEmail: process.env.ADMIN_ALERT_EMAIL || "support@waply.web.id",
+        recipientName: "Tim Support Waply",
+        ticketId: ticket.id,
+        subject: `[PERLU PENANGANAN HUMAN] ${ticket.subject}`,
+        messagePreview: `Pengguna meminta penanganan langsung staf CS manusia. Alasan: ${reason}`,
+        senderName: `${ticket.userName} (${ticket.userEmail})`,
+        ticketUrl: `${appUrl.replace(/\/$/, "")}/admin/tickets/${ticket.id}`,
+        actionType: "ESCALATED_TO_HUMAN",
+      });
+    } catch (escalateMailErr: any) {
+      console.warn("[Ticket Escalate API] Admin notification email skipped:", escalateMailErr.message);
+    }
+
     return NextResponse.json({
       success: true,
       message: "Tiket berhasil dialihkan ke CS Manusia",

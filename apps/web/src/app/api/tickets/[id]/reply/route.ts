@@ -99,6 +99,26 @@ export async function POST(
       }
     }
 
+    // If Admin / Support replies, notify user via Resend SMTP
+    if (isAdmin) {
+      try {
+        const { sendEmailTicketNotification } = await import("@/lib/email-service");
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://waply.web.id";
+        await sendEmailTicketNotification({
+          recipientEmail: ticket.userEmail,
+          recipientName: ticket.userName,
+          ticketId: ticket.id,
+          subject: ticket.subject,
+          messagePreview: cleanMessage.length > 250 ? `${cleanMessage.slice(0, 247)}...` : cleanMessage,
+          senderName: "Tim Customer Support Waply",
+          ticketUrl: `${appUrl.replace(/\/$/, "")}/dashboard/support/${ticket.id}`,
+          actionType: "ADMIN_REPLY_TO_USER",
+        });
+      } catch (notifyErr: any) {
+        console.warn("[Ticket Reply API] User email notification skipped:", notifyErr.message);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       message: "Balasan berhasil dikirim",

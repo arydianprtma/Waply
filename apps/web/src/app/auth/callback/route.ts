@@ -42,6 +42,29 @@ export async function GET(request: NextRequest) {
 
   const baseUrl = resolveAppBaseUrl(request);
 
+  const emailToken = searchParams.get("verify_token");
+  const targetEmail = searchParams.get("email");
+
+  // 0. Handle Direct SMTP Verification Token (Resend / Custom)
+  if (emailToken && targetEmail) {
+    const { verifyUserEmail, getUserByEmail } = await import("@/lib/admin-users");
+    const verified = verifyUserEmail(targetEmail, emailToken);
+    if (verified) {
+      const user = getUserByEmail(targetEmail);
+      if (user) {
+        const cookieStore = await cookies();
+        const maxAge = 60 * 60 * 24 * 7;
+        cookieStore.set("waply_demo_auth", "true", { path: "/", maxAge, sameSite: "lax" });
+        cookieStore.set("waply_user_email", user.email, { path: "/", maxAge, sameSite: "lax" });
+        cookieStore.set("waply_user_name", user.name, { path: "/", maxAge, sameSite: "lax" });
+        cookieStore.set("waply_user_role", user.role, { path: "/", maxAge, sameSite: "lax" });
+        cookieStore.set("waply_user_id", user.id, { path: "/", maxAge, sameSite: "lax" });
+        return NextResponse.redirect(`${baseUrl}/login?verified=true`);
+      }
+    }
+    return NextResponse.redirect(`${baseUrl}/login?error=auth_callback_failed`);
+  }
+
   try {
     const supabase = await createClient();
     let authUser = null;

@@ -174,6 +174,13 @@ export async function POST(req: NextRequest) {
       durationMonths,
       selectedAddonIds,
       addonsAmount,
+      qrCodeUrl: qrCodeUrl || null,
+      qrString: qrString || null,
+      vaNumber: vaNumber || null,
+      bank: paymentType === "bank_transfer" ? bank : undefined,
+      billerCode: billerCode || null,
+      billKey: billKey || null,
+      expiryTime: chargeResult.expiry_time || new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
     });
 
     // Send Email Invoice Notification (Non-blocking)

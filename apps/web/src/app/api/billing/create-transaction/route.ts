@@ -140,6 +140,8 @@ export async function POST(req: NextRequest) {
       durationMonths,
       selectedAddonIds,
       addonsAmount,
+      snapRedirectUrl: snap.redirect_url || null,
+      expiryTime: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
     });
 
     const { snapJsUrl, clientKey } = getMidtransConfig();

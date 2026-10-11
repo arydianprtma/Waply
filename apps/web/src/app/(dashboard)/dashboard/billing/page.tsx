@@ -26,7 +26,13 @@ import {
   BarChart3,
   FileText,
   Download,
+  QrCode,
+  Copy,
+  ExternalLink,
+  Eye,
+  Building2,
 } from "lucide-react";
+import { ModalPortal } from "@/components/ui/ModalPortal";
 import {
   type PlanId,
   type Plan,
@@ -96,6 +102,11 @@ interface BillingData {
   allPlans?: Record<string, Plan>;
   invoices: Invoice[];
   meteredUsage?: MeteredUsage;
+  midtrans?: {
+    snapJsUrl: string;
+    clientKey: string;
+    isProduction: boolean;
+  };
 }
 
 declare global {
@@ -155,6 +166,10 @@ function BillingContent() {
   const [addonCategoryFilter, setAddonCategoryFilter] = useState<"ALL" | "DEVICE" | "MESSAGES">("ALL");
   const [nowMs, setNowMs] = useState<number>(Date.now());
   const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
+  const [selectedDetailInvoice, setSelectedDetailInvoice] = useState<Invoice | null>(null);
+  const [payingOrderId, setPayingOrderId] = useState<string | null>(null);
+  const [copiedOrderId, setCopiedOrderId] = useState(false);
+  const [copiedVa, setCopiedVa] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => setNowMs(Date.now()), 1000);
@@ -246,11 +261,84 @@ function BillingContent() {
     }
   };
 
-  // Handle payment=finish redirect from Midtrans
+  const handlePaySnap = async (inv: Invoice) => {
+    if (!inv.snapToken) {
+      if (inv.snapRedirectUrl) {
+        window.open(inv.snapRedirectUrl, "_blank");
+      }
+      return;
+    }
+    setPayingOrderId(inv.orderId);
+    setErrorMsg(null);
+
+    const snapJsUrl = billingData?.midtrans?.snapJsUrl || "https://app.midtrans.com/snap/snap.js";
+    const clientKey = billingData?.midtrans?.clientKey || "";
+
+    try {
+      const existingScript = document.getElementById("midtrans-snap") as HTMLScriptElement | null;
+      if (!existingScript || existingScript.src !== snapJsUrl || !(window as any).snap) {
+        if (existingScript) existingScript.remove();
+        delete (window as any).snap;
+
+        await new Promise<void>((resolve) => {
+          const script = document.createElement("script");
+          script.id = "midtrans-snap";
+          script.src = snapJsUrl;
+          if (clientKey) script.setAttribute("data-client-key", clientKey);
+          script.onload = () => resolve();
+          script.onerror = () => resolve();
+          document.head.appendChild(script);
+        });
+      }
+
+      if ((window as any).snap) {
+        (window as any).snap.pay(inv.snapToken, {
+          onSuccess: async () => {
+            await handleSyncOrder(inv.orderId);
+            setSelectedDetailInvoice(null);
+            setSuccessMsg(`Pembayaran pesanan ${inv.orderId} berhasil diverifikasi!`);
+            await fetchStatus();
+          },
+          onPending: async () => {
+            await handleSyncOrder(inv.orderId);
+            await fetchStatus();
+          },
+          onError: () => {
+            setErrorMsg("Pembayaran gagal atau dibatalkan.");
+          },
+          onClose: () => {
+            setPayingOrderId(null);
+          },
+        });
+      } else {
+        const redirectUrl =
+          inv.snapRedirectUrl ||
+          (billingData?.midtrans?.isProduction
+            ? `https://app.midtrans.com/snap/v2/vtweb/${inv.snapToken}`
+            : `https://app.sandbox.midtrans.com/snap/v2/vtweb/${inv.snapToken}`);
+        window.open(redirectUrl, "_blank");
+      }
+    } catch (err: any) {
+      console.error("Snap pay error:", err);
+      setErrorMsg(err.message || "Gagal memuat sistem pembayaran");
+    } finally {
+      setPayingOrderId(null);
+    }
+  };
+
+  // Handle payment redirects from Midtrans (finish, unfinish, error)
   useEffect(() => {
     const payment = searchParams.get("payment");
     if (payment === "finish") {
       setSuccessMsg("Pembayaran selesai diproses. Memperbarui status langganan...");
+      fetchStatus();
+    } else if (payment === "unfinish") {
+      setActiveTab("invoices");
+      setErrorMsg("Pembayaran belum diselesaikan. Anda dapat membuka barcode QRIS / menyelesaikan pembayaran di Riwayat Invoice.");
+      fetchStatus();
+    } else if (payment === "error") {
+      setActiveTab("invoices");
+      setErrorMsg("Batas waktu pembayaran telah berakhir atau transaksi dibatalkan.");
       fetchStatus();
     }
   }, [searchParams, fetchStatus]);
@@ -771,30 +859,36 @@ function BillingContent() {
       {activeTab === "addons" && (
         <div className="space-y-6">
           {/* Header Banner & Summary */}
-          <div className="card bg-gradient-to-br from-indigo-900 via-slate-900 to-slate-950 text-white p-6 md:p-8 rounded-2xl shadow-xl border border-white/10 relative overflow-hidden">
-            <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <div className="max-w-xl">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 mb-3">
+          <div className="card bg-base-100 border border-base-200 p-6 md:p-7 rounded-2xl shadow-xs">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+              <div className="max-w-xl space-y-2">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
                   <PackagePlus className="w-3.5 h-3.5" />
-                  Katalog Addon & Top-Up Ekstra
-                </span>
-                <h2 className="text-xl md:text-2xl font-black tracking-tight text-white">
+                  <span>Katalog Addon dan Top-Up Ekstra</span>
+                </div>
+                <h2 className="text-xl md:text-2xl font-black tracking-tight text-base-content">
                   Tingkatkan Kapasitas Sesuai Kebutuhan
                 </h2>
-                <p className="text-xs md:text-sm text-slate-300 mt-1.5 leading-relaxed">
+                <p className="text-xs md:text-sm text-base-content/70 leading-relaxed">
                   Tambah slot koneksi perangkat WhatsApp atau kuota kirim pesan kapan saja tanpa harus mengubah paket langganan utama Anda.
                 </p>
               </div>
 
-              <div className="flex flex-wrap gap-3">
-                <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10 text-center min-w-[120px]">
-                  <p className="text-2xl font-black text-emerald-400">+{userAddonTotals.extraDevices}</p>
-                  <p className="text-xs text-slate-300">Slot Device Aktif</p>
+              <div className="flex flex-wrap sm:flex-nowrap gap-3 shrink-0">
+                <div className="flex-1 sm:flex-initial bg-base-200/60 rounded-xl p-4 border border-base-200 min-w-[130px] text-left">
+                  <span className="text-[11px] font-semibold text-base-content/60 uppercase tracking-wider block">
+                    Device Aktif
+                  </span>
+                  <p className="text-2xl font-black text-emerald-600 mt-1">+{userAddonTotals.extraDevices}</p>
+                  <span className="text-[11px] text-base-content/50 mt-0.5 block">Slot tambahan</span>
                 </div>
-                <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10 text-center min-w-[140px]">
-                  <p className="text-2xl font-black text-indigo-400">+{userAddonTotals.extraMessages.toLocaleString("id-ID")}</p>
-                  <p className="text-xs text-slate-300">Kuota Pesan Ekstra</p>
+
+                <div className="flex-1 sm:flex-initial bg-base-200/60 rounded-xl p-4 border border-base-200 min-w-[150px] text-left">
+                  <span className="text-[11px] font-semibold text-base-content/60 uppercase tracking-wider block">
+                    Kuota Ekstra
+                  </span>
+                  <p className="text-2xl font-black text-primary mt-1">+{userAddonTotals.extraMessages.toLocaleString("id-ID")}</p>
+                  <span className="text-[11px] text-base-content/50 mt-0.5 block">Pesan tersisa</span>
                 </div>
               </div>
             </div>
@@ -1029,7 +1123,16 @@ function BillingContent() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 self-end sm:self-center">
+                  <div className="flex flex-wrap items-center gap-2 self-start sm:self-center">
+                    <button
+                      onClick={() => setSelectedDetailInvoice(inv)}
+                      className="btn btn-xs rounded-lg gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 font-semibold px-2.5 py-1"
+                      title="Lihat Detail Pesanan & Faktur"
+                    >
+                      <Eye className="w-3 h-3 text-slate-500" />
+                      Detail
+                    </button>
+
                     {inv.status === "PAID" && (
                       <button
                         onClick={() => setViewingInvoice(inv)}
@@ -1040,18 +1143,50 @@ function BillingContent() {
                         Cetak Invoice
                       </button>
                     )}
+
                     {inv.status === "PENDING" && (
+                      <>
+                        {(inv.snapToken || inv.qrCodeUrl || inv.vaNumber || inv.snapRedirectUrl) && (
+                          <button
+                            onClick={() => {
+                              if (inv.snapToken) {
+                                handlePaySnap(inv);
+                              } else {
+                                setSelectedDetailInvoice(inv);
+                              }
+                            }}
+                            disabled={payingOrderId === inv.orderId}
+                            className="btn btn-xs rounded-lg gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white border-none font-bold px-3 py-1 shadow-xs"
+                            title="Buka kembali barcode QRIS atau kode bayar"
+                          >
+                            <QrCode className="w-3 h-3" />
+                            {payingOrderId === inv.orderId ? "Memuat..." : "Bayar / Buka QRIS"}
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleSyncOrder(inv.orderId)}
+                          disabled={syncingOrderId === inv.orderId}
+                          className="btn btn-xs rounded-lg gap-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 font-bold px-2.5 py-1 shadow-xs"
+                          title="Sinkronkan status transaksi dari server Midtrans"
+                        >
+                          <RefreshCw className={`w-3 h-3 ${syncingOrderId === inv.orderId ? "animate-spin" : ""}`} />
+                          {syncingOrderId === inv.orderId ? "Memeriksa..." : "Cek Status"}
+                        </button>
+                      </>
+                    )}
+
+                    {(inv.status === "EXPIRED" || inv.status === "FAILED") && (
                       <button
-                        onClick={() => handleSyncOrder(inv.orderId)}
-                        disabled={syncingOrderId === inv.orderId}
-                        className="btn btn-xs rounded-lg gap-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 font-bold px-3 py-1 shadow-xs"
-                        title="Sinkronkan status transaksi dari server Midtrans"
+                        onClick={() => router.push(`/order?plan=${inv.planId}`)}
+                        className="btn btn-xs rounded-lg gap-1.5 bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 font-semibold px-2.5 py-1"
+                        title="Pesan Ulang Paket"
                       >
-                        <RefreshCw className={`w-3 h-3 ${syncingOrderId === inv.orderId ? "animate-spin" : ""}`} />
-                        {syncingOrderId === inv.orderId ? "Memeriksa..." : "Cek Status Midtrans"}
+                        <ArrowRight className="w-3 h-3 text-sky-600" />
+                        Pesan Ulang
                       </button>
                     )}
-                    <div className="text-right flex-shrink-0">
+
+                    <div className="text-right flex-shrink-0 ml-auto sm:ml-2">
                       <InvoiceStatusBadge status={inv.status} />
                       <p className="text-[11px] text-slate-400 mt-1 font-medium">
                         {formatDate(inv.paidAt || inv.createdAt)}
@@ -1063,6 +1198,252 @@ function BillingContent() {
             </div>
           )}
         </div>
+      )}
+
+      {/* ── Order Detail & Payment Modal ────────────────────────────── */}
+      {selectedDetailInvoice && (
+        <ModalPortal>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+            <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-3xl shadow-2xl max-w-xl w-full p-6 md:p-8 space-y-6 relative border border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
+              
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold">
+                    <Receipt className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg text-slate-900 dark:text-white">Detail Pesanan & Tagihan</h3>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-xs font-mono text-slate-500">{selectedDetailInvoice.orderId}</span>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(selectedDetailInvoice.orderId);
+                          setCopiedOrderId(true);
+                          setTimeout(() => setCopiedOrderId(false), 2000);
+                        }}
+                        className="text-[11px] text-primary hover:underline flex items-center gap-1 font-medium"
+                      >
+                        {copiedOrderId ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                        {copiedOrderId ? "Tersalin" : "Salin ID"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedDetailInvoice(null)}
+                  className="btn btn-ghost btn-sm btn-circle text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Status Banner */}
+              {selectedDetailInvoice.status === "PENDING" && (
+                <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/40 text-amber-900 dark:text-amber-200 flex items-start gap-3">
+                  <Clock className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-xs space-y-1">
+                    <p className="font-bold text-sm text-amber-800 dark:text-amber-300">Menunggu Pembayaran</p>
+                    <p className="text-amber-700/90 dark:text-amber-400/90 leading-relaxed">
+                      Barcode QRIS atau instruksi pembayaran Anda tertutup atau hilang? Anda dapat membukanya kembali langsung di bawah ini tanpa perlu membuat pesanan baru.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {selectedDetailInvoice.status === "PAID" && (
+                <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/40 text-emerald-900 dark:text-emerald-200 flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-xs space-y-1">
+                    <p className="font-bold text-sm text-emerald-800 dark:text-emerald-300">Pembayaran Berhasil (Lunas)</p>
+                    <p className="text-emerald-700/90 dark:text-emerald-400/90 leading-relaxed">
+                      Transaksi telah diverifikasi resmi pada {formatDate(selectedDetailInvoice.paidAt)}. Paket langganan Anda telah aktif dan kuota dapat digunakan.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {(selectedDetailInvoice.status === "EXPIRED" || selectedDetailInvoice.status === "FAILED") && (
+                <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-800/40 text-rose-900 dark:text-rose-200 flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-xs space-y-1">
+                    <p className="font-bold text-sm text-rose-800 dark:text-rose-300">Tagihan Kedaluwarsa</p>
+                    <p className="text-rose-700/90 dark:text-rose-400/90 leading-relaxed">
+                      Batas waktu penyelesaian pembayaran untuk order ini telah berakhir. Silakan lakukan pemesanan ulang jika masih ingin berlangganan.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Order Breakdown Card */}
+              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 space-y-3.5 text-xs">
+                <div className="flex justify-between items-center pb-2.5 border-b border-slate-200/60 dark:border-slate-700/60">
+                  <span className="text-slate-500 font-medium">Paket Layanan</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">
+                    {allPlans?.[selectedDetailInvoice.planId]?.name || `Plan ${selectedDetailInvoice.planId}`}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center pb-2.5 border-b border-slate-200/60 dark:border-slate-700/60">
+                  <span className="text-slate-500 font-medium">Durasi Berlangganan</span>
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">
+                    {selectedDetailInvoice.durationMonths ? `${selectedDetailInvoice.durationMonths} Bulan` : "1 Bulan"}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center pb-2.5 border-b border-slate-200/60 dark:border-slate-700/60">
+                  <span className="text-slate-500 font-medium">Waktu Pemesanan</span>
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">
+                    {formatDate(selectedDetailInvoice.createdAt)}
+                  </span>
+                </div>
+                {selectedDetailInvoice.customerName && (
+                  <div className="flex justify-between items-center pb-2.5 border-b border-slate-200/60 dark:border-slate-700/60">
+                    <span className="text-slate-500 font-medium">Nama Pemesan</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">
+                      {selectedDetailInvoice.customerName}
+                    </span>
+                  </div>
+                )}
+                {selectedDetailInvoice.paymentMethod && (
+                  <div className="flex justify-between items-center pb-2.5 border-b border-slate-200/60 dark:border-slate-700/60">
+                    <span className="text-slate-500 font-medium">Metode Pembayaran</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">
+                      {selectedDetailInvoice.paymentMethod}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center pt-1">
+                  <span className="text-slate-700 dark:text-slate-300 font-bold text-sm">Total Tagihan</span>
+                  <span className="font-extrabold text-lg text-primary">
+                    {formatIDR(selectedDetailInvoice.amount)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Direct QRIS Image (if qrCodeUrl exists) */}
+              {selectedDetailInvoice.status === "PENDING" && selectedDetailInvoice.qrCodeUrl && (
+                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 text-center space-y-3">
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Scan Barcode QRIS di bawah ini dengan aplikasi M-Banking atau E-Wallet:
+                  </p>
+                  <div className="p-3 bg-white rounded-2xl inline-block border border-slate-200 shadow-xs mx-auto">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={selectedDetailInvoice.qrCodeUrl}
+                      alt="QRIS Barcode"
+                      className="w-48 h-48 object-contain mx-auto"
+                    />
+                  </div>
+                  <div>
+                    <a
+                      href={selectedDetailInvoice.qrCodeUrl}
+                      download={`QRIS-${selectedDetailInvoice.orderId}.png`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="btn btn-xs btn-outline rounded-lg gap-1.5 text-slate-700 dark:text-slate-300 font-bold"
+                    >
+                      <Download className="w-3.5 h-3.5" /> Unduh Barcode QRIS
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              {/* Direct VA Number (if vaNumber exists) */}
+              {selectedDetailInvoice.status === "PENDING" && selectedDetailInvoice.vaNumber && (
+                <div className="p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/50 space-y-2">
+                  <p className="text-xs font-semibold text-blue-800 dark:text-blue-300 flex items-center gap-1.5">
+                    <Building2 className="w-4 h-4" /> Nomor Virtual Account ({selectedDetailInvoice.bank?.toUpperCase() || "Bank"}):
+                  </p>
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-slate-900 border border-blue-200 font-mono text-base font-bold text-blue-900 dark:text-blue-200">
+                    <span>{selectedDetailInvoice.vaNumber}</span>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(selectedDetailInvoice.vaNumber!);
+                        setCopiedVa(true);
+                        setTimeout(() => setCopiedVa(false), 2000);
+                      }}
+                      className="btn btn-xs btn-ghost text-blue-600 font-bold"
+                    >
+                      {copiedVa ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                      {copiedVa ? "Tersalin" : "Salin"}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Modal Actions */}
+              <div className="space-y-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+                {selectedDetailInvoice.status === "PENDING" && (
+                  <>
+                    {(selectedDetailInvoice.snapToken || selectedDetailInvoice.snapRedirectUrl) && (
+                      <button
+                        onClick={() => handlePaySnap(selectedDetailInvoice)}
+                        disabled={payingOrderId === selectedDetailInvoice.orderId}
+                        className="btn btn-primary w-full rounded-2xl font-bold gap-2 shadow-lg shadow-primary/25"
+                      >
+                        <QrCode className="w-4 h-4" />
+                        {payingOrderId === selectedDetailInvoice.orderId
+                          ? "Membuka Sistem Pembayaran..."
+                          : "Buka Barcode QRIS / Bayar Sekarang"}
+                      </button>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={async () => {
+                          await handleSyncOrder(selectedDetailInvoice.orderId);
+                          // Refresh current detail modal with latest invoice state
+                          const updated = billingData?.invoices.find((i) => i.orderId === selectedDetailInvoice.orderId);
+                          if (updated) setSelectedDetailInvoice(updated);
+                        }}
+                        disabled={syncingOrderId === selectedDetailInvoice.orderId}
+                        className="btn btn-outline btn-sm rounded-xl font-bold gap-1.5 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-700"
+                      >
+                        <RefreshCw className={`w-3.5 h-3.5 ${syncingOrderId === selectedDetailInvoice.orderId ? "animate-spin" : ""}`} />
+                        {syncingOrderId === selectedDetailInvoice.orderId ? "Memeriksa..." : "Cek Status Midtrans"}
+                      </button>
+
+                      {selectedDetailInvoice.snapRedirectUrl && (
+                        <a
+                          href={selectedDetailInvoice.snapRedirectUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="btn btn-ghost btn-sm rounded-xl font-bold gap-1.5 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" /> Buka Tab Baru
+                        </a>
+                      )}
+                    </div>
+                  </>
+                )}
+
+                {selectedDetailInvoice.status === "PAID" && (
+                  <button
+                    onClick={() => {
+                      setViewingInvoice(selectedDetailInvoice);
+                      setSelectedDetailInvoice(null);
+                    }}
+                    className="btn btn-primary w-full rounded-2xl font-bold gap-2 shadow-lg shadow-primary/20"
+                  >
+                    <Printer className="w-4 h-4" /> Cetak / Unduh Faktur Resmi
+                  </button>
+                )}
+
+                {(selectedDetailInvoice.status === "EXPIRED" || selectedDetailInvoice.status === "FAILED") && (
+                  <button
+                    onClick={() => {
+                      setSelectedDetailInvoice(null);
+                      router.push(`/order?plan=${selectedDetailInvoice.planId}`);
+                    }}
+                    className="btn btn-primary w-full rounded-2xl font-bold gap-2 shadow-lg shadow-primary/20"
+                  >
+                    <ArrowRight className="w-4 h-4" /> Pesan Ulang Paket Ini
+                  </button>
+                )}
+              </div>
+
+            </div>
+          </div>
+        </ModalPortal>
       )}
 
       {/* ── Printable Official Invoice Modal ────────────────────────────── */}

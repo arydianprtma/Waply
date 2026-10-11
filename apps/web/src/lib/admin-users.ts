@@ -22,6 +22,8 @@ export interface ManagedUser {
   registeredIp?: string | null;
   lastLoginIp?: string | null;
   duplicateIpCount?: number;
+  emailVerified?: boolean;
+  emailVerifyToken?: string | null;
 }
 
 const DATA_DIR = getDataDirectory();
@@ -151,6 +153,8 @@ export function registerOrSyncUser(user: {
   role?: "admin" | "user";
   ipAddress?: string | null;
   avatarUrl?: string | null;
+  emailVerified?: boolean;
+  emailVerifyToken?: string | null;
 }): ManagedUser {
   const users = getAllManagedUsers();
   const existingIdx = users.findIndex(
@@ -207,6 +211,8 @@ export function registerOrSyncUser(user: {
       lastLoginAt: new Date().toISOString(),
       registeredIp: updatedRegIp,
       lastLoginIp: updatedLastIp,
+      emailVerified: user.emailVerified !== undefined ? user.emailVerified : existing.emailVerified,
+      emailVerifyToken: user.emailVerifyToken !== undefined ? user.emailVerifyToken : existing.emailVerifyToken,
     };
     saveManagedUsers(users);
     return users[existingIdx];
@@ -231,11 +237,28 @@ export function registerOrSyncUser(user: {
     lastLoginAt: new Date().toISOString(),
     registeredIp: cleanIp || "127.0.0.1",
     lastLoginIp: cleanIp || "127.0.0.1",
+    emailVerified: user.email === "admin@waply.id" ? true : (user.emailVerified ?? false),
+    emailVerifyToken: user.emailVerifyToken || null,
   };
 
   users.push(newUser);
   saveManagedUsers(users);
   return newUser;
+}
+
+export function verifyUserEmail(email: string, token: string): boolean {
+  const users = getAllManagedUsers();
+  const cleanEmail = email.trim().toLowerCase();
+  const idx = users.findIndex(
+    (u) => u.email.toLowerCase() === cleanEmail && u.emailVerifyToken === token
+  );
+
+  if (idx === -1) return false;
+
+  users[idx].emailVerified = true;
+  users[idx].emailVerifyToken = null;
+  saveManagedUsers(users);
+  return true;
 }
 
 export function updateUserAvatar(

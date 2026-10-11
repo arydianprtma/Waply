@@ -505,3 +505,199 @@ export async function sendEmailResetPassword(params: EmailResetPasswordParams): 
   }
 }
 
+export interface EmailVerificationParams {
+  customerEmail: string;
+  customerName?: string;
+  verificationUrl: string;
+}
+
+/**
+ * Generate corporate responsive HTML email for new account verification.
+ */
+function generateVerificationEmailHtml(params: EmailVerificationParams): string {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://waply.web.id";
+  const headerBg = "linear-gradient(135deg, #064e3b 0%, #065f46 50%, #0d9488 100%)";
+
+  return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="id">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verifikasi Alamat Email Akun Waply</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+  <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color: #f1f5f9; padding: 32px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" border="0" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0;">
+          <tr>
+            <td style="padding: 40px 32px 32px; background: ${headerBg}; text-align: center;">
+              <table align="center" border="0" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
+                <tr>
+                  <td style="background-color: rgba(255, 255, 255, 0.15); padding: 8px 16px; border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.25);">
+                    <span style="color: #ffffff; font-size: 13px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;">WAPLY GATEWAY</span>
+                  </td>
+                </tr>
+              </table>
+              <h1 style="margin: 0 0 10px; color: #ffffff; font-size: 26px; font-weight: 900; letter-spacing: -0.02em; line-height: 1.2;">
+                Selamat Datang di Waply!
+              </h1>
+              <p style="margin: 0; color: #e2e8f0; font-size: 13px;">
+                Satu langkah lagi untuk mengaktifkan akun dan kuota gratis WhatsApp Gateway Anda
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 36px 32px 28px;">
+              <p style="margin: 0 0 18px; font-size: 15px; line-height: 1.6; color: #334155;">
+                Halo <strong style="color: #0f172a;">${params.customerName || params.customerEmail}</strong>,
+              </p>
+              <p style="margin: 0 0 24px; font-size: 14px; line-height: 1.6; color: #475569;">
+                Terima kasih telah mendaftar di Waply. Untuk menjaga keamanan ekosistem gateway dan mencegah penyalahgunaan spam, silakan konfirmasi bahwa ini adalah alamat email aktif Anda:
+              </p>
+              <table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
+                <tr>
+                  <td align="center">
+                    <table border="0" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td align="center" style="border-radius: 14px; background-color: #059669; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);">
+                          <a href="${params.verificationUrl}" target="_blank" style="display: inline-block; padding: 16px 36px; font-size: 15px; font-weight: 800; color: #ffffff; text-decoration: none; border-radius: 14px;">
+                            Verifikasi Email Akun Saya &rarr;
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              <div style="font-size: 12px; color: #64748b; line-height: 1.5; word-break: break-all; border-top: 1px dashed #e2e8f0; padding-top: 18px;">
+                Jika tombol di atas tidak dapat diklik, buka tautan berikut melalui peramban Anda:<br />
+                <a href="${params.verificationUrl}" style="color: #059669; text-decoration: underline;">${params.verificationUrl}</a>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 24px 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
+              <p style="margin: 0; font-size: 12px; color: #94a3b8;">
+                &copy; ${new Date().getFullYear()} Waply. Solusi WhatsApp Automation & Gateway Terpercaya.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`.trim();
+}
+
+/**
+ * Dispatch new account email verification via SMTP.
+ */
+export async function sendEmailVerification(params: EmailVerificationParams): Promise<boolean> {
+  try {
+    if (!params.customerEmail || !params.customerEmail.includes("@")) {
+      return false;
+    }
+    const transporter = getTransporter();
+    const subject = `[VERIFIKASI AKUN] Konfirmasi Alamat Email Anda di Waply`;
+    const htmlContent = generateVerificationEmailHtml(params);
+    const fromAddress = process.env.SMTP_FROM || `"Waply Support" <${process.env.SMTP_USER || "support@waply.web.id"}>`;
+
+    if (!transporter) {
+      console.warn(`[Email Service] SMTP belum dikonfigurasi untuk email verifikasi: ${params.customerEmail}`);
+      return false;
+    }
+
+    const info = await transporter.sendMail({
+      from: fromAddress,
+      to: params.customerEmail,
+      subject,
+      html: htmlContent,
+    });
+    console.log(`[Email Service] ✅ Email verifikasi berhasil dikirim ke ${params.customerEmail} (ID: ${info.messageId})`);
+    return true;
+  } catch (err: any) {
+    console.error("[Email Service] ❌ Gagal mengirim email verifikasi:", err.message);
+    return false;
+  }
+}
+
+export interface EmailTicketNotificationParams {
+  recipientEmail: string;
+  recipientName: string;
+  ticketId: string;
+  subject: string;
+  messagePreview: string;
+  senderName: string;
+  ticketUrl: string;
+  actionType: "NEW_TICKET_ALERT_ADMIN" | "ADMIN_REPLY_TO_USER" | "ESCALATED_TO_HUMAN";
+}
+
+/**
+ * Dispatch CS ticket notifications (both for customer and admin).
+ */
+export async function sendEmailTicketNotification(params: EmailTicketNotificationParams): Promise<boolean> {
+  try {
+    if (!params.recipientEmail || !params.recipientEmail.includes("@")) {
+      return false;
+    }
+    const transporter = getTransporter();
+    const isToAdmin = params.actionType === "NEW_TICKET_ALERT_ADMIN" || params.actionType === "ESCALATED_TO_HUMAN";
+    const emailSubject = isToAdmin
+      ? `[TIKET CS BARU #${params.ticketId}] ${params.subject}`
+      : `[UPDATE TIKET #${params.ticketId}] Balasan Baru dari Tim CS Waply`;
+
+    const htmlContent = `<!DOCTYPE html>
+<html lang="id">
+<body style="margin: 0; padding: 24px; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <div style="max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; padding: 32px;">
+    <div style="margin-bottom: 20px;">
+      <span style="background-color: ${isToAdmin ? "#fef3c7" : "#ecfdf5"}; color: ${isToAdmin ? "#b45309" : "#047857"}; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 9999px; text-transform: uppercase;">
+        Tiket Bantuan #${params.ticketId}
+      </span>
+    </div>
+    <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 12px;">
+      ${isToAdmin ? "Tiket Bantuan Memerlukan Penanganan" : "Ada Balasan Baru untuk Tiket Anda"}
+    </h2>
+    <p style="font-size: 14px; color: #475569; line-height: 1.6; margin: 0 0 16px;">
+      Halo <strong>${params.recipientName}</strong>,
+    </p>
+    <div style="background-color: #f8fafc; border-left: 4px solid #059669; padding: 14px 16px; border-radius: 8px; margin-bottom: 24px;">
+      <p style="margin: 0 0 6px; font-size: 12px; font-weight: 700; color: #64748b;">
+        Pesan dari ${params.senderName}:
+      </p>
+      <p style="margin: 0; font-size: 14px; color: #1e293b; line-height: 1.5; font-style: italic;">
+        "${params.messagePreview}"
+      </p>
+    </div>
+    <div style="text-align: center; margin-bottom: 24px;">
+      <a href="${params.ticketUrl}" style="display: inline-block; background-color: #059669; color: #ffffff; padding: 12px 28px; border-radius: 12px; font-size: 14px; font-weight: 700; text-decoration: none;">
+        Buka Ruang Obrolan Tiket &rarr;
+      </a>
+    </div>
+    <p style="font-size: 12px; color: #94a3b8; text-align: center; margin: 0; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+      Waply Support System &bull; <a href="https://waply.web.id" style="color: #059669; text-decoration: none;">waply.web.id</a>
+    </p>
+  </div>
+</body>
+</html>`.trim();
+
+    const fromAddress = process.env.SMTP_FROM || `"Waply Support" <${process.env.SMTP_USER || "support@waply.web.id"}>`;
+
+    if (!transporter) return false;
+
+    await transporter.sendMail({
+      from: fromAddress,
+      to: params.recipientEmail,
+      subject: emailSubject,
+      html: htmlContent,
+    });
+    return true;
+  } catch (err: any) {
+    console.error("[Email Service] ❌ Gagal mengirim notifikasi tiket:", err.message);
+    return false;
+  }
+}
+
+

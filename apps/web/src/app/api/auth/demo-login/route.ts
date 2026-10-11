@@ -63,6 +63,19 @@ export async function POST(request: Request) {
       );
     }
 
+    // 3b. Verify Email Confirmation (Block unverified users except master admin)
+    if (cleanEmail !== "admin@waply.id" && dbUser.emailVerified === false) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Alamat email Anda belum diverifikasi. Silakan buka inbox atau folder spam email Anda dan klik tautan verifikasi sebelum masuk.",
+          code: "EMAIL_NOT_VERIFIED",
+        },
+        { status: 403 }
+      );
+    }
+
     // 4. Verify Super Admin password if configured
     const isSuperAdminUser = cleanEmail === "admin@waply.id" || dbUser.role === "admin";
     if (isSuperAdminUser && hasAdminPassword()) {

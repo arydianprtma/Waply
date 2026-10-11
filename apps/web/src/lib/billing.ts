@@ -312,8 +312,18 @@ export function activateSubscription(
   const plan = allPlans[planId] || DEFAULT_PLANS[planId];
   const period = plan?.period || "month";
 
+  const currentSub = getSubscription(userId);
   const now = new Date();
-  const endDate = new Date(now);
+  const hasActiveSamePlan =
+    currentSub &&
+    currentSub.status === "ACTIVE" &&
+    currentSub.planId === planId &&
+    Boolean(currentSub.endDate) &&
+    new Date(currentSub.endDate!) > now;
+
+  const baseDate = hasActiveSamePlan ? new Date(currentSub.endDate!) : now;
+  const startDate = hasActiveSamePlan && currentSub.startDate ? currentSub.startDate : now.toISOString();
+  const endDate = new Date(baseDate);
 
   if (period === "day") {
     endDate.setDate(endDate.getDate() + 1);
@@ -337,7 +347,7 @@ export function activateSubscription(
     userId,
     planId,
     status: "ACTIVE",
-    startDate: now.toISOString(),
+    startDate,
     endDate: endDate.toISOString(),
     updatedAt: now.toISOString(),
     expiredPlanId: null,
@@ -583,7 +593,9 @@ export async function createSnapToken(params: {
       phone: params.customerPhone || undefined,
     },
     callbacks: {
-      finish: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001"}/order?payment=finish&orderId=${params.orderId}`,
+      finish: `${(process.env.NEXT_PUBLIC_APP_URL || "https://ardp.my.id").replace(/\/$/, "")}/dashboard/billing?payment=finish&orderId=${params.orderId}`,
+      unfinish: `${(process.env.NEXT_PUBLIC_APP_URL || "https://ardp.my.id").replace(/\/$/, "")}/dashboard/billing?payment=unfinish&orderId=${params.orderId}`,
+      error: `${(process.env.NEXT_PUBLIC_APP_URL || "https://ardp.my.id").replace(/\/$/, "")}/dashboard/billing?payment=error&orderId=${params.orderId}`,
     },
   };
 
@@ -734,13 +746,15 @@ export async function chargeMidtransCoreApi(params: {
       };
     }
   } else if (params.paymentType === "gopay") {
+    const appBase = (process.env.NEXT_PUBLIC_APP_URL || "https://ardp.my.id").replace(/\/$/, "");
     payload.gopay = {
       enable_callback: true,
-      callback_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001"}/order?payment=finish&orderId=${params.orderId}`,
+      callback_url: `${appBase}/dashboard/billing?payment=finish&orderId=${params.orderId}`,
     };
   } else if (params.paymentType === "shopeepay") {
+    const appBase = (process.env.NEXT_PUBLIC_APP_URL || "https://ardp.my.id").replace(/\/$/, "");
     payload.shopeepay = {
-      callback_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001"}/order?payment=finish&orderId=${params.orderId}`,
+      callback_url: `${appBase}/dashboard/billing?payment=finish&orderId=${params.orderId}`,
     };
   }
 

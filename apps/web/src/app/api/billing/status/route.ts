@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/auth-user";
-import { getSubscription, getInvoices, getAllPlans, DEFAULT_PLANS } from "@/lib/billing";
+import { getSubscription, getInvoices, getAllPlans, DEFAULT_PLANS, getMidtransConfig } from "@/lib/billing";
 import { canUserSendMessage } from "@/lib/messages";
 import { getUserAddonTotals } from "@/lib/addons";
 import { getActiveDevices } from "@/lib/device-rotation";
@@ -61,6 +61,7 @@ export async function GET() {
       },
     };
 
+    const midtransConfig = getMidtransConfig();
     return NextResponse.json({
       success: true,
       data: {
@@ -70,6 +71,11 @@ export async function GET() {
         invoices,
         allPlans,
         meteredUsage,
+        midtrans: {
+          snapJsUrl: midtransConfig.snapJsUrl,
+          clientKey: midtransConfig.clientKey,
+          isProduction: midtransConfig.isProduction,
+        },
       },
     });
   } catch (error: any) {

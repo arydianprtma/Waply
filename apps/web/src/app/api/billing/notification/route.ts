@@ -56,17 +56,18 @@ export async function POST(req: NextRequest) {
 
     // 3. Map status
     const invoiceStatus = mapMidtransStatus(transaction_status, fraud_status);
+    const wasAlreadyPaid = invoice.status === "PAID";
 
     // 4. Update invoice
     updateInvoice(order_id, {
       status: invoiceStatus,
-      paymentMethod: payment_type || null,
-      midtransTransactionId: transaction_id || null,
-      paidAt: invoiceStatus === "PAID" ? new Date().toISOString() : null,
+      paymentMethod: payment_type || invoice.paymentMethod,
+      midtransTransactionId: transaction_id || invoice.midtransTransactionId,
+      paidAt: invoiceStatus === "PAID" ? (invoice.paidAt || new Date().toISOString()) : null,
     });
 
-    // 5. Activate subscription if paid
-    if (invoiceStatus === "PAID") {
+    // 5. Activate subscription if paid (idempotent: only if not already processed as PAID)
+    if (invoiceStatus === "PAID" && !wasAlreadyPaid) {
       if (invoice.planId && invoice.planId !== "ADDON" && invoice.planId !== "ADDON_ONLY") {
         activateSubscription(
           invoice.userId,

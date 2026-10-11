@@ -95,6 +95,24 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Trigger Admin Email Notification via Resend SMTP
+    try {
+      const { sendEmailTicketNotification } = await import("@/lib/email-service");
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://waply.web.id";
+      await sendEmailTicketNotification({
+        recipientEmail: process.env.ADMIN_ALERT_EMAIL || "support@waply.web.id",
+        recipientName: "Tim Support Waply",
+        ticketId: ticket.id,
+        subject: ticket.subject,
+        messagePreview: input.message.length > 250 ? `${input.message.slice(0, 247)}...` : input.message,
+        senderName: `${ticket.userName} (${ticket.userEmail})`,
+        ticketUrl: `${appUrl.replace(/\/$/, "")}/admin/tickets/${ticket.id}`,
+        actionType: "NEW_TICKET_ALERT_ADMIN",
+      });
+    } catch (mailErr: any) {
+      console.warn("[Tickets API] Admin notification email skipped:", mailErr.message);
+    }
+
     return NextResponse.json({
       success: true,
       message: "Tiket bantuan berhasil dibuat",

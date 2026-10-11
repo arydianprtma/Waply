@@ -731,4 +731,12 @@ export interface Invoice {
   durationMonths?: number;
   selectedAddonIds?: string[];
   addonsAmount?: number;
+  qrCodeUrl?: string | null;
+  qrString?: string | null;
+  vaNumber?: string | null;
+  bank?: string | null;
+  billerCode?: string | null;
+  billKey?: string | null;
+  expiryTime?: string | null;
+  snapRedirectUrl?: string | null;
 }

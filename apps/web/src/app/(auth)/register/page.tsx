@@ -24,59 +24,41 @@ export default function RegisterPage() {
     setErrorMsg(null);
     setSuccessMsg(null);
 
-    // If Supabase credentials are not provided yet in local .env, register via demo-login to track IP and enter dashboard
-    if (!isSupabaseConfigured()) {
-      try {
-        await fetch("/api/auth/demo-login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, name }),
-        });
-      } catch {
-        // Continue
-      }
-      router.push("/dashboard");
-      router.refresh();
-      return;
-    }
-
     try {
-      const supabase = createClient();
-      const origin =
-        typeof window !== "undefined" &&
-        !window.location.hostname.includes("0.0.0.0") &&
-        !window.location.hostname.includes("localhost")
-          ? window.location.origin
-          : (process.env.NEXT_PUBLIC_APP_URL || "https://ardp.my.id");
-      const redirectUrl = `${origin.replace(/\/$/, "")}/auth/callback`;
-
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name,
-          },
-          emailRedirectTo: redirectUrl,
-        },
+      // Send verification email directly via Waply SMTP (Resend @waply.web.id)
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, name, password }),
       });
+      const json = await res.json();
 
-      if (error) {
-        setErrorMsg(error.message);
+      if (!res.ok || !json.success) {
+        setErrorMsg(json.error || "Gagal melakukan pendaftaran akun.");
         setLoading(false);
-      } else {
-        if (data.session) {
-          router.push("/dashboard");
-          router.refresh();
-        } else {
-          setSuccessMsg(
-            "Pendaftaran berhasil! Silakan periksa inbox email Anda untuk verifikasi akun."
-          );
-          setLoading(false);
+        return;
+      }
+
+      // Also register in Supabase Auth in background if configured
+      if (isSupabaseConfigured()) {
+        try {
+          const supabase = createClient();
+          await supabase.auth.signUp({
+            email,
+            password,
+            options: { data: { name } },
+          });
+        } catch {
+          // ignore background sync
         }
       }
-    } catch (err) {
-      setErrorMsg((err as Error).message);
+
+      setSuccessMsg(
+        "Pendaftaran berhasil! Tautan verifikasi email resmi telah dikirimkan ke kotak masuk Anda. Silakan klik tautan verifikasi untuk mengaktifkan akun."
+      );
+      setLoading(false);
+    } catch (err: any) {
+      setErrorMsg(err.message || "Terjadi kesalahan saat memproses pendaftaran.");
       setLoading(false);
     }
   };
@@ -90,14 +72,6 @@ export default function RegisterPage() {
         </p>
       </div>
 
-      {!isSupabaseConfigured() && (
-        <div className="alert alert-info text-xs py-2 mb-4 bg-info/10 border-info/20 text-info-content">
-          <Info className="w-4 h-4 text-info flex-shrink-0" />
-          <span>
-            <strong>Local Dev Mode:</strong> Supabase Auth belum di-link di <code>.env.local</code>. Form pendaftaran akan langsung mengarahkan Anda ke Dashboard.
-          </span>
-        </div>
-      )}
 
       {errorMsg && (
         <div className="alert alert-error text-sm py-2 mb-4">
