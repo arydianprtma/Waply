@@ -646,6 +646,149 @@ export async function sendEmailVerification(params: EmailVerificationParams): Pr
   }
 }
 
+export interface EmailOtpParams {
+  customerEmail: string;
+  customerName?: string;
+  otpCode: string;
+  expiresInMinutes?: number;
+}
+
+/**
+ * Generate corporate responsive HTML email for OTP codes following antislop design rules.
+ */
+function generateOtpEmailHtml(params: EmailOtpParams): string {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://waply.web.id";
+  const minutes = params.expiresInMinutes || 5;
+
+  return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="id">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kode Autentikasi OTP</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #0f172a;">
+  <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 40px 16px;">
+    <tr>
+      <td align="center">
+        <!-- Main Card -->
+        <table width="100%" border="0" cellpadding="0" cellspacing="0" style="max-width: 520px; background-color: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden;">
+          
+          <!-- Header Area -->
+          <tr>
+            <td style="padding: 32px 32px 24px; border-bottom: 1px solid #f1f5f9;">
+              <table width="100%" border="0" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <span style="font-size: 18px; font-weight: 800; color: #0f172a; letter-spacing: -0.02em;">
+                      Waply<span style="color: #059669;">.</span>
+                    </span>
+                  </td>
+                  <td align="right">
+                    <span style="font-size: 11px; font-weight: 700; color: #059669; background-color: #ecfdf5; border: 1px solid #a7f3d0; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.02em;">
+                      AUTENTIKASI 2FA
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Body Content -->
+          <tr>
+            <td style="padding: 32px;">
+              <h1 style="margin: 0 0 16px; font-size: 20px; font-weight: 700; color: #0f172a; line-height: 1.3; letter-spacing: -0.01em;">
+                Kode verifikasi OTP Anda
+              </h1>
+
+              <p style="margin: 0 0 16px; font-size: 14px; line-height: 1.6; color: #334155;">
+                Halo <strong>${params.customerName || params.customerEmail}</strong>,
+              </p>
+
+              <p style="margin: 0 0 28px; font-size: 14px; line-height: 1.6; color: #475569;">
+                Gunakan kode verifikasi berikut untuk menyelesaikan proses autentikasi akun Waply Anda. Jangan berikan kode ini kepada siapa pun, termasuk pihak yang mengatasnamakan Waply.
+              </p>
+
+              <!-- OTP Code Display Card -->
+              <table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-bottom: 28px; background-color: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 10px;">
+                <tr>
+                  <td align="center" style="padding: 24px 16px;">
+                    <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; margin-bottom: 8px;">
+                      KODE VERIFIKASI SEMENTARA
+                    </div>
+                    <div style="font-size: 36px; font-weight: 800; font-family: monospace, sans-serif; letter-spacing: 0.25em; color: #0f172a; line-height: 1;">
+                      ${params.otpCode}
+                    </div>
+                    <div style="margin-top: 10px; font-size: 12px; color: #64748b;">
+                      Berlaku selama <strong>${minutes} menit</strong>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Security Notice -->
+              <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px;">
+                <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #64748b;">
+                  Jika Anda tidak sedang melakukan permintaan masuk atau tindakan verifikasi ini, amankan akun Anda segera atau hubungi tim customer service kami.
+                </p>
+              </div>
+
+            </td>
+          </tr>
+
+          <!-- Minimal Footer -->
+          <tr>
+            <td style="padding: 20px 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
+              <p style="margin: 0; font-size: 12px; color: #94a3b8; line-height: 1.5;">
+                Dikirim oleh sistem keamanan Waply &bull; <a href="${appUrl}" style="color: #64748b; text-decoration: none;">${appUrl.replace(/^https?:\/\//, "")}</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`.trim();
+}
+
+/**
+ * Dispatch OTP verification email via configured SMTP (noreply@waply.web.id).
+ */
+export async function sendEmailOtp(params: EmailOtpParams): Promise<boolean> {
+  try {
+    if (!params.customerEmail || !params.customerEmail.includes("@") || !params.otpCode) {
+      return false;
+    }
+    const transporter = getTransporter();
+    const subject = `[KODE OTP] ${params.otpCode} adalah Kode Verifikasi Akun Waply Anda`;
+    const htmlContent = generateOtpEmailHtml(params);
+    const fromAddress = sanitizeSenderAddress(
+      process.env.SMTP_NOREPLY_FROM,
+      "noreply@waply.web.id",
+      "Waply Security"
+    );
+
+    if (!transporter) {
+      console.warn(`[Email Service] SMTP belum dikonfigurasi untuk pengiriman OTP: ${params.customerEmail}`);
+      return false;
+    }
+
+    const info = await transporter.sendMail({
+      from: fromAddress,
+      to: params.customerEmail,
+      subject,
+      html: htmlContent,
+    });
+    console.log(`[Email Service] ✅ Email OTP berhasil dikirim ke ${params.customerEmail} (ID: ${info.messageId})`);
+    return true;
+  } catch (err: any) {
+    console.error("[Email Service] ❌ Gagal mengirim email OTP:", err.message);
+    return false;
+  }
+}
+
 export interface EmailTicketNotificationParams {
   recipientEmail: string;
   recipientName: string;
