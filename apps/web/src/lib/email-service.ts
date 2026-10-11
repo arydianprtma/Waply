@@ -358,133 +358,102 @@ export interface EmailResetPasswordParams {
  * Generate responsive corporate HTML email template for password reset.
  */
 function generateResetPasswordEmailHtml(params: EmailResetPasswordParams): string {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://waply.id";
-  const headerBg = "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://waply.web.id";
 
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="id">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Reset Password Akun Waply</title>
-  <!--[if mso]>
-  <style type="text/css">
-    body, table, td, p, a { font-family: Arial, sans-serif !important; }
-  </style>
-  <![endif]-->
+  <title>Atur Ulang Kata Sandi</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
-  <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color: #f1f5f9; padding: 32px 16px;">
+<body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #0f172a;">
+  <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 40px 16px;">
     <tr>
       <td align="center">
-        <!-- Main Card Container -->
-        <table width="100%" border="0" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01); border: 1px solid #e2e8f0;">
+        <!-- Main Card -->
+        <table width="100%" border="0" cellpadding="0" cellspacing="0" style="max-width: 520px; background-color: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden;">
           
-          <!-- Brand & Header Banner -->
+          <!-- Header Area -->
           <tr>
-            <td style="padding: 40px 32px 32px; background: ${headerBg}; text-align: center;">
-              <!-- Brand Logo / Badge -->
-              <table align="center" border="0" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
+            <td style="padding: 32px 32px 24px; border-bottom: 1px solid #f1f5f9;">
+              <table width="100%" border="0" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td style="background-color: rgba(255, 255, 255, 0.12); padding: 8px 16px; border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.2);">
-                    <table border="0" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="width: 10px; height: 10px; background-color: #10b981; border-radius: 50%; display: inline-block; margin-right: 8px;"></td>
-                        <td style="color: #ffffff; font-size: 13px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;">WAPLY GATEWAY</td>
-                      </tr>
-                    </table>
+                  <td>
+                    <span style="font-size: 18px; font-weight: 800; color: #0f172a; letter-spacing: -0.02em;">
+                      Waply<span style="color: #059669;">.</span>
+                    </span>
+                  </td>
+                  <td align="right">
+                    <span style="font-size: 11px; font-weight: 700; color: #0284c7; background-color: #f0f9ff; border: 1px solid #bae6fd; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.02em;">
+                      KEAMANAN AKUN
+                    </span>
                   </td>
                 </tr>
               </table>
-
-              <!-- Status Badge Pill -->
-              <table align="center" border="0" cellpadding="0" cellspacing="0" style="margin-bottom: 14px;">
-                <tr>
-                  <td style="background-color: #0284c7; color: #ffffff; font-size: 12px; font-weight: 800; padding: 5px 14px; border-radius: 9999px; letter-spacing: 0.04em; text-transform: uppercase;">
-                    Keamanan Akun
-                  </td>
-                </tr>
-              </table>
-
-              <h1 style="margin: 0 0 10px; color: #ffffff; font-size: 26px; font-weight: 900; letter-spacing: -0.02em; line-height: 1.2;">
-                Permintaan Reset Password
-              </h1>
-
-              <p style="margin: 0; color: #cbd5e1; font-size: 13px;">
-                Pemulihan akses dan keamanan kata sandi akun Waply Anda
-              </p>
             </td>
           </tr>
 
-          <!-- Main Content Body -->
+          <!-- Body Content -->
           <tr>
-            <td style="padding: 36px 32px 28px;">
-              <!-- Greeting -->
-              <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #334155;">
-                Halo <strong style="color: #0f172a;">${params.customerName || params.customerEmail}</strong>,
-              </p>
-              <p style="margin: 0 0 24px; font-size: 14px; line-height: 1.6; color: #475569;">
-                Kami menerima permintaan untuk mengatur ulang kata sandi (password) akun Waply Anda. Untuk melanjutkan dan membuat kata sandi baru, silakan klik tombol konfirmasi di bawah ini:
+            <td style="padding: 32px;">
+              <h1 style="margin: 0 0 16px; font-size: 20px; font-weight: 700; color: #0f172a; line-height: 1.3; letter-spacing: -0.01em;">
+                Permintaan atur ulang kata sandi
+              </h1>
+
+              <p style="margin: 0 0 16px; font-size: 14px; line-height: 1.6; color: #334155;">
+                Halo <strong>${params.customerName || params.customerEmail}</strong>,
               </p>
 
-              <!-- CTA Button -->
+              <p style="margin: 0 0 28px; font-size: 14px; line-height: 1.6; color: #475569;">
+                Kami menerima permintaan untuk mengatur ulang kata sandi akun Waply Anda. Silakan klik tombol di bawah untuk membuat kata sandi baru.
+              </p>
+
+              <!-- Action Button (Min 44px tap target) -->
               <table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
                 <tr>
-                  <td align="center">
-                    <table border="0" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td align="center" style="border-radius: 14px; background-color: #059669; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);">
-                          <a href="${params.resetUrl}" target="_blank" style="display: inline-block; padding: 16px 36px; font-size: 15px; font-weight: 800; color: #ffffff; text-decoration: none; border-radius: 14px; letter-spacing: 0.02em;">
-                            Atur Ulang Password Sekarang &rarr;
-                          </a>
-                        </td>
-                      </tr>
-                    </table>
+                  <td>
+                    <a href="${params.resetUrl}" target="_blank" style="display: block; width: 100%; box-sizing: border-box; text-align: center; background-color: #0f172a; color: #ffffff; padding: 13px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; min-height: 44px;">
+                      Atur Ulang Kata Sandi
+                    </a>
                   </td>
                 </tr>
               </table>
 
               <!-- Notice Box -->
-              <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; margin-bottom: 24px;">
-                <tr>
-                  <td style="padding: 16px 20px;">
-                    <div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 4px;">
-                      Informasi Keamanan Penting:
-                    </div>
-                    <ul style="margin: 0; padding-left: 18px; font-size: 13px; color: #475569; line-height: 1.6;">
-                      <li>Tautan ini hanya berlaku selama <strong>60 menit</strong> sejak email ini dikirimkan.</li>
-                      <li>Jika Anda tidak merasa mengajukan permintaan ini, Anda dapat mengabaikan email ini. Kata sandi Anda saat ini tetap aman dan tidak akan berubah.</li>
-                    </ul>
-                  </td>
-                </tr>
-              </table>
+              <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; margin-bottom: 24px;">
+                <p style="margin: 0 0 6px; font-size: 12px; font-weight: 700; color: #334155;">
+                  Informasi Penting:
+                </p>
+                <ul style="margin: 0; padding-left: 18px; font-size: 12px; color: #64748b; line-height: 1.5;">
+                  <li>Tautan ini kedaluwarsa dalam 60 menit.</li>
+                  <li>Jika Anda tidak meminta ini, abaikan email ini dan kata sandi Anda tetap tidak berubah.</li>
+                </ul>
+              </div>
 
-              <!-- Alternative Link -->
-              <div style="font-size: 12px; color: #64748b; line-height: 1.5; word-break: break-all; border-top: 1px dashed #e2e8f0; padding-top: 18px;">
-                Jika tombol di atas tidak dapat diklik, salin dan tempel tautan berikut ke browser Anda:<br />
-                <a href="${params.resetUrl}" style="color: #059669; text-decoration: underline;">${params.resetUrl}</a>
+              <!-- Fallback Direct URL -->
+              <div style="border-top: 1px solid #f1f5f9; padding-top: 20px;">
+                <p style="margin: 0 0 6px; font-size: 12px; color: #64748b;">
+                  Jika tombol di atas tidak berfungsi, buka tautan berikut di peramban:
+                </p>
+                <p style="margin: 0; font-size: 11px; line-height: 1.4; word-break: break-all;">
+                  <a href="${params.resetUrl}" style="color: #059669; text-decoration: underline;">${params.resetUrl}</a>
+                </p>
               </div>
 
             </td>
           </tr>
 
-          <!-- Footer Area -->
+          <!-- Minimal Footer -->
           <tr>
-            <td style="padding: 28px 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
-              <p style="margin: 0 0 6px; font-size: 13px; font-weight: 700; color: #334155;">
-                Waply WhatsApp Gateway & Messaging API
-              </p>
-              <p style="margin: 0 0 12px; font-size: 12px; color: #94a3b8; line-height: 1.5;">
-                Solusi gateway pesan WhatsApp cepat, aman, dan handal untuk bisnis modern.
-              </p>
-              <p style="margin: 0; font-size: 12px; color: #94a3b8;">
-                &copy; ${new Date().getFullYear()} Waply. Hak Cipta Dilindungi. • <a href="${appUrl}" style="color: #059669; text-decoration: none; font-weight: 600;">${appUrl.replace(/^https?:\/\//, "")}</a>
+            <td style="padding: 20px 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
+              <p style="margin: 0; font-size: 12px; color: #94a3b8; line-height: 1.5;">
+                Dikirim oleh sistem keamanan Waply &bull; <a href="${appUrl}" style="color: #64748b; text-decoration: none;">${appUrl.replace(/^https?:\/\//, "")}</a>
               </p>
             </td>
           </tr>
 
         </table>
-        <!-- End Main Card -->
       </td>
     </tr>
   </table>
@@ -541,78 +510,98 @@ export interface EmailVerificationParams {
   verificationUrl: string;
 }
 
-/**
- * Generate corporate responsive HTML email for new account verification.
- */
 function generateVerificationEmailHtml(params: EmailVerificationParams): string {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://waply.web.id";
-  const headerBg = "linear-gradient(135deg, #064e3b 0%, #065f46 50%, #0d9488 100%)";
 
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="id">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Verifikasi Alamat Email Akun Waply</title>
+  <title>Verifikasi Alamat Email</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
-  <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color: #f1f5f9; padding: 32px 16px;">
+<body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #0f172a;">
+  <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 40px 16px;">
     <tr>
       <td align="center">
-        <table width="100%" border="0" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0;">
+        <!-- Main Card -->
+        <table width="100%" border="0" cellpadding="0" cellspacing="0" style="max-width: 520px; background-color: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden;">
+          
+          <!-- Header Area -->
           <tr>
-            <td style="padding: 40px 32px 32px; background: ${headerBg}; text-align: center;">
-              <table align="center" border="0" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
+            <td style="padding: 32px 32px 24px; border-bottom: 1px solid #f1f5f9;">
+              <table width="100%" border="0" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td style="background-color: rgba(255, 255, 255, 0.15); padding: 8px 16px; border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.25);">
-                    <span style="color: #ffffff; font-size: 13px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;">WAPLY GATEWAY</span>
+                  <td>
+                    <span style="font-size: 18px; font-weight: 800; color: #0f172a; letter-spacing: -0.02em;">
+                      Waply<span style="color: #059669;">.</span>
+                    </span>
+                  </td>
+                  <td align="right">
+                    <span style="font-size: 11px; font-weight: 700; color: #059669; background-color: #ecfdf5; border: 1px solid #a7f3d0; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.02em;">
+                      VERIFIKASI AKUN
+                    </span>
                   </td>
                 </tr>
               </table>
-              <h1 style="margin: 0 0 10px; color: #ffffff; font-size: 26px; font-weight: 900; letter-spacing: -0.02em; line-height: 1.2;">
-                Selamat Datang di Waply!
-              </h1>
-              <p style="margin: 0; color: #e2e8f0; font-size: 13px;">
-                Satu langkah lagi untuk mengaktifkan akun dan kuota gratis WhatsApp Gateway Anda
-              </p>
             </td>
           </tr>
+
+          <!-- Body Content -->
           <tr>
-            <td style="padding: 36px 32px 28px;">
-              <p style="margin: 0 0 18px; font-size: 15px; line-height: 1.6; color: #334155;">
-                Halo <strong style="color: #0f172a;">${params.customerName || params.customerEmail}</strong>,
+            <td style="padding: 32px;">
+              <h1 style="margin: 0 0 16px; font-size: 20px; font-weight: 700; color: #0f172a; line-height: 1.3; letter-spacing: -0.01em;">
+                Konfirmasi alamat email Anda
+              </h1>
+
+              <p style="margin: 0 0 16px; font-size: 14px; line-height: 1.6; color: #334155;">
+                Halo <strong>${params.customerName || params.customerEmail}</strong>,
               </p>
-              <p style="margin: 0 0 24px; font-size: 14px; line-height: 1.6; color: #475569;">
-                Terima kasih telah mendaftar di Waply. Untuk menjaga keamanan ekosistem gateway dan mencegah penyalahgunaan spam, silakan konfirmasi bahwa ini adalah alamat email aktif Anda:
+
+              <p style="margin: 0 0 28px; font-size: 14px; line-height: 1.6; color: #475569;">
+                Terima kasih telah mendaftar di Waply. Untuk mengaktifkan akun dan memastikan keamanan akses WhatsApp Gateway Anda, silakan konfirmasi kepemilikan alamat email ini.
               </p>
+
+              <!-- Action Button (Min 44px tap target) -->
               <table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
                 <tr>
-                  <td align="center">
-                    <table border="0" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td align="center" style="border-radius: 14px; background-color: #059669; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);">
-                          <a href="${params.verificationUrl}" target="_blank" style="display: inline-block; padding: 16px 36px; font-size: 15px; font-weight: 800; color: #ffffff; text-decoration: none; border-radius: 14px;">
-                            Verifikasi Email Akun Saya &rarr;
-                          </a>
-                        </td>
-                      </tr>
-                    </table>
+                  <td>
+                    <a href="${params.verificationUrl}" target="_blank" style="display: block; width: 100%; box-sizing: border-box; text-align: center; background-color: #059669; color: #ffffff; padding: 13px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; min-height: 44px;">
+                      Konfirmasi Alamat Email
+                    </a>
                   </td>
                 </tr>
               </table>
-              <div style="font-size: 12px; color: #64748b; line-height: 1.5; word-break: break-all; border-top: 1px dashed #e2e8f0; padding-top: 18px;">
-                Jika tombol di atas tidak dapat diklik, buka tautan berikut melalui peramban Anda:<br />
-                <a href="${params.verificationUrl}" style="color: #059669; text-decoration: underline;">${params.verificationUrl}</a>
+
+              <!-- Security Notice -->
+              <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; margin-bottom: 24px;">
+                <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #64748b;">
+                  Tautan ini berlaku selama 24 jam. Jika Anda tidak merasa mendaftar di Waply, silakan abaikan email ini dan akun tidak akan diaktifkan.
+                </p>
               </div>
+
+              <!-- Fallback Direct URL -->
+              <div style="border-top: 1px solid #f1f5f9; padding-top: 20px;">
+                <p style="margin: 0 0 6px; font-size: 12px; color: #64748b;">
+                  Jika tombol di atas tidak berfungsi, buka tautan berikut di peramban:
+                </p>
+                <p style="margin: 0; font-size: 11px; line-height: 1.4; word-break: break-all;">
+                  <a href="${params.verificationUrl}" style="color: #059669; text-decoration: underline;">${params.verificationUrl}</a>
+                </p>
+              </div>
+
             </td>
           </tr>
+
+          <!-- Minimal Footer -->
           <tr>
-            <td style="padding: 24px 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
-              <p style="margin: 0; font-size: 12px; color: #94a3b8;">
-                &copy; ${new Date().getFullYear()} Waply. Solusi WhatsApp Automation & Gateway Terpercaya.
+            <td style="padding: 20px 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
+              <p style="margin: 0; font-size: 12px; color: #94a3b8; line-height: 1.5;">
+                Dikirim oleh sistem keamanan Waply &bull; <a href="${appUrl}" style="color: #64748b; text-decoration: none;">${appUrl.replace(/^https?:\/\//, "")}</a>
               </p>
             </td>
           </tr>
+
         </table>
       </td>
     </tr>
@@ -684,36 +673,89 @@ export async function sendEmailTicketNotification(params: EmailTicketNotificatio
 
     const htmlContent = `<!DOCTYPE html>
 <html lang="id">
-<body style="margin: 0; padding: 24px; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-  <div style="max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; padding: 32px;">
-    <div style="margin-bottom: 20px;">
-      <span style="background-color: ${isToAdmin ? "#fef3c7" : "#ecfdf5"}; color: ${isToAdmin ? "#b45309" : "#047857"}; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 9999px; text-transform: uppercase;">
-        Tiket Bantuan #${params.ticketId}
-      </span>
-    </div>
-    <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 12px;">
-      ${isToAdmin ? "Tiket Bantuan Memerlukan Penanganan" : "Ada Balasan Baru untuk Tiket Anda"}
-    </h2>
-    <p style="font-size: 14px; color: #475569; line-height: 1.6; margin: 0 0 16px;">
-      Halo <strong>${params.recipientName}</strong>,
-    </p>
-    <div style="background-color: #f8fafc; border-left: 4px solid #059669; padding: 14px 16px; border-radius: 8px; margin-bottom: 24px;">
-      <p style="margin: 0 0 6px; font-size: 12px; font-weight: 700; color: #64748b;">
-        Pesan dari ${params.senderName}:
-      </p>
-      <p style="margin: 0; font-size: 14px; color: #1e293b; line-height: 1.5; font-style: italic;">
-        "${params.messagePreview}"
-      </p>
-    </div>
-    <div style="text-align: center; margin-bottom: 24px;">
-      <a href="${params.ticketUrl}" style="display: inline-block; background-color: #059669; color: #ffffff; padding: 12px 28px; border-radius: 12px; font-size: 14px; font-weight: 700; text-decoration: none;">
-        Buka Ruang Obrolan Tiket &rarr;
-      </a>
-    </div>
-    <p style="font-size: 12px; color: #94a3b8; text-align: center; margin: 0; border-top: 1px solid #f1f5f9; padding-top: 16px;">
-      Waply Support System &bull; <a href="https://waply.web.id" style="color: #059669; text-decoration: none;">waply.web.id</a>
-    </p>
-  </div>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tiket Bantuan Waply</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #0f172a;">
+  <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" border="0" cellpadding="0" cellspacing="0" style="max-width: 520px; background-color: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden;">
+          
+          <!-- Header Area -->
+          <tr>
+            <td style="padding: 32px 32px 24px; border-bottom: 1px solid #f1f5f9;">
+              <table width="100%" border="0" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <span style="font-size: 18px; font-weight: 800; color: #0f172a; letter-spacing: -0.02em;">
+                      Waply<span style="color: #059669;">.</span>
+                    </span>
+                  </td>
+                  <td align="right">
+                    <span style="font-size: 11px; font-weight: 700; color: ${isToAdmin ? "#b45309" : "#047857"}; background-color: ${isToAdmin ? "#fef3c7" : "#ecfdf5"}; border: 1px solid ${isToAdmin ? "#fde68a" : "#a7f3d0"}; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.02em;">
+                      TIKET #${params.ticketId}
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Body Content -->
+          <tr>
+            <td style="padding: 32px;">
+              <h1 style="margin: 0 0 16px; font-size: 20px; font-weight: 700; color: #0f172a; line-height: 1.3; letter-spacing: -0.01em;">
+                ${isToAdmin ? "Tiket bantuan memerlukan respon" : "Pembaruan tiket bantuan Anda"}
+              </h1>
+
+              <p style="margin: 0 0 16px; font-size: 14px; line-height: 1.6; color: #334155;">
+                Halo <strong>${params.recipientName}</strong>,
+              </p>
+
+              <p style="margin: 0 0 20px; font-size: 14px; line-height: 1.6; color: #475569;">
+                ${isToAdmin ? "Pengguna telah mengirimkan pesan tiket baru yang memerlukan perhatian tim:" : "Tim Customer Support Waply telah memberikan tanggapan baru:"}
+              </p>
+
+              <!-- Message Quote Box -->
+              <div style="background-color: #f8fafc; border-left: 3px solid #059669; padding: 16px; border-radius: 6px; margin-bottom: 28px;">
+                <p style="margin: 0 0 6px; font-size: 12px; font-weight: 600; color: #64748b;">
+                  Pesan dari ${params.senderName}:
+                </p>
+                <p style="margin: 0; font-size: 14px; color: #1e293b; line-height: 1.6; font-style: italic;">
+                  "${params.messagePreview}"
+                </p>
+              </div>
+
+              <!-- Action Button -->
+              <table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-bottom: 12px;">
+                <tr>
+                  <td>
+                    <a href="${params.ticketUrl}" target="_blank" style="display: block; width: 100%; box-sizing: border-box; text-align: center; background-color: #059669; color: #ffffff; padding: 13px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; min-height: 44px;">
+                      Lihat Percakapan Tiket
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          <!-- Footer Area -->
+          <tr>
+            <td style="padding: 20px 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
+              <p style="margin: 0; font-size: 12px; color: #94a3b8; line-height: 1.5;">
+                Waply Support &bull; <a href="https://waply.web.id" style="color: #64748b; text-decoration: none;">waply.web.id</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>`.trim();
 
