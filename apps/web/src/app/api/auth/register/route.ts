@@ -4,27 +4,23 @@ import { extractClientIp } from "@/lib/ip-utils";
 import { sendEmailVerification } from "@/lib/email-service";
 import crypto from "crypto";
 
+import { registerSchema, validateSchema } from "@/lib/validation-schemas";
+
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json().catch(() => ({}));
-    const cleanEmail = (body.email || "").trim().toLowerCase();
-    const name = (body.name || "").trim() || cleanEmail.split("@")[0] || "Waply User";
-    const password = (body.password || "").trim();
+    const rawBody = await req.json().catch(() => ({}));
+    
+    // Strict schema validation & sanitization (Anti-XSS, length check, email format)
+    const validation = validateSchema(registerSchema, rawBody);
+    if (!validation.success) {
+      return NextResponse.json(
+        { success: false, error: validation.message, errors: validation.errors },
+        { status: 400 }
+      );
+    }
+
+    const { email: cleanEmail, name, password } = validation.data;
     const clientIp = extractClientIp(req);
-
-    if (!cleanEmail || !cleanEmail.includes("@")) {
-      return NextResponse.json(
-        { success: false, error: "Alamat email tidak valid." },
-        { status: 400 }
-      );
-    }
-
-    if (!password || password.length < 6) {
-      return NextResponse.json(
-        { success: false, error: "Password minimal 6 karakter." },
-        { status: 400 }
-      );
-    }
 
     // 1. Check if user already exists
     const existing = getUserByEmail(cleanEmail);
