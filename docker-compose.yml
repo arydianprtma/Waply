@@ -1,4 +1,24 @@
 services:
+  waply-db:
+    image: postgres:16-alpine
+    container_name: waply-db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-waply}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-waply_secret_password}
+      POSTGRES_DB: ${POSTGRES_DB:-waply}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-waply} -d ${POSTGRES_DB:-waply}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - waply-net
+
   waply-gateway:
     build:
       context: .
@@ -16,6 +36,9 @@ services:
     volumes:
       - gateway-sessions:/app/apps/gateway/.sessions
       - waply-shared-data:/app/.waply-data
+    depends_on:
+      waply-db:
+        condition: service_healthy
     networks:
       - waply-net
 
@@ -50,11 +73,16 @@ services:
       - waply-web-data:/app/apps/web/.waply-data
       - waply-shared-data:/app/.waply-data
     depends_on:
-      - waply-gateway
+      waply-gateway:
+        condition: service_started
+      waply-db:
+        condition: service_healthy
     networks:
       - waply-net
 
 volumes:
+  postgres-data:
+    name: waply_postgres_data
   gateway-sessions:
     name: waply_gateway_sessions
   waply-web-data:

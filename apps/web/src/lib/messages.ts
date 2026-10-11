@@ -4,6 +4,7 @@ import { prisma } from "@waply/database";
 import { getSubscription, getAllPlans } from "./billing";
 import { DEFAULT_PLANS } from "./billing-types";
 import { getUserAddonTotals } from "./addons";
+import { getDataDirectory } from "./data-dir";
 
 export interface StoredMessage {
   id: string;
@@ -20,7 +21,7 @@ export interface StoredMessage {
   createdAt: string;
 }
 
-const DATA_DIR = path.resolve(process.cwd(), ".waply-data");
+const DATA_DIR = getDataDirectory();
 const MESSAGES_FILE = path.join(DATA_DIR, "messages.json");
 
 function ensureDataDir() {
@@ -129,11 +130,15 @@ export function canUserSendMessage(
   remainingMessages: number;
   isUnlimited: boolean;
 } {
+  // Count user's sent messages (status SENT)
+  const userMessages = getStoredMessages(userId).filter((m) => m.status === "SENT");
+  const usedMessages = userMessages.length;
+
   if (userRole === "admin") {
     return {
       allowed: true,
       maxMessages: -1,
-      usedMessages: 0,
+      usedMessages,
       remainingMessages: -1,
       isUnlimited: true,
     };
@@ -150,7 +155,7 @@ export function canUserSendMessage(
     return {
       allowed: true,
       maxMessages: -1,
-      usedMessages: 0,
+      usedMessages,
       remainingMessages: -1,
       isUnlimited: true,
     };
@@ -159,10 +164,6 @@ export function canUserSendMessage(
   // Calculate extra message quota from active addons
   const { extraMessages } = getUserAddonTotals(userId);
   const maxMessages = baseMessages + extraMessages;
-
-  // Count user's sent messages (status SENT)
-  const userMessages = getStoredMessages(userId).filter((m) => m.status === "SENT");
-  const usedMessages = userMessages.length;
   const remainingMessages = Math.max(0, maxMessages - usedMessages);
 
   if (usedMessages >= maxMessages) {

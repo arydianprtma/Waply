@@ -12,7 +12,7 @@ Panduan ini menjelaskan langkah demi langkah cara men-deploy **Waply** di server
 
 ---
 
-## 🛠️ Langkah 1: Update Server & Install Docker + Docker Compose
+## 🛠️ Langkah 1: Update Server, Setup Swap & Install Docker
 
 Jalankan perintah berikut di terminal SSH VPS Anda:
 
@@ -20,17 +20,24 @@ Jalankan perintah berikut di terminal SSH VPS Anda:
 # 1. Update package index
 sudo apt update && sudo apt upgrade -y
 
-# 2. Install dependencies pendukung
+# 2. Pasang Swap Memory 4 GB (Sangat penting untuk kestabilan VPS 2 GB RAM)
+sudo fallocate -l 4G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+
+# 3. Install dependencies pendukung
 sudo apt install -y curl git ufw fail2ban
 
-# 3. Install Docker Engine resmi
+# 4. Install Docker Engine resmi
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 
-# 4. Beri akses user non-root ke Docker (Opsional)
+# 5. Beri akses user non-root ke Docker (Opsional)
 sudo usermod -aG docker $USER
 
-# 5. Verifikasi instalasi Docker
+# 6. Verifikasi instalasi Docker
 docker --version
 docker compose version
 ```
@@ -54,22 +61,31 @@ cp .env.example .env
 nano .env
 ```
 
-Isi variabel `.env` dengan data asli (Supabase, Midtrans Production, JWT Secret, SMTP Email, dll). Simpan dengan menekan `Ctrl+O` lalu `Enter`, kemudian keluar dengan `Ctrl+X`.
+Isi variabel `.env` dengan data asli (password DB lokal, Midtrans Production, JWT Secret, SMTP Email, dll). Simpan dengan menekan `Ctrl+O` lalu `Enter`, kemudian keluar dengan `Ctrl+X`.
 
 ---
 
 ## 🚢 Langkah 3: Build & Jalankan Container dengan Docker Compose
 
-Jalankan perintah berikut untuk mem-build dan menjalankan kedua service (`waply-web` dan `waply-gateway`):
+Jalankan perintah berikut untuk mem-build dan menjalankan ketiga service (`waply-db`, `waply-gateway`, dan `waply-web`):
 
 ```bash
 # Build dan jalankan di background (Daemon)
 docker compose up -d --build
 ```
 
+### Inisialisasi Skema Database (Wajib saat pertama kali deploy):
+```bash
+# Push schema Prisma ke database PostgreSQL lokal di container
+docker compose exec waply-web npx prisma db push --schema=/app/packages/database/prisma/schema.prisma
+
+# (Opsional) Jalankan seed data default jika ada:
+docker compose exec waply-web npm run seed --workspace=@waply/database
+```
+
 ### Cek Status Container:
 ```bash
-# Cek apakah kedua container berstatus 'Up'
+# Cek apakah ketiga container (waply-db, waply-gateway, waply-web) berstatus 'Up'
 docker compose ps
 
 # Cek log aplikasi secara real-time

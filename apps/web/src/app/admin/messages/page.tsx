@@ -14,6 +14,7 @@ import {
   Copy,
   Check,
 } from "lucide-react";
+import { TableSkeleton } from "@/components/ui/SkeletonLoaders";
 
 export default function AdminMessagesPage() {
   const [messages, setMessages] = useState<any[]>([]);
@@ -141,17 +142,16 @@ export default function AdminMessagesPage() {
       </div>
 
       {/* Table */}
-      <div className="card bg-base-100 border border-base-200 shadow-sm rounded-2xl overflow-hidden">
-        {loading ? (
-          <div className="p-12 text-center text-sm text-base-content/40">
-            <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2" /> Memuat pesan...
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-base-content/30">
-            <MessageSquare className="w-10 h-10 mb-3" />
-            <p className="text-sm font-medium">Belum ada pesan tercatat</p>
-          </div>
-        ) : (
+      {loading ? (
+        <TableSkeleton rows={6} cols={6} />
+      ) : (
+        <div className="card bg-base-100 border border-base-200 shadow-sm rounded-2xl overflow-hidden">
+          {filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-base-content/30">
+              <MessageSquare className="w-10 h-10 mb-3" />
+              <p className="text-sm font-medium">Belum ada pesan tercatat</p>
+            </div>
+          ) : (
           <div className="overflow-x-auto">
             <table className="table table-sm">
               <thead>
@@ -268,6 +268,7 @@ export default function AdminMessagesPage() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }

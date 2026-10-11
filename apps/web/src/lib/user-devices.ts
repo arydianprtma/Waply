@@ -12,6 +12,8 @@ export interface UserDeviceRecord {
   userEmail?: string;
   name: string;
   createdAt: string;
+  phoneNumber?: string;
+  warmupStage?: "Cold" | "Warm" | "Active" | "Mature";
 }
 
 function ensureDataDir() {
@@ -101,13 +103,15 @@ export function registerUserDevice(
   sessionId: string,
   deviceName: string,
   userRole?: string,
-  userEmail?: string
+  userEmail?: string,
+  phoneNumber?: string
 ): { success: boolean; error?: string } {
   const limit = getUserDeviceLimit(userId);
   const existing = getUserSessionIds(userId, userEmail);
 
-  // If user reached device limit:
-  if (userRole !== "admin" && existing.length >= limit.maxDevices) {
+  // If user reached device limit and session is not already registered:
+  const isAlreadyRegistered = existing.includes(sessionId);
+  if (!isAlreadyRegistered && userRole !== "admin" && existing.length >= limit.maxDevices) {
     return {
       success: false,
       error: `Batas maksimal WhatsApp Device (${limit.maxDevices}) untuk paket ${limit.planName} telah tercapai. Silakan upgrade paket Anda untuk menambah device baru.`,
@@ -115,16 +119,32 @@ export function registerUserDevice(
   }
 
   const records = getAllUserDeviceRecords();
+  const prevRecord = records[sessionId];
+
   records[sessionId] = {
     id: sessionId,
     userId,
-    userEmail: userEmail?.trim().toLowerCase(),
-    name: deviceName,
-    createdAt: new Date().toISOString(),
+    userEmail: userEmail?.trim().toLowerCase() || prevRecord?.userEmail,
+    name: deviceName || prevRecord?.name || "WhatsApp Device",
+    createdAt: prevRecord?.createdAt || new Date().toISOString(),
+    phoneNumber: phoneNumber || prevRecord?.phoneNumber,
+    warmupStage: prevRecord?.warmupStage,
   };
   saveUserDeviceRecords(records);
 
   return { success: true };
+}
+
+/**
+ * Update / persist phone number for a user device session
+ */
+export function updateUserDevicePhone(sessionId: string, phoneNumber: string): void {
+  ensureDataDir();
+  const records = getAllUserDeviceRecords();
+  if (records[sessionId]) {
+    records[sessionId].phoneNumber = phoneNumber;
+    saveUserDeviceRecords(records);
+  }
 }
 
 /**
@@ -136,4 +156,31 @@ export function unregisterUserDevice(sessionId: string): void {
     delete records[sessionId];
     saveUserDeviceRecords(records);
   }
+}
+
+/**
+ * Manually update/override a device's warmup stage
+ */
+export function setDeviceWarmupStage(
+  sessionId: string,
+  stage: "Cold" | "Warm" | "Active" | "Mature",
+  userId?: string,
+  userEmail?: string
+): boolean {
+  ensureDataDir();
+  const records = getAllUserDeviceRecords();
+  if (!records[sessionId]) {
+    records[sessionId] = {
+      id: sessionId,
+      userId: userId || "default",
+      userEmail: userEmail?.trim().toLowerCase(),
+      name: "WhatsApp Device",
+      createdAt: new Date().toISOString(),
+      warmupStage: stage,
+    };
+  } else {
+    records[sessionId].warmupStage = stage;
+  }
+  saveUserDeviceRecords(records);
+  return true;
 }

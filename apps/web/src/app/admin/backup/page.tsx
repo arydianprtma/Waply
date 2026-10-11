@@ -14,6 +14,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { BackupMetadata } from "@/lib/admin-backup";
+import { TableSkeleton } from "@/components/ui/SkeletonLoaders";
 
 export default function AdminBackupPage() {
   const [backups, setBackups] = useState<BackupMetadata[]>([]);
@@ -152,10 +153,7 @@ export default function AdminBackupPage() {
         </div>
 
         {loading ? (
-          <div className="p-10 text-center">
-            <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mb-2" />
-            <p className="text-xs text-base-content/60">Memuat riwayat backup...</p>
-          </div>
+          <TableSkeleton rows={4} cols={4} />
         ) : backups.length === 0 ? (
           <div className="p-12 text-center space-y-2">
             <HardDrive className="w-12 h-12 text-base-content/20 mx-auto" />

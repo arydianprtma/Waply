@@ -32,6 +32,7 @@ import {
 import type { SupportTicket, TicketCategory, TicketPriority, TicketStatus, TicketAttachment } from "@/lib/support-tickets";
 import { useUserSession } from "@/lib/use-user-session";
 import { useAdminTickets } from "@/lib/admin-tickets-context";
+import { Skeleton } from "@/components/ui/SkeletonLoaders";
 import { ChatMessageContent } from "@/components/support/ChatMessageContent";
 import { validateAttachmentFile } from "@/lib/file-security";
 
@@ -355,9 +356,31 @@ export default function AdminTicketDetailPage() {
 
   if (loading && !ticket) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
-        <RefreshCw className="w-8 h-8 text-primary animate-spin" />
-        <p className="text-xs font-semibold text-slate-500">Memuat ruang resolusi tiket bantuan...</p>
+      <div className="w-full space-y-5 animate-in fade-in duration-300 pb-12">
+        <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-3">
+          <Skeleton className="h-4 w-36" />
+          <div className="flex justify-between items-center">
+            <Skeleton className="h-7 w-64" />
+            <Skeleton className="h-6 w-24 rounded-full" />
+          </div>
+          <Skeleton className="h-4 w-48" />
+        </div>
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 space-y-6 min-h-[420px]">
+          <div className="space-y-4">
+            <div className="flex gap-3 max-w-lg">
+              <Skeleton className="w-9 h-9 rounded-full shrink-0" />
+              <Skeleton className="h-16 w-80 rounded-2xl" />
+            </div>
+            <div className="flex gap-3 max-w-lg ml-auto justify-end">
+              <Skeleton className="h-14 w-72 rounded-2xl" />
+              <Skeleton className="w-9 h-9 rounded-full shrink-0" />
+            </div>
+            <div className="flex gap-3 max-w-lg">
+              <Skeleton className="w-9 h-9 rounded-full shrink-0" />
+              <Skeleton className="h-20 w-96 rounded-2xl" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

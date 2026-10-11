@@ -17,10 +17,11 @@ import {
   Invoice,
 } from "./billing-types";
 import { getAdminSettings } from "./admin-settings";
+import { getDataDirectory } from "./data-dir";
 
 // ─── Plan Storage & Server Methods ────────────────────────────────────────────
 
-const DATA_DIR = path.resolve(process.cwd(), ".waply-data");
+const DATA_DIR = getDataDirectory();
 const PLANS_FILE = path.join(DATA_DIR, "plans.json");
 const SUBSCRIPTION_FILE = path.join(DATA_DIR, "subscription.json");
 const INVOICES_FILE = path.join(DATA_DIR, "invoices.json");
@@ -152,22 +153,49 @@ export function getSubscription(userId: string): Subscription {
 
   const all = getAllSubscriptions();
 
+  function handleExpiredReversion(sub: Subscription, targetUserId: string): Subscription {
+    const isTimeExpired = sub.endDate ? new Date(sub.endDate) < new Date() : false;
+    const isExpired = sub.status === "EXPIRED" || isTimeExpired;
+
+    // If a paid/custom plan is expired, revert active plan to FREE and preserve expiredPlanId
+    if (isExpired && sub.planId && sub.planId !== "FREE") {
+      const expiredPlanId = sub.expiredPlanId || sub.planId;
+      const expiredAt = sub.expiredAt || sub.endDate || sub.updatedAt || new Date().toISOString();
+
+      const revertedSub: Subscription = {
+        userId: sub.userId || targetUserId,
+        planId: "FREE",
+        status: "FREE",
+        startDate: null,
+        endDate: null,
+        updatedAt: new Date().toISOString(),
+        expiredPlanId,
+        expiredAt,
+        expiredReadAt: sub.expiredReadAt || null,
+      };
+
+      try {
+        saveSubscription(revertedSub);
+      } catch {}
+
+      return revertedSub;
+    }
+
+    if (isExpired && sub.planId === "FREE" && sub.status === "EXPIRED") {
+      return { ...sub, status: "FREE" };
+    }
+
+    return sub;
+  }
+
   // 1. Direct match by exact key or case-insensitive key
   if (all[cleanId]) {
-    const sub = all[cleanId];
-    if (sub.status === "ACTIVE" && sub.endDate && new Date(sub.endDate) < new Date()) {
-      return { ...sub, status: "EXPIRED" };
-    }
-    return sub;
+    return handleExpiredReversion(all[cleanId], cleanId);
   }
 
   const matchedKey = Object.keys(all).find((k) => k.toLowerCase() === cleanId.toLowerCase());
   if (matchedKey && all[matchedKey]) {
-    const sub = all[matchedKey];
-    if (sub.status === "ACTIVE" && sub.endDate && new Date(sub.endDate) < new Date()) {
-      return { ...sub, status: "EXPIRED" };
-    }
-    return sub;
+    return handleExpiredReversion(all[matchedKey], cleanId);
   }
 
   // 2. Check users_registry.json to cross-reference user ID <-> email
@@ -184,27 +212,37 @@ export function getSubscription(userId: string): Subscription {
       if (found) {
         // Try looking up in subscriptions by found.id, then found.email
         if (found.id && all[found.id]) {
-          const sub = all[found.id];
-          if (sub.status === "ACTIVE" && sub.endDate && new Date(sub.endDate) < new Date()) {
-            return { ...sub, status: "EXPIRED" };
-          }
-          return sub;
+          return handleExpiredReversion(all[found.id], cleanId);
         }
         if (found.email && all[found.email.toLowerCase()]) {
-          const sub = all[found.email.toLowerCase()];
-          if (sub.status === "ACTIVE" && sub.endDate && new Date(sub.endDate) < new Date()) {
-            return { ...sub, status: "EXPIRED" };
-          }
-          return sub;
+          return handleExpiredReversion(all[found.email.toLowerCase()], cleanId);
         }
 
         // If user in registry has an active plan
         if (found.planId && found.planId !== "FREE") {
-          const isExpired = found.endDate && new Date(found.endDate) < new Date();
+          const isExpired = (found.endDate && new Date(found.endDate) < new Date()) ||
+                            found.planStatus === "EXPIRED" ||
+                            found.subscriptionStatus === "EXPIRED";
+          if (isExpired) {
+            const reverted: Subscription = {
+              userId: found.id || cleanId,
+              planId: "FREE",
+              status: "FREE",
+              startDate: null,
+              endDate: null,
+              updatedAt: new Date().toISOString(),
+              expiredPlanId: found.planId as PlanId,
+              expiredAt: found.endDate || new Date().toISOString(),
+            };
+            try {
+              saveSubscription(reverted);
+            } catch {}
+            return reverted;
+          }
           return {
             userId: found.id || cleanId,
             planId: found.planId as PlanId,
-            status: isExpired ? "EXPIRED" : ((found.planStatus || "ACTIVE") as SubscriptionStatus),
+            status: ((found.planStatus || "ACTIVE") as SubscriptionStatus),
             startDate: found.startDate || null,
             endDate: found.endDate || null,
             updatedAt: found.updatedAt || new Date().toISOString(),
@@ -217,10 +255,7 @@ export function getSubscription(userId: string): Subscription {
   // 3. Search inside subscription objects values
   for (const sub of Object.values(all)) {
     if (sub.userId && sub.userId.toLowerCase() === cleanId.toLowerCase()) {
-      if (sub.status === "ACTIVE" && sub.endDate && new Date(sub.endDate) < new Date()) {
-        return { ...sub, status: "EXPIRED" };
-      }
-      return sub;
+      return handleExpiredReversion(sub, cleanId);
     }
   }
 
@@ -305,10 +340,22 @@ export function activateSubscription(
     startDate: now.toISOString(),
     endDate: endDate.toISOString(),
     updatedAt: now.toISOString(),
+    expiredPlanId: null,
+    expiredAt: null,
+    expiredReadAt: null,
   };
   saveSubscription(sub);
 
   return sub;
+}
+
+export function markExpiredNotificationRead(userId: string): boolean {
+  ensureDataDir();
+  const sub = getSubscription(userId);
+  if (!sub || !sub.expiredPlanId) return false;
+  sub.expiredReadAt = new Date().toISOString();
+  saveSubscription(sub);
+  return true;
 }
 
 export function getUserPlanAccess(userId: string): PlanFeatureAccess {

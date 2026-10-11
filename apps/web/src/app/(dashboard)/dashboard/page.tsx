@@ -23,6 +23,7 @@ import {
   BarChart3,
   Calendar,
 } from "lucide-react";
+import { DashboardOverviewSkeleton } from "@/components/ui/SkeletonLoaders";
 
 const TrafficHistoryChart = dynamic(
   () => import("@/components/dashboard/TrafficHistoryChart"),
@@ -174,6 +175,10 @@ export default function DashboardOverviewPage() {
     { href: "/dashboard/webhooks", label: "Webhooks", icon: Zap },
     { href: "/dashboard/devices", label: "Connect Device", icon: Smartphone },
   ];
+
+  if (!initialLoaded && loading) {
+    return <DashboardOverviewSkeleton />;
+  }
 
   return (
     <div className="space-y-7 max-w-7xl mx-auto">

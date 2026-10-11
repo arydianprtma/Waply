@@ -23,6 +23,7 @@ import {
 import { AddonItem, AddonType } from "@/lib/addon-types";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import { useConfirm, useAlert } from "@/components/confirm-dialog";
+import { CardGridSkeleton } from "@/components/ui/SkeletonLoaders";
 
 export default function AdminAddonsPage() {
   const [addons, setAddons] = useState<AddonItem[]>([]);
@@ -519,10 +520,7 @@ export default function AdminAddonsPage() {
 
       {/* Main Content Area: Loading / Empty / Addons Cards */}
       {loading ? (
-        <div className="p-16 text-center bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700">
-          <span className="loading loading-spinner loading-md text-primary mb-2" />
-          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Memuat katalog addon...</p>
-        </div>
+        <CardGridSkeleton count={6} />
       ) : addons.length === 0 ? (
         /* First-run Empty State (0 Addons in DB) */
         <div className="p-12 sm:p-16 text-center bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 space-y-4">

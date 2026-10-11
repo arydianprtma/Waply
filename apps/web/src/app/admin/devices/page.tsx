@@ -17,6 +17,7 @@ import {
   Check,
   User,
 } from "lucide-react";
+import { TableSkeleton } from "@/components/ui/SkeletonLoaders";
 
 interface Device {
   id: string;
@@ -204,10 +205,7 @@ export default function AdminDevicesPage() {
         </div>
 
         {loading && devices.length === 0 ? (
-          <div className="p-8 text-center text-sm text-base-content/40">
-            <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2" />
-            Memuat data device...
-          </div>
+          <TableSkeleton rows={5} cols={7} />
         ) : devices.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-base-content/30">
             <Smartphone className="w-10 h-10 mb-3" />

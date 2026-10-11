@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { TransactionDetail, TransactionSummary } from "@/lib/admin-transactions";
 import { ModalPortal } from "@/components/ui/ModalPortal";
+import { TableSkeleton, StatCardsSkeleton } from "@/components/ui/SkeletonLoaders";
 
 export default function AdminTransactionsPage() {
   const [transactions, setTransactions] = useState<TransactionDetail[]>([]);
@@ -355,15 +356,13 @@ export default function AdminTransactionsPage() {
       </div>
 
       {/* Table Card */}
-      <div className="bg-base-100 rounded-3xl border border-base-200 shadow-xs overflow-hidden">
-        {loading ? (
-          <div className="p-12 text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-3" />
-            <p className="text-xs text-base-content/60">Memuat riwayat transaksi...</p>
-          </div>
-        ) : filteredTransactions.length === 0 ? (
-          <div className="p-12 text-center space-y-2">
-            <Receipt className="w-12 h-12 text-base-content/20 mx-auto" />
+      {loading ? (
+        <TableSkeleton rows={5} cols={6} />
+      ) : (
+        <div className="bg-base-100 rounded-3xl border border-base-200 shadow-xs overflow-hidden">
+          {filteredTransactions.length === 0 ? (
+            <div className="p-12 text-center space-y-2">
+              <Receipt className="w-12 h-12 text-base-content/20 mx-auto" />
             <h3 className="font-bold text-sm text-base-content">Belum ada data transaksi</h3>
             <p className="text-xs text-base-content/50 max-w-sm mx-auto">
               Transaksi pembayaran paket pelanggan melalui Midtrans akan otomatis tercatat di sini.
@@ -497,6 +496,7 @@ export default function AdminTransactionsPage() {
           </div>
         )}
       </div>
+      )}
 
       {/* Modal Konfirmasi Hapus Semua */}
       {showClearModal && (

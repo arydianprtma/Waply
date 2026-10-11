@@ -1060,49 +1060,64 @@ void handleIncomingWebhook(String rawPayload, String signatureHeader) {
               Nomor WhatsApp baru atau nomor yang baru saja didaftarkan sangat rentan diblokir oleh algoritma WhatsApp jika langsung mengirim ribuan pesan. Gunakan fitur <Link href="/dashboard/devices/warmup" className="text-emerald-700 font-semibold underline decoration-emerald-300 underline-offset-2 hover:text-emerald-800">Device Warmup</Link> untuk membangun reputasi nomor secara bertahap:
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 pt-1">
               <div className="p-4 bg-white border border-slate-200/90 rounded-2xl space-y-2.5 shadow-xs relative overflow-hidden">
                 <div className="flex items-center justify-between gap-2">
                   <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
-                    Minggu ke-1
+                    Hari 1-3
                   </span>
-                  <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Fase Pengenalan</span>
+                  <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Cold Number</span>
                 </div>
                 <div>
-                  <div className="text-lg font-bold text-slate-900 tracking-tight">20 - 50 <span className="text-xs font-normal text-slate-500">pesan / hari</span></div>
+                  <div className="text-lg font-bold text-slate-900 tracking-tight">10% <span className="text-xs font-normal text-slate-500">kuota harian</span></div>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Fokus interaksi 2 arah dengan kontak yang sudah saling menyimpan nomor kontak. Hindari broadcast ke nomor asing.
+                  Fokus interaksi 2 arah dan pesan penting. Pengiriman dibatasi 10% kuota harian dengan safety delay 8-15s untuk membangun skor trust Meta.
                 </p>
               </div>
 
               <div className="p-4 bg-white border border-slate-200/90 rounded-2xl space-y-2.5 shadow-xs relative overflow-hidden">
                 <div className="flex items-center justify-between gap-2">
                   <span className="inline-flex items-center gap-1 text-[11px] font-bold text-sky-700 bg-sky-50 border border-sky-200 px-2 py-0.5 rounded-md">
-                    Minggu ke-2
+                    Hari 4-7
                   </span>
-                  <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Fase Peningkatan</span>
+                  <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Warm Number</span>
                 </div>
                 <div>
-                  <div className="text-lg font-bold text-slate-900 tracking-tight">100 - 200 <span className="text-xs font-normal text-slate-500">pesan / hari</span></div>
+                  <div className="text-lg font-bold text-slate-900 tracking-tight">30% <span className="text-xs font-normal text-slate-500">kuota harian</span></div>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Mulai kirim ke pelanggan umum. Wajib aktifkan <span className="font-semibold text-slate-800">Spintax Engine</span> dan beri jeda delay 5-10 detik.
+                  Peningkatan volume bertahap ke 30% kuota harian. Mulai interaksi ke pelanggan umum dan gunakan Spintax Engine dengan jeda delay alami.
+                </p>
+              </div>
+
+              <div className="p-4 bg-white border border-slate-200/90 rounded-2xl space-y-2.5 shadow-xs relative overflow-hidden">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md">
+                    Hari 8-14
+                  </span>
+                  <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Active Number</span>
+                </div>
+                <div>
+                  <div className="text-lg font-bold text-slate-900 tracking-tight">60% <span className="text-xs font-normal text-slate-500">kuota harian</span></div>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Nomor dinilai stabil oleh sistem telemetri. Batas kuota dinaikkan ke 60% kuota harian untuk broadcast dan otomatisasi skala menengah.
                 </p>
               </div>
 
               <div className="p-4 bg-white border border-slate-200/90 rounded-2xl space-y-2.5 shadow-xs relative overflow-hidden">
                 <div className="flex items-center justify-between gap-2">
                   <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
-                    Minggu ke-3+
+                    Hari 15+
                   </span>
-                  <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Fase Skala Penuh</span>
+                  <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Mature Number</span>
                 </div>
                 <div>
-                  <div className="text-lg font-bold text-slate-900 tracking-tight">1.000+ <span className="text-xs font-normal text-slate-500">pesan / hari</span></div>
+                  <div className="text-lg font-bold text-slate-900 tracking-tight">100% <span className="text-xs font-normal text-slate-500">kuota penuh</span></div>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Nomor telah memiliki reputasi kuat. Kampanye massal aman dengan sistem <span className="font-semibold text-slate-800">Batch Throttling</span> Waply.
+                  Nomor telah memiliki reputasi kuat. Kampanye broadcast skala penuh aktif sesuai limit kuota paket dengan Smart Throttling.
                 </p>
               </div>
             </div>

@@ -5,6 +5,7 @@ import { verifyPasswordResetToken, consumePasswordResetToken } from "@/lib/passw
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { saveSettings } from "@/lib/settings";
+import { setAdminPassword } from "@/lib/admin-settings";
 
 import { passwordResetRateLimiter, checkRateLimitResponse } from "@/lib/rate-limiter";
 
@@ -71,6 +72,10 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Update / ensure user in registry & settings
+    if (cleanEmail === "admin@waply.id") {
+      setAdminPassword(newPassword);
+    }
+
     let dbUser = getUserByEmail(cleanEmail);
     if (!dbUser) {
       dbUser = registerOrSyncUser({

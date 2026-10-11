@@ -9,7 +9,9 @@ export class SessionManager {
   private baseDir: string;
 
   private constructor() {
-    this.baseDir = path.resolve(process.cwd(), "sessions");
+    this.baseDir = fs.existsSync(path.resolve(process.cwd(), "apps/gateway"))
+      ? path.resolve(process.cwd(), "apps/gateway/sessions")
+      : path.resolve(process.cwd(), "sessions");
     if (!fs.existsSync(this.baseDir)) {
       fs.mkdirSync(this.baseDir, { recursive: true });
     }
@@ -41,25 +43,40 @@ export class SessionManager {
   /**
    * Membuat atau memulai sesi Baileys baru
    */
-  public async createSession(id: string, name = "WhatsApp Device"): Promise<BaileysInstance> {
+  public async createSession(
+    id: string,
+    name = "WhatsApp Device",
+    cleanAuth = false
+  ): Promise<BaileysInstance> {
     let session = this.sessions.get(id);
 
     if (session) {
       if (session.status === "CONNECTED") {
-        logger.info({ sessionId: id }, "Session already active and connected");
+        logger.info({ sessionId: id, status: session.status }, "Session already CONNECTED, returning active session");
         return session;
       }
-      logger.info({ sessionId: id }, "Re-initializing existing session instance");
-      await session.initialize();
+      if (session.status === "CONNECTING" && session.qrCode) {
+        logger.info({ sessionId: id, status: session.status }, "Session already CONNECTING with active QR, returning current session");
+        return session;
+      }
+      logger.info({ sessionId: id, cleanAuth }, "Re-initializing existing session instance");
+      await session.initialize(cleanAuth);
       return session;
     }
 
-    logger.info({ sessionId: id, name }, "Creating new Baileys session");
+    logger.info({ sessionId: id, name, cleanAuth }, "Creating new Baileys session");
     session = new BaileysInstance(id, name);
     this.sessions.set(id, session);
-    await session.initialize();
+    await session.initialize(cleanAuth);
 
     return session;
+  }
+
+  /**
+   * Menghubungkan ulang sesi yang terputus (membersihkan kredensial lama yang expired agar QR baru terbit)
+   */
+  public async reconnectSession(id: string): Promise<BaileysInstance> {
+    return this.createSession(id, undefined, true);
   }
 
   /**

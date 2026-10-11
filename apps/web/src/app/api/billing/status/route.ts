@@ -13,7 +13,7 @@ export async function GET() {
     const allPlans = getAllPlans();
     const plan = allPlans[subscription.planId] || DEFAULT_PLANS[subscription.planId] || DEFAULT_PLANS.FREE;
 
-    // Check if subscription is expired
+    // Check if subscription is expired or previously reverted
     let status = subscription.status;
     if (
       status === "ACTIVE" &&
@@ -22,6 +22,14 @@ export async function GET() {
     ) {
       status = "EXPIRED";
     }
+
+    if (subscription.planId === "FREE" && status === "EXPIRED") {
+      status = "FREE";
+    }
+
+    const expiredPlan = subscription.expiredPlanId
+      ? allPlans[subscription.expiredPlanId] || DEFAULT_PLANS[subscription.expiredPlanId]
+      : null;
 
     // Metered Usage Metrics
     const quota = canUserSendMessage(user.id, user.role);
@@ -58,6 +66,7 @@ export async function GET() {
       data: {
         subscription: { ...subscription, status },
         plan,
+        expiredPlan,
         invoices,
         allPlans,
         meteredUsage,

@@ -17,6 +17,7 @@ import {
   Send,
 } from "lucide-react";
 import { SystemBroadcastCampaign } from "@/lib/admin-broadcasts";
+import { TableSkeleton } from "@/components/ui/SkeletonLoaders";
 
 export default function AdminBroadcastsPage() {
   const [campaigns, setCampaigns] = useState<SystemBroadcastCampaign[]>([]);
@@ -200,21 +201,19 @@ export default function AdminBroadcastsPage() {
       </div>
 
       {/* Table Card */}
-      <div className="bg-base-100 rounded-3xl border border-base-200 shadow-xs overflow-hidden">
-        {loading ? (
-          <div className="p-12 text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-3" />
-            <p className="text-xs text-base-content/60">Memuat data broadcast...</p>
-          </div>
-        ) : filteredCampaigns.length === 0 ? (
-          <div className="p-12 text-center space-y-2">
-            <Megaphone className="w-12 h-12 text-base-content/20 mx-auto" />
-            <h3 className="font-bold text-sm text-base-content">Belum ada broadcast aktif</h3>
-            <p className="text-xs text-base-content/50 max-w-sm mx-auto">
-              Seluruh broadcast yang dijalankan oleh user akan muncul dan dapat diawasi di sini.
-            </p>
-          </div>
-        ) : (
+      {loading ? (
+        <TableSkeleton rows={5} cols={5} />
+      ) : (
+        <div className="bg-base-100 rounded-3xl border border-base-200 shadow-xs overflow-hidden">
+          {filteredCampaigns.length === 0 ? (
+            <div className="p-12 text-center space-y-2">
+              <Megaphone className="w-12 h-12 text-base-content/20 mx-auto" />
+              <h3 className="font-bold text-sm text-base-content">Belum ada broadcast aktif</h3>
+              <p className="text-xs text-base-content/50 max-w-sm mx-auto">
+                Seluruh broadcast yang dijalankan oleh user akan muncul dan dapat diawasi di sini.
+              </p>
+            </div>
+          ) : (
           <div className="overflow-x-auto">
             <table className="table table-sm w-full">
               <thead className="bg-base-200/50 text-[11px] font-bold text-base-content/70 uppercase">
@@ -311,6 +310,7 @@ export default function AdminBroadcastsPage() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }

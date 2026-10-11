@@ -25,6 +25,7 @@ import {
   Power,
 } from "lucide-react";
 import { ModalPortal } from "@/components/ui/ModalPortal";
+import { CardGridSkeleton } from "@/components/ui/SkeletonLoaders";
 
 interface AnnouncementItem {
   id: string;
@@ -514,10 +515,7 @@ export default function AdminAnnouncementsPage() {
       {/* Announcements Content List */}
       <div className="space-y-3.5">
         {loading ? (
-          <div className="p-16 text-center text-slate-400 bg-white rounded-2xl border border-slate-200">
-            <div className="loading loading-spinner loading-md mb-2 text-primary" />
-            <p className="text-xs font-semibold">Memuat daftar pengumuman...</p>
-          </div>
+          <CardGridSkeleton count={4} />
         ) : filtered.length === 0 ? (
           <div className="p-16 text-center text-slate-400 bg-white rounded-2xl border border-slate-200">
             <Megaphone className="w-10 h-10 mx-auto mb-3 opacity-25 text-slate-500" />

@@ -34,6 +34,7 @@ import { ModalPortal } from "@/components/ui/ModalPortal";
 import { useBillingPlan } from "@/lib/use-billing-plan";
 import { setCachedUser, getCachedUser } from "@/lib/use-user-session";
 import QRCode from "qrcode";
+import { SettingsPageSkeleton } from "@/components/ui/SkeletonLoaders";
 
 interface Profile {
   name: string;
@@ -381,12 +382,7 @@ export default function SettingsPage() {
     .toUpperCase();
 
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] gap-3">
-        <span className="loading loading-spinner loading-lg text-primary" />
-        <p className="text-xs text-base-content/50 font-medium">Memuat konfigurasi akun...</p>
-      </div>
-    );
+    return <SettingsPageSkeleton />;
   }
 
   return (

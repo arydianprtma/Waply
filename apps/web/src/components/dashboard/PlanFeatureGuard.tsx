@@ -26,15 +26,14 @@ export function PlanFeatureGuard({
 
   const hasAccess = Boolean(planAccess[feature]);
 
-  // Don't flash locked state while checking user's package upon page refresh
-  if (isLoading && !isMounted) {
-    return <PageLoadingSkeleton />;
-  }
-
   const recommendedPlan = getRecommendedUpgradePlan ? getRecommendedUpgradePlan(feature) : null;
   const targetPlanName = recommendedPlan?.name || fallbackMinPlanName || "Paket Lebih Tinggi";
 
   if (!hasAccess) {
+    if (isLoading && !isMounted) {
+      return <PageLoadingSkeleton />;
+    }
+
     return (
       <div className="max-w-3xl mx-auto py-4 sm:py-8 space-y-6">
         {/* Navigation Breadcrumb / Return */}

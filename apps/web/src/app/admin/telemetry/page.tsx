@@ -19,6 +19,7 @@ import {
   Info,
 } from "lucide-react";
 import { SystemTelemetry } from "@/lib/admin-telemetry";
+import { StatCardsSkeleton, TableSkeleton } from "@/components/ui/SkeletonLoaders";
 
 export default function AdminTelemetryPage() {
   const [telemetry, setTelemetry] = useState<SystemTelemetry | null>(null);
@@ -136,9 +137,9 @@ export default function AdminTelemetryPage() {
       </div>
 
       {loading && !telemetry ? (
-        <div className="p-16 text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-3" />
-          <p className="text-xs text-base-content/60">Mengumpulkan telemetri sistem...</p>
+        <div className="space-y-6">
+          <StatCardsSkeleton count={4} />
+          <TableSkeleton rows={4} cols={4} />
         </div>
       ) : telemetry ? (
         <>

@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { getSubscription, saveSubscription, PlanId, Subscription } from "@/lib/billing";
+import { getDataDirectory } from "./data-dir";
 
 export type UserAccountStatus = "ACTIVE" | "SUSPENDED" | "BANNED";
 
@@ -23,7 +24,7 @@ export interface ManagedUser {
   duplicateIpCount?: number;
 }
 
-const DATA_DIR = path.resolve(process.cwd(), ".waply-data");
+const DATA_DIR = getDataDirectory();
 const USERS_FILE = path.join(DATA_DIR, "users_registry.json");
 
 function ensureDataDir() {
@@ -114,10 +115,22 @@ export function getAllManagedUsers(): ManagedUser[] {
           ? (sub.status as any)
           : u.planStatus || (effectivePlanId === "FREE" ? "FREE" : "ACTIVE");
 
+      let liveMessagesUsed = u.messagesUsed || 0;
+      try {
+        const msgsFile = path.join(DATA_DIR, "messages.json");
+        if (fs.existsSync(msgsFile)) {
+          const allMsgs: any[] = JSON.parse(fs.readFileSync(msgsFile, "utf-8") || "[]");
+          liveMessagesUsed = allMsgs.filter(
+            (m) => (m.userId === u.id || (u.email && m.userId === u.email)) && m.status === "SENT"
+          ).length;
+        }
+      } catch {}
+
       return {
         ...u,
         planId: effectivePlanId,
         planStatus: effectivePlanStatus,
+        messagesUsed: liveMessagesUsed,
         duplicateIpCount: count,
       };
     });

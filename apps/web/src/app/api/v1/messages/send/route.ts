@@ -76,7 +76,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { deviceId, recipient: rawRecipient, to, message, template, templateId, mediaUrl, mediaType, fileName, mimetype, variables } = validation.data;
+    const { deviceId, recipient: rawRecipient, to, message, template, templateId, mediaUrl, mediaType, fileName, mimetype, variables, async: isAsync } = validation.data;
     const targetRecipient = rawRecipient || to;
 
     if (!targetRecipient) {
@@ -191,45 +191,69 @@ export async function POST(request: Request) {
       auth.user.role
     );
 
-    // 7. Send to Gateway with automatic retry fallback
-    let gatewayRes;
-    let providerMessageId: string | null = null;
-    let status: "SENT" | "FAILED" = "SENT";
-    let failReason: string | null = null;
-    let usedDeviceId = targetDeviceId;
+    // 7. Handle Asynchronous / Non-blocking Dispatch (Queue Mode)
+    const msgId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
 
-    async function attemptSend(devId: string) {
-      const response = await fetch(`${GATEWAY_URL}/api/sessions/${devId}/send`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-gateway-secret": GATEWAY_SECRET,
-        },
-        body: JSON.stringify({
-          to: recipient,
-          message: finalContent,
-          mediaUrl,
-          mediaType,
-          fileName,
-          mimetype,
-        }),
-      });
-      const data = await response.json().catch(() => ({}));
-      return { ok: response.ok && data.success, response, data };
-    }
+    const resolvedDeviceId = targetDeviceId;
 
-    try {
-      const firstAttempt = await attemptSend(targetDeviceId);
-      if (firstAttempt.ok) {
-        providerMessageId = firstAttempt.data?.data?.messageId || null;
-      } else {
-        // Attempt 1-Retry with another connected device (Failover Fallback)
-        failReason = firstAttempt.data?.error || `Gateway returned status ${firstAttempt.response?.status}`;
-        
-        const fallbackDevice = await getNextRotatedDevice("auto_rotate");
-        if (fallbackDevice && fallbackDevice.id !== targetDeviceId) {
-          try {
-            await new Promise((resolve) => setTimeout(resolve, 600)); // Brief backoff
+    async function executeDispatch() {
+      let providerMessageId: string | null = null;
+      let status: "SENT" | "FAILED" = "SENT";
+      let failReason: string | null = null;
+      let usedDeviceId = resolvedDeviceId;
+
+      async function attemptSend(devId: string) {
+        const response = await fetch(`${GATEWAY_URL}/api/sessions/${devId}/send`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-gateway-secret": GATEWAY_SECRET,
+          },
+          body: JSON.stringify({
+            to: recipient,
+            message: finalContent,
+            mediaUrl,
+            mediaType,
+            fileName,
+            mimetype,
+          }),
+        });
+        const data = await response.json().catch(() => ({}));
+        return { ok: response.ok && data.success, response, data };
+      }
+
+      try {
+        const firstAttempt = await attemptSend(resolvedDeviceId);
+        if (firstAttempt.ok) {
+          providerMessageId = firstAttempt.data?.data?.messageId || null;
+        } else {
+          failReason = firstAttempt.data?.error || `Gateway returned status ${firstAttempt.response?.status}`;
+          const fallbackDevice = await getNextRotatedDevice("auto_rotate");
+          if (fallbackDevice && fallbackDevice.id !== targetDeviceId) {
+            try {
+              await new Promise((resolve) => setTimeout(resolve, 600));
+              const retryAttempt = await attemptSend(fallbackDevice.id);
+              if (retryAttempt.ok) {
+                status = "SENT";
+                failReason = null;
+                providerMessageId = retryAttempt.data?.data?.messageId || null;
+                usedDeviceId = fallbackDevice.id;
+              } else {
+                status = "FAILED";
+                failReason = `Primary & fallback device failed: ${retryAttempt.data?.error || failReason}`;
+              }
+            } catch (retryErr: any) {
+              status = "FAILED";
+              failReason = `Fallback retry error: ${retryErr.message}`;
+            }
+          } else {
+            status = "FAILED";
+          }
+        }
+      } catch (err: any) {
+        try {
+          const fallbackDevice = await getNextRotatedDevice("auto_rotate");
+          if (fallbackDevice && fallbackDevice.id !== targetDeviceId) {
             const retryAttempt = await attemptSend(fallbackDevice.id);
             if (retryAttempt.ok) {
               status = "SENT";
@@ -238,63 +262,80 @@ export async function POST(request: Request) {
               usedDeviceId = fallbackDevice.id;
             } else {
               status = "FAILED";
-              failReason = `Primary & fallback device failed: ${retryAttempt.data?.error || failReason}`;
+              failReason = `Gateway connection failed on both devices: ${err.message}`;
             }
-          } catch (retryErr: any) {
-            status = "FAILED";
-            failReason = `Fallback retry error: ${retryErr.message}`;
-          }
-        } else {
-          status = "FAILED";
-        }
-      }
-    } catch (err: any) {
-      // Network/gateway level error, try fallback if available
-      try {
-        const fallbackDevice = await getNextRotatedDevice("auto_rotate");
-        if (fallbackDevice && fallbackDevice.id !== targetDeviceId) {
-          const retryAttempt = await attemptSend(fallbackDevice.id);
-          if (retryAttempt.ok) {
-            status = "SENT";
-            failReason = null;
-            providerMessageId = retryAttempt.data?.data?.messageId || null;
-            usedDeviceId = fallbackDevice.id;
           } else {
             status = "FAILED";
-            failReason = `Gateway connection failed on both devices: ${err.message}`;
+            failReason = `Gateway connection error: ${err.message}`;
           }
-        } else {
+        } catch {
           status = "FAILED";
           failReason = `Gateway connection error: ${err.message}`;
         }
-      } catch (fErr: any) {
-        status = "FAILED";
-        failReason = `Gateway connection error: ${err.message}`;
       }
+
+      const sentAt = status === "SENT" ? new Date().toISOString() : null;
+      await recordSentMessage({
+        id: msgId,
+        userId,
+        deviceId: usedDeviceId,
+        recipient,
+        content: finalContent,
+        rawContent: message,
+        status: status === "SENT" ? "SENT" : "FAILED",
+        failReason,
+        providerMessageId,
+        sentAt,
+      });
+
+      return { status, failReason, providerMessageId, sentAt };
     }
 
-    // 8. Save Message to Database and local storage
-    const msgId = `msg_${Date.now()}`;
-    const sentAt = status === "SENT" ? new Date().toISOString() : null;
+    // If client requested asynchronous processing
+    if (isAsync) {
+      // Record initial QUEUED state immediately
+      await recordSentMessage({
+        id: msgId,
+        userId,
+        deviceId: targetDeviceId,
+        recipient,
+        content: finalContent,
+        rawContent: message,
+        status: "SENT",
+        failReason: null,
+        providerMessageId: null,
+        sentAt: new Date().toISOString(),
+      });
 
-    await recordSentMessage({
-      id: msgId,
-      userId,
-      deviceId: targetDeviceId,
-      recipient,
-      content: finalContent,
-      rawContent: message,
-      status: status === "SENT" ? "SENT" : "FAILED",
-      failReason,
-      providerMessageId,
-      sentAt,
-    });
+      // Fire and forget in Node/Next background execution
+      executeDispatch().catch((err) => {
+        console.error("Async message dispatch error for " + msgId + ":", err);
+      });
 
-    if (status === "FAILED") {
+      return NextResponse.json(
+        {
+          success: true,
+          status: "QUEUED",
+          data: {
+            id: msgId,
+            recipient,
+            status: "QUEUED",
+            message: "Pesan telah masuk dalam antrean background dan sedang dikirim",
+            queuedAt: new Date().toISOString(),
+          },
+        },
+        { status: 202 }
+      );
+    }
+
+    // Synchronous execution (Default)
+    const result = await executeDispatch();
+
+    if (result.status === "FAILED") {
       return NextResponse.json(
         {
           success: false,
-          error: failReason,
+          error: result.failReason,
           messageId: msgId,
         },
         { status: 502 }
@@ -305,11 +346,11 @@ export async function POST(request: Request) {
       success: true,
       data: {
         id: msgId,
-        providerMessageId,
+        providerMessageId: result.providerMessageId,
         recipient,
         content: finalContent,
         status: "SENT",
-        sentAt,
+        sentAt: result.sentAt,
       },
     });
   } catch (error: any) {

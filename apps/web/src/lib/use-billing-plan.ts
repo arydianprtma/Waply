@@ -8,6 +8,7 @@ interface BillingData {
   plan: Plan | null;
   invoices: any[];
   allPlans?: Record<string, Plan>;
+  meteredUsage?: any;
 }
 
 let cachedBillingData: BillingData | null = null;

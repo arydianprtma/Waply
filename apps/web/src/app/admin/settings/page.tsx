@@ -30,6 +30,7 @@ import {
   Building2,
 } from "lucide-react";
 import { AVAILABLE_PAYMENT_CHANNELS } from "@/lib/payment-channels";
+import { SettingsPageSkeleton } from "@/components/ui/SkeletonLoaders";
 
 interface AdminSystemSettings {
   systemProfile: {
@@ -365,11 +366,7 @@ export default function AdminSettingsPage() {
   ] as const;
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <span className="loading loading-spinner loading-md text-emerald-600" />
-      </div>
-    );
+    return <SettingsPageSkeleton />;
   }
 
   return (

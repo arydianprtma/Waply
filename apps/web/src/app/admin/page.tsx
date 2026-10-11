@@ -43,6 +43,7 @@ import {
   Bar,
 } from "recharts";
 import { Top4xxPathsCard } from "@/components/admin/Top4xxPathsCard";
+import { DashboardOverviewSkeleton } from "@/components/ui/SkeletonLoaders";
 
 interface AdminStats {
   overview: {
@@ -236,6 +237,10 @@ export default function AdminOverviewPage() {
     value,
     color: PLAN_COLORS[name] || "#94a3b8",
   })).filter((item) => item.value > 0);
+
+  if (loading && !stats) {
+    return <DashboardOverviewSkeleton />;
+  }
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-10">

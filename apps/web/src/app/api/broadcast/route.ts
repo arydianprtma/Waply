@@ -1,11 +1,32 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth-user";
+import { authenticateApiRequest } from "@/lib/api-auth";
 import { getLocalCampaigns, createBroadcastCampaign } from "@/lib/broadcast";
 import { hasUserPlanFeature } from "@/lib/billing";
 
-export async function GET() {
+async function resolveUserFromRequest(request?: Request) {
+  if (request) {
+    const authHeader = request.headers.get("authorization") || request.headers.get("x-api-key");
+    if (authHeader) {
+      const auth = await authenticateApiRequest(request);
+      if (auth.authenticated && auth.user) {
+        return {
+          id: auth.user.id,
+          role: auth.user.role,
+        };
+      }
+    }
+  }
+  const sessionUser = await getSessionUser();
+  return {
+    id: sessionUser.id,
+    role: sessionUser.role,
+  };
+}
+
+export async function GET(request: Request) {
   try {
-    const user = await getSessionUser();
+    const user = await resolveUserFromRequest(request);
     const campaigns = getLocalCampaigns(user.id);
     return NextResponse.json({ success: true, data: campaigns });
   } catch (error: any) {
@@ -15,7 +36,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const user = await getSessionUser();
+    const user = await resolveUserFromRequest(request);
     if (!hasUserPlanFeature(user.id, "broadcast", user.role)) {
       return NextResponse.json(
         {

@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { SecurityConfig, SecurityViolationLog } from "@/lib/security-guard";
 import { Top4xxPathsCard } from "@/components/admin/Top4xxPathsCard";
+import { TableSkeleton } from "@/components/ui/SkeletonLoaders";
 
 const PRESET_KEYWORDS = [
   "slot gacor",
@@ -327,10 +328,7 @@ export default function AdminSecurityPage() {
         </div>
 
         {loading ? (
-          <div className="p-8 text-center">
-            <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mb-2" />
-            <p className="text-xs text-base-content/60">Memuat log...</p>
-          </div>
+          <TableSkeleton rows={4} cols={6} />
         ) : logs.length === 0 ? (
           <div className="p-10 text-center space-y-1">
             <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto" />

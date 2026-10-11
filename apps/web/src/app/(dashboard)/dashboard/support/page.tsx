@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import type { SupportTicket, TicketCategory, TicketPriority, TicketStatus } from "@/lib/support-tickets";
 import { useUserSession } from "@/lib/use-user-session";
+import { TableSkeleton } from "@/components/ui/SkeletonLoaders";
 
 const CATEGORY_LABELS: Record<TicketCategory, string> = {
   TECHNICAL: "Kendala Teknis & Gateway",
@@ -250,14 +251,12 @@ export default function UserSupportPage() {
       </div>
 
       {/* Tickets List */}
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-        {loading ? (
-          <div className="p-16 flex flex-col items-center justify-center space-y-3">
-            <RefreshCw className="w-8 h-8 text-primary animate-spin" />
-            <span className="text-xs font-semibold text-slate-500">Memuat daftar tiket bantuan...</span>
-          </div>
-        ) : filteredTickets.length === 0 ? (
-          <div className="p-16 text-center space-y-4">
+      {loading ? (
+        <TableSkeleton rows={5} cols={5} />
+      ) : (
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+          {filteredTickets.length === 0 ? (
+            <div className="p-16 text-center space-y-4">
             <div className="w-14 h-14 rounded-3xl bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
               <MessageSquare className="w-7 h-7" />
             </div>
@@ -369,6 +368,7 @@ export default function UserSupportPage() {
           </div>
         )}
       </div>
+      )}
 
       {/* Quick Help Channels Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">

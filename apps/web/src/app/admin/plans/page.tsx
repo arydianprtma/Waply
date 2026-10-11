@@ -36,6 +36,7 @@ import {
 } from "@/lib/billing-types";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import { PromoCountdownTimer } from "@/components/ui/PromoCountdownTimer";
+import { CardGridSkeleton } from "@/components/ui/SkeletonLoaders";
 
 const DEFAULT_ACCESS: PlanFeatureAccess = {
   devices: true,
@@ -449,14 +450,11 @@ export default function AdminPlansPage() {
       </div>
 
       {/* Plan Grid: Spacious 3-Column Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-        {loading ? (
-          <div className="col-span-full text-center py-16">
-            <span className="loading loading-spinner loading-lg text-emerald-600" />
-            <p className="text-xs text-slate-500 mt-3 font-medium">Memuat konfigurasi layanan...</p>
-          </div>
-        ) : (
-          plans
+      {loading ? (
+        <CardGridSkeleton count={6} />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+          {plans
             .filter((p) => {
               if (filterCategory === "all") return true;
               return (p.period || "month") === filterCategory;
@@ -653,9 +651,9 @@ export default function AdminPlansPage() {
                 </div>
               </div>
             );
-          })
-        )}
-      </div>
+          })}
+        </div>
+      )}
 
       {/* MODAL: Form Buat / Edit Layanan */}
       {modalOpen && (

@@ -15,5 +15,7 @@ export const logger = pino({
       : undefined,
 });
 
-// Create a silent or minimal logger specifically for Baileys internal socket chatter
-export const baileysLogger = pino({ level: "silent" });
+// Create a logger for Baileys internal socket chatter with configurable level
+export const baileysLogger = pino({
+  level: process.env.BAILEYS_LOG_LEVEL || "warn",
+});

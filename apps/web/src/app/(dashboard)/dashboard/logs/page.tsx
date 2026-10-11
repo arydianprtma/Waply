@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import clsx from "clsx";
 import { useConfirm, useAlert } from "@/components/confirm-dialog";
+import { TableSkeleton, StatCardsSkeleton } from "@/components/ui/SkeletonLoaders";
 
 interface UserLog {
   id: string;
@@ -280,18 +281,16 @@ export default function UserLogsPage() {
       </div>
 
       {/* Logs Table */}
-      <div className="card bg-base-100 border border-base-200 shadow-sm rounded-2xl overflow-hidden">
-        {loading && logs.length === 0 ? (
-          <div className="p-12 text-center text-sm text-base-content/40">
-            <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-primary" />
-            Memuat aktivitas log...
-          </div>
-        ) : filteredLogs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-base-content/30">
-            <ScrollText className="w-10 h-10 mb-3" />
-            <p className="text-sm font-medium">Belum ada riwayat log yang sesuai kriteria</p>
-          </div>
-        ) : (
+      {loading && logs.length === 0 ? (
+        <TableSkeleton rows={6} cols={6} />
+      ) : (
+        <div className="card bg-base-100 border border-base-200 shadow-sm rounded-2xl overflow-hidden">
+          {filteredLogs.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-base-content/30">
+              <ScrollText className="w-10 h-10 mb-3" />
+              <p className="text-sm font-medium">Belum ada riwayat log yang sesuai kriteria</p>
+            </div>
+          ) : (
           <div className="overflow-x-auto">
             <table className="table table-sm">
               <thead>
@@ -417,6 +416,7 @@ export default function UserLogsPage() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }

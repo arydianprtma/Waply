@@ -33,6 +33,14 @@ import { gatewayAuthMiddleware } from "./middleware/auth.js";
 app.use("/api/sessions", gatewayAuthMiddleware, sessionRouter);
 app.use("/api/sessions", gatewayAuthMiddleware, messageRouter);
 
+process.on("unhandledRejection", (reason) => {
+  logger.error({ reason }, "Unhandled Promise Rejection caught in Gateway process");
+});
+
+process.on("uncaughtException", (error) => {
+  logger.error({ error }, "Uncaught Exception caught in Gateway process");
+});
+
 // Start Server and restore saved sessions
 app.listen(PORT, async () => {
   logger.info(`🚀 Waply Gateway Service running on http://localhost:${PORT}`);

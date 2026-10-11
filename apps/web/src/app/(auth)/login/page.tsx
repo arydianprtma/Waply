@@ -28,14 +28,14 @@ function LoginForm() {
   const authError = searchParams.get("error");
   const isVerified = searchParams.get("verified") === "true";
 
-  const performLoginSync = async (userEmail: string, userName?: string, userId?: string) => {
+  const performLoginSync = async (userEmail: string, userName?: string, userId?: string, pass?: string) => {
     try {
       const cleanEmail = userEmail.trim().toLowerCase();
 
       const res = await fetch("/api/auth/demo-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: cleanEmail, name: userName, id: userId }),
+        body: JSON.stringify({ email: cleanEmail, name: userName, id: userId, password: pass }),
       });
       const json = await res.json();
       if (json.success) {
@@ -114,14 +114,16 @@ function LoginForm() {
           return;
         }
       } catch (err: any) {
-        setErrorMsg(err.message || "Terjadi kesalahan saat memverifikasi akun.");
-        setLoading(false);
+        // Jika endpoint Supabase offline / paused (ERR_NAME_NOT_RESOLVED / Failed to fetch),
+        // fallback ke autentikasi lokal Waply agar login tidak macet
+        console.warn("Supabase auth unreachable, falling back to local auth:", err);
+        await performLoginSync(cleanEmail, undefined, undefined, password);
         return;
       }
     }
 
     // For Super Admin master account or offline dev mode
-    await performLoginSync(cleanEmail);
+    await performLoginSync(cleanEmail, undefined, undefined, password);
   };
 
   return (

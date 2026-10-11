@@ -19,6 +19,7 @@ import {
   CheckCheck,
   Menu,
   Headphones,
+  ArrowRight,
 } from "lucide-react";
 
 import { useUserSession } from "@/lib/use-user-session";
@@ -36,6 +37,8 @@ interface AnnouncementItem {
   isActive: boolean;
   createdAt: string;
   isRead: boolean;
+  popupActionText?: string;
+  popupActionUrl?: string;
 }
 
 export function Navbar() {
@@ -330,7 +333,12 @@ export function Navbar() {
                   return (
                     <div
                       key={item.id}
-                      onClick={() => !item.isRead && handleMarkSingleRead(item.id)}
+                      onClick={() => {
+                        if (!item.isRead) handleMarkSingleRead(item.id);
+                        if (item.popupActionUrl) {
+                          router.push(item.popupActionUrl);
+                        }
+                      }}
                       className={`p-3 rounded-xl border transition-all cursor-pointer ${
                         item.isRead
                           ? "bg-base-100 border-base-200 opacity-80 hover:opacity-100 hover:bg-base-200/50"
@@ -370,6 +378,17 @@ export function Navbar() {
                         </span>
                         <span>{formatDate(item.createdAt)}</span>
                       </div>
+
+                      {item.popupActionUrl && item.popupActionText && (
+                        <div className="mt-2 pt-1.5 border-t border-base-200/70 flex justify-end">
+                          <span
+                            className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 hover:underline transition-colors py-0.5"
+                          >
+                            {item.popupActionText}
+                            <ArrowRight className="w-3 h-3" />
+                          </span>
+                        </div>
+                      )}
                     </div>
                   );
                 })

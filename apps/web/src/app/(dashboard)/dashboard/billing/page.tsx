@@ -32,12 +32,14 @@ import {
   type Plan,
   type Subscription,
   type Invoice,
+  DEFAULT_PLANS,
   getPlanDetailedFeatureList,
   getPlanDiscountStatus,
 } from "@/lib/billing-types";
 import { AddonItem, UserAddon } from "@/lib/addon-types";
 import { setCachedBillingData } from "@/lib/use-billing-plan";
 import { PromoCountdownTimer } from "@/components/ui/PromoCountdownTimer";
+import { BillingSkeleton } from "@/components/ui/SkeletonLoaders";
 
 // Plan display order
 const PLAN_ORDER: PlanId[] = ["FREE", "STARTER", "BUSINESS", "PRO"];
@@ -90,6 +92,8 @@ interface MeteredUsage {
 interface BillingData {
   subscription: Subscription & { status: string };
   plan: Plan;
+  expiredPlan?: Plan | null;
+  allPlans?: Record<string, Plan>;
   invoices: Invoice[];
   meteredUsage?: MeteredUsage;
 }
@@ -255,9 +259,22 @@ function BillingContent() {
     router.push(`/order?plan=${planId}`);
   };
 
-  const currentPlanId = billingData?.subscription.planId || "FREE";
-  const subStatus = billingData?.subscription.status || "FREE";
+  const isExpired =
+    billingData?.subscription.status === "EXPIRED" ||
+    !!billingData?.subscription.expiredPlanId ||
+    (billingData?.subscription.endDate ? new Date(billingData.subscription.endDate) < new Date() : false);
+
+  const currentPlanId = isExpired ? "FREE" : (billingData?.subscription.planId || "FREE");
+  const subStatus = isExpired ? "FREE" : (billingData?.subscription.status || "FREE");
   const days = daysLeft(billingData?.subscription.endDate || null);
+
+  const activePlan = isExpired
+    ? (allPlans?.["FREE"] || DEFAULT_PLANS["FREE"])
+    : (billingData?.plan || allPlans?.[currentPlanId] || DEFAULT_PLANS[currentPlanId] || DEFAULT_PLANS["FREE"]);
+
+  if (loading && !billingData) {
+    return <BillingSkeleton />;
+  }
 
   return (
     <div className="space-y-7 max-w-7xl mx-auto">
@@ -317,6 +334,33 @@ function BillingContent() {
       {/* ── Tab: Subscription ─────────────────────────────────────────── */}
       {activeTab === "subscription" && (
         <div className="space-y-6">
+          {/* Expired Subscription Notice Banner */}
+          {isExpired && (billingData?.subscription.expiredPlanId || billingData?.expiredPlan) && (
+            <div className="alert bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              <div className="flex items-start gap-2.5">
+                <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold text-sm text-slate-800 dark:text-slate-100">
+                    Paket Langganan Sebelumnya Telah Berakhir
+                  </p>
+                  <p className="text-slate-600 dark:text-slate-300 mt-0.5">
+                    Masa aktif paket <strong>{billingData?.expiredPlan?.name || (billingData?.allPlans?.[billingData.subscription.expiredPlanId!]?.name) || billingData?.subscription.expiredPlanId}</strong> Anda telah berakhir
+                    {billingData?.subscription.expiredAt ? ` pada ${new Date(billingData.subscription.expiredAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}` : ""}. Akun Anda telah otomatis dikembalikan ke <strong>Paket Free</strong>.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  const el = document.getElementById("plan-selection-grid");
+                  el?.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="btn btn-xs btn-primary rounded-xl shrink-0 gap-1.5"
+              >
+                <Zap className="w-3.5 h-3.5" /> Perpanjang / Upgrade
+              </button>
+            </div>
+          )}
+
           {/* Current Plan Card */}
           {loading ? (
             <div className="h-36 bg-base-200 rounded-2xl animate-pulse" />
@@ -342,15 +386,17 @@ function BillingContent() {
                           (PLAN_COLORS[currentPlanId] || DEFAULT_COLOR).badge
                         }`}
                       >
-                        {billingData?.plan.name || "Free Trial"}
+                        {activePlan?.name || "Free Trial"}
                       </span>
                       <StatusBadge status={subStatus} />
                     </div>
                     <div className="text-3xl font-extrabold mt-1">
-                      {billingData?.plan.price === 0
+                      {activePlan?.price === 0
                         ? "Gratis"
-                        : formatIDR(billingData?.plan.price || 0)}
-                      <span className="text-sm font-normal text-base-content/50 ml-1">/ bulan</span>
+                        : formatIDR(activePlan?.price || 0)}
+                      <span className="text-sm font-normal text-base-content/50 ml-1">
+                        / {activePlan?.period === "day" ? "hari" : activePlan?.period === "week" ? "minggu" : activePlan?.period === "year" ? "tahun" : "bulan"}
+                      </span>
                     </div>
                     {subStatus === "ACTIVE" && billingData?.subscription.endDate && (
                       <p className="text-xs text-base-content/50 mt-1">
@@ -366,7 +412,7 @@ function BillingContent() {
                 <div className="flex flex-wrap gap-4 text-sm text-center">
                   <div className="bg-base-200/60 rounded-xl px-4 py-2 text-left">
                     <p className="font-bold text-lg text-center">
-                      {(billingData?.plan.maxDevices || 1) + userAddonTotals.extraDevices}
+                      {(activePlan?.maxDevices || 1) + userAddonTotals.extraDevices}
                     </p>
                     <p className="text-xs text-base-content/50 text-center">Total Device Slot</p>
                     {userAddonTotals.extraDevices > 0 && (
@@ -376,13 +422,13 @@ function BillingContent() {
                     )}
                   </div>
                   <div className="bg-base-200/60 rounded-xl px-4 py-2 text-left">
-                    <p className={`font-bold text-lg text-center ${billingData?.plan.monthlyMessages === -1 ? "text-emerald-600" : ""}`}>
-                      {billingData?.plan.monthlyMessages === -1
+                    <p className={`font-bold text-lg text-center ${activePlan?.monthlyMessages === -1 ? "text-emerald-600" : ""}`}>
+                      {activePlan?.monthlyMessages === -1
                         ? "Unlimited"
-                        : ((billingData?.plan.monthlyMessages || 100) + userAddonTotals.extraMessages).toLocaleString("id-ID")}
+                        : ((activePlan?.monthlyMessages || 100) + userAddonTotals.extraMessages).toLocaleString("id-ID")}
                     </p>
                     <p className="text-xs text-base-content/50 text-center">Total Kuota Pesan</p>
-                    {billingData?.plan.monthlyMessages === -1 ? (
+                    {activePlan?.monthlyMessages === -1 ? (
                       <p className="text-[10px] text-emerald-600 font-semibold text-center mt-0.5">
                         (Tanpa Batas Pesan)
                       </p>
@@ -396,12 +442,26 @@ function BillingContent() {
               </div>
 
               {/* Active Addons mini-badge list */}
-              {userAddons.filter((a) => a.status === "ACTIVE").length > 0 && (
+              {userAddons.filter((a) => {
+                if (a.status !== "ACTIVE") return false;
+                if (a.expiresAt) {
+                  const exp = new Date(a.expiresAt);
+                  if (!isNaN(exp.getTime()) && exp < new Date()) return false;
+                }
+                return true;
+              }).length > 0 && (
                 <div className="mt-5 pt-4 border-t border-base-200/80 flex flex-wrap items-center gap-2">
                   <span className="text-xs font-semibold text-base-content/60 flex items-center gap-1 mr-1">
                     <PlusCircle className="w-3.5 h-3.5 text-primary" /> Addon Aktif:
                   </span>
-                  {userAddons.filter((a) => a.status === "ACTIVE").map((addon) => (
+                  {userAddons.filter((a) => {
+                    if (a.status !== "ACTIVE") return false;
+                    if (a.expiresAt) {
+                      const exp = new Date(a.expiresAt);
+                      if (!isNaN(exp.getTime()) && exp < new Date()) return false;
+                    }
+                    return true;
+                  }).map((addon) => (
                     <span
                       key={addon.id}
                       className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border ${
@@ -529,7 +589,7 @@ function BillingContent() {
           )}
 
           {/* Category Tabs & Plan Comparison Grid */}
-          <div className="space-y-4">
+          <div id="plan-selection-grid" className="space-y-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
                 <h3 className="font-bold text-base text-base-content">Pilih Paket Langganan</h3>

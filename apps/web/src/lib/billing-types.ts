@@ -708,6 +708,9 @@ export interface Subscription {
   startDate: string | null;
   endDate: string | null;
   updatedAt: string;
+  expiredPlanId?: PlanId | null;
+  expiredAt?: string | null;
+  expiredReadAt?: string | null;
 }
 
 export interface Invoice {

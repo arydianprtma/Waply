@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
 import {
   PaymentChannelDefinition,
   AVAILABLE_PAYMENT_CHANNELS,
@@ -17,6 +18,7 @@ export interface AdminSystemSettings {
     adminName: string;
     adminEmail: string;
     appName: string;
+    adminPasswordHash?: string | null;
   };
   gatewayConfig: {
     gatewayUrl: string;
@@ -194,6 +196,10 @@ export function saveAdminSettings(data: Partial<AdminSystemSettings>): AdminSyst
     systemProfile: {
       ...current.systemProfile,
       ...(data.systemProfile || {}),
+      adminPasswordHash:
+        data.systemProfile && "adminPasswordHash" in data.systemProfile
+          ? data.systemProfile.adminPasswordHash
+          : current.systemProfile?.adminPasswordHash,
     },
     gatewayConfig: {
       ...current.gatewayConfig,
@@ -225,3 +231,50 @@ export function saveAdminSettings(data: Partial<AdminSystemSettings>): AdminSyst
   fs.writeFileSync(ADMIN_SETTINGS_FILE, JSON.stringify(updated, null, 2));
   return updated;
 }
+
+export function hashPassword(password: string): string {
+  const salt = crypto.randomBytes(16).toString("hex");
+  const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+  return `${salt}:${hash}`;
+}
+
+export function verifyPassword(password: string, combined: string): boolean {
+  try {
+    const [salt, key] = combined.split(":");
+    if (!salt || !key) return false;
+    const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+    return crypto.timingSafeEqual(Buffer.from(hash, "hex"), Buffer.from(key, "hex"));
+  } catch {
+    return false;
+  }
+}
+
+export function hasAdminPassword(): boolean {
+  const settings = getAdminSettings();
+  return !!(settings.systemProfile?.adminPasswordHash || process.env.ADMIN_PASSWORD);
+}
+
+export function verifyAdminPassword(inputPassword: string): boolean {
+  const settings = getAdminSettings();
+  const hash = settings.systemProfile?.adminPasswordHash;
+  if (hash) {
+    return verifyPassword(inputPassword, hash);
+  }
+  if (process.env.ADMIN_PASSWORD) {
+    return inputPassword === process.env.ADMIN_PASSWORD;
+  }
+  // When no password has been explicitly set yet, allow initial login
+  return true;
+}
+
+export function setAdminPassword(newPassword: string): void {
+  const hash = hashPassword(newPassword);
+  const current = getAdminSettings();
+  saveAdminSettings({
+    systemProfile: {
+      ...current.systemProfile,
+      adminPasswordHash: hash,
+    },
+  });
+}
+

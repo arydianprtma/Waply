@@ -21,6 +21,7 @@ import {
   Server,
 } from "lucide-react";
 import { useConfirm, useAlert } from "@/components/confirm-dialog";
+import { TableSkeleton } from "@/components/ui/SkeletonLoaders";
 
 interface FormattedSystemLog {
   id: string;
@@ -237,17 +238,15 @@ export default function AdminLogsPage() {
       </div>
 
       {/* Logs Container */}
-      <div className="bg-white border border-slate-200/90 shadow-sm rounded-2xl overflow-hidden">
-        {loading && logs.length === 0 ? (
-          <div className="p-16 text-center text-slate-400">
-            <RefreshCw className="w-6 h-6 animate-spin text-emerald-600 mx-auto mb-2.5" />
-            <p className="text-sm font-medium">Memuat riwayat log sistem...</p>
-          </div>
-        ) : filteredLogs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center mb-3">
-              <CheckCircle2 className="w-6 h-6" />
-            </div>
+      {loading && logs.length === 0 ? (
+        <TableSkeleton rows={6} cols={4} />
+      ) : (
+        <div className="bg-white border border-slate-200/90 shadow-sm rounded-2xl overflow-hidden">
+          {filteredLogs.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center mb-3">
+                <CheckCircle2 className="w-6 h-6" />
+              </div>
             <p className="text-base font-bold text-slate-900">
               {logs.length === 0 ? "Sistem Berjalan Normal" : "Tidak Ada Log yang Cocok"}
             </p>
@@ -398,6 +397,7 @@ export default function AdminLogsPage() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }

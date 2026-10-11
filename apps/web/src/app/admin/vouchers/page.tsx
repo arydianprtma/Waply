@@ -26,6 +26,7 @@ import {
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import { useConfirm } from "@/components/confirm-dialog";
 import { Voucher, DiscountType } from "@/lib/vouchers";
+import { TableSkeleton } from "@/components/ui/SkeletonLoaders";
 
 function formatIDR(n: number) {
   return new Intl.NumberFormat("id-ID", {
@@ -390,12 +391,15 @@ export default function AdminVouchersPage() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
-                <tr>
-                  <td colSpan={8} className="text-center py-12">
-                    <div className="loading loading-spinner loading-md text-primary mx-auto"></div>
-                    <p className="text-xs text-slate-500 mt-2">Memuat daftar voucher...</p>
-                  </td>
-                </tr>
+                Array.from({ length: 5 }).map((_, r) => (
+                  <tr key={r}>
+                    {Array.from({ length: 8 }).map((_, c) => (
+                      <td key={c} className="py-4">
+                        <div className="skeleton h-4 w-20 rounded bg-base-300/70" />
+                      </td>
+                    ))}
+                  </tr>
+                ))
               ) : filteredVouchers.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="text-center py-12">

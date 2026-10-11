@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   Send,
   Sparkles,
@@ -37,25 +38,33 @@ export default function SendMessageTesterPage() {
     error?: string;
   } | null>(null);
 
-  useEffect(() => {
-    async function loadDevices() {
-      try {
-        const res = await fetch("/api/gateway/sessions");
-        const json = await res.json();
-        if (json.success && Array.isArray(json.data)) {
-          setDevices(json.data);
-          const connected = json.data.find((d: DeviceOption) => d.status === "CONNECTED");
-          if (connected) {
-            setSelectedDevice(connected.id);
-          } else if (json.data.length > 0) {
-            setSelectedDevice(json.data[0].id);
+  const loadDevices = async () => {
+    try {
+      const res = await fetch("/api/gateway/sessions");
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        setDevices(json.data);
+        setSelectedDevice((prev) => {
+          if (prev && json.data.some((d: DeviceOption) => d.id === prev)) {
+            return prev;
           }
-        }
-      } catch (err) {
-        console.error("Failed to load devices", err);
+          const connected = json.data.find((d: DeviceOption) => d.status === "CONNECTED");
+          return connected ? connected.id : (json.data[0]?.id || "");
+        });
       }
+    } catch (err) {
+      console.error("Failed to load devices", err);
     }
+  };
+
+  useEffect(() => {
     loadDevices();
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        loadDevices();
+      }
+    }, 8000);
+    return () => clearInterval(interval);
   }, []);
 
   // Update spintax samples whenever message changes
@@ -125,6 +134,9 @@ export default function SendMessageTesterPage() {
     }
   };
 
+  const activeDevice = devices.find((d) => d.id === selectedDevice);
+  const isDeviceConnected = activeDevice?.status === "CONNECTED";
+
   return (
     <PlanFeatureGuard
       feature="sendMessage"
@@ -174,26 +186,58 @@ export default function SendMessageTesterPage() {
       <div className="card bg-base-100 border border-base-200 shadow-sm rounded-2xl p-6 md:p-8">
         <form onSubmit={handleSend} className="space-y-5">
           <div className="form-control">
-            <label className="label">
-              <span className="label-text font-semibold">Pilih Device WhatsApp</span>
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="label p-0">
+                <span className="label-text font-semibold">Pilih Device WhatsApp</span>
+              </label>
+              <button
+                type="button"
+                onClick={loadDevices}
+                className="btn btn-ghost btn-xs gap-1 text-base-content/60 hover:text-base-content font-normal"
+                title="Perbarui status koneksi device"
+              >
+                <RefreshCw className="w-3 h-3" /> Refresh Status
+              </button>
+            </div>
             {devices.length === 0 ? (
               <div className="alert alert-warning text-xs">
                 <span>Belum ada device WhatsApp terhubung. Silakan hubungkan device terlebih dahulu di menu WhatsApp Devices.</span>
               </div>
             ) : (
-              <select
-                className="select select-bordered w-full font-medium"
-                value={selectedDevice}
-                onChange={(e) => setSelectedDevice(e.target.value)}
-                required
-              >
-                {devices.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.phoneNumber ? `+${d.phoneNumber}` : d.name} ({d.status})
-                  </option>
-                ))}
-              </select>
+              <>
+                <select
+                  className="select select-bordered w-full font-medium"
+                  value={selectedDevice}
+                  onChange={(e) => setSelectedDevice(e.target.value)}
+                  required
+                >
+                  {devices.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.phoneNumber ? `+${d.phoneNumber}` : d.name} ({d.status})
+                    </option>
+                  ))}
+                </select>
+
+                {activeDevice && !isDeviceConnected && (
+                  <div className="alert alert-warning text-xs mt-3 flex items-start gap-2 shadow-sm">
+                    <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-warning-content" />
+                    <div className="flex-1">
+                      <div className="font-bold text-warning-content">
+                        Status Device: {activeDevice.status} (Belum Terhubung ke WhatsApp)
+                      </div>
+                      <p className="mt-0.5 text-warning-content/90 leading-relaxed">
+                        Pesan hanya dapat terkirim jika status device adalah <strong>CONNECTED</strong> (hijau). Silakan scan QR code terlebih dahulu pada menu WhatsApp Devices.
+                      </p>
+                      <Link
+                        href="/dashboard/devices"
+                        className="btn btn-xs btn-neutral mt-2 inline-flex items-center gap-1.5"
+                      >
+                        <Smartphone className="w-3.5 h-3.5" /> Buka Menu Devices &amp; Scan QR
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
@@ -287,11 +331,21 @@ export default function SendMessageTesterPage() {
           <button
             type="submit"
             className="btn btn-primary btn-block gap-2 shadow-md shadow-primary/25 mt-2"
-            disabled={loading || !selectedDevice || !recipient.trim() || !message.trim()}
+            disabled={
+              loading ||
+              !selectedDevice ||
+              !isDeviceConnected ||
+              !recipient.trim() ||
+              !message.trim()
+            }
           >
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" /> Mengirim Pesan (Simulating Typing)...
+              </>
+            ) : selectedDevice && !isDeviceConnected ? (
+              <>
+                <AlertCircle className="w-4 h-4" /> Device Belum Terhubung (Perlu Scan QR)
               </>
             ) : (
               <>

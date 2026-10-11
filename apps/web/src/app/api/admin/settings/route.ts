@@ -12,10 +12,11 @@ export async function GET() {
     const settings = getAdminSettings();
     
     // Mask sensitive keys for safety
+    const { adminPasswordHash: _unusedHash, ...cleanProfile } = settings.systemProfile || {};
     const safeSettings = {
       ...settings,
       systemProfile: {
-        ...settings.systemProfile,
+        ...cleanProfile,
         adminName: user.name || settings.systemProfile.adminName,
         adminEmail: user.email || settings.systemProfile.adminEmail,
       },

@@ -24,6 +24,7 @@ import {
   GraduationCap
 } from "lucide-react";
 import type { AiKnowledgeItem, AiKnowledgeCategory, AiKnowledgeSource } from "@/lib/ai-knowledge";
+import { CardGridSkeleton } from "@/components/ui/SkeletonLoaders";
 
 const CATEGORY_MAP: Record<AiKnowledgeCategory, { label: string; bg: string; text: string; border: string }> = {
   TECHNICAL: { label: "Kendala Teknis", bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200" },
@@ -407,10 +408,7 @@ export default function AdminAiKnowledgePage() {
 
       {/* Knowledge Cards Grid */}
       {loading ? (
-        <div className="p-12 text-center space-y-3 bg-white rounded-3xl border border-slate-200">
-          <RefreshCw className="w-8 h-8 text-primary animate-spin mx-auto" />
-          <p className="text-xs font-semibold text-slate-500">Memuat basis pengetahuan AI...</p>
-        </div>
+        <CardGridSkeleton count={4} />
       ) : filteredItems.length === 0 ? (
         <div className="p-12 text-center space-y-3 bg-white rounded-3xl border border-slate-200">
           <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">

@@ -17,20 +17,39 @@ sessionRouter.get("/", (req: Request, res: Response) => {
 // POST /api/sessions/create - Create / Init a new session
 sessionRouter.post("/create", async (req: Request, res: Response) => {
   try {
-    const { id, name } = req.body;
+    const { id, name, reconnect } = req.body;
 
     if (!id) {
       res.status(400).json({ success: false, error: "Session ID is required" });
       return;
     }
 
-    const session = await sessionManager.createSession(String(id), name || "WhatsApp Device");
+    const session = await sessionManager.createSession(
+      String(id),
+      name || "WhatsApp Device",
+      Boolean(reconnect)
+    );
     res.json({
       success: true,
       data: session.getInfo(),
     });
   } catch (error) {
     logger.error({ error }, "Failed to create session");
+    res.status(500).json({ success: false, error: (error as Error).message });
+  }
+});
+
+// POST /api/sessions/:id/reconnect - Reconnect / Reset auth for fresh QR
+sessionRouter.post("/:id/reconnect", async (req: Request, res: Response) => {
+  try {
+    const id = String(req.params.id);
+    const session = await sessionManager.reconnectSession(id);
+    res.json({
+      success: true,
+      data: session.getInfo(),
+    });
+  } catch (error) {
+    logger.error({ error }, "Failed to reconnect session");
     res.status(500).json({ success: false, error: (error as Error).message });
   }
 });

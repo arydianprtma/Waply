@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import type { ManagedUser, UserAccountStatus } from "@/lib/admin-users";
 import { ModalPortal } from "@/components/ui/ModalPortal";
+import { TableSkeleton, CardGridSkeleton } from "@/components/ui/SkeletonLoaders";
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<ManagedUser[]>([]);
@@ -383,28 +384,26 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Desktop User Table View */}
-      <div className="hidden md:block rounded-2xl bg-white border border-slate-200 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="table w-full">
-            <thead>
-              <tr className="bg-slate-50/90 text-[11px] font-extrabold uppercase tracking-wider text-slate-600 border-b border-slate-200">
-                <th className="py-3.5 pl-5">Pengguna</th>
-                <th className="py-3.5">IP & Keamanan</th>
-                <th className="py-3.5">Status Akun</th>
-                <th className="py-3.5">Paket & Penggunaan</th>
-                <th className="py-3.5">Terdaftar & Login</th>
-                <th className="py-3.5 pr-5 text-right min-w-[220px]">Aksi Super Admin</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-xs">
-              {loading ? (
-                <tr>
-                  <td colSpan={6} className="text-center py-16">
-                    <span className="loading loading-spinner loading-md text-primary" />
-                    <p className="text-xs text-slate-500 mt-2 font-medium">Memuat data pengguna...</p>
-                  </td>
+      {loading ? (
+        <div className="hidden md:block">
+          <TableSkeleton rows={5} cols={6} />
+        </div>
+      ) : (
+        <div className="hidden md:block rounded-2xl bg-white border border-slate-200 shadow-xs overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="table w-full">
+              <thead>
+                <tr className="bg-slate-50/90 text-[11px] font-extrabold uppercase tracking-wider text-slate-600 border-b border-slate-200">
+                  <th className="py-3.5 pl-5">Pengguna</th>
+                  <th className="py-3.5">IP & Keamanan</th>
+                  <th className="py-3.5">Status Akun</th>
+                  <th className="py-3.5">Paket & Penggunaan</th>
+                  <th className="py-3.5">Terdaftar & Login</th>
+                  <th className="py-3.5 pr-5 text-right min-w-[220px]">Aksi Super Admin</th>
                 </tr>
-              ) : users.length === 0 ? (
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-xs">
+                {users.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="text-center py-16 text-slate-400">
                     <Users className="w-10 h-10 mx-auto mb-2 opacity-30 text-slate-500" />
@@ -701,14 +700,12 @@ export default function AdminUsersPage() {
           </table>
         </div>
       </div>
+      )}
 
       {/* Mobile User Card View (for Smartphones & Small Tablets) */}
       <div className="block md:hidden space-y-3.5">
         {loading ? (
-          <div className="p-12 text-center text-slate-400 bg-white rounded-2xl border border-slate-200">
-            <span className="loading loading-spinner loading-md text-primary mb-2" />
-            <p className="text-xs font-semibold">Memuat data pengguna...</p>
-          </div>
+          <CardGridSkeleton count={4} />
         ) : users.length === 0 ? (
           <div className="p-12 text-center text-slate-400 bg-white rounded-2xl border border-slate-200">
             <Users className="w-10 h-10 mx-auto mb-2 opacity-30 text-slate-500" />

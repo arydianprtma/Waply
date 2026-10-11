@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getUserByEmail, registerOrSyncUser } from "@/lib/admin-users";
 import { extractClientIp } from "@/lib/ip-utils";
+import { hasAdminPassword, verifyAdminPassword } from "@/lib/admin-settings";
 
 export async function POST(request: Request) {
   try {
@@ -60,6 +61,21 @@ export async function POST(request: Request) {
         },
         { status: 403 }
       );
+    }
+
+    // 4. Verify Super Admin password if configured
+    const isSuperAdminUser = cleanEmail === "admin@waply.id" || dbUser.role === "admin";
+    if (isSuperAdminUser && hasAdminPassword()) {
+      const inputPassword = (body.password || "").trim();
+      if (!inputPassword || !verifyAdminPassword(inputPassword)) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Password akun Super Admin salah. Silakan periksa kembali.",
+          },
+          { status: 401 }
+        );
+      }
     }
 
     // 4. Resolve exact role from database record

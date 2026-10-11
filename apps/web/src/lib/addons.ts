@@ -74,13 +74,40 @@ function saveUserAddonsMap(map: Record<string, UserAddon[]>): void {
 
 export function getUserAddons(userId: string): UserAddon[] {
   const map = getAllUserAddonsMap();
-  const list = map[userId] || [];
-  const now = new Date();
+  const cleanId = userId ? userId.trim() : "";
+  let targetKey = cleanId;
+  let list = map[cleanId] || [];
 
-  // Check expiration if any
+  // Cross-reference by email or alternate ID if empty
+  if (list.length === 0 && cleanId) {
+    try {
+      const usersFile = path.join(DATA_DIR, "users_registry.json");
+      if (fs.existsSync(usersFile)) {
+        const users: any[] = JSON.parse(fs.readFileSync(usersFile, "utf-8"));
+        const found = users.find(
+          (u) =>
+            u.id === cleanId ||
+            u.id?.toLowerCase() === cleanId.toLowerCase() ||
+            (u.email && u.email.toLowerCase() === cleanId.toLowerCase())
+        );
+        if (found) {
+          if (found.id && map[found.id]?.length > 0) {
+            targetKey = found.id;
+            list = map[found.id];
+          } else if (found.email && map[found.email.toLowerCase()]?.length > 0) {
+            targetKey = found.email.toLowerCase();
+            list = map[found.email.toLowerCase()];
+          }
+        }
+      }
+    } catch {}
+  }
+
+  const now = new Date();
   let changed = false;
   const updatedList = list.map((item) => {
-    if (item.status === "ACTIVE" && item.expiresAt && new Date(item.expiresAt) < now) {
+    const isPast = item.expiresAt ? new Date(item.expiresAt) < now : false;
+    if (item.status === "ACTIVE" && isPast) {
       changed = true;
       return { ...item, status: "EXPIRED" as const };
     }
@@ -88,7 +115,7 @@ export function getUserAddons(userId: string): UserAddon[] {
   });
 
   if (changed) {
-    map[userId] = updatedList;
+    map[targetKey] = updatedList;
     saveUserAddonsMap(map);
   }
 
@@ -100,7 +127,16 @@ export function getUserAddonTotals(userId: string): {
   extraMessages: number;
   activeAddons: UserAddon[];
 } {
-  const addons = getUserAddons(userId).filter((a) => a.status === "ACTIVE");
+  const now = new Date();
+  // Filter ONLY truly active and non-expired addons
+  const addons = getUserAddons(userId).filter((a) => {
+    if (a.status !== "ACTIVE") return false;
+    if (a.expiresAt) {
+      const exp = new Date(a.expiresAt);
+      if (!isNaN(exp.getTime()) && exp < now) return false;
+    }
+    return true;
+  });
 
   let extraDevices = 0;
   let extraMessages = 0;

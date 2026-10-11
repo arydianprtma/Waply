@@ -68,7 +68,7 @@ const INITIAL_KNOWLEDGE_BASE: AiKnowledgeItem[] = [
     title: "Strategi Anti-Banned & Penggunaan Spintax",
     category: "TECHNICAL",
     problemDescription: "Cara mengirim broadcast tanpa terblokir WhatsApp dan aturan warmup nomor baru.",
-    solution: "1. Selalu gunakan Spintax seperti `{Halo|Hai|Selamat Siang}` pada pesan agar setiap chat memiliki hash unik.\n2. Untuk nomor WhatsApp baru, jalankan tahapan Warmup: Hari 1-3 maks 30 pesan/hari, Hari 4-7 maks 100 pesan/hari, Hari 8-14 maks 500 pesan/hari.\n3. Gunakan fitur 'Auto-Rotate Device' agar pengiriman broadcast terbagi rata ke seluruh nomor yang terhubung.\n4. Berikan jeda delay pengiriman minimal 4–12 detik antar pesan.",
+    solution: "1. Selalu gunakan Spintax seperti `{Halo|Hai|Selamat Siang}` pada pesan agar setiap chat memiliki hash unik.\n2. Untuk nomor WhatsApp baru, jalankan tahapan Warmup proporsional berbasis kuota harian (Total Kuota Paket / 30 hari): Stage 1 Cold (10%), Stage 2 Warm (30%), Stage 3 Active (60%), dan Stage 4 Mature (100% kapasitas penuh).\n3. Gunakan fitur 'Auto-Rotate Device' agar pengiriman broadcast terbagi rata ke seluruh nomor yang terhubung.\n4. Berikan jeda delay pengiriman minimal 4-12 detik antar pesan.",
     keywords: ["banned", "blokir", "anti-ban", "spintax", "warmup", "nomor baru", "delay", "aman broadcast"],
     source: "admin_manual",
     isActive: true,

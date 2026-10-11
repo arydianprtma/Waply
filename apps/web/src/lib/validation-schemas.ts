@@ -42,6 +42,7 @@ export const sendMessageSchema = z.object({
   fileName: z.string().max(255).optional(),
   mimetype: z.string().max(100).optional(),
   variables: z.record(z.union([z.string(), z.number()])).optional(),
+  async: z.boolean().optional(),
 });
 
 // 2. Auth - Forgot Password Schema

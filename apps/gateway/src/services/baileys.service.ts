@@ -6,6 +6,7 @@ import makeWASocket, {
   makeCacheableSignalKeyStore,
   proto,
 } from "@whiskeysockets/baileys";
+import NodeCache from "@cacheable/node-cache";
 import { Boom } from "@hapi/boom";
 import QRCode from "qrcode";
 import path from "path";
@@ -38,33 +39,250 @@ export class BaileysInstance {
   public lastError?: string;
 
   private sessionsDir: string;
+  private msgStorePath: string;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
+  private isInitializing = false;
+  private reconnectTimer: NodeJS.Timeout | null = null;
+  private watchdogTimer: NodeJS.Timeout | null = null;
   private msgStore = new Map<string, proto.IMessage>();
+  private msgStoreSaveTimer: NodeJS.Timeout | null = null;
+  private msgRetryCounterCache: any;
+  private placeholderResendCache: any;
   private recentRecipients = new Map<string, string>(); // name/jid to phone number mapping
   private lastRecipientPhone = "";
 
   constructor(id: string, name = "WhatsApp Device") {
     this.id = id;
     this.name = name;
-    this.sessionsDir = path.resolve(process.cwd(), "sessions", id);
+    this.sessionsDir = fs.existsSync(path.resolve(process.cwd(), "apps/gateway"))
+      ? path.resolve(process.cwd(), "apps/gateway/sessions", id)
+      : path.resolve(process.cwd(), "sessions", id);
+    this.msgStorePath = path.join(this.sessionsDir, "msg_store.json");
 
     // Ensure session directory exists
     if (!fs.existsSync(this.sessionsDir)) {
       fs.mkdirSync(this.sessionsDir, { recursive: true });
     }
+
+    // Initialize retry counter and placeholder resend caches
+    const NodeCacheConstructor: any = (NodeCache as any).default || NodeCache;
+    this.msgRetryCounterCache = new NodeCacheConstructor({ stdTTL: 3600, useClones: false });
+    this.placeholderResendCache = new NodeCacheConstructor({ stdTTL: 3600, useClones: false });
+
+    // Load message store from disk
+    this.loadMsgStoreFromDisk();
+
+    // Clean any stale session files with stuck unconfirmed prekeys
+    this.cleanStaleSessionKeys();
+
+    // Load phone number from existing credentials if present
+    this.loadPhoneFromCreds();
+  }
+
+  /**
+   * Bersihkan file session-*.json yang memiliki pendingPreKey macet (unacknowledged ratchet)
+   * agar Baileys meminta prekey bundle segar dari WhatsApp saat mengirim pesan berikutnya.
+   */
+  public cleanStaleSessionKeys(): void {
+    try {
+      if (!fs.existsSync(this.sessionsDir)) return;
+      const files = fs.readdirSync(this.sessionsDir);
+      let cleaned = 0;
+      for (const file of files) {
+        if (file.startsWith("session-") && file.endsWith(".json")) {
+          const filePath = path.join(this.sessionsDir, file);
+          try {
+            const raw = fs.readFileSync(filePath, "utf-8");
+            const data = JSON.parse(raw);
+            const sessionsObj = data?._sessions || {};
+            let hasStuckPending = false;
+            for (const sKey of Object.keys(sessionsObj)) {
+              const sess = sessionsObj[sKey];
+              if (sess?.pendingPreKey) {
+                hasStuckPending = true;
+                break;
+              }
+            }
+            if (hasStuckPending) {
+              fs.unlinkSync(filePath);
+              cleaned++;
+            }
+          } catch {
+            try {
+              fs.unlinkSync(filePath);
+              cleaned++;
+            } catch {}
+          }
+        }
+      }
+      if (cleaned > 0) {
+        logger.info(
+          { sessionId: this.id, cleanedCount: cleaned },
+          "🧹 Cleaned stale Signal session files with stuck pending pre-keys"
+        );
+      }
+    } catch (err) {
+      logger.warn({ err, sessionId: this.id }, "Failed to scan/clean stale session keys");
+    }
+  }
+
+  /**
+   * Muat message cache dari file disk msg_store.json
+   */
+  private loadMsgStoreFromDisk(): void {
+    try {
+      if (fs.existsSync(this.msgStorePath)) {
+        const raw = fs.readFileSync(this.msgStorePath, "utf-8");
+        const parsed = JSON.parse(raw);
+        if (typeof parsed === "object" && parsed !== null) {
+          for (const [key, val] of Object.entries(parsed)) {
+            if (key && val) {
+              this.msgStore.set(key, val as proto.IMessage);
+            }
+          }
+          logger.info({ sessionId: this.id, count: this.msgStore.size }, "Loaded cached messages from disk");
+        }
+      }
+    } catch (err) {
+      logger.warn({ err, sessionId: this.id }, "Failed to read msg_store.json from disk");
+    }
+  }
+
+  /**
+   * Simpan pesan ke memory store dan jadwalkan flush ke disk
+   */
+  public storeMessage(id: string, message: proto.IMessage): void {
+    if (!id || !message) return;
+    this.msgStore.set(id, message);
+    if (this.msgStore.size > 2000) {
+      const firstKey = this.msgStore.keys().next().value;
+      if (firstKey) this.msgStore.delete(firstKey);
+    }
+    this.scheduleSaveMsgStore();
+  }
+
+  private scheduleSaveMsgStore(): void {
+    if (this.msgStoreSaveTimer) return;
+    this.msgStoreSaveTimer = setTimeout(() => {
+      this.msgStoreSaveTimer = null;
+      try {
+        const obj = Object.fromEntries(this.msgStore.entries());
+        fs.writeFileSync(this.msgStorePath, JSON.stringify(obj), "utf-8");
+      } catch (err) {
+        logger.warn({ err, sessionId: this.id }, "Failed to persist msg_store.json to disk");
+      }
+    }, 1000);
+  }
+
+  /**
+   * Cari pesan untuk retry Baileys (dari memory, disk, atau database/messages.json fallback)
+   */
+  public loadMessage(id: string): proto.IMessage | undefined {
+    if (!id) return undefined;
+    if (this.msgStore.has(id)) {
+      return this.msgStore.get(id);
+    }
+
+    // Fallback: cari di file pesan web (.waply-data/messages.json)
+    try {
+      const possiblePaths = [
+        path.resolve(process.cwd(), "..", "web", ".waply-data", "messages.json"),
+        path.resolve(process.cwd(), ".waply-data", "messages.json"),
+      ];
+      for (const p of possiblePaths) {
+        if (fs.existsSync(p)) {
+          const list = JSON.parse(fs.readFileSync(p, "utf-8") || "[]");
+          const found = list.find((m: any) => m.providerMessageId === id || m.id === id);
+          if (found && found.content) {
+            const reconstructed: proto.IMessage = {
+              extendedTextMessage: { text: found.content },
+            };
+            this.msgStore.set(id, reconstructed);
+            return reconstructed;
+          }
+        }
+      }
+    } catch {}
+
+    return undefined;
+  }
+
+  /**
+   * Coba baca nomor WhatsApp dari creds.json tersimpan jika ada
+   */
+  public loadPhoneFromCreds(): string | undefined {
+    try {
+      const credsPath = path.join(this.sessionsDir, "creds.json");
+      if (fs.existsSync(credsPath)) {
+        const raw = fs.readFileSync(credsPath, "utf-8");
+        const credsData = JSON.parse(raw);
+        if (credsData?.me?.id) {
+          const extracted = credsData.me.id.split(":")[0].replace("@s.whatsapp.net", "");
+          if (extracted) {
+            this.phoneNumber = extracted;
+            return extracted;
+          }
+        }
+      }
+    } catch {}
+    return this.phoneNumber;
   }
 
   /**
    * Menginisialisasi dan menghubungkan socket Baileys WhatsApp
    */
-  async initialize(): Promise<void> {
+  async initialize(cleanAuth = false): Promise<void> {
+    if (this.isInitializing) {
+      logger.info({ sessionId: this.id }, "Session initialization already in progress, skipping concurrent call");
+      return;
+    }
+
+    this.isInitializing = true;
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    if (this.watchdogTimer) {
+      clearTimeout(this.watchdogTimer);
+      this.watchdogTimer = null;
+    }
+
     try {
       this.status = "CONNECTING";
       this.lastError = undefined;
       logger.info({ sessionId: this.id }, `🔌 Initializing WhatsApp session: ${this.name}`);
 
+      // Teardown any previously open socket before creating a new one
+      if (this.socket) {
+        try {
+          this.socket.ev.removeAllListeners("connection.update");
+          this.socket.ev.removeAllListeners("creds.update");
+          this.socket.ev.removeAllListeners("messages.upsert");
+          this.socket.end(undefined);
+        } catch (sockErr) {
+          logger.debug({ sockErr }, "Previous socket teardown");
+        }
+        this.socket = null;
+      }
+
+      // Jika cleanAuth diminta (misal reconnect untuk sesi logged-out), hapus kredensial lama agar Baileys menghasilkan QR baru
+      if (cleanAuth) {
+        this.loadPhoneFromCreds();
+        if (fs.existsSync(this.sessionsDir)) {
+          fs.rmSync(this.sessionsDir, { recursive: true, force: true });
+          fs.mkdirSync(this.sessionsDir, { recursive: true });
+          logger.info({ sessionId: this.id }, "Auth directory refreshed for fresh QR generation");
+        }
+      }
+
+      // Bersihkan session keys macet sebelum memuat auth state
+      this.cleanStaleSessionKeys();
+
       const { state, saveCreds } = await useMultiFileAuthState(this.sessionsDir);
+      if (state?.creds?.me?.id && !this.phoneNumber) {
+        this.phoneNumber = state.creds.me.id.split(":")[0].replace("@s.whatsapp.net", "");
+      }
       const { version } = await fetchLatestBaileysVersion();
 
       this.socket = makeWASocket({
@@ -75,15 +293,20 @@ export class BaileysInstance {
           creds: state.creds,
           keys: makeCacheableSignalKeyStore(state.keys, baileysLogger),
         },
+        msgRetryCounterCache: this.msgRetryCounterCache,
+        placeholderResendCache: this.placeholderResendCache,
         browser: ["Waply Gateway", "Chrome", "1.0.0"],
         generateHighQualityLinkPreview: true,
         syncFullHistory: false,
         defaultQueryTimeoutMs: 60000,
         getMessage: async (key) => {
-          if (key.id && this.msgStore.has(key.id)) {
-            return this.msgStore.get(key.id);
-          }
-          return undefined;
+          if (!key.id) return undefined;
+          const msg = this.loadMessage(key.id);
+          logger.info(
+            { sessionId: this.id, messageId: key.id, remoteJid: key.remoteJid, found: !!msg },
+            `🔄 Baileys getMessage handled retry request for ${key.id} (Found: ${!!msg})`
+          );
+          return msg || undefined;
         },
       });
 
@@ -113,6 +336,14 @@ export class BaileysInstance {
           this.qrDataUrl = undefined;
           this.reconnectAttempts = 0;
           this.lastConnectedAt = new Date();
+          if (this.reconnectTimer) {
+            clearTimeout(this.reconnectTimer);
+            this.reconnectTimer = null;
+          }
+          if (this.watchdogTimer) {
+            clearTimeout(this.watchdogTimer);
+            this.watchdogTimer = null;
+          }
 
           // Ekstrak nomor WhatsApp dari JID (user format: 62812xxx:xx@s.whatsapp.net)
           const userJid = this.socket?.user?.id;
@@ -132,10 +363,21 @@ export class BaileysInstance {
           const statusCode = error?.output?.statusCode;
           const isLoggedOut = statusCode === DisconnectReason.loggedOut || statusCode === 401;
           const isRestartRequired = statusCode === DisconnectReason.restartRequired || statusCode === 515;
+          const isConnectionReplaced = statusCode === DisconnectReason.connectionReplaced || statusCode === 440;
 
           this.qrCode = undefined;
           this.qrDataUrl = undefined;
           this.status = "DISCONNECTED";
+
+          // Sesi ditimpa oleh sesi WhatsApp lain (jangan reconnect otomatis agar tidak looping bentrok)
+          if (isConnectionReplaced) {
+            this.lastError = "Koneksi digantikan oleh sesi WhatsApp lain (Connection Replaced)";
+            logger.warn(
+              { sessionId: this.id, statusCode },
+              "Session connection replaced by another instance. Stopping auto-reconnect."
+            );
+            return;
+          }
 
           // Jika user logout manual dari menu Perangkat Tertaut di WhatsApp HP
           if (isLoggedOut) {
@@ -155,7 +397,8 @@ export class BaileysInstance {
               { sessionId: this.id },
               "Baileys stream restart required (515). Re-initializing socket immediately in 800ms..."
             );
-            setTimeout(() => this.initialize(), 800);
+            if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+            this.reconnectTimer = setTimeout(() => this.initialize(), 800);
             return;
           }
 
@@ -166,14 +409,16 @@ export class BaileysInstance {
               { sessionId: this.id, attempt: this.reconnectAttempts, delay, statusCode },
               `WhatsApp disconnected. Reconnecting in ${delay / 1000}s...`
             );
-            setTimeout(() => this.initialize(), delay);
+            if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+            this.reconnectTimer = setTimeout(() => this.initialize(), delay);
           } else {
             logger.error(
               { sessionId: this.id, attempts: this.reconnectAttempts },
               "Max reconnect attempts reached. Scheduled for soft self-healing watchdog."
             );
             // Soft self-healing background recovery after 60s
-            setTimeout(() => {
+            if (this.watchdogTimer) clearTimeout(this.watchdogTimer);
+            this.watchdogTimer = setTimeout(() => {
               if (this.status !== "CONNECTED") {
                 logger.info({ sessionId: this.id }, "Watchdog attempting soft session recovery...");
                 this.reconnectAttempts = 0;
@@ -188,11 +433,7 @@ export class BaileysInstance {
       this.socket.ev.on("messages.upsert", async ({ messages, type }) => {
         for (const msg of messages) {
           if (msg.key.id && msg.message) {
-            this.msgStore.set(msg.key.id, msg.message);
-            if (this.msgStore.size > 2000) {
-              const firstKey = this.msgStore.keys().next().value;
-              if (firstKey) this.msgStore.delete(firstKey);
-            }
+            this.storeMessage(msg.key.id, msg.message);
           }
         }
 
@@ -266,6 +507,8 @@ export class BaileysInstance {
       this.status = "DISCONNECTED";
       this.lastError = (error as Error).message;
       logger.error({ sessionId: this.id, error }, "Failed to initialize Baileys instance");
+    } finally {
+      this.isInitializing = false;
     }
   }
 
@@ -306,15 +549,10 @@ export class BaileysInstance {
     // 2. Kirim pesan via Baileys socket
     const result = await this.socket.sendMessage(formattedJid, { text });
 
-    if (result?.key?.id && result?.message) {
-      this.msgStore.set(result.key.id, result.message);
-      if (this.msgStore.size > 2000) {
-        const firstKey = this.msgStore.keys().next().value;
-        if (firstKey) this.msgStore.delete(firstKey);
-      }
-    }
-
     const messageId = result?.key?.id || `msg_${Date.now()}`;
+    const messageContent = result?.message || { extendedTextMessage: { text } };
+    this.storeMessage(messageId, messageContent);
+
     logger.info({ sessionId: this.id, messageId, recipient: cleanNumber }, "✅ Message sent successfully!");
 
     return {
@@ -423,15 +661,11 @@ export class BaileysInstance {
 
     const result = await this.socket.sendMessage(formattedJid, payload);
 
-    if (result?.key?.id && result?.message) {
-      this.msgStore.set(result.key.id, result.message);
-      if (this.msgStore.size > 2000) {
-        const firstKey = this.msgStore.keys().next().value;
-        if (firstKey) this.msgStore.delete(firstKey);
-      }
+    const messageId = result?.key?.id || `msg_${Date.now()}`;
+    if (result?.message) {
+      this.storeMessage(messageId, result.message);
     }
 
-    const messageId = result?.key?.id || `msg_${Date.now()}`;
     logger.info({ sessionId: this.id, messageId, recipient: cleanNumber, type }, "✅ Media message sent successfully!");
 
     return {
@@ -445,6 +679,14 @@ export class BaileysInstance {
    */
   async logout(): Promise<void> {
     try {
+      if (this.reconnectTimer) {
+        clearTimeout(this.reconnectTimer);
+        this.reconnectTimer = null;
+      }
+      if (this.watchdogTimer) {
+        clearTimeout(this.watchdogTimer);
+        this.watchdogTimer = null;
+      }
       if (this.socket) {
         await this.socket.logout().catch(() => {});
         this.socket.end(new Error("Manual logout by user"));
@@ -469,6 +711,9 @@ export class BaileysInstance {
    * Mendapatkan summary informasi sesi
    */
   getInfo(): SessionInfo {
+    if (!this.phoneNumber) {
+      this.loadPhoneFromCreds();
+    }
     return {
       id: this.id,
       name: this.name,
