@@ -448,7 +448,7 @@ function generateResetPasswordEmailHtml(params: EmailResetPasswordParams): strin
           <tr>
             <td style="padding: 20px 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
               <p style="margin: 0; font-size: 12px; color: #94a3b8; line-height: 1.5;">
-                Dikirim oleh sistem keamanan Waply &bull; <a href="${appUrl}" style="color: #64748b; text-decoration: none;">${appUrl.replace(/^https?:\/\//, "")}</a>
+                Dikirim oleh sistem keamanan Waply &bull; <a href="https://waply.web.id" style="color: #64748b; text-decoration: none;">waply.web.id</a>
               </p>
             </td>
           </tr>
@@ -597,7 +597,7 @@ function generateVerificationEmailHtml(params: EmailVerificationParams): string 
           <tr>
             <td style="padding: 20px 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
               <p style="margin: 0; font-size: 12px; color: #94a3b8; line-height: 1.5;">
-                Dikirim oleh sistem keamanan Waply &bull; <a href="${appUrl}" style="color: #64748b; text-decoration: none;">${appUrl.replace(/^https?:\/\//, "")}</a>
+                Dikirim oleh sistem keamanan Waply &bull; <a href="https://waply.web.id" style="color: #64748b; text-decoration: none;">waply.web.id</a>
               </p>
             </td>
           </tr>
@@ -740,7 +740,7 @@ function generateOtpEmailHtml(params: EmailOtpParams): string {
           <tr>
             <td style="padding: 20px 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
               <p style="margin: 0; font-size: 12px; color: #94a3b8; line-height: 1.5;">
-                Dikirim oleh sistem keamanan Waply &bull; <a href="${appUrl}" style="color: #64748b; text-decoration: none;">${appUrl.replace(/^https?:\/\//, "")}</a>
+                Dikirim oleh sistem keamanan Waply &bull; <a href="https://waply.web.id" style="color: #64748b; text-decoration: none;">waply.web.id</a>
               </p>
             </td>
           </tr>
