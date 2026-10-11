@@ -40,6 +40,32 @@ function getTransporter() {
 }
 
 /**
+ * Normalizes email 'from' headers to clean 'Name <email@domain>' or 'email@domain' format.
+ * Strips corrupted JSON escapes, outer backslashes, or quotes.
+ */
+export function sanitizeSenderAddress(raw: string | undefined, defaultEmail: string, defaultName: string): string {
+  if (!raw || !raw.trim()) {
+    return `${defaultName} <${defaultEmail}>`;
+  }
+  let clean = raw.trim();
+  // Strip backslashes, wrapping quotes, and escaped quotes
+  clean = clean.replace(/\\"/g, "").replace(/^["']|["']$/g, "").trim();
+  
+  const match = clean.match(/(.*)<([^>]+)>/);
+  if (match) {
+    const name = match[1].replace(/["']/g, "").trim();
+    const email = match[2].trim();
+    return name ? `${name} <${email}>` : email;
+  }
+  
+  if (clean.includes("@")) {
+    return `${defaultName} <${clean}>`;
+  }
+  
+  return `${defaultName} <${defaultEmail}>`;
+}
+
+/**
  * Generate modern, enterprise-grade responsive HTML email template for invoices and receipts.
  * Designed with bulletproof table layout for 100% compatibility across Gmail, Apple Mail, Outlook, and mobile.
  */
@@ -479,7 +505,11 @@ export async function sendEmailResetPassword(params: EmailResetPasswordParams): 
     const transporter = getTransporter();
     const subject = `[PEMULIHAN AKUN] Tautan Atur Ulang Password Akun Waply`;
     const htmlContent = generateResetPasswordEmailHtml(params);
-    const fromAddress = process.env.SMTP_FROM || `"Waply Gateway" <${process.env.SMTP_USER || "no-reply@waply.id"}>`;
+    const fromAddress = sanitizeSenderAddress(
+      process.env.SMTP_NOREPLY_FROM,
+      "noreply@waply.web.id",
+      "Waply Security"
+    );
 
     if (!transporter) {
       console.warn(
@@ -602,7 +632,11 @@ export async function sendEmailVerification(params: EmailVerificationParams): Pr
     const transporter = getTransporter();
     const subject = `[VERIFIKASI AKUN] Konfirmasi Alamat Email Anda di Waply`;
     const htmlContent = generateVerificationEmailHtml(params);
-    const fromAddress = process.env.SMTP_FROM || `"Waply Support" <${process.env.SMTP_USER || "support@waply.web.id"}>`;
+    const fromAddress = sanitizeSenderAddress(
+      process.env.SMTP_NOREPLY_FROM,
+      "noreply@waply.web.id",
+      "Waply Security"
+    );
 
     if (!transporter) {
       console.warn(`[Email Service] SMTP belum dikonfigurasi untuk email verifikasi: ${params.customerEmail}`);
@@ -683,7 +717,11 @@ export async function sendEmailTicketNotification(params: EmailTicketNotificatio
 </body>
 </html>`.trim();
 
-    const fromAddress = process.env.SMTP_FROM || `"Waply Support" <${process.env.SMTP_USER || "support@waply.web.id"}>`;
+    const fromAddress = sanitizeSenderAddress(
+      process.env.SMTP_FROM,
+      "support@waply.web.id",
+      "Waply Support"
+    );
 
     if (!transporter) return false;
 
