@@ -52,6 +52,29 @@ export async function GET(request: NextRequest) {
     if (verified) {
       const user = getUserByEmail(targetEmail);
       if (user) {
+        // Also confirm email in Supabase Auth backend
+        const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        if (sbUrl && sbKey) {
+          try {
+            const { createClient } = await import("@supabase/supabase-js");
+            const supabaseAdmin = createClient(sbUrl, sbKey, {
+              auth: { autoRefreshToken: false, persistSession: false },
+            });
+            if (user.id && !user.id.startsWith("usr_")) {
+              await supabaseAdmin.auth.admin.updateUserById(user.id, { email_confirm: true });
+            } else {
+              const { data } = await supabaseAdmin.auth.admin.listUsers();
+              const match = data?.users?.find((u) => u.email?.toLowerCase() === targetEmail.toLowerCase());
+              if (match) {
+                await supabaseAdmin.auth.admin.updateUserById(match.id, { email_confirm: true });
+              }
+            }
+          } catch (sbErr: any) {
+            console.warn("[Auth Callback] Supabase email confirm note:", sbErr.message);
+          }
+        }
+
         const cookieStore = await cookies();
         const maxAge = 60 * 60 * 24 * 7;
         cookieStore.set("waply_demo_auth", "true", { path: "/", maxAge, sameSite: "lax" });

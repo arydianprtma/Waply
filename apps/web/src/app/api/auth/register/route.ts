@@ -40,8 +40,36 @@ export async function POST(req: NextRequest) {
     // 2. Generate secure email verification token
     const verifyToken = crypto.randomBytes(32).toString("hex");
 
-    // 3. Register user with emailVerified = false
-    const userId = existing ? existing.id : `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, "_")}`;
+    // 3. Register user in local database with emailVerified = false
+    let userId = existing ? existing.id : `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, "_")}`;
+
+    // Sync to Supabase Auth backend via Admin API (email_confirm: false, no default email sent)
+    const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (sbUrl && sbKey) {
+      try {
+        const { createClient } = await import("@supabase/supabase-js");
+        const supabaseAdmin = createClient(sbUrl, sbKey, {
+          auth: { autoRefreshToken: false, persistSession: false },
+        });
+
+        const { data: sbUser, error: sbErr } = await supabaseAdmin.auth.admin.createUser({
+          email: cleanEmail,
+          password: password,
+          email_confirm: false, // will be confirmed when user clicks verification link
+          user_metadata: { name },
+        });
+
+        if (!sbErr && sbUser?.user?.id) {
+          userId = sbUser.user.id;
+        } else if (sbErr) {
+          console.warn("[Register] Supabase Admin sync warning:", sbErr.message);
+        }
+      } catch (err: any) {
+        console.warn("[Register] Supabase Admin connection error:", err.message);
+      }
+    }
+
     registerOrSyncUser({
       id: userId,
       email: cleanEmail,
@@ -69,10 +97,20 @@ export async function POST(req: NextRequest) {
       verificationUrl,
     });
 
+    if (!sent) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Gagal mengirimkan email verifikasi. Silakan periksa kembali konfigurasi SMTP atau coba beberapa saat lagi.",
+        },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json({
       success: true,
       message: "Pendaftaran berhasil! Tautan verifikasi email telah dikirimkan ke kotak masuk Anda. Silakan verifikasi untuk mengaktifkan akun.",
-      emailSent: sent,
+      emailSent: true,
     });
   } catch (err: any) {
     console.error("[Register API Error]:", err);
