@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import { Lock, Mail, User, Loader2, AlertCircle, CheckCircle, Info, Eye, EyeOff } from "lucide-react";
 
 export default function RegisterPage() {
@@ -37,20 +36,6 @@ export default function RegisterPage() {
         setErrorMsg(json.error || "Gagal melakukan pendaftaran akun.");
         setLoading(false);
         return;
-      }
-
-      // Also register in Supabase Auth in background if configured
-      if (isSupabaseConfigured()) {
-        try {
-          const supabase = createClient();
-          await supabase.auth.signUp({
-            email,
-            password,
-            options: { data: { name } },
-          });
-        } catch {
-          // ignore background sync
-        }
       }
 
       setSuccessMsg(
