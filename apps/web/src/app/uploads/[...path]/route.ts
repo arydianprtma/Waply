@@ -31,15 +31,8 @@ export async function GET(
       }
     }
 
-    const uploadsDir = getUploadsDirectory();
-    const filePath = path.join(uploadsDir, ...pathSegments);
-
-    // Verify filePath is contained within uploadsDir
-    if (!filePath.startsWith(uploadsDir)) {
-      return new NextResponse("Forbidden", { status: 403 });
-    }
-
-    if (!fs.existsSync(filePath)) {
+    const filePath = findUploadFile(...pathSegments);
+    if (!filePath || !fs.existsSync(filePath)) {
       return new NextResponse("File Not Found", { status: 404 });
     }
 
