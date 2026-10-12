@@ -78,6 +78,8 @@ interface AdminSystemSettings {
     password?: string;
     fromEmail: string;
     fromName: string;
+    noreplyEmail?: string;
+    noreplyName?: string;
     enabled: boolean;
   };
   maintenanceConfig: {
@@ -942,31 +944,102 @@ export default function AdminSettingsPage() {
               />
             </div>
 
-            <div className="form-control">
-              <label className="label py-1">
-                <span className="label-text font-bold text-xs text-slate-700">Sender From Email</span>
-              </label>
-              <input
-                type="email"
-                className="input input-bordered input-sm"
-                placeholder="no-reply@waply.id"
-                value={settings.smtpConfig.fromEmail}
-                onChange={(e) => updateSmtp("fromEmail", e.target.value)}
-              />
+            {/* Section 1: Email Layanan & Transaksi (Support / Billing) */}
+            <div className="md:col-span-2 pt-4 border-t border-slate-100">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="badge badge-sm badge-primary font-bold">1</span>
+                <span className="text-xs font-bold text-slate-800">Email Layanan & Transaksi (Support / Billing)</span>
+                <span className="text-[11px] text-slate-400 font-normal">
+                  — Digunakan untuk invoice pembayaran Midtrans & balasan tiket customer service
+                </span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
+                <div className="form-control">
+                  <label className="label py-1">
+                    <span className="label-text font-bold text-xs text-slate-700">Support Sender Email</span>
+                  </label>
+                  <input
+                    type="email"
+                    className="input input-bordered input-sm bg-white"
+                    placeholder="support@waply.web.id"
+                    value={settings.smtpConfig.fromEmail}
+                    onChange={(e) => updateSmtp("fromEmail", e.target.value)}
+                  />
+                </div>
+
+                <div className="form-control">
+                  <label className="label py-1">
+                    <span className="label-text font-bold text-xs text-slate-700">Support Display Name</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="input input-bordered input-sm bg-white"
+                    placeholder="Waply Support"
+                    value={settings.smtpConfig.fromName}
+                    onChange={(e) => updateSmtp("fromName", e.target.value)}
+                  />
+                </div>
+              </div>
             </div>
 
-            <div className="form-control">
-              <label className="label py-1">
-                <span className="label-text font-bold text-xs text-slate-700">Sender Display Name</span>
-              </label>
-              <input
-                type="text"
-                className="input input-bordered input-sm"
-                placeholder="Waply Notification"
-                value={settings.smtpConfig.fromName}
-                onChange={(e) => updateSmtp("fromName", e.target.value)}
-              />
+            {/* Section 2: Email Otomatis Sistem & Keamanan (No-Reply / OTP) */}
+            <div className="md:col-span-2 pt-2">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="badge badge-sm badge-secondary font-bold">2</span>
+                <span className="text-xs font-bold text-slate-800">Email Otomatis Sistem & Keamanan (No-Reply / OTP)</span>
+                <span className="text-[11px] text-slate-400 font-normal">
+                  — Digunakan untuk verifikasi OTP pendaftaran akun, reset password, dan notifikasi robot otomatis
+                </span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
+                <div className="form-control">
+                  <label className="label py-1">
+                    <span className="label-text font-bold text-xs text-slate-700">No-Reply Sender Email</span>
+                  </label>
+                  <input
+                    type="email"
+                    className="input input-bordered input-sm bg-white"
+                    placeholder="noreply@waply.web.id"
+                    value={settings.smtpConfig.noreplyEmail || "noreply@waply.web.id"}
+                    onChange={(e) => updateSmtp("noreplyEmail", e.target.value)}
+                  />
+                </div>
+
+                <div className="form-control">
+                  <label className="label py-1">
+                    <span className="label-text font-bold text-xs text-slate-700">No-Reply Display Name</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="input input-bordered input-sm bg-white"
+                    placeholder="Waply Security"
+                    value={settings.smtpConfig.noreplyName || "Waply Security"}
+                    onChange={(e) => updateSmtp("noreplyName", e.target.value)}
+                  />
+                </div>
+              </div>
             </div>
+          </div>
+
+          {/* Direct Save Button for SMTP Tab */}
+          <div className="flex justify-end pt-3 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+              className={`btn btn-sm gap-2 rounded-xl font-bold shadow-md ${
+                saved ? "btn-success text-white" : "btn-primary shadow-emerald-600/25"
+              }`}
+            >
+              {saving ? (
+                <span className="loading loading-spinner loading-xs" />
+              ) : saved ? (
+                <CheckCircle2 className="w-4 h-4" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              {saved ? "Perubahan Disimpan!" : "Simpan Pengaturan SMTP & Email"}
+            </button>
           </div>
         </div>
       )}

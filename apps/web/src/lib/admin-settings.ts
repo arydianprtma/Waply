@@ -60,6 +60,8 @@ export interface AdminSystemSettings {
     password?: string;
     fromEmail: string;
     fromName: string;
+    noreplyEmail: string;
+    noreplyName: string;
     enabled: boolean;
   };
   maintenanceConfig: {
@@ -130,14 +132,16 @@ export function getDefaultAdminSettings(): AdminSystemSettings {
       enabledChannels: DEFAULT_ENABLED_PAYMENT_CHANNELS,
     },
     smtpConfig: {
-      host: process.env.SMTP_HOST || "smtp.sendgrid.net",
-      port: Number(process.env.SMTP_PORT) || 587,
-      secure: false,
-      username: process.env.SMTP_USER || "apikey",
-      password: process.env.SMTP_PASSWORD || "",
-      fromEmail: process.env.SMTP_FROM || "notifications@waply.id",
-      fromName: "Waply WhatsApp Gateway",
-      enabled: false,
+      host: process.env.SMTP_HOST || "smtp.resend.com",
+      port: Number(process.env.SMTP_PORT) || 465,
+      secure: (Number(process.env.SMTP_PORT) || 465) === 465,
+      username: process.env.SMTP_USER || "resend",
+      password: process.env.SMTP_PASS || process.env.SMTP_PASSWORD || "",
+      fromEmail: process.env.SMTP_FROM || "support@waply.web.id",
+      fromName: "Waply Support",
+      noreplyEmail: process.env.SMTP_NOREPLY_FROM || "noreply@waply.web.id",
+      noreplyName: "Waply Security",
+      enabled: true,
     },
     maintenanceConfig: {
       enabled: false,

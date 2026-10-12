@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { getAdminSettings } from "./admin-settings";
 
 interface EmailInvoiceParams {
   orderId: string;
@@ -13,13 +14,25 @@ interface EmailInvoiceParams {
 }
 
 /**
- * Creates and returns the nodemailer SMTP transporter using environment variables.
+ * Creates and returns the nodemailer SMTP transporter using admin settings or environment variables.
  */
 function getTransporter() {
-  const host = process.env.SMTP_HOST || "smtp.gmail.com";
-  const port = Number(process.env.SMTP_PORT) || 465;
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
+  let host = process.env.SMTP_HOST || "smtp.resend.com";
+  let port = Number(process.env.SMTP_PORT) || 465;
+  let user = process.env.SMTP_USER;
+  let pass = process.env.SMTP_PASS;
+
+  try {
+    const settings = getAdminSettings();
+    if (settings?.smtpConfig) {
+      if (settings.smtpConfig.host) host = settings.smtpConfig.host;
+      if (settings.smtpConfig.port) port = Number(settings.smtpConfig.port);
+      if (settings.smtpConfig.username) user = settings.smtpConfig.username;
+      if (settings.smtpConfig.password) pass = settings.smtpConfig.password;
+    }
+  } catch {
+    // Fallback to process.env
+  }
 
   if (!user || !pass) {
     return null;
@@ -37,6 +50,34 @@ function getTransporter() {
       rejectUnauthorized: false,
     },
   });
+}
+
+/**
+ * Resolves Support / Transactional sender address.
+ */
+export function getSupportSenderAddress(): string {
+  try {
+    const settings = getAdminSettings();
+    const email = settings?.smtpConfig?.fromEmail || process.env.SMTP_FROM || "support@waply.web.id";
+    const name = settings?.smtpConfig?.fromName || "Waply Support";
+    return sanitizeSenderAddress(email, "support@waply.web.id", name);
+  } catch {
+    return sanitizeSenderAddress(process.env.SMTP_FROM, "support@waply.web.id", "Waply Support");
+  }
+}
+
+/**
+ * Resolves No-Reply / OTP / Security sender address.
+ */
+export function getNoreplySenderAddress(): string {
+  try {
+    const settings = getAdminSettings();
+    const email = settings?.smtpConfig?.noreplyEmail || process.env.SMTP_NOREPLY_FROM || "noreply@waply.web.id";
+    const name = settings?.smtpConfig?.noreplyName || "Waply Security";
+    return sanitizeSenderAddress(email, "noreply@waply.web.id", name);
+  } catch {
+    return sanitizeSenderAddress(process.env.SMTP_NOREPLY_FROM, "noreply@waply.web.id", "Waply Security");
+  }
 }
 
 /**
@@ -322,7 +363,7 @@ export async function sendEmailInvoiceNotification(params: EmailInvoiceParams): 
       : `[TAGIHAN] Rincian Tagihan Pesanan Waply ${params.planName} (#${params.orderId})`;
 
     const htmlContent = generateEmailHtml(params);
-    const fromAddress = process.env.SMTP_FROM || `"Waply Gateway" <${process.env.SMTP_USER || "no-reply@waply.id"}>`;
+    const fromAddress = getSupportSenderAddress();
 
     if (!transporter) {
       console.warn(
@@ -474,11 +515,7 @@ export async function sendEmailResetPassword(params: EmailResetPasswordParams): 
     const transporter = getTransporter();
     const subject = `[PEMULIHAN AKUN] Tautan Atur Ulang Password Akun Waply`;
     const htmlContent = generateResetPasswordEmailHtml(params);
-    const fromAddress = sanitizeSenderAddress(
-      process.env.SMTP_NOREPLY_FROM,
-      "noreply@waply.web.id",
-      "Waply Security"
-    );
+    const fromAddress = getNoreplySenderAddress();
 
     if (!transporter) {
       console.warn(
@@ -621,11 +658,7 @@ export async function sendEmailVerification(params: EmailVerificationParams): Pr
     const transporter = getTransporter();
     const subject = `[VERIFIKASI AKUN] Konfirmasi Alamat Email Anda di Waply`;
     const htmlContent = generateVerificationEmailHtml(params);
-    const fromAddress = sanitizeSenderAddress(
-      process.env.SMTP_NOREPLY_FROM,
-      "noreply@waply.web.id",
-      "Waply Security"
-    );
+    const fromAddress = getNoreplySenderAddress();
 
     if (!transporter) {
       console.warn(`[Email Service] SMTP belum dikonfigurasi untuk email verifikasi: ${params.customerEmail}`);
@@ -764,11 +797,7 @@ export async function sendEmailOtp(params: EmailOtpParams): Promise<boolean> {
     const transporter = getTransporter();
     const subject = `[KODE OTP] ${params.otpCode} adalah Kode Verifikasi Akun Waply Anda`;
     const htmlContent = generateOtpEmailHtml(params);
-    const fromAddress = sanitizeSenderAddress(
-      process.env.SMTP_NOREPLY_FROM,
-      "noreply@waply.web.id",
-      "Waply Security"
-    );
+    const fromAddress = getNoreplySenderAddress();
 
     if (!transporter) {
       console.warn(`[Email Service] SMTP belum dikonfigurasi untuk pengiriman OTP: ${params.customerEmail}`);
@@ -902,11 +931,7 @@ export async function sendEmailTicketNotification(params: EmailTicketNotificatio
 </body>
 </html>`.trim();
 
-    const fromAddress = sanitizeSenderAddress(
-      process.env.SMTP_FROM,
-      "support@waply.web.id",
-      "Waply Support"
-    );
+    const fromAddress = getSupportSenderAddress();
 
     if (!transporter) return false;
 
