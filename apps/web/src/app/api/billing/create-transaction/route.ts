@@ -185,6 +185,7 @@ export async function POST(req: NextRequest) {
       itemName: isAddonOnly
         ? `Waply Addon (${addonLabel})`
         : `Waply ${plan?.name || planId} (${durationLabel})`,
+      requiresActivation,
     });
 
     // Save pending invoice to local storage

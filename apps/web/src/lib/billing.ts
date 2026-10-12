@@ -567,12 +567,22 @@ export async function createSnapToken(params: {
   customerEmail: string;
   customerPhone?: string;
   itemName?: string;
+  requiresActivation?: boolean;
 }): Promise<{ token: string; redirect_url: string }> {
   const { serverKey, snapBaseUrl } = getMidtransConfig();
   if (!serverKey) throw new Error("MIDTRANS_SERVER_KEY tidak dikonfigurasi. Silakan isi di Pengaturan Sistem Admin.");
 
   const auth = Buffer.from(`${serverKey}:`).toString("base64");
   const plan = PLANS[params.planId] || DEFAULT_PLANS[params.planId] || { name: params.planId };
+  const appBase = (process.env.NEXT_PUBLIC_APP_URL || "https://ardp.my.id").replace(/\/$/, "");
+
+  const finishCallback = params.requiresActivation
+    ? `${appBase}/login?registered=verify&email=${encodeURIComponent(params.customerEmail)}`
+    : `${appBase}/dashboard/billing?payment=finish&orderId=${params.orderId}`;
+
+  const unfinishCallback = params.requiresActivation
+    ? `${appBase}/login?pending_order=true&email=${encodeURIComponent(params.customerEmail)}`
+    : `${appBase}/dashboard/billing?payment=unfinish&orderId=${params.orderId}`;
 
   const body = {
     transaction_details: {
@@ -593,9 +603,9 @@ export async function createSnapToken(params: {
       phone: params.customerPhone || undefined,
     },
     callbacks: {
-      finish: `${(process.env.NEXT_PUBLIC_APP_URL || "https://ardp.my.id").replace(/\/$/, "")}/dashboard/billing?payment=finish&orderId=${params.orderId}`,
-      unfinish: `${(process.env.NEXT_PUBLIC_APP_URL || "https://ardp.my.id").replace(/\/$/, "")}/dashboard/billing?payment=unfinish&orderId=${params.orderId}`,
-      error: `${(process.env.NEXT_PUBLIC_APP_URL || "https://ardp.my.id").replace(/\/$/, "")}/dashboard/billing?payment=error&orderId=${params.orderId}`,
+      finish: finishCallback,
+      unfinish: unfinishCallback,
+      error: `${appBase}/dashboard/billing?payment=error&orderId=${params.orderId}`,
     },
   };
 
