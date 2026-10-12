@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/auth-user";
+import { getUploadsDirectory } from "@/lib/upload-dir";
 import fs from "fs";
 import path from "path";
 
@@ -45,10 +46,7 @@ export async function POST(req: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const uploadDir = path.resolve(process.cwd(), "public", "uploads");
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
+    const uploadDir = getUploadsDirectory();
 
     const ext = path.extname(file.name) || ".png";
     const fileName = `banner_${Date.now()}_${Math.random().toString(36).substring(2, 8)}${ext}`;

@@ -1,7 +1,8 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser, requireActiveUser } from "@/lib/auth-user";
 import { getSettings, saveSettings } from "@/lib/settings";
 import { updateUserAvatar } from "@/lib/admin-users";
+import { getUploadsDirectory } from "@/lib/upload-dir";
 import fs from "fs";
 import path from "path";
 
@@ -40,10 +41,7 @@ export async function POST(req: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const uploadDir = path.resolve(process.cwd(), "public", "uploads", "avatars");
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
+    const uploadDir = getUploadsDirectory("avatars");
 
     const cleanUserId = user.id.replace(/[^a-zA-Z0-9_-]/g, "_");
     const rawExt = path.extname(file.name) || ".png";

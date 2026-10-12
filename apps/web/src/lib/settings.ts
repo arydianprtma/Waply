@@ -2,6 +2,8 @@ import fs from "fs";
 import path from "path";
 import { updateUserAvatar } from "./admin-users";
 
+import { getDataDirectory } from "./data-dir";
+
 export interface AppSettings {
   userId: string;
   profile: {
@@ -36,7 +38,7 @@ export interface AppSettings {
   updatedAt: string;
 }
 
-const DATA_DIR = path.resolve(process.cwd(), ".waply-data");
+const DATA_DIR = getDataDirectory();
 const SETTINGS_FILE = path.join(DATA_DIR, "settings.json");
 
 function getDefaultSettings(userId: string, defaultProfile?: { name?: string; email?: string }): AppSettings {

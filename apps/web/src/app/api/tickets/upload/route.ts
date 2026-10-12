@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth-user";
 import { getTicketById } from "@/lib/support-tickets";
 import { validateAttachmentFile } from "@/lib/file-security";
+import { getUploadsDirectory } from "@/lib/upload-dir";
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
@@ -54,10 +55,7 @@ export async function POST(req: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const uploadDir = path.resolve(process.cwd(), "public", "uploads", "tickets");
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
+    const uploadDir = getUploadsDirectory("tickets");
 
     const randomHash = crypto.randomBytes(6).toString("hex");
     const safeExt = validation.extension || path.extname(file.name).toLowerCase() || ".dat";

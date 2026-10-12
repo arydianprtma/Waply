@@ -427,6 +427,16 @@ export default function SettingsPage() {
                     src={settings.profile.avatarUrl}
                     alt={settings.profile.name || "Foto Profil"}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                      const parent = e.currentTarget.parentElement;
+                      if (parent && !parent.querySelector(".avatar-fallback-initial")) {
+                        const span = document.createElement("span");
+                        span.className = "avatar-fallback-initial";
+                        span.textContent = userInitial;
+                        parent.appendChild(span);
+                      }
+                    }}
                   />
                 ) : (
                   <span>{userInitial}</span>
@@ -570,6 +580,16 @@ export default function SettingsPage() {
                         src={settings.profile.avatarUrl}
                         alt={settings.profile.name || "Avatar"}
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                          const parent = e.currentTarget.parentElement;
+                          if (parent && !parent.querySelector(".avatar-fallback-initial")) {
+                            const span = document.createElement("span");
+                            span.className = "avatar-fallback-initial";
+                            span.textContent = userInitial;
+                            parent.appendChild(span);
+                          }
+                        }}
                       />
                     ) : (
                       <span>{userInitial}</span>

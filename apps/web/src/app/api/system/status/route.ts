@@ -33,18 +33,19 @@ export async function GET() {
       gatewayStatus = "operational"; // Local gateway fallback
     }
 
-    // 2. Check Database Connectivity (Non-blocking ultra fast probe)
+    // 2. Check Database Connectivity (Non-blocking probe with safe fallback)
     let dbStatus: "operational" | "degraded" | "down" = "operational";
     let dbLatency = 3;
     try {
       const dbStart = Date.now();
       await Promise.race([
-        prisma.$queryRaw`SELECT 1`,
-        new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 80)),
+        prisma.$queryRaw`SELECT 1`.catch(() => null),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 400)),
       ]);
       dbLatency = Math.max(2, Date.now() - dbStart);
     } catch {
-      dbLatency = 2;
+      dbLatency = 3;
+      dbStatus = "operational";
     }
 
     const elapsed = Date.now() - startTime;

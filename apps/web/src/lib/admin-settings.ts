@@ -7,6 +7,8 @@ import {
   DEFAULT_ENABLED_PAYMENT_CHANNELS,
 } from "./payment-channels";
 
+import { getDataDirectory } from "./data-dir";
+
 export {
   type PaymentChannelDefinition,
   AVAILABLE_PAYMENT_CHANNELS,
@@ -73,7 +75,7 @@ export interface AdminSystemSettings {
   updatedAt: string;
 }
 
-const DATA_DIR = path.resolve(process.cwd(), ".waply-data");
+const DATA_DIR = getDataDirectory();
 const ADMIN_SETTINGS_FILE = path.join(DATA_DIR, "admin_settings.json");
 
 function ensureDataDir() {

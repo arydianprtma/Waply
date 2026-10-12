@@ -413,6 +413,13 @@ export function Navbar() {
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       e.currentTarget.style.display = "none";
+                      const parent = e.currentTarget.parentElement;
+                      if (parent && !parent.querySelector(".navbar-avatar-fallback")) {
+                        const span = document.createElement("span");
+                        span.className = "navbar-avatar-fallback";
+                        span.textContent = (currentUser?.name || "A").charAt(0).toUpperCase();
+                        parent.appendChild(span);
+                      }
                     }}
                   />
                 ) : currentUser?.name ? (
