@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Lock, Mail, User, Loader2, AlertCircle, CheckCircle, Info, Eye, EyeOff } from "lucide-react";
+import { DEFAULT_PLANS } from "@/lib/billing-types";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
@@ -14,6 +15,25 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [freePlan, setFreePlan] = useState({
+    monthlyMessages: DEFAULT_PLANS.FREE.monthlyMessages || 200,
+    maxDevices: DEFAULT_PLANS.FREE.maxDevices || 1,
+  });
+
+  useEffect(() => {
+    fetch("/api/billing/plans")
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success && json.data?.FREE) {
+          const f = json.data.FREE;
+          setFreePlan({
+            monthlyMessages: f.monthlyMessages ?? 200,
+            maxDevices: f.maxDevices ?? 1,
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const router = useRouter();
 
@@ -53,7 +73,7 @@ export default function RegisterPage() {
       <div className="text-center mb-6">
         <h1 className="text-2xl font-bold">Buat Akun Waply</h1>
         <p className="text-sm text-base-content/60 mt-1">
-          Dapatkan free trial 200 pesan WhatsApp & 1 WhatsApp Device
+          Dapatkan free trial {freePlan.monthlyMessages.toLocaleString("id-ID")} pesan WhatsApp &amp; {freePlan.maxDevices} WhatsApp Device
         </p>
       </div>
 
