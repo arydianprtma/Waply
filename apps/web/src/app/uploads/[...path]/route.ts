@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUploadsDirectory } from "@/lib/upload-dir";
+import { getUploadsDirectory, findUploadFile } from "@/lib/upload-dir";
 import fs from "fs";
 import path from "path";
 
