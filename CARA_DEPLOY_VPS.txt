@@ -1,0 +1,60 @@
+================================================================================
+⚡ CARA DEPLOY WAPLY DI VPS SUMOPOD (PRAKTIS & LENGKAP)
+================================================================================
+
+Ketika VPS SumoPod sudah aktif dan Anda sudah login via SSH di terminal:
+Contoh: ssh root@<IP_VPS_ANDA>
+
+--------------------------------------------------------------------------------
+LANGKAH 1: Masuk ke folder /opt & Clone Repository
+--------------------------------------------------------------------------------
+cd /opt
+git clone https://github.com/arydianprtma/Waply.git waply
+cd waply
+
+
+--------------------------------------------------------------------------------
+LANGKAH 2: Jalankan Setup Server (Hanya perlu 1x di awal)
+--------------------------------------------------------------------------------
+chmod +x setup-vps.sh deploy.sh
+./setup-vps.sh
+
+(Script ini otomatis memasang Swap 4GB, Docker, Docker Compose, Nginx, Certbot SSL, & Firewall UFW)
+
+
+--------------------------------------------------------------------------------
+LANGKAH 3: Isi Kredensial Environment (.env)
+--------------------------------------------------------------------------------
+cp .env.example .env
+nano .env
+
+(Sesuaikan password database, domain https://waply.web.id, Midtrans, dan Resend SMTP)
+* Untuk simpan di nano: Tekan Ctrl + O lalu Enter
+* Untuk keluar dari nano: Tekan Ctrl + X
+
+
+--------------------------------------------------------------------------------
+LANGKAH 4: Deploy Sistem Waply
+--------------------------------------------------------------------------------
+./deploy.sh
+
+(Script ini otomatis build Docker, jalankan container, & migrasi skema database Prisma)
+
+
+--------------------------------------------------------------------------------
+LANGKAH 5: Konfigurasi Domain Nginx & SSL HTTPS Gratis (Certbot)
+--------------------------------------------------------------------------------
+# Pastikan DNS domain (waply.web.id) sudah diarahkan ke IP VPS Anda!
+
+sudo cp nginx.conf.example /etc/nginx/sites-available/waply.web.id
+sudo ln -s /etc/nginx/sites-available/waply.web.id /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+sudo certbot --nginx -d waply.web.id -d ardp.my.id
+
+
+================================================================================
+CARA UPDATE APLIKASI DI KEMUDIAN HARI (JIKA ADA PERUBAHAN KODE):
+================================================================================
+cd /opt/waply
+./deploy.sh
+================================================================================

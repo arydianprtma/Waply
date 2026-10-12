@@ -1,158 +1,131 @@
-# 🚀 Panduan Lengkap Deploy Waply WhatsApp Gateway di VPS Menggunakan Docker
+# 🚀 Panduan Lengkap Deploy Waply WhatsApp Gateway di VPS SumoPod (Docker)
 
-Panduan ini menjelaskan langkah demi langkah cara men-deploy **Waply** di server VPS Ubuntu / Debian dari awal hingga live dengan domain dan SSL HTTPS.
-
----
-
-## 📋 Prasyarat Server VPS
-- **OS:** Ubuntu 22.04 LTS / Ubuntu 24.04 LTS (atau Debian 11/12)
-- **RAM:** Minimal 1 GB (Disarankan 2 GB + Swap 2 GB)
-- **Storage:** Minimal 20 GB SSD
-- **Port Terbuka:** Port 80 (HTTP), 443 (HTTPS), 22 (SSH)
+Panduan ini menjelaskan langkah demi langkah cara men-deploy **Waply** di server VPS Ubuntu (SumoPod / Tencent Cloud) dari awal hingga live dengan domain `waply.web.id` dan SSL HTTPS.
 
 ---
 
-## 🛠️ Langkah 1: Update Server, Setup Swap & Install Docker
+## 📋 Spesifikasi Rekomendasi VPS
+* **OS:** Ubuntu 22.04 LTS atau Ubuntu 24.04 LTS
+* **RAM:** Minimal 1 GB (Sangat disarankan 2 GB + Swap 4 GB otomatis via script)
+* **Storage:** Minimal 20 GB SSD
+* **Domain:** `waply.web.id` (dengan fallback dev `ardp.my.id`)
 
-Jalankan perintah berikut di terminal SSH VPS Anda:
+---
 
+## ⚡ Jalur Cepat (Automated 1-Click Setup)
+
+Ketika VPS SumoPod sudah aktif dan Anda sudah login via terminal SSH (`ssh root@<IP_VPS>`):
+
+### 1. Inisialisasi Server & Docker Otomatis
 ```bash
-# 1. Update package index
-sudo apt update && sudo apt upgrade -y
-
-# 2. Pasang Swap Memory 4 GB (Sangat penting untuk kestabilan VPS 2 GB RAM)
-sudo fallocate -l 4G /swapfile
-sudo chmod 600 /swapfile
-sudo mkswap /swapfile
-sudo swapon /swapfile
-echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
-
-# 3. Install dependencies pendukung
-sudo apt install -y curl git ufw fail2ban
-
-# 4. Install Docker Engine resmi
-curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
-
-# 5. Beri akses user non-root ke Docker (Opsional)
-sudo usermod -aG docker $USER
-
-# 6. Verifikasi instalasi Docker
-docker --version
-docker compose version
-```
-
----
-
-## 📦 Langkah 2: Clone Repository & Persiapan File Konfigurasi
-
-```bash
-# 1. Masuk ke folder home atau /opt
+# Masuk ke direktori /opt
 cd /opt
 
-# 2. Clone repository Anda
+# Clone repository Waply
 git clone https://github.com/arydianprtma/Waply.git waply
 cd waply
 
-# 3. Buat file .env dari template
-cp .env.example .env
+# Berikan izin eksekusi pada script
+chmod +x setup-vps.sh deploy.sh
 
-# 4. Edit file .env dengan kredensial produksi Anda
+# Jalankan script instalasi sistem (Swap, Docker, Nginx, Certbot, Firewall)
+./setup-vps.sh
+```
+
+---
+
+### 2. Atur Environment (.env)
+Salin template environment dan isi dengan kredensial produksi:
+```bash
+cp .env.example .env
 nano .env
 ```
+Variabel penting yang perlu diperhatikan:
+```env
+# Domain Publik Utama
+NEXT_PUBLIC_APP_URL="https://waply.web.id"
 
-Isi variabel `.env` dengan data asli (password DB lokal, Midtrans Production, JWT Secret, SMTP Email, dll). Simpan dengan menekan `Ctrl+O` lalu `Enter`, kemudian keluar dengan `Ctrl+X`.
+# Database PostgreSQL Lokal Container
+DATABASE_URL="postgresql://waply:waply_secret_password@waply-db:5432/waply?schema=public"
+DIRECT_URL="postgresql://waply:waply_secret_password@waply-db:5432/waply?schema=public"
+
+# Midtrans Production (setelah nama merchant Waply aktif)
+MIDTRANS_IS_PRODUCTION=true
+MIDTRANS_SERVER_KEY=Mid-server-YOUR_PROD_KEY
+MIDTRANS_CLIENT_KEY=Mid-client-YOUR_PROD_KEY
+
+# Resend SMTP Email (Port 465 SSL)
+SMTP_HOST=smtp.resend.com
+SMTP_PORT=465
+SMTP_USER=resend
+SMTP_PASS=re_YOUR_RESEND_API_KEY
+SMTP_FROM="Waply <noreply@waply.web.id>"
+```
+> Tekan `Ctrl + O` lalu `Enter` untuk menyimpan, kemudian `Ctrl + X` untuk keluar dari nano.
 
 ---
 
-## 🚢 Langkah 3: Build & Jalankan Container dengan Docker Compose
-
-Jalankan perintah berikut untuk mem-build dan menjalankan ketiga service (`waply-db`, `waply-gateway`, dan `waply-web`):
-
+### 3. Deploy Aplikasi dengan Script Otomatis
+Cukup jalankan satu perintah:
 ```bash
-# Build dan jalankan di background (Daemon)
-docker compose up -d --build
+./deploy.sh
+```
+Script ini akan:
+1. Memeriksa file `.env`
+2. Mem-build seluruh image Docker (`waply-db`, `waply-gateway`, `waply-web`)
+3. Menjalankan container di background
+4. Melakukan migrasi/sinkronisasi skema Prisma ke database PostgreSQL secara otomatis
+
+---
+
+### 4. Setup Domain Nginx & SSL HTTPS Gratis (Certbot)
+
+Arahkan DNS Record domain Anda di Cloudflare / registrar:
+* **Tipe A:** `@` atau `waply.web.id` -> `<IP_VPS_SUMOPOD>`
+
+Kemudian di terminal VPS:
+```bash
+# 1. Pasang konfigurasi Nginx
+sudo cp nginx.conf.example /etc/nginx/sites-available/waply.web.id
+sudo ln -s /etc/nginx/sites-available/waply.web.id /etc/nginx/sites-enabled/
+
+# 2. Uji dan restart Nginx
+sudo nginx -t
+sudo systemctl reload nginx
+
+# 3. Terbitkan Sertifikat SSL HTTPS (Let's Encrypt)
+sudo certbot --nginx -d waply.web.id -d ardp.my.id
 ```
 
-### Inisialisasi Skema Database (Wajib saat pertama kali deploy):
-```bash
-# Push schema Prisma ke database PostgreSQL lokal di container
-docker compose exec waply-web npx prisma db push --schema=/app/packages/database/prisma/schema.prisma
-
-# (Opsional) Jalankan seed data default jika ada:
-docker compose exec waply-web npm run seed --workspace=@waply/database
-```
-
-### Cek Status Container:
-```bash
-# Cek apakah ketiga container (waply-db, waply-gateway, waply-web) berstatus 'Up'
-docker compose ps
-
-# Cek log aplikasi secara real-time
-docker compose logs -f
-```
+Website dan API Waply kini sudah live di **`https://waply.web.id`** dengan HTTPS aman! 🔒
 
 ---
 
-## 🌐 Langkah 4: Setup Domain & SSL HTTPS
-
-Terdapat 2 opsi mudah untuk menghubungkan domain `ardp.my.id`:
-
-### Opsi A: Menggunakan Cloudflare Tunnel (Paling Mudah, Tanpa Port Forwarding / Nginx)
-1. Install Cloudflare Tunnel di VPS:
-   ```bash
-   curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
-   sudo dpkg -i cloudflared.deb
-   ```
-2. Hubungkan tunnel Anda:
-   ```bash
-   sudo cloudflared service install <YOUR_CLOUDFLARE_TUNNEL_TOKEN>
-   ```
-3. Arahkan public hostname di Dashboard Cloudflare:
-   - Hostname: `ardp.my.id`
-   - Service: `http://localhost:3001`
-
----
-
-### Opsi B: Menggunakan Nginx & Let's Encrypt Certbot
-1. Install Nginx & Certbot:
-   ```bash
-   sudo apt install -y nginx certbot python3-certbot-nginx
-   ```
-2. Salin konfigurasi Nginx:
-   ```bash
-   sudo cp nginx.conf.example /etc/nginx/sites-available/ardp.my.id
-   sudo ln -s /etc/nginx/sites-available/ardp.my.id /etc/nginx/sites-enabled/
-   sudo nginx -t
-   sudo systemctl reload nginx
-   ```
-3. Generate sertifikat SSL gratis:
-   ```bash
-   sudo certbot --nginx -d ardp.my.id
-   ```
-
----
-
-## 🔄 Langkah 5: Cara Update / Deploy Ulang Saat Ada Code Baru
-
-Jika Anda melakukan push commit baru ke GitHub:
-
+## 🔄 Cara Update Kode Saat Ada Fitur Baru
+Jika di kemudian hari ada commit atau pembaruan kode di GitHub:
 ```bash
 cd /opt/waply
-git pull origin main
-docker compose up -d --build
+./deploy.sh
 ```
+Script akan otomatis melakukan `git pull`, rebuild container, dan migrasi database tanpa perlu langkah manual tambahan.
 
 ---
 
-## 💾 Manajemen Persistent Volume & Backup
+## 🛠️ Perintah Berguna untuk Monitoring & Debugging
 
-Data sesi login WhatsApp tersimpan aman di Docker Named Volumes sehingga **tidak akan logout saat container di-restart atau di-update**:
-* `waply_gateway_sessions`: Menyimpan auth token WhatsApp multi-device.
-* `waply_web_data`: Menyimpan cache & data lokal.
+| Kebutuhan | Perintah |
+| :--- | :--- |
+| **Cek status semua container** | `docker compose ps` |
+| **Cek log real-time semua container** | `docker compose logs -f` |
+| **Cek log WhatsApp Gateway saja** | `docker compose logs -f waply-gateway` |
+| **Cek log Web Next.js saja** | `docker compose logs -f waply-web` |
+| **Restart semua container** | `docker compose restart` |
+| **Stop semua container** | `docker compose down` |
 
-Untuk backup folder sesi manual:
-```bash
-# Cek lokasi volume di host VPS
-docker volume inspect waply_gateway_sessions
-```
+---
+
+## 💾 Keamanan Data & Persistent Sessions WhatsApp
+Semua data penting tersimpan aman di Docker Named Volumes:
+* `waply_gateway_sessions`: Sesi login QR Baileys WhatsApp (tidak akan hilang/logout saat container di-restart atau di-update).
+* `waply_postgres_data`: Seluruh database PostgreSQL (pengguna, transaksi, broadcast, auto-reply).
+* `waply_web_data`: Media cache dan data shared.

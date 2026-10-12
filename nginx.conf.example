@@ -1,19 +1,29 @@
 # Nginx Reverse Proxy Configuration for Waply WhatsApp Gateway
-# Place in: /etc/nginx/sites-available/ardp.my.id
-# Enable with: sudo ln -s /etc/nginx/sites-available/ardp.my.id /etc/nginx/sites-enabled/
-# Test with: sudo nginx -t && sudo systemctl reload nginx
+# Simpan di: /etc/nginx/sites-available/waply.web.id
+# Aktifkan: sudo ln -s /etc/nginx/sites-available/waply.web.id /etc/nginx/sites-enabled/
+# Uji konfigurasi: sudo nginx -t && sudo systemctl reload nginx
+# Pasang SSL Certbot: sudo certbot --nginx -d waply.web.id -d ardp.my.id
 
 server {
-    server_name ardp.my.id;
+    listen 80;
+    server_name waply.web.id ardp.my.id;
 
-    client_max_body_size 25M;
+    # Ukuran upload maksimal (untuk media gambar, dokumen PDF, import CSV)
+    client_max_body_size 50M;
 
-    # 1. Frontend Web & Next.js API Routes (Port 3001)
+    # Gzip Compression untuk performa frontend
+    gzip on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types text/plain text/css text/xml application/json application/javascript application/rss+xml application/atom+xml image/svg+xml;
+
+    # 1. Aplikasi Utama Web & Next.js API Routes (Port 3001)
     location / {
         proxy_pass http://127.0.0.1:3001;
         proxy_http_version 1.1;
-        
-        # WebSocket & Header forwarding
+
+        # WebSocket & Header Forwarding
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
         proxy_set_header Host $host;
@@ -21,16 +31,18 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
 
-        # Timeout settings
-        proxy_connect_timeout 60s;
-        proxy_send_timeout 60s;
-        proxy_read_timeout 60s;
+        # Timeout settings (2 menit untuk streaming SSE / QR Code sync)
+        proxy_connect_timeout 120s;
+        proxy_send_timeout 120s;
+        proxy_read_timeout 120s;
     }
 
-    # 2. Gateway Worker API & Socket (Port 3002) - Optional if exposed directly
+    # 2. Gateway API & WebSocket Baileys (Port 3002)
     location /api/gateway/ {
         proxy_pass http://127.0.0.1:3001/api/gateway/;
         proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
