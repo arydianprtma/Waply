@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { cookies, headers } from "next/headers";
 import { registerOrSyncUser, getUserById, getUserByEmail } from "@/lib/admin-users";
+import { getSettings } from "@/lib/settings";
 import { extractClientIp } from "@/lib/ip-utils";
 
 export interface SessionUser {
@@ -80,6 +81,15 @@ export async function getSessionUser(): Promise<SessionUser> {
         ipAddress: clientIp,
       });
 
+      // Check user settings profile for latest avatarUrl
+      let userAvatar: string | null = managed.avatarUrl || dbUser?.avatarUrl || null;
+      try {
+        const uSettings = getSettings(managed.id, { name: managed.name, email: managed.email });
+        if (uSettings?.profile?.avatarUrl) {
+          userAvatar = uSettings.profile.avatarUrl;
+        }
+      } catch {}
+
       return {
         id: managed.id,
         email: managed.email,
@@ -89,7 +99,7 @@ export async function getSessionUser(): Promise<SessionUser> {
         banReason: managed.banReason,
         createdAt: new Date(managed.createdAt || Date.now()),
         updatedAt: new Date(),
-        avatarUrl: managed.avatarUrl || dbUser?.avatarUrl || null,
+        avatarUrl: userAvatar,
       };
     }
 

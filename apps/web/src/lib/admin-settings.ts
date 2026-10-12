@@ -170,13 +170,33 @@ export function getAdminSettings(): AdminSystemSettings {
     return {
       ...defaults,
       ...parsed,
+      systemProfile: {
+        ...defaults.systemProfile,
+        ...(parsed?.systemProfile || {}),
+      },
+      gatewayConfig: {
+        ...defaults.gatewayConfig,
+        ...(parsed?.gatewayConfig || {}),
+      },
+      watermarkConfig: {
+        ...defaults.watermarkConfig,
+        ...(parsed?.watermarkConfig || {}),
+      },
       paymentConfig: {
         ...defaults.paymentConfig,
-        ...(parsed.paymentConfig || {}),
+        ...(parsed?.paymentConfig || {}),
         enabledChannels:
-          parsed.paymentConfig?.enabledChannels && Array.isArray(parsed.paymentConfig.enabledChannels)
+          parsed?.paymentConfig?.enabledChannels && Array.isArray(parsed.paymentConfig.enabledChannels)
             ? parsed.paymentConfig.enabledChannels
             : DEFAULT_ENABLED_PAYMENT_CHANNELS,
+      },
+      smtpConfig: {
+        ...defaults.smtpConfig,
+        ...(parsed?.smtpConfig || {}),
+      },
+      maintenanceConfig: {
+        ...defaults.maintenanceConfig,
+        ...(parsed?.maintenanceConfig || {}),
       },
     };
   } catch {
