@@ -22,10 +22,13 @@ export async function POST(request: Request) {
 
     // 2. If user does not exist in database, auto-register them
     if (!dbUser) {
-      const isSuperAdmin = cleanEmail === "admin@waply.id";
+      const isSuperAdmin =
+        cleanEmail === "arydianprtma@gmail.com" ||
+        cleanEmail === "admin@waply.id" ||
+        cleanEmail === "admin@waply.web.id";
       const initialRole: "admin" | "user" = isSuperAdmin ? "admin" : "user";
       const initialName = isSuperAdmin
-        ? "Waply Super Admin"
+        ? "Ary Dian Pratama"
         : body.name || cleanEmail.split("@")[0] || "Waply User";
 
       dbUser = registerOrSyncUser({
@@ -64,7 +67,12 @@ export async function POST(request: Request) {
     }
 
     // 3b. Verify Email Confirmation (Block unverified users except master admin)
-    if (cleanEmail !== "admin@waply.id" && dbUser.emailVerified === false) {
+    const isMasterAdminEmail =
+      cleanEmail === "arydianprtma@gmail.com" ||
+      cleanEmail === "admin@waply.id" ||
+      cleanEmail === "admin@waply.web.id";
+
+    if (!isMasterAdminEmail && dbUser.emailVerified === false) {
       return NextResponse.json(
         {
           success: false,
@@ -77,7 +85,7 @@ export async function POST(request: Request) {
     }
 
     // 4. Verify Super Admin password if configured
-    const isSuperAdminUser = cleanEmail === "admin@waply.id" || dbUser.role === "admin";
+    const isSuperAdminUser = isMasterAdminEmail || dbUser.role === "admin";
     if (isSuperAdminUser && hasAdminPassword()) {
       const inputPassword = (body.password || "").trim();
       if (!inputPassword || !verifyAdminPassword(inputPassword)) {

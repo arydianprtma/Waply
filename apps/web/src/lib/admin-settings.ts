@@ -95,8 +95,8 @@ export function getDefaultAdminSettings(): AdminSystemSettings {
 
   return {
     systemProfile: {
-      adminName: "Super Administrator",
-      adminEmail: "admin@waply.id",
+      adminName: process.env.ADMIN_NAME || "Ary Dian Pratama",
+      adminEmail: process.env.ADMIN_EMAIL || "arydianprtma@gmail.com",
       appName: "Waply WhatsApp Gateway",
     },
     gatewayConfig: {

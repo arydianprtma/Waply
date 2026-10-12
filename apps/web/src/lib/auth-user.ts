@@ -49,7 +49,10 @@ export async function getSessionUser(): Promise<SessionUser> {
 
     if (isDemoAuth || demoEmail) {
       const email = demoEmail || "guest@waply.id";
-      const isSystemAdmin = email === "admin@waply.id";
+      const isSystemAdmin =
+        email === "arydianprtma@gmail.com" ||
+        email === "admin@waply.id" ||
+        email === "admin@waply.web.id";
       const dbUser = getUserByEmail(email) || (demoId ? getUserById(demoId) : null);
 
       if (!dbUser && !isSystemAdmin) {
