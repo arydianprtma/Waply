@@ -118,6 +118,9 @@ export default function SettingsPage() {
   const [resetConfirm, setResetConfirm] = useState(false);
   const [resetDone, setResetDone] = useState<string[] | null>(null);
   const [resetting, setResetting] = useState(false);
+  const [deleteAccountConfirm, setDeleteAccountConfirm] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deleteAccountError, setDeleteAccountError] = useState<string | null>(null);
 
   // Password Change State
   const [currentPassword, setCurrentPassword] = useState("");
@@ -338,6 +341,27 @@ export default function SettingsPage() {
       }
     } finally {
       setResetting(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeletingAccount(true);
+    setDeleteAccountError(null);
+    try {
+      const res = await fetch("/api/user/delete-account", {
+        method: "POST",
+      });
+      const json = await res.json();
+      if (json.success) {
+        const { performLogout } = await import("@/lib/auth-logout");
+        await performLogout("/login?error=account_deleted");
+      } else {
+        setDeleteAccountError(json.error || "Gagal menghapus akun.");
+        setDeletingAccount(false);
+      }
+    } catch (err: any) {
+      setDeleteAccountError(err.message || "Terjadi kesalahan saat menghapus akun.");
+      setDeletingAccount(false);
     }
   };
 
@@ -1262,6 +1286,50 @@ export default function SettingsPage() {
                 )}
               </div>
             )}
+
+            {/* Permanent Account Deletion Card */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-rose-50/70 dark:bg-rose-950/25 border border-rose-300 dark:border-rose-900/50 rounded-2xl">
+              <div>
+                <p className="font-bold text-sm text-rose-950 dark:text-rose-200">Hapus Akun Saya Permanen</p>
+                <p className="text-xs text-rose-900/80 dark:text-rose-300/80 mt-1 leading-relaxed">
+                  Menghapus akun, data profil, dan paket langganan Anda secara permanen. Anda akan otomatis dikeluarkan (logout) seketika dari dashboard dan seluruh sesi dibersihkan.
+                </p>
+                {deleteAccountError && (
+                  <p className="text-xs text-rose-700 font-bold mt-2">{deleteAccountError}</p>
+                )}
+              </div>
+
+              {deleteAccountConfirm ? (
+                <div className="flex gap-2 shrink-0 self-start sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={() => setDeleteAccountConfirm(false)}
+                    className="btn btn-ghost btn-sm rounded-xl text-xs font-semibold"
+                    disabled={deletingAccount}
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeleteAccount}
+                    disabled={deletingAccount}
+                    className="btn btn-error btn-sm rounded-xl gap-2 text-white font-bold text-xs"
+                  >
+                    {deletingAccount ? <span className="loading loading-spinner loading-xs" /> : <Trash2 className="w-3.5 h-3.5" />}
+                    Ya, Hapus Akun Saya
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setDeleteAccountConfirm(true)}
+                  className="btn btn-error btn-sm rounded-xl text-white font-bold shrink-0 self-start sm:self-auto text-xs gap-1.5"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Hapus Akun Saya
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

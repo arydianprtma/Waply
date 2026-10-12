@@ -57,7 +57,17 @@ export async function getSessionUser(): Promise<SessionUser> {
       const dbUser = getUserByEmail(email) || (demoId ? getUserById(demoId) : null);
 
       if (!dbUser && !isSystemAdmin) {
-        throw new Error("401 Unauthorized: Akun ini telah dihapus oleh Administrator.");
+        try {
+          cookieStore.delete("waply_demo_auth");
+          cookieStore.delete("waply_user_email");
+          cookieStore.delete("waply_user_name");
+          cookieStore.delete("waply_user_role");
+          cookieStore.delete("waply_user_id");
+        } catch {}
+        const error = new Error("401 Unauthorized: Akun ini telah dihapus oleh Administrator.");
+        (error as any).status = 401;
+        (error as any).code = "ACCOUNT_DELETED";
+        throw error;
       }
 
       const role: "admin" | "user" =
@@ -151,7 +161,14 @@ export async function getSessionUser(): Promise<SessionUser> {
     } catch (sbErr) {
       // Ignore and fallback immediately
     }
-  } catch (err) {
+  } catch (err: any) {
+    if (
+      err?.message?.includes("401 Unauthorized") ||
+      err?.code === "ACCOUNT_DELETED" ||
+      err?.status === 401
+    ) {
+      throw err;
+    }
     // Fallback directly without blocking timeout
   }
 

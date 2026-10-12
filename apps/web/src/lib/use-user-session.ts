@@ -44,6 +44,13 @@ export function fetchUserSession(forceRefresh = false): Promise<CachedUser | nul
     })
     .then((d) => {
       if (d.success && d.user) {
+        if (
+          d.user.id === "usr_default_guest" &&
+          typeof document !== "undefined" &&
+          (document.cookie.includes("waply_demo_auth") || document.cookie.includes("waply_user_email"))
+        ) {
+          throw new Error("account_deleted");
+        }
         cachedUser = d.user;
         listeners.forEach((cb) => cb(d.user));
         return d.user;
