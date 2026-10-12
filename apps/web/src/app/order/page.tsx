@@ -465,44 +465,14 @@ function OrderContent() {
 
     setLoading(true);
 
-    // Auto-register session for guest/new user
-    if (!isLoggedIn) {
-      try {
-        const maxAge = 60 * 60 * 24 * 7;
-        document.cookie = `waply_demo_auth=true; path=/; max-age=${maxAge}; SameSite=Lax`;
-        document.cookie = `waply_user_email=${encodeURIComponent(cleanEmail)}; path=/; max-age=${maxAge}; SameSite=Lax`;
-        document.cookie = `waply_user_name=${encodeURIComponent(cleanName)}; path=/; max-age=${maxAge}; SameSite=Lax`;
-        document.cookie = `waply_user_role=user; path=/; max-age=${maxAge}; SameSite=Lax`;
-
-        if (isSupabaseConfigured() && customerPassword) {
-          const supabase = createClient();
-          const origin =
-            typeof window !== "undefined" &&
-            !window.location.hostname.includes("0.0.0.0") &&
-            !window.location.hostname.includes("localhost")
-              ? window.location.origin
-              : (process.env.NEXT_PUBLIC_APP_URL || "https://ardp.my.id");
-          const redirectUrl = `${origin.replace(/\/$/, "")}/auth/callback?next=/dashboard/billing`;
-
-          supabase.auth.signUp({
-            email: cleanEmail,
-            password: customerPassword,
-            options: {
-              data: {
-                name: cleanName,
-                phone: cleanPhone || undefined,
-              },
-              emailRedirectTo: redirectUrl,
-            },
-          }).catch(() => {});
-        }
-      } catch {}
-    }
-
     // Free plan direct activation (No payment required)
     if (!isAddonMode && currentPlan.price === 0) {
       setLoading(false);
-      router.push("/dashboard?welcome=free");
+      if (!isLoggedIn) {
+        router.push(`/register?plan=free&email=${encodeURIComponent(cleanEmail)}`);
+      } else {
+        router.push("/dashboard?welcome=free");
+      }
       return;
     }
 
@@ -519,6 +489,7 @@ function OrderContent() {
           customerName: cleanName,
           customerEmail: cleanEmail,
           customerPhone: cleanPhone,
+          customerPassword: customerPassword || undefined,
           couponCode: appliedVoucher?.code || undefined,
         }),
       });
@@ -557,10 +528,18 @@ function OrderContent() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ orderId }),
             });
-            router.push("/dashboard/billing?payment=finish");
+            if (!isLoggedIn) {
+              router.push(`/login?registered=verify&email=${encodeURIComponent(cleanEmail)}`);
+            } else {
+              router.push("/dashboard/billing?payment=finish");
+            }
           },
           onPending: () => {
-            router.push("/dashboard/billing?payment=pending");
+            if (!isLoggedIn) {
+              router.push(`/login?pending_order=true&email=${encodeURIComponent(cleanEmail)}`);
+            } else {
+              router.push("/dashboard/billing?payment=pending");
+            }
           },
           onError: () => {
             setFormError("Pembayaran gagal atau dibatalkan. Silakan coba lagi.");
@@ -951,8 +930,8 @@ function OrderContent() {
                             className="input input-bordered input-sm w-full rounded-xl text-xs font-mono"
                           />
                         </div>
-                        <p className="text-[11px] text-slate-400 leading-relaxed">
-                          Setelah pembayaran, Anda dapat langsung login ke Dashboard menggunakan email & password di atas.
+                        <p className="text-[11px] text-slate-600 leading-relaxed">
+                          Setelah pembayaran berhasil, kami akan mengirimkan tautan aktivasi ke email Anda. Silakan aktivasi akun terlebih dahulu agar dapat login ke Dashboard.
                         </p>
                       </div>
                     </div>
@@ -1951,6 +1930,7 @@ function OrderContent() {
           effectiveDurationMonths={effectiveDurationMonths}
           paymentSuccess={paymentSuccess}
           setPaymentSuccess={setPaymentSuccess}
+          isLoggedIn={isLoggedIn}
         />
       )}
     </div>

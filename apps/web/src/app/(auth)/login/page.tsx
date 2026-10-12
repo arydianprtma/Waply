@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
@@ -27,6 +27,15 @@ function LoginForm() {
   const redirectTo = searchParams.get("redirectTo") || "/dashboard";
   const authError = searchParams.get("error");
   const isVerified = searchParams.get("verified") === "true";
+  const registeredVerify = searchParams.get("registered") === "verify";
+  const pendingOrder = searchParams.get("pending_order") === "true";
+  const emailParam = searchParams.get("email");
+
+  useEffect(() => {
+    if (emailParam && !email) {
+      setEmail(emailParam);
+    }
+  }, [emailParam, email]);
 
   const performLoginSync = async (userEmail: string, userName?: string, userId?: string, pass?: string) => {
     try {
@@ -134,6 +143,30 @@ function LoginForm() {
           Akses dashboard dan kelola gateway WhatsApp Anda
         </p>
       </div>
+
+      {registeredVerify && (
+        <div className="alert alert-info text-xs py-3 mb-4 font-medium flex items-start gap-2.5 bg-sky-50 border border-sky-200 text-sky-950 rounded-xl shadow-xs">
+          <CheckCircle className="w-4 h-4 text-sky-600 shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <p className="font-bold text-sky-900">Pendaftaran & Pembayaran Berhasil</p>
+            <p className="text-slate-700 leading-relaxed text-[11px]">
+              Tautan aktivasi akun telah dikirim ke {emailParam ? <strong className="text-slate-900">{emailParam}</strong> : "email Anda"}. Silakan periksa inbox atau folder spam email Anda dan klik tautan aktivasi akun sebelum login.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {pendingOrder && (
+        <div className="alert alert-warning text-xs py-3 mb-4 font-medium flex items-start gap-2.5 bg-amber-50 border border-amber-200 text-amber-950 rounded-xl shadow-xs">
+          <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <p className="font-bold text-amber-900">Menunggu Pembayaran & Aktivasi</p>
+            <p className="text-slate-700 leading-relaxed text-[11px]">
+              Pesanan Anda sedang diproses. Silakan selesaikan pembayaran dan verifikasi tautan aktivasi yang dikirimkan ke email Anda untuk mengaktifkan akun.
+            </p>
+          </div>
+        </div>
+      )}
 
       {isVerified && (
         <div className="alert alert-success text-xs py-2.5 mb-4 text-white font-medium flex items-center gap-2">

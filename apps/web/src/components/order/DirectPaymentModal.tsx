@@ -52,6 +52,7 @@ interface DirectPaymentModalProps {
   effectiveDurationMonths: number;
   paymentSuccess: boolean;
   setPaymentSuccess: (success: boolean) => void;
+  isLoggedIn?: boolean;
 }
 
 function formatIDR(n: number) {
@@ -78,6 +79,7 @@ export default function DirectPaymentModal({
   effectiveDurationMonths,
   paymentSuccess,
   setPaymentSuccess,
+  isLoggedIn = true,
 }: DirectPaymentModalProps) {
   const [copiedVa, setCopiedVa] = useState(false);
   const [copiedAmount, setCopiedAmount] = useState(false);
@@ -317,11 +319,26 @@ export default function DirectPaymentModal({
                   </div>
 
                   {customerEmail && (
-                    <div className="pt-2 border-t border-slate-200/80 flex items-center gap-2 text-[11px] text-emerald-800 bg-emerald-50/70 p-2.5 rounded-xl border border-emerald-200/60 font-medium">
-                      <Mail className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      <span>
-                        Bukti bayar dan rincian invoice dikirimkan ke: <strong>{customerEmail}</strong>
-                      </span>
+                    <div className={`pt-2 border-t flex items-start gap-2 text-[11px] p-2.5 rounded-xl border font-medium ${
+                      !isLoggedIn
+                        ? "border-amber-200 bg-amber-50 text-amber-950"
+                        : "border-emerald-200/60 bg-emerald-50/70 text-emerald-800"
+                    }`}>
+                      <Mail className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${!isLoggedIn ? "text-amber-700" : "text-emerald-600"}`} />
+                      <div>
+                        {!isLoggedIn ? (
+                          <>
+                            <p className="font-bold text-amber-900">Aktivasi Akun Diperlukan</p>
+                            <p className="text-amber-800 text-[11px] mt-0.5 leading-relaxed">
+                              Tautan aktivasi akun dan bukti pembayaran telah dikirim ke <strong>{customerEmail}</strong>. Silakan periksa inbox atau folder spam email Anda dan klik tautan konfirmasi sebelum login.
+                            </p>
+                          </>
+                        ) : (
+                          <span>
+                            Bukti bayar dan rincian invoice dikirimkan ke: <strong>{customerEmail}</strong>
+                          </span>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -349,18 +366,38 @@ export default function DirectPaymentModal({
 
                 {/* Actions */}
                 <div className="pt-2 flex flex-col sm:flex-row gap-3 justify-center">
-                  <Link
-                    href="/dashboard"
-                    className="btn btn-primary rounded-xl text-white font-extrabold shadow-md shadow-primary/20 gap-2 text-sm px-8"
-                  >
-                    Buka Dashboard Gateway <ArrowRight className="w-4 h-4" />
-                  </Link>
-                  <Link
-                    href="/dashboard/billing"
-                    className="btn btn-ghost btn-sm text-xs font-bold text-slate-500 hover:text-slate-800 self-center"
-                  >
-                    Lihat Invoice di Dashboard
-                  </Link>
+                  {!isLoggedIn ? (
+                    <>
+                      <Link
+                        href={`/login?registered=verify&email=${encodeURIComponent(customerEmail)}`}
+                        className="btn btn-primary rounded-xl text-white font-extrabold shadow-md shadow-primary/20 gap-2 text-sm px-8"
+                      >
+                        Menuju Halaman Login <ArrowRight className="w-4 h-4" />
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={onClose}
+                        className="btn btn-ghost btn-sm text-xs font-bold text-slate-600 hover:text-slate-900 self-center"
+                      >
+                        Tutup Jendela
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        href="/dashboard"
+                        className="btn btn-primary rounded-xl text-white font-extrabold shadow-md shadow-primary/20 gap-2 text-sm px-8"
+                      >
+                        Buka Dashboard Gateway <ArrowRight className="w-4 h-4" />
+                      </Link>
+                      <Link
+                        href="/dashboard/billing"
+                        className="btn btn-ghost btn-sm text-xs font-bold text-slate-500 hover:text-slate-800 self-center"
+                      >
+                        Lihat Invoice di Dashboard
+                      </Link>
+                    </>
+                  )}
                 </div>
               </div>
             ) : (

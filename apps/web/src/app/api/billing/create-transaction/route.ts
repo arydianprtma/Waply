@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/auth-user";
-import { registerOrSyncUser } from "@/lib/admin-users";
+import crypto from "crypto";
+import { registerOrSyncUser, getUserByEmail } from "@/lib/admin-users";
 import {
   PLANS,
   DEFAULT_PLANS,
@@ -13,6 +14,7 @@ import {
 } from "@/lib/billing";
 import { validateVoucher, recordVoucherUsage } from "@/lib/vouchers";
 import { getAllAddons } from "@/lib/addons";
+import { sendEmailVerification } from "@/lib/email-service";
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,6 +27,7 @@ export async function POST(req: NextRequest) {
     const customerName = (body.customerName || authUser.name || "Waply User").trim();
     const customerEmail = (body.customerEmail || authUser.email || "user@waply.id").trim().toLowerCase();
     const customerPhone = (body.customerPhone || "").trim();
+    const customerPassword = (body.customerPassword || "").trim();
     const couponCode = (body.couponCode || "").trim().toUpperCase();
 
     // Addons calculation
@@ -54,13 +57,74 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Sync / register user in DB if new
+    // Guest registration & email activation check
+    const isGuest = !authUser || authUser.id === "usr_default_guest" || authUser.email === "user@waply.id";
+    const existingUser = getUserByEmail(customerEmail);
+
+    let requiresActivation = false;
+    let verifyToken: string | null = null;
+
+    if (isGuest && (!existingUser || existingUser.emailVerified === false)) {
+      requiresActivation = true;
+      verifyToken = existingUser?.emailVerifyToken || crypto.randomBytes(32).toString("hex");
+    }
+
+    // Sync / register user in DB
     const syncedUser = registerOrSyncUser({
-      id: authUser.id && authUser.id !== "usr_default_guest" ? authUser.id : `usr_${customerEmail.replace(/[^a-zA-Z0-9]/g, "_")}`,
+      id: authUser.id && authUser.id !== "usr_default_guest" ? authUser.id : (existingUser?.id || `usr_${customerEmail.replace(/[^a-zA-Z0-9]/g, "_")}`),
       email: customerEmail,
       name: customerName,
       role: customerEmail === "admin@waply.id" ? "admin" : "user",
+      emailVerified: isGuest ? (existingUser?.emailVerified ?? false) : true,
+      emailVerifyToken: verifyToken || existingUser?.emailVerifyToken || null,
     });
+
+    if (requiresActivation && verifyToken) {
+      // Sync to Supabase auth if configured and password provided
+      const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      if (sbUrl && sbKey && customerPassword) {
+        try {
+          const { createClient } = await import("@supabase/supabase-js");
+          const supabaseAdmin = createClient(sbUrl, sbKey, {
+            auth: { autoRefreshToken: false, persistSession: false },
+          });
+          const { data: userList } = await supabaseAdmin.auth.admin.listUsers();
+          const sbMatch = userList?.users?.find((u) => u.email?.toLowerCase() === customerEmail.toLowerCase());
+          if (!sbMatch) {
+            await supabaseAdmin.auth.admin.createUser({
+              email: customerEmail,
+              password: customerPassword,
+              email_confirm: false,
+              user_metadata: { name: customerName, phone: customerPhone },
+            });
+          } else {
+            await supabaseAdmin.auth.admin.updateUserById(sbMatch.id, {
+              password: customerPassword,
+              email_confirm: false,
+              user_metadata: { name: customerName, phone: customerPhone },
+            });
+          }
+        } catch (sbErr: any) {
+          console.warn("[Checkout] Supabase user registration note:", sbErr.message);
+        }
+      }
+
+      // Send verification email
+      let origin = process.env.NEXT_PUBLIC_APP_URL || "https://ardp.my.id";
+      const hostHeader = req.headers.get("x-forwarded-host") || req.headers.get("host");
+      const protoHeader = req.headers.get("x-forwarded-proto") || "https";
+      if (hostHeader) {
+        origin = `${protoHeader}://${hostHeader}`;
+      }
+      const verificationUrl = `${origin.replace(/\/$/, "")}/auth/callback?verify_token=${verifyToken}&email=${encodeURIComponent(customerEmail)}`;
+
+      sendEmailVerification({
+        customerEmail,
+        customerName,
+        verificationUrl,
+      }).catch((err) => console.error("[Checkout] Error sending verification email:", err.message));
+    }
 
     // Base price & duration calculation
     let baseAmount = 0;
@@ -156,6 +220,7 @@ export async function POST(req: NextRequest) {
         durationMonths,
         snapJsUrl,
         clientKey,
+        requiresActivation,
       },
     });
   } catch (error: any) {
