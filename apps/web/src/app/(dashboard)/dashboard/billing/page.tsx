@@ -134,7 +134,7 @@ function formatIDR(amount: number) {
 }
 
 function formatDate(iso: string | null) {
-  if (!iso) return "—";
+  if (!iso) return "-";
   return new Date(iso).toLocaleDateString("id-ID", {
     day: "2-digit",
     month: "long",
@@ -365,14 +365,14 @@ function BillingContent() {
   }
 
   return (
-    <div className="space-y-7 max-w-7xl mx-auto">
+    <div className="space-y-6 sm:space-y-7 w-full max-w-7xl mx-auto min-w-0">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-          <CreditCard className="w-6 h-6 text-primary" />
-          Subscription & Billing
+      <div className="min-w-0">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2 text-slate-900 dark:text-slate-100">
+          <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-primary shrink-0" />
+          <span className="truncate">Subscription &amp; Billing</span>
         </h1>
-        <p className="text-sm text-base-content/60 mt-1">
+        <p className="text-xs sm:text-sm text-base-content/60 mt-1">
           Kelola paket langganan dan pantau riwayat pembayaran Anda.
         </p>
       </div>
@@ -393,30 +393,33 @@ function BillingContent() {
         </div>
       )}
 
-      {/* Tabs */}
-      <div className="flex gap-1 p-1 bg-base-200/60 rounded-2xl w-fit">
-        {[
-          { key: "subscription", label: "Paket & Upgrade", icon: Sparkles },
-          { key: "addons", label: "Addon & Top-Up", icon: PlusCircle, badge: addonsCatalog.length > 0 ? `${addonsCatalog.length}` : undefined },
-          { key: "invoices", label: "Riwayat Invoice", icon: Receipt },
-        ].map((t) => {
-          const Icon = t.icon;
-          return (
-            <button
-              key={t.key}
-              onClick={() => setActiveTab(t.key as any)}
-              className={`btn btn-sm gap-2 rounded-xl transition-all ${
-                activeTab === t.key ? "btn-primary shadow-md shadow-primary/20" : "btn-ghost"
-              }`}
-            >
-              <Icon className="w-3.5 h-3.5" />
-              {t.label}
-              {t.badge && (
-                <span className="badge badge-xs badge-info font-mono">{t.badge}</span>
-              )}
-            </button>
-          );
-        })}
+      {/* Tabs (Responsive Horizontal Scroll on Mobile) */}
+      <div className="w-full overflow-x-auto no-scrollbar py-0.5">
+        <div className="flex gap-1.5 p-1 bg-base-200/70 border border-base-300/60 rounded-2xl w-max sm:w-fit min-w-0">
+          {[
+            { key: "subscription", label: "Paket & Upgrade", icon: Sparkles },
+            { key: "addons", label: "Addon & Top-Up", icon: PlusCircle, badge: addonsCatalog.length > 0 ? `${addonsCatalog.length}` : undefined },
+            { key: "invoices", label: "Riwayat Invoice", icon: Receipt },
+          ].map((t) => {
+            const Icon = t.icon;
+            const isActive = activeTab === t.key;
+            return (
+              <button
+                key={t.key}
+                onClick={() => setActiveTab(t.key as any)}
+                className={`btn btn-sm text-xs sm:text-sm font-semibold gap-1.5 sm:gap-2 px-3 sm:px-4 rounded-xl transition-all whitespace-nowrap min-h-[40px] shrink-0 ${
+                  isActive ? "btn-primary shadow-sm text-white" : "btn-ghost text-base-content/70 hover:text-base-content"
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5 shrink-0" />
+                <span>{t.label}</span>
+                {t.badge && (
+                  <span className="badge badge-xs badge-info font-mono shrink-0">{t.badge}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* ── Tab: Subscription ─────────────────────────────────────────── */}
@@ -454,23 +457,23 @@ function BillingContent() {
             <div className="h-36 bg-base-200 rounded-2xl animate-pulse" />
           ) : (
             <div
-              className={`card bg-base-100 border-2 shadow-sm p-6 md:p-8 rounded-2xl ${
+              className={`card bg-base-100 border-2 shadow-xs p-4 sm:p-6 md:p-8 rounded-2xl w-full min-w-0 ${
                 (PLAN_COLORS[currentPlanId] || DEFAULT_COLOR).border
               }`}
             >
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
-                <div className="flex items-start gap-4">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-5 min-w-0">
+                <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
                   <div
-                    className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                    className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0 ${
                       (PLAN_COLORS[currentPlanId] || DEFAULT_COLOR).badge
                     }`}
                   >
-                    <Shield className="w-6 h-6" />
+                    <Shield className="w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1">
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold shrink-0 ${
                           (PLAN_COLORS[currentPlanId] || DEFAULT_COLOR).badge
                         }`}
                       >
@@ -478,16 +481,16 @@ function BillingContent() {
                       </span>
                       <StatusBadge status={subStatus} />
                     </div>
-                    <div className="text-3xl font-extrabold mt-1">
+                    <div className="text-2xl sm:text-3xl font-extrabold mt-0.5 sm:mt-1 truncate">
                       {activePlan?.price === 0
                         ? "Gratis"
                         : formatIDR(activePlan?.price || 0)}
-                      <span className="text-sm font-normal text-base-content/50 ml-1">
+                      <span className="text-xs sm:text-sm font-normal text-base-content/50 ml-1">
                         / {activePlan?.period === "day" ? "hari" : activePlan?.period === "week" ? "minggu" : activePlan?.period === "year" ? "tahun" : "bulan"}
                       </span>
                     </div>
                     {subStatus === "ACTIVE" && billingData?.subscription.endDate && (
-                      <p className="text-xs text-base-content/50 mt-1">
+                      <p className="text-xs text-base-content/60 mt-1">
                         Aktif hingga {formatDate(billingData.subscription.endDate)} •{" "}
                         <span className={days <= 7 ? "text-warning font-semibold" : ""}>
                           {days} hari lagi
@@ -497,31 +500,31 @@ function BillingContent() {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-4 text-sm text-center">
-                  <div className="bg-base-200/60 rounded-xl px-4 py-2 text-left">
-                    <p className="font-bold text-lg text-center">
+                <div className="grid grid-cols-2 gap-2 sm:gap-4 w-full md:w-auto text-center shrink-0">
+                  <div className="bg-base-200/60 rounded-xl p-2.5 sm:px-4 sm:py-2 text-center">
+                    <p className="font-bold text-base sm:text-lg">
                       {(activePlan?.maxDevices || 1) + userAddonTotals.extraDevices}
                     </p>
-                    <p className="text-xs text-base-content/50 text-center">Total Device Slot</p>
+                    <p className="text-[11px] sm:text-xs text-base-content/50">Total Device Slot</p>
                     {userAddonTotals.extraDevices > 0 && (
-                      <p className="text-[10px] text-emerald-600 font-semibold text-center mt-0.5">
-                        (+{userAddonTotals.extraDevices} Addon aktif)
+                      <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">
+                        (+{userAddonTotals.extraDevices} Addon)
                       </p>
                     )}
                   </div>
-                  <div className="bg-base-200/60 rounded-xl px-4 py-2 text-left">
-                    <p className={`font-bold text-lg text-center ${activePlan?.monthlyMessages === -1 ? "text-emerald-600" : ""}`}>
+                  <div className="bg-base-200/60 rounded-xl p-2.5 sm:px-4 sm:py-2 text-center">
+                    <p className={`font-bold text-base sm:text-lg ${activePlan?.monthlyMessages === -1 ? "text-emerald-600" : ""}`}>
                       {activePlan?.monthlyMessages === -1
                         ? "Unlimited"
                         : ((activePlan?.monthlyMessages || 100) + userAddonTotals.extraMessages).toLocaleString("id-ID")}
                     </p>
-                    <p className="text-xs text-base-content/50 text-center">Total Kuota Pesan</p>
+                    <p className="text-[11px] sm:text-xs text-base-content/50">Total Kuota Pesan</p>
                     {activePlan?.monthlyMessages === -1 ? (
-                      <p className="text-[10px] text-emerald-600 font-semibold text-center mt-0.5">
-                        (Tanpa Batas Pesan)
+                      <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">
+                        (Tanpa Batas)
                       </p>
                     ) : userAddonTotals.extraMessages > 0 ? (
-                      <p className="text-[10px] text-indigo-600 font-semibold text-center mt-0.5">
+                      <p className="text-[10px] text-indigo-600 font-semibold mt-0.5">
                         (+{userAddonTotals.extraMessages.toLocaleString("id-ID")} Addon)
                       </p>
                     ) : null}
@@ -578,26 +581,30 @@ function BillingContent() {
 
           {/* Metered Usage & Quota Monitor (Transparency) */}
           {billingData?.meteredUsage && (
-            <div className="card bg-base-100 border border-base-200 shadow-sm p-6 rounded-2xl">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-                    <BarChart3 className="w-5 h-5" />
+            <div className="card bg-base-100 border border-base-200 shadow-xs p-4 sm:p-6 rounded-2xl w-full min-w-0">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-5 min-w-0">
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                    <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
-                  <div>
-                    <h3 className="font-bold text-sm text-base-content">Transparansi Penggunaan Kuota (Metered Usage)</h3>
-                    <p className="text-xs text-base-content/50">Pantau konsumsi pesan dan perangkat aktif secara real-time</p>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-bold text-xs sm:text-sm text-base-content truncate">
+                      Transparansi Penggunaan Kuota (Metered Usage)
+                    </h3>
+                    <p className="text-[11px] sm:text-xs text-base-content/50 truncate">
+                      Pantau konsumsi pesan dan perangkat aktif secara real-time
+                    </p>
                   </div>
                 </div>
                 <button
                   onClick={() => setActiveTab("addons")}
-                  className="btn btn-xs btn-outline btn-primary rounded-lg gap-1.5 self-start sm:self-center"
+                  className="btn btn-xs btn-outline btn-primary rounded-lg gap-1.5 self-start sm:self-center shrink-0"
                 >
                   <PlusCircle className="w-3.5 h-3.5" /> Top-Up Kuota / Addon
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 w-full min-w-0">
                 {/* Messages Meter */}
                 <div className="bg-base-200/40 border border-base-200 rounded-xl p-4 space-y-2.5">
                   <div className="flex items-center justify-between text-xs">
@@ -677,15 +684,16 @@ function BillingContent() {
           )}
 
           {/* Category Tabs & Plan Comparison Grid */}
-          <div id="plan-selection-grid" className="space-y-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div>
-                <h3 className="font-bold text-base text-base-content">Pilih Paket Langganan</h3>
+          <div id="plan-selection-grid" className="space-y-4 w-full min-w-0">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 w-full min-w-0">
+              <div className="min-w-0">
+                <h3 className="font-bold text-sm sm:text-base text-base-content">Pilih Paket Langganan</h3>
                 <p className="text-xs text-base-content/60">Pilih siklus tagihan harian, bulanan, atau tahunan sesuai kebutuhan.</p>
               </div>
 
               {/* Period Tabs with Liquid Glass 3D Fluid Morph Animation */}
-              <div className="relative inline-flex max-w-full overflow-x-auto p-1.5 rounded-2xl bg-base-200/80 border border-slate-300/50 dark:border-white/10 shadow-[inset_0_2px_4px_rgba(0,0,0,0.06),0_8px_20px_-4px_rgba(0,0,0,0.04)] backdrop-blur-md">
+              <div className="w-full sm:w-auto overflow-x-auto no-scrollbar py-0.5">
+                <div className="relative inline-flex max-w-full overflow-x-auto no-scrollbar p-1.5 rounded-2xl bg-base-200/80 border border-slate-300/50 dark:border-white/10 shadow-[inset_0_2px_4px_rgba(0,0,0,0.06),0_8px_20px_-4px_rgba(0,0,0,0.04)] backdrop-blur-md">
                 {/* Midnight Obsidian Liquid Glass Fluid Pill */}
                 <div
                   className="absolute top-1.5 bottom-1.5 rounded-xl bg-gradient-to-b from-slate-800 via-slate-900 to-slate-950 shadow-[inset_0_1.5px_1px_rgba(255,255,255,0.4),inset_0_-1.5px_2px_rgba(0,0,0,0.5),0_8px_20px_-3px_rgba(15,23,42,0.5)] border-t border-white/25 pointer-events-none transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] overflow-hidden"
@@ -731,6 +739,7 @@ function BillingContent() {
                     </button>
                   );
                 })}
+                </div>
               </div>
             </div>
 
@@ -1116,7 +1125,7 @@ function BillingContent() {
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm font-bold text-slate-900 truncate">
-                        Plan {inv.planId} — {formatIDR(inv.amount)}
+                        Plan {inv.planId}: {formatIDR(inv.amount)}
                       </p>
                       <p className="text-xs text-slate-500 font-mono mt-0.5 truncate">
                         {inv.orderId}
@@ -1524,7 +1533,7 @@ function BillingContent() {
                   <tbody className="divide-y divide-slate-100">
                     <tr>
                       <td className="p-3.5 font-semibold text-slate-900">
-                        Paket Langganan Waply — Plan {viewingInvoice.planId}
+                        Paket Langganan Waply - Plan {viewingInvoice.planId}
                         <p className="text-[11px] text-slate-400 font-normal mt-0.5">
                           Akses WhatsApp Multi-Device Gateway, REST API, Spintax & Broadcast
                         </p>

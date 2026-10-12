@@ -26,9 +26,57 @@ export async function POST(req: NextRequest) {
 
     const cleanEmail = validation.data.email;
 
-    // Find user in database / managed registry
-    const dbUser = getUserByEmail(cleanEmail);
-    const userName = dbUser?.name || cleanEmail.split("@")[0] || "Pengguna Waply";
+    // 1. Find user in database / managed registry
+    let dbUser = getUserByEmail(cleanEmail);
+
+    // 2. Fallback check directly in Prisma database if not in JSON registry
+    if (!dbUser) {
+      try {
+        const { prisma } = await import("@waply/database");
+        const pUser = await prisma.user.findUnique({
+          where: { email: cleanEmail },
+        });
+        if (pUser) {
+          dbUser = {
+            id: pUser.id,
+            email: pUser.email,
+            name: pUser.name || cleanEmail.split("@")[0],
+            role: (pUser.role as any) || "user",
+            status: "ACTIVE",
+            planId: "FREE",
+            planStatus: "FREE",
+            messagesUsed: 0,
+            devicesCount: 0,
+            createdAt: pUser.createdAt.toISOString(),
+          };
+        }
+      } catch {
+        // Safe fallback
+      }
+    }
+
+    // 3. User verification: Reject if email is not registered in the system
+    if (!dbUser) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Alamat email ini tidak terdaftar di sistem kami. Silakan periksa kembali atau daftar akun baru.",
+        },
+        { status: 404 }
+      );
+    }
+
+    if (dbUser.status === "BANNED" || dbUser.status === "SUSPENDED") {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Akun Anda sedang dinonaktifkan atau ditangguhkan. Silakan hubungi Administrator.",
+        },
+        { status: 403 }
+      );
+    }
+
+    const userName = dbUser.name || cleanEmail.split("@")[0] || "Pengguna Waply";
 
     // Generate secure reset token
     const { token } = createPasswordResetToken(cleanEmail);
