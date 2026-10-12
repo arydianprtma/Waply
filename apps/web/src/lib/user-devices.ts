@@ -2,8 +2,9 @@ import fs from "fs";
 import path from "path";
 import { getSubscription, getAllPlans } from "./billing";
 import { DEFAULT_PLANS } from "./billing-types";
+import { getDataDirectory } from "./data-dir";
 
-const DATA_DIR = path.resolve(process.cwd(), ".waply-data");
+const DATA_DIR = getDataDirectory();
 const USER_DEVICES_FILE = path.join(DATA_DIR, "user_devices.json");
 
 export interface UserDeviceRecord {

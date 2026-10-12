@@ -1,7 +1,8 @@
 import fs from "fs";
 import path from "path";
+import { getDataDirectory } from "./data-dir";
 
-const DATA_DIR = path.resolve(process.cwd(), ".waply-data");
+const DATA_DIR = getDataDirectory();
 const ROTATION_STATE_FILE = path.join(DATA_DIR, "rotation_state.json");
 const GATEWAY_URL = process.env.GATEWAY_INTERNAL_URL || "http://localhost:3002";
 

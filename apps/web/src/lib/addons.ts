@@ -2,8 +2,9 @@ import fs from "fs";
 import path from "path";
 import { AddonItem, UserAddon, AddonType } from "./addon-types";
 import { getSubscription } from "./billing";
+import { getDataDirectory } from "./data-dir";
 
-const DATA_DIR = path.resolve(process.cwd(), ".waply-data");
+const DATA_DIR = getDataDirectory();
 const ADDONS_FILE = path.join(DATA_DIR, "addons_catalog.json");
 const USER_ADDONS_FILE = path.join(DATA_DIR, "user_addons.json");
 
