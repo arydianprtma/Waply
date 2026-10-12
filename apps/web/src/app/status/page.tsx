@@ -142,10 +142,11 @@ function generate90DayHistory(): DailyStatus[] {
 export default function StatusPage() {
   const [data, setData] = useState<StatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [lastChecked, setLastChecked] = useState<Date>(new Date());
+  const [mounted, setMounted] = useState(false);
+  const [lastChecked, setLastChecked] = useState<Date>(() => new Date());
   const [autoRefresh] = useState(true);
   const [clientPing, setClientPing] = useState<number | null>(null);
-  const [dailyHistory] = useState<DailyStatus[]>(() => generate90DayHistory());
+  const [dailyHistory, setDailyHistory] = useState<DailyStatus[]>([]);
   const [hoveredDay, setHoveredDay] = useState<DailyStatus | null>(null);
   const [showAllLogs, setShowAllLogs] = useState(false);
 
@@ -170,6 +171,8 @@ export default function StatusPage() {
   }, []);
 
   useEffect(() => {
+    setMounted(true);
+    setDailyHistory(generate90DayHistory());
     fetchStatus();
     if (!autoRefresh) return;
     const interval = setInterval(fetchStatus, 15000); // 15s real-time poll
@@ -282,7 +285,7 @@ export default function StatusPage() {
                 <div>
                   <p className="text-[11px] text-slate-400 font-medium">Update Terakhir</p>
                   <p className="text-xs font-mono text-slate-600 mt-1">
-                    {lastChecked.toLocaleTimeString("id-ID")}
+                    {mounted ? lastChecked.toLocaleTimeString("id-ID") : "--:--:--"}
                   </p>
                 </div>
               </div>
