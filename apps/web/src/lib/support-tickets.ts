@@ -166,9 +166,15 @@ export function createTicket(input: CreateTicketInput): SupportTicket {
     createdAt: now,
   };
 
-  const hasGeminiKey = Boolean(
-    process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY
-  );
+  let hasGeminiKey = false;
+  try {
+    const { isAiSupportActive } = require("./gemini-support");
+    hasGeminiKey = isAiSupportActive();
+  } catch {
+    hasGeminiKey = Boolean(
+      process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY
+    );
+  }
 
   const newTicket: SupportTicket = {
     id: ticketId,

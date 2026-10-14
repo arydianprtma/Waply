@@ -69,6 +69,7 @@ services:
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASS=${SMTP_PASS}
       - SMTP_FROM=${SMTP_FROM}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
     volumes:
       - waply-web-data:/app/apps/web/.waply-data
       - waply-shared-data:/app/.waply-data

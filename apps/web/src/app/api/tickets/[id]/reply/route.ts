@@ -6,7 +6,7 @@ import {
   escalateTicketToHuman,
   updateTicketStatus,
 } from "@/lib/support-tickets";
-import { generateAiTicketResponse } from "@/lib/gemini-support";
+import { generateAiTicketResponse, isAiSupportActive } from "@/lib/gemini-support";
 
 export const dynamic = "force-dynamic";
 
@@ -64,8 +64,16 @@ export async function POST(
       return NextResponse.json({ success: false, error: "Gagal mengirim balasan" }, { status: 500 });
     }
 
-    // If client replied and ticket is currently in AI handling mode, trigger AI follow-up
-    if (!isAdmin && updated.handlingMode === "AI") {
+    // If client replied and ticket is in AI mode (or has never had human staff reply and AI is enabled)
+    const hadHumanStaffReply = updated.messages.some(
+      (m) => m.senderRole === "admin" || m.senderRole === "support"
+    );
+    const isAiEligible = updated.handlingMode === "AI" || (!hadHumanStaffReply && isAiSupportActive());
+
+    if (!isAdmin && isAiEligible) {
+      if (updated.handlingMode !== "AI") {
+        updated.handlingMode = "AI";
+      }
       try {
         const attachmentNote = attachments && attachments.length > 0
           ? ` [Pengguna melampirkan file: ${attachments.map((a: any) => `${a.name}`).join(", ")}]`

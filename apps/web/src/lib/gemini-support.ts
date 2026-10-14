@@ -142,12 +142,32 @@ export interface AiResponseResult {
   closeReason?: string;
 }
 
+export function getGeminiApiKey(): string {
+  try {
+    const { getAdminSettings } = require("./admin-settings");
+    const settings = getAdminSettings();
+    if (settings?.aiConfig?.geminiApiKey && settings.aiConfig.geminiApiKey.trim()) {
+      return settings.aiConfig.geminiApiKey.trim();
+    }
+  } catch {}
+  return (
+    process.env.GEMINI_API_KEY ||
+    process.env.NEXT_PUBLIC_GEMINI_API_KEY ||
+    ""
+  ).trim();
+}
+
+export function isAiSupportActive(): boolean {
+  return Boolean(getGeminiApiKey());
+}
+
 export async function generateAiTicketResponse(
   ticket: SupportTicket,
   latestUserMessage: string
 ): Promise<AiResponseResult | null> {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-  if (!apiKey || apiKey.trim() === "") {
+  const apiKey = getGeminiApiKey();
+  if (!apiKey) {
+    console.warn("[Gemini Support] Tidak ada GEMINI_API_KEY yang terkonfigurasi.");
     return null;
   }
 
@@ -262,13 +282,12 @@ Jawab pesan terakhir klien secara langsung dan alami tanpa mengulang sapaan/nama
 }
 `;
 
-    // Call Gemini API (using available fast flash models)
+    // Call Gemini API (using tested stable flash models)
     const models = [
-      "gemini-flash-lite-latest",
-      "gemini-3.6-flash",
       "gemini-3.5-flash",
       "gemini-flash-latest",
       "gemini-2.5-flash-lite",
+      "gemini-3.8-flash",
     ];
     let responseData: any = null;
     let selectedModel = models[0];
@@ -301,9 +320,11 @@ Jawab pesan terakhir klien secara langsung dan alami tanpa mengulang sapaan/nama
           responseData = await res.json();
           selectedModel = model;
           break;
+        } else {
+          console.warn(`[Gemini Support] Model ${model} returned status ${res.status}`);
         }
-      } catch {
-        // Try next model
+      } catch (err: any) {
+        console.warn(`[Gemini Support] Model ${model} fetch error: ${err.message}`);
       }
     }
 
@@ -333,6 +354,7 @@ Jawab pesan terakhir klien secara langsung dan alami tanpa mengulang sapaan/nama
     }
 
     if (!responseData) {
+      console.error("[Gemini Support] Semua model Gemini gagal menghasilkan respon.");
       return null;
     }
 
@@ -344,11 +366,19 @@ Jawab pesan terakhir klien secara langsung dan alami tanpa mengulang sapaan/nama
     }
 
     try {
-      // Clean possible markdown code fences if returned
-      const cleanJson = textContent
-        .replace(/```json/gi, "")
-        .replace(/```/g, "")
-        .trim();
+      // Clean possible markdown code fences or extract outer JSON object
+      let cleanJson = textContent.trim();
+      const jsonMatch = cleanJson.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+      if (jsonMatch) {
+        cleanJson = jsonMatch[1].trim();
+      } else {
+        const firstBrace = cleanJson.indexOf("{");
+        const lastBrace = cleanJson.lastIndexOf("}");
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+          cleanJson = cleanJson.substring(firstBrace, lastBrace + 1).trim();
+        }
+      }
+
       const parsed = JSON.parse(cleanJson);
       const isExplicitEscalation = containsExplicitHuman && !hasNegation;
       const shouldEscalateFinal = !hasNegation && (Boolean(parsed.shouldEscalate) || isExplicitEscalation);

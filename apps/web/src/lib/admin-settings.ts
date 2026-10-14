@@ -66,6 +66,11 @@ export interface AdminSystemSettings {
     noreplyName: string;
     enabled: boolean;
   };
+  aiConfig?: {
+    geminiApiKey?: string;
+    enabled?: boolean;
+    model?: string;
+  };
   maintenanceConfig: {
     enabled: boolean;
     message: string;
@@ -145,6 +150,11 @@ export function getDefaultAdminSettings(): AdminSystemSettings {
       noreplyName: "Waply Security",
       enabled: true,
     },
+    aiConfig: {
+      geminiApiKey: process.env.GEMINI_API_KEY || "",
+      enabled: true,
+      model: "gemini-3.5-flash",
+    },
     maintenanceConfig: {
       enabled: false,
       message: "Sistem sedang dalam peningkatan performa server terjadwal. Silakan coba kembali beberapa saat lagi.",
@@ -193,6 +203,14 @@ export function getAdminSettings(): AdminSystemSettings {
       smtpConfig: {
         ...defaults.smtpConfig,
         ...(parsed?.smtpConfig || {}),
+      },
+      aiConfig: {
+        ...defaults.aiConfig,
+        ...(parsed?.aiConfig || {}),
+        geminiApiKey:
+          parsed?.aiConfig?.geminiApiKey !== undefined
+            ? parsed.aiConfig.geminiApiKey
+            : (defaults.aiConfig?.geminiApiKey || process.env.GEMINI_API_KEY || ""),
       },
       maintenanceConfig: {
         ...defaults.maintenanceConfig,
@@ -246,6 +264,10 @@ export function saveAdminSettings(data: Partial<AdminSystemSettings>): AdminSyst
     smtpConfig: {
       ...current.smtpConfig,
       ...(data.smtpConfig || {}),
+    },
+    aiConfig: {
+      ...(current.aiConfig || {}),
+      ...(data.aiConfig || {}),
     },
     maintenanceConfig: {
       ...current.maintenanceConfig,
