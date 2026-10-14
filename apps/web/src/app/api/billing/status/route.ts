@@ -6,6 +6,7 @@ import { getUserAddonTotals } from "@/lib/addons";
 import { getActiveDevices } from "@/lib/device-rotation";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function GET() {
   try {
@@ -40,7 +41,7 @@ export async function GET() {
       };
     }
 
-    const invoices = getInvoices(user.id) || [];
+    const invoices = getInvoices(user.id, user.email) || [];
     const plan = (allPlans && allPlans[subscription.planId]) || DEFAULT_PLANS[subscription.planId] || DEFAULT_PLANS.FREE;
 
     // Check if subscription is expired or previously reverted
@@ -109,22 +110,29 @@ export async function GET() {
       midtransConfig = getMidtransConfig();
     } catch {}
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        subscription: { ...subscription, status },
-        plan,
-        expiredPlan,
-        invoices,
-        allPlans,
-        meteredUsage,
-        midtrans: {
-          snapJsUrl: midtransConfig.snapJsUrl,
-          clientKey: midtransConfig.clientKey,
-          isProduction: midtransConfig.isProduction,
+    return NextResponse.json(
+      {
+        success: true,
+        data: {
+          subscription: { ...subscription, status },
+          plan,
+          expiredPlan,
+          invoices,
+          allPlans,
+          meteredUsage,
+          midtrans: {
+            snapJsUrl: midtransConfig.snapJsUrl,
+            clientKey: midtransConfig.clientKey,
+            isProduction: midtransConfig.isProduction,
+          },
         },
       },
-    });
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
+        },
+      }
+    );
   } catch (error: any) {
     // Graceful fallback to avoid hard 500 error on client
     return NextResponse.json({

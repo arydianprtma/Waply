@@ -2,14 +2,24 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdminUser } from "@/lib/auth-user";
 import { getAllPlans, saveCustomPlan, deleteCustomPlan, Plan } from "@/lib/billing";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET() {
   try {
     await requireAdminUser();
     const plans = getAllPlans();
-    return NextResponse.json({
-      success: true,
-      data: Object.values(plans),
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        data: Object.values(plans),
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
+        },
+      }
+    );
   } catch (err: any) {
     const status = err.message.includes("403") ? 403 : 500;
     return NextResponse.json({ success: false, error: err.message }, { status });
@@ -84,7 +94,7 @@ export async function POST(req: NextRequest) {
       createdAt: validation.data.createdAt || new Date().toISOString(),
     };
 
-    const saved = saveCustomPlan(planData);
+    const saved = saveCustomPlan(planData, validation.data.previousId || undefined);
     return NextResponse.json({
       success: true,
       data: saved,

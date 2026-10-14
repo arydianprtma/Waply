@@ -61,7 +61,7 @@ export default function AdminUsersPage() {
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/billing/plans")
+    fetch("/api/billing/plans", { cache: "no-store" })
       .then((r) => r.json())
       .then((json) => {
         if (json.success && json.data) {

@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { getSubscription, saveSubscription, PlanId, Subscription } from "@/lib/billing";
+import { getSubscription, saveSubscription, deleteUserInvoices, PlanId, Subscription } from "@/lib/billing";
 import { getDataDirectory } from "./data-dir";
 
 export type UserAccountStatus = "ACTIVE" | "SUSPENDED" | "BANNED";
@@ -404,20 +404,24 @@ export async function deleteUser(userId: string): Promise<{ success: boolean; er
     const remaining = users.filter((u) => u.id !== target.id && u.email.toLowerCase() !== target.email.toLowerCase());
     saveManagedUsers(remaining);
 
-    // 2. Clean up user subscription & settings cache
+    // 2. Clean up user subscription cache completely
     try {
-      saveSubscription({
-        userId: target.id,
-        planId: "FREE",
-        status: "EXPIRED",
-        startDate: null,
-        endDate: null,
-        updatedAt: new Date().toISOString(),
-      });
+      const subFile = path.join(DATA_DIR, "subscription.json");
+      if (fs.existsSync(subFile)) {
+        const subData = JSON.parse(fs.readFileSync(subFile, "utf-8") || "{}");
+        if (target.id && subData[target.id]) delete subData[target.id];
+        if (target.email && subData[target.email.toLowerCase()]) delete subData[target.email.toLowerCase()];
+        fs.writeFileSync(subFile, JSON.stringify(subData, null, 2));
+      }
     } catch {}
   }
 
-  // 3. Delete user in Supabase Auth backend
+  // 3. Clean up user invoices permanently
+  try {
+    deleteUserInvoices(targetId, targetEmail);
+  } catch {}
+
+  // 4. Delete user in Supabase Auth backend
   const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (sbUrl && sbKey) {

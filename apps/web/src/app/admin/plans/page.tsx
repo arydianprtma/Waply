@@ -294,8 +294,9 @@ export default function AdminPlansPage() {
       const cleanDevices = formData.maxDevices === "" ? 1 : Math.max(1, Number(formData.maxDevices) || 1);
       const cleanMessages = formData.isUnlimitedMessages ? -1 : (formData.monthlyMessages === "" ? 0 : Number(formData.monthlyMessages) || 0);
 
-      const payload: Partial<Plan> = {
+      const payload: Partial<Plan> & { previousId?: string } = {
         id: formData.id,
+        previousId: editingId || undefined,
         name: formData.name,
         price: cleanPrice,
         originalPrice: cleanOrig && cleanOrig > 0 ? cleanOrig : undefined,

@@ -49,10 +49,22 @@ export function getAllPlans(): Record<string, Plan> {
   }
 }
 
-export function saveCustomPlan(plan: Plan): Plan {
+export function saveCustomPlan(plan: Plan, previousId?: string): Plan {
   ensureDataDir();
   const all = getAllPlans();
   const cleanId = plan.id.toUpperCase().replace(/\s+/g, "_");
+
+  // If ID was changed during edit, clean up the previous plan entry
+  if (previousId) {
+    const cleanPrev = previousId.toUpperCase().replace(/\s+/g, "_");
+    if (cleanPrev !== cleanId && all[cleanPrev]) {
+      delete all[cleanPrev];
+    }
+    if (previousId !== cleanId && all[previousId]) {
+      delete all[previousId];
+    }
+  }
+
   const updatedPlan: Plan = {
     ...plan,
     id: cleanId,
@@ -412,7 +424,7 @@ export function hasUserPlanFeature(
 
 // ─── Invoice CRUD ─────────────────────────────────────────────────────────────
 
-export function getInvoices(userId: string): Invoice[] {
+export function getAllInvoices(): Invoice[] {
   ensureDataDir();
   try {
     if (fs.existsSync(INVOICES_FILE)) {
@@ -423,36 +435,69 @@ export function getInvoices(userId: string): Invoice[] {
   return [];
 }
 
+export function getInvoices(userId?: string, userEmail?: string): Invoice[] {
+  const all = getAllInvoices();
+  const cleanId = userId?.trim().toLowerCase();
+  const cleanEmail = userEmail?.trim().toLowerCase();
+  if (!cleanId && !cleanEmail) return [];
+
+  return all.filter((inv) => {
+    const invUserId = inv.userId?.trim().toLowerCase();
+    const invEmail = inv.customerEmail?.trim().toLowerCase();
+    const matchId = Boolean(cleanId && invUserId === cleanId);
+    const matchEmail = Boolean(cleanEmail && invEmail === cleanEmail);
+    return matchId || matchEmail;
+  });
+}
+
+export function deleteUserInvoices(userId?: string, userEmail?: string): void {
+  ensureDataDir();
+  try {
+    const all = getAllInvoices();
+    const cleanId = userId?.trim().toLowerCase();
+    const cleanEmail = userEmail?.trim().toLowerCase();
+    if (!cleanId && !cleanEmail) return;
+
+    const remaining = all.filter((inv) => {
+      const invUserId = inv.userId?.trim().toLowerCase();
+      const invEmail = inv.customerEmail?.trim().toLowerCase();
+      const matchId = Boolean(cleanId && invUserId === cleanId);
+      const matchEmail = Boolean(cleanEmail && invEmail === cleanEmail);
+      return !matchId && !matchEmail;
+    });
+
+    fs.writeFileSync(INVOICES_FILE, JSON.stringify(remaining, null, 2));
+  } catch (err) {
+    console.error("Failed to delete user invoices:", err);
+  }
+}
+
 export function getInvoiceByOrderId(orderId: string): Invoice | null {
   ensureDataDir();
   try {
-    if (fs.existsSync(INVOICES_FILE)) {
-      const all: Invoice[] = JSON.parse(fs.readFileSync(INVOICES_FILE, "utf-8"));
-      return all.find((inv) => inv.orderId === orderId) || null;
-    }
+    const all = getAllInvoices();
+    return all.find((inv) => inv.orderId === orderId) || null;
   } catch {}
   return null;
 }
 
 export function createInvoice(data: Omit<Invoice, "id" | "createdAt">): Invoice {
   ensureDataDir();
-  const invoices = getInvoices(data.userId);
+  const all = getAllInvoices();
   const invoice: Invoice = {
     ...data,
     id: `inv_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
     createdAt: new Date().toISOString(),
   };
-  invoices.unshift(invoice);
-  fs.writeFileSync(INVOICES_FILE, JSON.stringify(invoices, null, 2));
+  all.unshift(invoice);
+  fs.writeFileSync(INVOICES_FILE, JSON.stringify(all, null, 2));
   return invoice;
 }
 
 export function updateInvoice(orderId: string, update: Partial<Invoice>): Invoice | null {
   ensureDataDir();
   try {
-    const all: Invoice[] = fs.existsSync(INVOICES_FILE)
-      ? JSON.parse(fs.readFileSync(INVOICES_FILE, "utf-8"))
-      : [];
+    const all = getAllInvoices();
     const idx = all.findIndex((inv) => inv.orderId === orderId);
     if (idx === -1) return null;
     all[idx] = { ...all[idx], ...update };

@@ -21,7 +21,7 @@ export default function RegisterPage() {
   });
 
   useEffect(() => {
-    fetch("/api/billing/plans")
+    fetch("/api/billing/plans", { cache: "no-store" })
       .then((res) => res.json())
       .then((json) => {
         if (json.success && json.data?.FREE) {

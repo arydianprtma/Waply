@@ -200,9 +200,9 @@ function BillingContent() {
   const fetchStatus = useCallback(async () => {
     try {
       const [statusRes, plansRes, addonsRes] = await Promise.all([
-        fetch("/api/billing/status"),
-        fetch("/api/billing/plans").catch(() => null),
-        fetch("/api/addons").catch(() => null),
+        fetch("/api/billing/status", { cache: "no-store" }),
+        fetch("/api/billing/plans", { cache: "no-store" }).catch(() => null),
+        fetch("/api/addons", { cache: "no-store" }).catch(() => null),
       ]);
       const statusJson = await statusRes.json();
       if (statusJson.success) {
@@ -1125,7 +1125,7 @@ function BillingContent() {
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm font-bold text-slate-900 truncate">
-                        Plan {inv.planId}: {formatIDR(inv.amount)}
+                        {(allPlans?.[inv.planId]?.name || billingData?.allPlans?.[inv.planId]?.name || `Plan ${inv.planId}`)}: {formatIDR(inv.amount)}
                       </p>
                       <p className="text-xs text-slate-500 font-mono mt-0.5 truncate">
                         {inv.orderId}

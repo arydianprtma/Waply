@@ -121,6 +121,7 @@ export const planSchema = z.object({
   isPopular: z.boolean().optional().nullable(),
   isActive: z.boolean().optional().nullable(),
   createdAt: z.string().optional().nullable(),
+  previousId: z.string().optional().nullable(),
 });
 
 // 7. Admin Voucher Schema
