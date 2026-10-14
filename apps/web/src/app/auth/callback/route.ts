@@ -75,14 +75,7 @@ export async function GET(request: NextRequest) {
           }
         }
 
-        const cookieStore = await cookies();
-        const maxAge = 60 * 60 * 24 * 7;
-        cookieStore.set("waply_demo_auth", "true", { path: "/", maxAge, sameSite: "lax" });
-        cookieStore.set("waply_user_email", user.email, { path: "/", maxAge, sameSite: "lax" });
-        cookieStore.set("waply_user_name", user.name, { path: "/", maxAge, sameSite: "lax" });
-        cookieStore.set("waply_user_role", user.role, { path: "/", maxAge, sameSite: "lax" });
-        cookieStore.set("waply_user_id", user.id, { path: "/", maxAge, sameSite: "lax" });
-        return NextResponse.redirect(`${baseUrl}/login?verified=true`);
+        return NextResponse.redirect(`${baseUrl}/login?verified=true&email=${encodeURIComponent(user.email)}`);
       }
     }
     return NextResponse.redirect(`${baseUrl}/login?error=auth_callback_failed`);

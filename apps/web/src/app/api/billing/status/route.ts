@@ -41,7 +41,8 @@ export async function GET() {
       };
     }
 
-    const invoices = getInvoices(user.id, user.email) || [];
+    const isGuestUser = !user || user.id === "usr_default_guest" || user.email === "guest@waply.id" || user.email === "user@waply.id";
+    const invoices = isGuestUser ? [] : (getInvoices(user.id, user.email) || []);
     const plan = (allPlans && allPlans[subscription.planId]) || DEFAULT_PLANS[subscription.planId] || DEFAULT_PLANS.FREE;
 
     // Check if subscription is expired or previously reverted

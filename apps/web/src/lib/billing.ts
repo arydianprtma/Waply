@@ -441,11 +441,22 @@ export function getInvoices(userId?: string, userEmail?: string): Invoice[] {
   const cleanEmail = userEmail?.trim().toLowerCase();
   if (!cleanId && !cleanEmail) return [];
 
+  const FORBIDDEN = ["usr_default_guest", "guest@waply.id", "user@waply.id", "anonymous", "fallback", "guest"];
+  if ((cleanId && FORBIDDEN.includes(cleanId)) || (cleanEmail && FORBIDDEN.includes(cleanEmail))) {
+    return [];
+  }
+
   return all.filter((inv) => {
     const invUserId = inv.userId?.trim().toLowerCase();
     const invEmail = inv.customerEmail?.trim().toLowerCase();
-    const matchId = Boolean(cleanId && invUserId === cleanId);
-    const matchEmail = Boolean(cleanEmail && invEmail === cleanEmail);
+
+    // Ignore placeholder/corrupted records
+    if (!invUserId && !invEmail) return false;
+    if (invUserId && FORBIDDEN.includes(invUserId)) return false;
+    if (invEmail && FORBIDDEN.includes(invEmail)) return false;
+
+    const matchId = Boolean(cleanId && invUserId && invUserId === cleanId);
+    const matchEmail = Boolean(cleanEmail && invEmail && invEmail === cleanEmail);
     return matchId || matchEmail;
   });
 }

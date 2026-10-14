@@ -24,8 +24,10 @@ export function setCachedBillingData(data: BillingData | null) {
   if (typeof window !== "undefined") {
     try {
       if (data) {
-        localStorage.setItem("waply_billing_cache", JSON.stringify(data));
-        sessionStorage.setItem("waply_billing_cache", JSON.stringify(data));
+        // Strip private invoices from persistent browser storage to eliminate cross-user leaks
+        const { invoices, ...safeData } = data;
+        localStorage.setItem("waply_billing_cache", JSON.stringify({ ...safeData, invoices: [] }));
+        sessionStorage.setItem("waply_billing_cache", JSON.stringify({ ...safeData, invoices: [] }));
       } else {
         localStorage.removeItem("waply_billing_cache");
         sessionStorage.removeItem("waply_billing_cache");
