@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { type EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
-import { registerOrSyncUser } from "@/lib/admin-users";
+import { registerOrSyncUser, generateUserId } from "@/lib/admin-users";
 import { extractClientIp } from "@/lib/ip-utils";
 
 function resolveAppBaseUrl(request: NextRequest): string {
@@ -117,7 +117,7 @@ export async function GET(request: NextRequest) {
       // Register or sync user in local database registry
       if (userEmail) {
         registerOrSyncUser({
-          id: authUser.id || `usr_${userEmail.replace(/[^a-zA-Z0-9]/g, "_")}`,
+          id: authUser.id || generateUserId(),
           email: userEmail,
           name: userName,
           role: userRole,

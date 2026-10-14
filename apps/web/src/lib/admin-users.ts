@@ -1,7 +1,33 @@
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
 import { getSubscription, saveSubscription, deleteUserInvoices, PlanId, Subscription } from "@/lib/billing";
 import { getDataDirectory } from "./data-dir";
+
+/**
+ * Generate a professional, clean alphanumeric User ID
+ * Format: usr_ + 12 alphanumeric lowercase characters (e.g. usr_7k9p2m4x8q1w)
+ */
+export function generateUserId(): string {
+  const chars = "0123456789abcdefghijklmnopqrstuvwxyz";
+  const bytes = crypto.randomBytes(12);
+  let rand = "";
+  for (let i = 0; i < 12; i++) {
+    rand += chars[bytes[i] % chars.length];
+  }
+  return `usr_${rand}`;
+}
+
+export function isLegacyEmailUserId(id?: string): boolean {
+  if (!id) return false;
+  return (
+    id.includes("_gmail_com") ||
+    id.includes("_yahoo_com") ||
+    id.includes("@") ||
+    (id.startsWith("usr_") && id.includes("_com")) ||
+    (id.startsWith("usr_") && id.includes("."))
+  );
+}
 
 export type UserAccountStatus = "ACTIVE" | "SUSPENDED" | "BANNED";
 
@@ -215,9 +241,54 @@ export function registerOrSyncUser(user: {
         ? existing.avatarUrl
         : null;
 
+    // Auto-migrate legacy email-based user IDs (e.g. usr_arygaming53_gmail_com) to clean alphanumeric ID
+    let effectiveUserId = existing.id;
+    if (
+      isLegacyEmailUserId(effectiveUserId) &&
+      effectiveUserId !== "admin-master-waply-01" &&
+      existing.role !== "admin"
+    ) {
+      const newAlphanumericId = generateUserId();
+      // Update invoices in invoices.json
+      try {
+        const invFile = path.join(DATA_DIR, "invoices.json");
+        if (fs.existsSync(invFile)) {
+          const invs = JSON.parse(fs.readFileSync(invFile, "utf-8") || "[]");
+          let changed = false;
+          invs.forEach((inv: any) => {
+            if (
+              inv.userId === effectiveUserId ||
+              (existing.email && inv.customerEmail?.toLowerCase() === existing.email.toLowerCase())
+            ) {
+              inv.userId = newAlphanumericId;
+              changed = true;
+            }
+          });
+          if (changed) fs.writeFileSync(invFile, JSON.stringify(invs, null, 2));
+        }
+      } catch {}
+
+      // Update subscription in subscription.json
+      try {
+        const subFile = path.join(DATA_DIR, "subscription.json");
+        if (fs.existsSync(subFile)) {
+          const subs = JSON.parse(fs.readFileSync(subFile, "utf-8") || "{}");
+          if (subs[effectiveUserId]) {
+            subs[newAlphanumericId] = { ...subs[effectiveUserId], userId: newAlphanumericId };
+            delete subs[effectiveUserId];
+            fs.writeFileSync(subFile, JSON.stringify(subs, null, 2));
+          }
+        }
+      } catch {}
+
+      effectiveUserId = newAlphanumericId;
+    } else if (user.id && !isLegacyEmailUserId(user.id)) {
+      effectiveUserId = user.id;
+    }
+
     users[existingIdx] = {
       ...existing,
-      id: user.id || existing.id,
+      id: effectiveUserId,
       name: user.name || existing.name,
       email: user.email || existing.email,
       role: user.role || existing.role,
@@ -237,8 +308,13 @@ export function registerOrSyncUser(user: {
   const effectivePlanId = (sub && sub.planId) || "FREE";
   const effectivePlanStatus = sub && sub.status === "ACTIVE" ? "ACTIVE" : (effectivePlanId === "FREE" ? "FREE" : "ACTIVE");
 
+  const effectiveNewId =
+    user.id && !isLegacyEmailUserId(user.id)
+      ? user.id
+      : generateUserId();
+
   const newUser: ManagedUser = {
-    id: user.id,
+    id: effectiveNewId,
     email: user.email,
     name: user.name || user.email.split("@")[0],
     role: user.role || (user.email === "admin@waply.id" ? "admin" : "user"),

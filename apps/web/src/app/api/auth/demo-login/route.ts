@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { getUserByEmail, registerOrSyncUser } from "@/lib/admin-users";
+import { getUserByEmail, registerOrSyncUser, generateUserId } from "@/lib/admin-users";
 import { extractClientIp } from "@/lib/ip-utils";
 import { hasAdminPassword, verifyAdminPassword } from "@/lib/admin-settings";
 
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
       dbUser = registerOrSyncUser({
         id: isSuperAdmin
           ? "admin-master-waply-01"
-          : `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, "_")}`,
+          : generateUserId(),
         email: cleanEmail,
         name: initialName,
         role: initialRole,

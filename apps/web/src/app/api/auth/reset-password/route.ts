@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { getUserByEmail, registerOrSyncUser } from "@/lib/admin-users";
+import { getUserByEmail, registerOrSyncUser, generateUserId } from "@/lib/admin-users";
 import { verifyPasswordResetToken, consumePasswordResetToken } from "@/lib/password-reset";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
     let dbUser = getUserByEmail(cleanEmail);
     if (!dbUser) {
       dbUser = registerOrSyncUser({
-        id: `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, "_")}`,
+        id: generateUserId(),
         email: cleanEmail,
         name: cleanEmail.split("@")[0] || "Waply User",
         role: cleanEmail === "admin@waply.id" ? "admin" : "user",

@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { cookies, headers } from "next/headers";
-import { registerOrSyncUser, getUserById, getUserByEmail } from "@/lib/admin-users";
+import { registerOrSyncUser, getUserById, getUserByEmail, generateUserId } from "@/lib/admin-users";
 import { getSettings } from "@/lib/settings";
 import { extractClientIp } from "@/lib/ip-utils";
 
@@ -76,7 +76,7 @@ export async function getSessionUser(): Promise<SessionUser> {
         dbUser?.id ||
         (isSystemAdmin
           ? "admin-master-waply-01"
-          : `usr_${email.replace(/[^a-zA-Z0-9]/g, "_")}`);
+          : generateUserId());
       const name =
         dbUser?.name ||
         demoName ||

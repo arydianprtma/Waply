@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/auth-user";
 import crypto from "crypto";
-import { registerOrSyncUser, getUserByEmail } from "@/lib/admin-users";
+import { registerOrSyncUser, getUserByEmail, generateUserId } from "@/lib/admin-users";
 import {
   PLANS,
   DEFAULT_PLANS,
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
 
     // Sync / register user in DB
     const syncedUser = registerOrSyncUser({
-      id: authUser.id && authUser.id !== "usr_default_guest" ? authUser.id : (existingUser?.id || `usr_${customerEmail.replace(/[^a-zA-Z0-9]/g, "_")}`),
+      id: authUser.id && authUser.id !== "usr_default_guest" ? authUser.id : (existingUser?.id || generateUserId()),
       email: customerEmail,
       name: customerName,
       role: customerEmail === "admin@waply.id" ? "admin" : "user",

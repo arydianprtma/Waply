@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUserByEmail, registerOrSyncUser } from "@/lib/admin-users";
+import { getUserByEmail, registerOrSyncUser, generateUserId } from "@/lib/admin-users";
 import { extractClientIp } from "@/lib/ip-utils";
 import { sendEmailVerification } from "@/lib/email-service";
 import crypto from "crypto";
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     const verifyToken = crypto.randomBytes(32).toString("hex");
 
     // 3. Register user in local database with emailVerified = false
-    let userId = existing ? existing.id : `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, "_")}`;
+    let userId = existing ? existing.id : generateUserId();
 
     // Sync to Supabase Auth backend via Admin API (email_confirm: false, no default email sent)
     const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
