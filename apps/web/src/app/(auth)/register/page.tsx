@@ -16,7 +16,7 @@ export default function RegisterPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [freePlan, setFreePlan] = useState({
-    monthlyMessages: DEFAULT_PLANS.FREE.monthlyMessages || 200,
+    monthlyMessages: DEFAULT_PLANS.FREE.monthlyMessages || 500,
     maxDevices: DEFAULT_PLANS.FREE.maxDevices || 1,
   });
 
@@ -27,7 +27,7 @@ export default function RegisterPage() {
         if (json.success && json.data?.FREE) {
           const f = json.data.FREE;
           setFreePlan({
-            monthlyMessages: f.monthlyMessages ?? 200,
+            monthlyMessages: f.monthlyMessages ?? 500,
             maxDevices: f.maxDevices ?? 1,
           });
         }

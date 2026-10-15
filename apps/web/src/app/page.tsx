@@ -57,7 +57,7 @@ export default function LandingPage() {
                   href="/register"
                   className="px-6 py-3.5 rounded-xl text-sm sm:text-base font-semibold text-white bg-primary hover:bg-primary/90 shadow-md shadow-primary/20 transition-colors flex items-center justify-center min-h-[48px] gap-2"
                 >
-                  <span>Mulai Sekarang (Free 200 Pesan)</span>
+                  <span>Mulai Sekarang (Free 500 Pesan)</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
                 <Link

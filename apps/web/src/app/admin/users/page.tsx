@@ -1118,7 +1118,7 @@ export default function AdminUsersPage() {
                     value={selectedPlanId}
                     onChange={(e) => setSelectedPlanId(e.target.value)}
                   >
-                    <option value="FREE">FREE TRIAL (200 Pesan, 1 Device)</option>
+                    <option value="FREE">FREE TRIAL (500 Pesan, 1 Device)</option>
                     {Object.values(availablePlans)
                       .filter((p: any) => p.id !== "FREE")
                       .map((p: any) => (

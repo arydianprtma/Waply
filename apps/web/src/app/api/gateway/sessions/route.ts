@@ -116,7 +116,7 @@ export async function GET() {
         const sub = getSubscription(targetUserId);
         const allPlans = getAllPlans();
         const plan = allPlans[sub.planId] || DEFAULT_PLANS[sub.planId] || DEFAULT_PLANS.FREE;
-        const totalMessages = plan.monthlyMessages ?? 200;
+        const totalMessages = plan.monthlyMessages ?? 500;
         const isUnlimited = totalMessages === -1;
         const periodDays = plan.period === "day" ? 1 : plan.period === "year" ? 365 : 30;
         const dailyQuota = isUnlimited

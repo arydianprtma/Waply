@@ -53,7 +53,7 @@ export default function WarmupHealthPage() {
 
   const planName = plan?.name || (billingData ? "Free Trial" : "Memuat...");
   const totalMessages =
-    plan?.monthlyMessages ?? (billingData?.meteredUsage?.messages?.limit ?? 200);
+    plan?.monthlyMessages ?? (billingData?.meteredUsage?.messages?.limit ?? 500);
   const isUnlimited = totalMessages === -1;
 
   // Estimasi kuota harian: Total kuota dibagi durasi hari periode paket (default 30 hari)

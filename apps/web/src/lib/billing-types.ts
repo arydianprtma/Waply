@@ -487,8 +487,8 @@ export const DEFAULT_PLANS: Record<string, Plan> = {
     price: 0,
     period: "month",
     maxDevices: 1,
-    monthlyMessages: 200,
-    features: ["1 WhatsApp Device", "200 Pesan / bulan", "Basic API", "Basic Webhook"],
+    monthlyMessages: 500,
+    features: ["1 WhatsApp Device", "500 Pesan / bulan", "Basic API", "Basic Webhook"],
     access: {
       devices: true,
       warmupHealth: false,
