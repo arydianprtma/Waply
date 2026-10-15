@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import { WaplyLogo } from "@/components/brand/WaplyLogo";
+
+export const metadata: Metadata = {
+  title: "Masuk ke Akun",
+  description: "Akses dashboard Waply WhatsApp Gateway untuk mengelola pesan dan koneksi perangkat.",
+};
 
 export default function AuthLayout({
   children,
