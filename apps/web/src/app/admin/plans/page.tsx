@@ -33,6 +33,7 @@ import {
   FEATURE_ACCESS_CATEGORIES, 
   DEFAULT_FREE_ACCESS,
   getPlanDiscountStatus,
+  sortPlansByPeriodAndPrice,
 } from "@/lib/billing-types";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import { PromoCountdownTimer } from "@/components/ui/PromoCountdownTimer";
@@ -455,12 +456,12 @@ export default function AdminPlansPage() {
         <CardGridSkeleton count={6} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          {plans
-            .filter((p) => {
+          {sortPlansByPeriodAndPrice(
+            plans.filter((p) => {
               if (filterCategory === "all") return true;
               return (p.period || "month") === filterCategory;
             })
-            .map((p) => {
+          ).map((p) => {
             const isFree = p.price === 0;
             const periodLabel =
               p.period === "day"

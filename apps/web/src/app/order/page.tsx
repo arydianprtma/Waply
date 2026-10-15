@@ -52,6 +52,7 @@ import {
   DEFAULT_PLANS,
   getPlanDetailedFeatureList,
   getPlanDiscountStatus,
+  sortPlansByPeriodAndPrice,
 } from "@/lib/billing-types";
 import { AddonItem } from "@/lib/addon-types";
 import { WaplyLogo } from "@/components/brand/WaplyLogo";
@@ -306,13 +307,15 @@ function OrderContent() {
     setCustomerConfirmPassword("");
   };
 
-  // Filter active paid plans for Section 3
-  const activePlansList = Object.values(plans).filter((p) => {
-    if (p.isActive === false) return false;
-    if (p.id === "FREE") return false;
-    if (p.id.startsWith("YEARLY_")) return false;
-    return true;
-  });
+  // Filter active paid plans for Section 3, sorted by period and lowest price first
+  const activePlansList = sortPlansByPeriodAndPrice(
+    Object.values(plans).filter((p) => {
+      if (p.isActive === false) return false;
+      if (p.id === "FREE") return false;
+      if (p.id.startsWith("YEARLY_")) return false;
+      return true;
+    })
+  );
 
   useEffect(() => {
     if (rawPlanParam) {

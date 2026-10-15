@@ -3,17 +3,18 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { CheckCircle2, X, Zap, Calendar, Sparkles, Layers, PackageX, Timer } from "lucide-react";
-import { Plan, getPlanDetailedFeatureList, getPlanDiscountStatus } from "@/lib/billing-types";
+import { Plan, getPlanDetailedFeatureList, getPlanDiscountStatus, sortPlansByPeriodAndPrice } from "@/lib/billing-types";
 import { PromoCountdownTimer } from "@/components/ui/PromoCountdownTimer";
 
 interface LandingPricingProps {
   plans: Plan[];
 }
 
-type PeriodTab = "month" | "day" | "year" | "all";
+type PeriodTab = "day" | "month" | "year" | "all";
 
 export default function LandingPricing({ plans }: LandingPricingProps) {
-  const [activeTab, setActiveTab] = useState<PeriodTab>("month");
+  const hasDayPlans = plans.some((p) => p.isActive !== false && p.id !== "FREE" && p.period === "day");
+  const [activeTab, setActiveTab] = useState<PeriodTab>(hasDayPlans ? "day" : "month");
   const [nowMs, setNowMs] = useState<number>(Date.now());
 
   useEffect(() => {
@@ -47,18 +48,20 @@ export default function LandingPricing({ plans }: LandingPricingProps) {
   };
 
   const tabs: { id: PeriodTab; label: string; icon: React.ElementType; badge?: string }[] = [
-    { id: "month", label: "Bulanan", icon: Calendar, badge: getTabDiscountBadge("month") },
     { id: "day", label: "Harian", icon: Zap, badge: getTabDiscountBadge("day") },
+    { id: "month", label: "Bulanan", icon: Calendar, badge: getTabDiscountBadge("month") },
     { id: "year", label: "Tahunan", icon: Sparkles, badge: getTabDiscountBadge("year") },
     { id: "all", label: "Semua", icon: Layers },
   ];
 
-  const filteredPlans = plans.filter((p) => {
-    if (p.isActive === false) return false;
-    if (activeTab === "all") return true;
-    if (p.id === "FREE") return true;
-    return (p.period || "month") === activeTab;
-  });
+  const filteredPlans = sortPlansByPeriodAndPrice(
+    plans.filter((p) => {
+      if (p.isActive === false) return false;
+      if (activeTab === "all") return true;
+      if (p.id === "FREE") return true;
+      return (p.period || "month") === activeTab;
+    })
+  );
 
   return (
     <div className="w-full">

@@ -740,3 +740,42 @@ export interface Invoice {
   expiryTime?: string | null;
   snapRedirectUrl?: string | null;
 }
+
+/**
+ * Mengurutkan paket langganan berdasarkan:
+ * 1. Paket FREE selalu paling pertama
+ * 2. Periode waktu: Harian (day) -> Mingguan (week) -> Bulanan (month) -> Tahunan (year)
+ * 3. Harga termurah ke termahal (ascending)
+ * 4. Kuota pesan terbanyak jika harga sama
+ */
+export function sortPlansByPeriodAndPrice(plans: Plan[]): Plan[] {
+  const periodWeight: Record<string, number> = {
+    day: 1,
+    week: 2,
+    month: 3,
+    year: 4,
+  };
+
+  return [...plans].sort((a, b) => {
+    // 1. FREE selalu pertama
+    if (a.id === "FREE" && b.id !== "FREE") return -1;
+    if (b.id === "FREE" && a.id !== "FREE") return 1;
+
+    // 2. Berdasarkan periode
+    const weightA = periodWeight[a.period || "month"] ?? 3;
+    const weightB = periodWeight[b.period || "month"] ?? 3;
+    if (weightA !== weightB) {
+      return weightA - weightB;
+    }
+
+    // 3. Berdasarkan harga termurah ke termahal
+    const priceA = typeof a.price === "number" ? a.price : 0;
+    const priceB = typeof b.price === "number" ? b.price : 0;
+    if (priceA !== priceB) {
+      return priceA - priceB;
+    }
+
+    // 4. Kuota pesan
+    return (a.monthlyMessages || 0) - (b.monthlyMessages || 0);
+  });
+}

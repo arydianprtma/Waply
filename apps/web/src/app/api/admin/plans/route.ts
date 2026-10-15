@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminUser } from "@/lib/auth-user";
 import { getAllPlans, saveCustomPlan, deleteCustomPlan, Plan } from "@/lib/billing";
+import { sortPlansByPeriodAndPrice } from "@/lib/billing-types";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -12,7 +13,7 @@ export async function GET() {
     return NextResponse.json(
       {
         success: true,
-        data: Object.values(plans),
+        data: sortPlansByPeriodAndPrice(Object.values(plans)),
       },
       {
         headers: {

@@ -41,6 +41,7 @@ import {
   DEFAULT_PLANS,
   getPlanDetailedFeatureList,
   getPlanDiscountStatus,
+  sortPlansByPeriodAndPrice,
 } from "@/lib/billing-types";
 import { AddonItem, UserAddon } from "@/lib/addon-types";
 import { setCachedBillingData } from "@/lib/use-billing-plan";
@@ -745,11 +746,13 @@ function BillingContent() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
               {(allPlans
-                ? Object.values(allPlans).filter((p) => {
-                    if (p.id === "FREE" || p.isActive === false) return false;
-                    if (selectedPeriodTab === "all") return true;
-                    return (p.period || "month") === selectedPeriodTab;
-                  })
+                ? sortPlansByPeriodAndPrice(
+                    Object.values(allPlans).filter((p) => {
+                      if (p.id === "FREE" || p.isActive === false) return false;
+                      if (selectedPeriodTab === "all") return true;
+                      return (p.period || "month") === selectedPeriodTab;
+                    })
+                  )
                 : []
               ).map((plan: any) => {
               const planId = plan.id;
