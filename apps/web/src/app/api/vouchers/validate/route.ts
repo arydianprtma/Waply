@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { validateVoucher } from "@/lib/vouchers";
 
 export const dynamic = "force-dynamic";
@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
         name: result.voucher?.name,
         discountType: result.voucher?.discountType,
         discountValue: result.voucher?.discountValue,
+        maxDiscountAmount: result.voucher?.maxDiscountAmount || null,
         discountAmount: result.discountAmount,
         finalAmount: result.finalAmount,
         message: result.message,

@@ -189,11 +189,13 @@ function OrderContent() {
 
   // Voucher Promo
   const [couponInput, setCouponInput] = useState("");
+  const [activeVoucherCode, setActiveVoucherCode] = useState<string | null>(null);
   const [appliedVoucher, setAppliedVoucher] = useState<{
     code: string;
     name: string;
     discountType: string;
     discountValue: number;
+    maxDiscountAmount?: number | null;
     discountAmount: number;
     finalAmount: number;
     message?: string;
@@ -383,13 +385,61 @@ function OrderContent() {
   let couponDiscount = 0;
   if (appliedVoucher) {
     if (appliedVoucher.discountType === "PERCENTAGE") {
-      couponDiscount = Math.round((subtotalAfterDuration * appliedVoucher.discountValue) / 100);
+      let rawDisc = Math.round((subtotalAfterDuration * appliedVoucher.discountValue) / 100);
+      if (appliedVoucher.maxDiscountAmount && appliedVoucher.maxDiscountAmount > 0) {
+        rawDisc = Math.min(rawDisc, appliedVoucher.maxDiscountAmount);
+      }
+      couponDiscount = rawDisc;
     } else {
       couponDiscount = Math.min(appliedVoucher.discountValue, subtotalAfterDuration);
     }
   }
 
   const finalTotal = Math.max(isAddonMode && addonsTotal === 0 ? 0 : 1000, subtotalAfterDuration - couponDiscount);
+
+  // Auto-revalidate or detach applied voucher when user changes plan, duration, mode, or order amount
+  useEffect(() => {
+    if (!activeVoucherCode) return;
+
+    let isMounted = true;
+    const revalidateActiveVoucher = async () => {
+      try {
+        const res = await fetch("/api/vouchers/validate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            code: activeVoucherCode,
+            planId: isAddonMode ? "ADDON" : selectedPlanId,
+            durationMonths,
+            orderAmount: subtotalAfterDuration,
+          }),
+        });
+        const json = await res.json();
+        if (!isMounted) return;
+
+        if (json.success && json.data) {
+          setAppliedVoucher(json.data);
+          setCouponError(null);
+        } else {
+          // Detach voucher if invalid for the new plan/duration
+          setAppliedVoucher(null);
+          const friendlyPlan = plans[selectedPlanId]?.name || selectedPlanId;
+          const msg = isAddonMode
+            ? `Voucher "${activeVoucherCode}" dilepas karena tidak dapat digunakan untuk Addon.`
+            : `Voucher "${activeVoucherCode}" dilepas karena tidak berlaku untuk paket ${friendlyPlan}.`;
+          setCouponError(msg);
+        }
+      } catch {
+        // network issue fallback
+      }
+    };
+
+    revalidateActiveVoucher();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedPlanId, durationMonths, isAddonMode, subtotalAfterDuration, activeVoucherCode]);
 
   // Dynamic Apply Voucher Handler
   const handleApplyCoupon = async (e: React.FormEvent) => {
@@ -413,9 +463,11 @@ function OrderContent() {
       const json = await res.json();
       if (json.success && json.data) {
         setAppliedVoucher(json.data);
+        setActiveVoucherCode(clean);
         setCouponError(null);
       } else {
         setAppliedVoucher(null);
+        setActiveVoucherCode(null);
         setCouponError(json.error || "Kode voucher tidak valid atau tidak memenuhi syarat.");
       }
     } catch (err: any) {
@@ -427,6 +479,7 @@ function OrderContent() {
 
   const handleRemoveCoupon = () => {
     setAppliedVoucher(null);
+    setActiveVoucherCode(null);
     setCouponInput("");
     setCouponError(null);
   };
