@@ -44,8 +44,9 @@ const PAYMENT_LOGOS: PaymentLogoItem[] = [
 ];
 
 export function LandingPaymentTrust() {
-  // Duplicate array for seamless infinite scrolling loop
-  const marqueeItems = [...PAYMENT_LOGOS, ...PAYMENT_LOGOS];
+  // Repeat items sufficiently so there is never an empty gap on wide screens
+  const baseList = [...PAYMENT_LOGOS, ...PAYMENT_LOGOS, ...PAYMENT_LOGOS, ...PAYMENT_LOGOS];
+  const marqueeItems = [...baseList, ...baseList];
 
   return (
     <section className="py-12 sm:py-16 px-4 md:px-12 bg-base-200/50 border-t border-base-200 overflow-hidden">
@@ -143,7 +144,7 @@ export function LandingPaymentTrust() {
           }
         }
         .animate-marquee {
-          animation: marquee 24s linear infinite;
+          animation: marquee 32s linear infinite;
         }
       `}</style>
     </section>
