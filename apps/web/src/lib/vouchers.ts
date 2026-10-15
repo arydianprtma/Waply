@@ -32,7 +32,9 @@ export interface VoucherValidationResult {
   error?: string;
 }
 
-const DATA_DIR = path.resolve(process.cwd(), ".waply-data");
+import { getDataDirectory } from "./data-dir";
+
+const DATA_DIR = getDataDirectory();
 const VOUCHERS_FILE = path.join(DATA_DIR, "vouchers.json");
 
 function ensureDataDir() {

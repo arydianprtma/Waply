@@ -13,7 +13,12 @@ export function getDataDirectory(): string {
   ];
 
   for (const p of possiblePaths) {
-    if (fs.existsSync(p) && fs.existsSync(path.join(p, "subscription.json"))) {
+    if (
+      fs.existsSync(p) &&
+      (fs.existsSync(path.join(p, "subscription.json")) ||
+        fs.existsSync(path.join(p, "vouchers.json")) ||
+        fs.existsSync(path.join(p, "plans.json")))
+    ) {
       return p;
     }
   }

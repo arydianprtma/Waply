@@ -20,7 +20,9 @@ export interface Announcement {
   readBy?: string[]; // Array of user IDs who have marked this read
 }
 
-const DATA_DIR = path.resolve(process.cwd(), ".waply-data");
+import { getDataDirectory } from "./data-dir";
+
+const DATA_DIR = getDataDirectory();
 const ANNOUNCEMENTS_FILE = path.join(DATA_DIR, "announcements.json");
 
 function ensureDataDir() {
