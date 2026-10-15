@@ -85,4 +85,7 @@ export const AVAILABLE_PAYMENT_CHANNELS: PaymentChannelDefinition[] = [
 
 export const DEFAULT_ENABLED_PAYMENT_CHANNELS = [
   "bri_va",
+  "mandiri_va",
+  "qris",
+  "gopay",
 ];

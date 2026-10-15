@@ -24,10 +24,10 @@ const PAYMENT_LOGOS: PaymentLogoItem[] = [
     src: "/icons/payments/qris.svg",
   },
   {
-    id: "bca",
-    name: "BCA Virtual Account",
+    id: "bri",
+    name: "BRI (BRIVA)",
     category: "Bank Transfer",
-    src: "/icons/payments/bca.svg",
+    src: "/icons/payments/bri.svg",
   },
   {
     id: "mandiri",
@@ -36,22 +36,10 @@ const PAYMENT_LOGOS: PaymentLogoItem[] = [
     src: "/icons/payments/mandiri.svg",
   },
   {
-    id: "bri",
-    name: "BRI (BRIVA)",
-    category: "Bank Transfer",
-    src: "/icons/payments/bri.svg",
-  },
-  {
     id: "gopay",
     name: "GoPay",
     category: "E-Wallet Instan",
     src: "/icons/payments/gopay.svg",
-  },
-  {
-    id: "shopeepay",
-    name: "ShopeePay",
-    category: "E-Wallet Instan",
-    src: "/icons/payments/shopee-pay.svg",
   },
 ];
 
