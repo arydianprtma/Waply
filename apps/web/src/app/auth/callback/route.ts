@@ -30,7 +30,7 @@ function resolveAppBaseUrl(request: NextRequest): string {
   }
 
   // 4. Default fallback to production live domain
-  return "https://ardp.my.id";
+  return "https://waply.web.id";
 }
 
 export async function GET(request: NextRequest) {

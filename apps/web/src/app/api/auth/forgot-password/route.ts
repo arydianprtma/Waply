@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
       process.env.NEXT_PUBLIC_APP_URL ||
       (reqOrigin && !reqOrigin.includes("0.0.0.0") && !reqOrigin.includes("localhost")
         ? (reqOrigin.startsWith("http") ? reqOrigin : `https://${reqOrigin}`)
-        : "https://ardp.my.id");
+        : "https://waply.web.id");
     const resetUrl = `${origin.replace(/\/$/, "")}/reset-password?token=${token}&email=${encodeURIComponent(cleanEmail)}`;
 
     // Dispatch custom SMTP email

@@ -19,7 +19,7 @@ const SNIPPETS: CodeSnippet[] = [
     code: `import axios from "axios";
 
 const waply = axios.create({
-  baseURL: "https://ardp.my.id",
+  baseURL: "https://waply.web.id",
   headers: {
     Authorization: "Bearer snd_live_YOUR_API_KEY",
     "Content-Type": "application/json",
@@ -45,7 +45,7 @@ console.log("Pesan berhasil diproses:", response.data);`,
 $response = Http::withHeaders([
     'Authorization' => 'Bearer ' . env('WAPLY_API_KEY'),
     'Content-Type'  => 'application/json',
-])->post('https://ardp.my.id/api/v1/messages/send', [
+])->post('https://waply.web.id/api/v1/messages/send', [
     'to'       => '6281234567890',
     'message'  => '{Halo|Hai} Kak {{name}}, invoice #{order_id} telah terbit.',
     'variables'=> [
@@ -69,7 +69,7 @@ Future<void> sendWhatsApp({
   required String name,
   required String apiKey,
 }) async {
-  final url = Uri.parse('https://ardp.my.id/api/v1/messages/send');
+  final url = Uri.parse('https://waply.web.id/api/v1/messages/send');
   final response = await http.post(
     url,
     headers: {
@@ -102,7 +102,7 @@ payload = {
 }
 
 res = requests.post(
-    "https://ardp.my.id/api/v1/messages/send",
+    "https://waply.web.id/api/v1/messages/send",
     json=payload,
     headers={"Authorization": f"Bearer {API_KEY}"}
 )
@@ -129,7 +129,7 @@ func SendMessage(to, message string) (*http.Response, error) {
 		"deviceId": "auto_rotate",
 	})
 
-	req, _ := http.NewRequest("POST", "https://ardp.my.id/api/v1/messages/send", bytes.NewBuffer(payload))
+	req, _ := http.NewRequest("POST", "https://waply.web.id/api/v1/messages/send", bytes.NewBuffer(payload))
 	req.Header.Set("Authorization", "Bearer "+os.Getenv("WAPLY_API_KEY"))
 	req.Header.Set("Content-Type", "application/json")
 
@@ -141,7 +141,7 @@ func SendMessage(to, message string) (*http.Response, error) {
     id: "curl",
     name: "cURL",
     lang: "bash",
-    code: `curl -X POST https://ardp.my.id/api/v1/messages/send \\
+    code: `curl -X POST https://waply.web.id/api/v1/messages/send \\
   -H "Authorization: Bearer snd_live_YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -248,7 +248,7 @@ export function LandingCodePreview() {
           {/* Footer Highlights */}
           <div className="px-4 sm:px-6 py-3 bg-slate-950/70 border-t border-slate-800/80 flex flex-wrap items-center justify-between text-[11px] text-slate-400 gap-2">
             <div className="flex items-center gap-4">
-              <span>Base URL: <strong className="text-slate-200">https://ardp.my.id</strong></span>
+              <span>Base URL: <strong className="text-slate-200">https://waply.web.id</strong></span>
               <span>Auth: <strong className="text-slate-200">Bearer Token</strong></span>
             </div>
             <span className="text-emerald-400 font-medium flex items-center gap-1">

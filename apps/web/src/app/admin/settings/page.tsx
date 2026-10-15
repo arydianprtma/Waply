@@ -826,7 +826,7 @@ export default function AdminSettingsPage() {
                   <div className="flex items-center gap-2 text-slate-700">
                     <span className="font-semibold text-slate-500">Notification / Webhook URL:</span>
                     <code className="bg-white px-2 py-0.5 rounded border border-slate-300 font-mono text-[11px] text-emerald-700 font-bold select-all">
-                      https://ardp.my.id/api/billing/notification
+                      https://waply.web.id/api/billing/notification
                     </code>
                   </div>
                   <a

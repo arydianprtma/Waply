@@ -81,7 +81,7 @@ const INITIAL_KNOWLEDGE_BASE: AiKnowledgeItem[] = [
     title: "Integrasi REST API & Inbound Webhook",
     category: "FEATURE",
     problemDescription: "Panduan integrasi API pengiriman pesan dan penerimaan webhook event.",
-    solution: "1. Gunakan Base URL Produksi: `https://ardp.my.id` (tanpa sub-path tambahan).\n2. Kirim Header: `Authorization: Bearer <API_KEY>` atau `X-API-Key: <API_KEY>`.\n3. Endpoint Kirim Pesan: `POST /api/v1/messages/send` dengan payload `{ to: '628xxx', message: 'teks', deviceId: 'auto_rotate' }`.\n4. Daftarkan URL Webhook di menu Dashboard > Webhook untuk menerima event pesan masuk (`message.received`) dan status terkirim (`message.delivered`).",
+    solution: "1. Gunakan Base URL Produksi: `https://waply.web.id` (tanpa sub-path tambahan).\n2. Kirim Header: `Authorization: Bearer <API_KEY>` atau `X-API-Key: <API_KEY>`.\n3. Endpoint Kirim Pesan: `POST /api/v1/messages/send` dengan payload `{ to: '628xxx', message: 'teks', deviceId: 'auto_rotate' }`.\n4. Daftarkan URL Webhook di menu Dashboard > Webhook untuk menerima event pesan masuk (`message.received`) dan status terkirim (`message.delivered`).",
     keywords: ["api", "webhook", "endpoint", "base url", "integrasi", "postman", "curl", "laravel", "nodejs", "rest api"],
     source: "admin_manual",
     isActive: true,

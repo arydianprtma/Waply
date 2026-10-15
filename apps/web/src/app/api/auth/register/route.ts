@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
       process.env.NEXT_PUBLIC_APP_URL ||
       (reqOrigin && !reqOrigin.includes("0.0.0.0") && !reqOrigin.includes("localhost")
         ? (reqOrigin.startsWith("http") ? reqOrigin : `https://${reqOrigin}`)
-        : "https://ardp.my.id");
+        : "https://waply.web.id");
 
     const verificationUrl = `${origin.replace(/\/$/, "")}/auth/callback?verify_token=${verifyToken}&email=${encodeURIComponent(cleanEmail)}`;
 

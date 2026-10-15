@@ -630,7 +630,7 @@ export async function createSnapToken(params: {
 
   const auth = Buffer.from(`${serverKey}:`).toString("base64");
   const plan = PLANS[params.planId] || DEFAULT_PLANS[params.planId] || { name: params.planId };
-  const appBase = (process.env.NEXT_PUBLIC_APP_URL || "https://ardp.my.id").replace(/\/$/, "");
+  const appBase = (process.env.NEXT_PUBLIC_APP_URL || "https://waply.web.id").replace(/\/$/, "");
 
   const finishCallback = params.requiresActivation
     ? `${appBase}/login?registered=verify&email=${encodeURIComponent(params.customerEmail)}`
@@ -812,13 +812,13 @@ export async function chargeMidtransCoreApi(params: {
       };
     }
   } else if (params.paymentType === "gopay") {
-    const appBase = (process.env.NEXT_PUBLIC_APP_URL || "https://ardp.my.id").replace(/\/$/, "");
+    const appBase = (process.env.NEXT_PUBLIC_APP_URL || "https://waply.web.id").replace(/\/$/, "");
     payload.gopay = {
       enable_callback: true,
       callback_url: `${appBase}/dashboard/billing?payment=finish&orderId=${params.orderId}`,
     };
   } else if (params.paymentType === "shopeepay") {
-    const appBase = (process.env.NEXT_PUBLIC_APP_URL || "https://ardp.my.id").replace(/\/$/, "");
+    const appBase = (process.env.NEXT_PUBLIC_APP_URL || "https://waply.web.id").replace(/\/$/, "");
     payload.shopeepay = {
       callback_url: `${appBase}/dashboard/billing?payment=finish&orderId=${params.orderId}`,
     };

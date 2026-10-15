@@ -54,7 +54,7 @@ async function handleLogout(request: NextRequest) {
     const response = NextResponse.json({ success: true, message: "Logged out successfully" });
 
     // Explicitly append expired Set-Cookie headers for both host and domains
-    const hostname = request.headers.get("host") || "ardp.my.id";
+    const hostname = request.headers.get("host") || "waply.web.id";
     const cleanHost = hostname.split(":")[0];
 
     const cookiesToWipe = [...authCookieNames, ...allCookies.map((c) => c.name)];

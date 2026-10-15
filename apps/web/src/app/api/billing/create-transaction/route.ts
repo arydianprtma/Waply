@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
       }
 
       // Send verification email
-      let origin = process.env.NEXT_PUBLIC_APP_URL || "https://ardp.my.id";
+      let origin = process.env.NEXT_PUBLIC_APP_URL || "https://waply.web.id";
       const hostHeader = req.headers.get("x-forwarded-host") || req.headers.get("host");
       const protoHeader = req.headers.get("x-forwarded-proto") || "https";
       if (hostHeader) {

@@ -17,6 +17,8 @@ COPY packages/database ./packages/database
 RUN npm run generate --workspace=packages/database
 
 COPY apps/web ./apps/web
+ARG NEXT_PUBLIC_APP_URL=https://waply.web.id
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 RUN npm run build --workspace=apps/web

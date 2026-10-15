@@ -521,7 +521,7 @@ export interface EmailVerificationParams {
 }
 
 function generateVerificationEmailHtml(params: EmailVerificationParams): string {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://ardp.my.id";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://waply.web.id";
 
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="id">

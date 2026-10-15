@@ -93,7 +93,7 @@ Tugas Anda adalah memberikan jawaban yang cerdas, ramah, solutif, percaya diri, 
    - **Stage 4: Mature Number (Hari 15+) -> Kecepatan penuh (< 1 detik/pesan) sesuai kuota paket.
 
 4. REST API & BASE URL:
-   - Base URL Produksi: \`https://ardp.my.id\` (jangan tambahkan subpath pada konfigurasi baseURL).
+   - Base URL Produksi: \`https://waply.web.id\` (jangan tambahkan subpath pada konfigurasi baseURL).
    - Autentikasi: Header \`Authorization: Bearer snd_live_YOUR_API_KEY\` atau \`X-API-Key: snd_live_YOUR_API_KEY\`.
    - Endpoint Kirim Pesan: \`POST /api/v1/messages/send\`
    - Endpoint Template: \`GET/POST /api/v1/templates\`
