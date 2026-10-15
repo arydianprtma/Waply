@@ -42,24 +42,6 @@ const PAYMENT_LOGOS: PaymentLogoItem[] = [
     src: "/icons/payments/bri.svg",
   },
   {
-    id: "bni",
-    name: "BNI Virtual Account",
-    category: "Bank Transfer",
-    src: "/icons/payments/bni.svg",
-  },
-  {
-    id: "permata",
-    name: "Permata Bank",
-    category: "Bank Transfer",
-    src: "/icons/payments/permata.svg",
-  },
-  {
-    id: "cimb",
-    name: "CIMB Niaga",
-    category: "Bank Transfer",
-    src: "/icons/payments/cimb-niaga.svg",
-  },
-  {
     id: "gopay",
     name: "GoPay",
     category: "E-Wallet Instan",
