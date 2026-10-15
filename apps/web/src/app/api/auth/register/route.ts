@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserByEmail, registerOrSyncUser, generateUserId } from "@/lib/admin-users";
 import { extractClientIp } from "@/lib/ip-utils";
 import { sendEmailVerification } from "@/lib/email-service";
+import { hashPassword } from "@/lib/admin-settings";
 import crypto from "crypto";
 
 import { registerSchema, validateSchema } from "@/lib/validation-schemas";
@@ -66,11 +67,14 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const passHash = hashPassword(password);
+
     registerOrSyncUser({
       id: userId,
       email: cleanEmail,
       name,
       role: "user",
+      passwordHash: passHash,
       ipAddress: clientIp,
       emailVerified: false,
       emailVerifyToken: verifyToken,

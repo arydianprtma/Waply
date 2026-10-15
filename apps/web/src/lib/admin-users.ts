@@ -36,6 +36,7 @@ export interface ManagedUser {
   email: string;
   name: string;
   role: "admin" | "user";
+  passwordHash?: string | null;
   status: UserAccountStatus;
   banReason?: string | null;
   avatarUrl?: string | null;
@@ -193,6 +194,7 @@ export function registerOrSyncUser(user: {
   email: string;
   name: string;
   role?: "admin" | "user";
+  passwordHash?: string | null;
   ipAddress?: string | null;
   avatarUrl?: string | null;
   emailVerified?: boolean;
@@ -292,6 +294,7 @@ export function registerOrSyncUser(user: {
       name: user.name || existing.name,
       email: user.email || existing.email,
       role: user.role || existing.role,
+      passwordHash: user.passwordHash !== undefined ? user.passwordHash : existing.passwordHash,
       avatarUrl: effectiveAvatar,
       planId: effectivePlanId,
       planStatus: effectivePlanStatus,
@@ -318,6 +321,7 @@ export function registerOrSyncUser(user: {
     email: user.email,
     name: user.name || user.email.split("@")[0],
     role: user.role || (user.email === "admin@waply.id" ? "admin" : "user"),
+    passwordHash: user.passwordHash || null,
     status: "ACTIVE",
     banReason: null,
     avatarUrl: user.avatarUrl || null,
