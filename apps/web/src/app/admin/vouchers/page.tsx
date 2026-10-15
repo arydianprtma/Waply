@@ -73,6 +73,14 @@ export default function AdminVouchersPage() {
   const [validUntil, setValidUntil] = useState<string>("");
   const [isActive, setIsActive] = useState<boolean>(true);
 
+  const [availablePlans, setAvailablePlans] = useState<Array<{ id: string; name: string }>>([
+    { id: "STARTER", name: "Starter" },
+    { id: "PRO_BUSINESS", name: "Pro Business" },
+    { id: "ENTERPRISE", name: "Enterprise" },
+    { id: "PRO-VIP-TAHUNAN", name: "Pro VIP Tahunan" },
+    { id: "CUSTOM_PLAN", name: "Paket Kustom" },
+  ]);
+
   const confirm = useConfirm();
 
   const fetchVouchers = async () => {
@@ -92,6 +100,24 @@ export default function AdminVouchersPage() {
 
   useEffect(() => {
     fetchVouchers();
+
+    // Fetch dynamic plans from API
+    fetch("/api/admin/plans", { cache: "no-store" })
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success && Array.isArray(json.data)) {
+          const list = json.data
+            .filter((p: any) => p.price > 0 && p.id !== "FREE")
+            .map((p: any) => ({
+              id: p.id,
+              name: p.name || p.id,
+            }));
+          if (list.length > 0) {
+            setAvailablePlans(list);
+          }
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const openCreateModal = () => {
@@ -472,15 +498,21 @@ export default function AdminVouchersPage() {
 
                       {/* Target Plans */}
                       <td>
-                        <div className="flex flex-wrap gap-1 max-w-[140px]">
+                        <div className="flex flex-wrap gap-1 max-w-[160px]">
                           {v.applicablePlans.includes("ALL") ? (
                             <span className="badge badge-ghost badge-sm text-[10px] font-bold">Semua Paket</span>
                           ) : (
-                            v.applicablePlans.map((p) => (
-                              <span key={p} className="badge badge-info badge-outline badge-sm text-[10px] font-bold">
-                                {p}
-                              </span>
-                            ))
+                            v.applicablePlans.map((p) => {
+                              const matched = availablePlans.find(
+                                (ap) => ap.id === p || (ap.id === "PRO_BUSINESS" && p === "BUSINESS")
+                              );
+                              const label = matched ? matched.name : p;
+                              return (
+                                <span key={p} className="badge badge-info badge-outline badge-sm text-[10px] font-bold">
+                                  {label}
+                                </span>
+                              );
+                            })
                           )}
                         </div>
                       </td>
@@ -716,37 +748,50 @@ export default function AdminVouchersPage() {
 
                 {/* Target Plans */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700">Berlaku Untuk Paket</label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-slate-700">Berlaku Untuk Paket</label>
+                    <span className="text-[11px] text-slate-400">
+                      {applicablePlans.includes("ALL")
+                        ? "Semua paket dapat menggunakan voucher ini"
+                        : `${applicablePlans.length} paket dipilih`}
+                    </span>
+                  </div>
                   <div className="flex flex-wrap gap-2">
-                    {[
-                      { id: "ALL", label: "Semua Paket" },
-                      { id: "STARTER", label: "Starter" },
-                      { id: "BUSINESS", label: "Business" },
-                      { id: "PRO", label: "Pro" },
-                    ].map((p) => {
-                      const isSel = applicablePlans.includes(p.id);
+                    <button
+                      type="button"
+                      onClick={() => setApplicablePlans(["ALL"])}
+                      className={`btn btn-xs rounded-lg font-bold ${
+                        applicablePlans.includes("ALL") ? "btn-primary" : "btn-ghost border border-slate-200"
+                      }`}
+                    >
+                      Semua Paket
+                    </button>
+                    {availablePlans.map((p) => {
+                      const isSel =
+                        !applicablePlans.includes("ALL") &&
+                        (applicablePlans.includes(p.id) ||
+                          (p.id === "PRO_BUSINESS" && applicablePlans.includes("BUSINESS")));
                       return (
                         <button
                           key={p.id}
                           type="button"
                           onClick={() => {
-                            if (p.id === "ALL") {
-                              setApplicablePlans(["ALL"]);
+                            const withoutAll = applicablePlans.filter((x) => x !== "ALL");
+                            const normalized = withoutAll.map((x) => (x === "BUSINESS" ? "PRO_BUSINESS" : x));
+                            if (isSel) {
+                              const next = normalized.filter(
+                                (x) => x !== p.id && !(p.id === "PRO_BUSINESS" && x === "BUSINESS")
+                              );
+                              setApplicablePlans(next.length === 0 ? ["ALL"] : next);
                             } else {
-                              const withoutAll = applicablePlans.filter((x) => x !== "ALL");
-                              if (isSel) {
-                                const next = withoutAll.filter((x) => x !== p.id);
-                                setApplicablePlans(next.length === 0 ? ["ALL"] : next);
-                              } else {
-                                setApplicablePlans([...withoutAll, p.id]);
-                              }
+                              setApplicablePlans([...normalized.filter((x) => x !== p.id), p.id]);
                             }
                           }}
                           className={`btn btn-xs rounded-lg font-bold ${
-                            isSel ? "btn-primary" : "btn-ghost border border-slate-200"
+                            isSel ? "btn-primary" : "btn-ghost border border-slate-200 text-slate-700"
                           }`}
                         >
-                          {p.label}
+                          {p.name}
                         </button>
                       );
                     })}

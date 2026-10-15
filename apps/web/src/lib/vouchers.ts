@@ -224,8 +224,20 @@ export function validateVoucher(params: {
 
   // Plan restriction
   if (params.planId && voucher.applicablePlans && !voucher.applicablePlans.includes("ALL")) {
-    const cleanPlan = params.planId.toUpperCase().replace(/^YEARLY_/, "");
-    if (!voucher.applicablePlans.includes(cleanPlan)) {
+    const rawPlan = params.planId.toUpperCase().trim();
+    const cleanPlan = rawPlan.replace(/^YEARLY_/, "");
+    const isMatched = voucher.applicablePlans.some((ap) => {
+      const upAp = ap.toUpperCase().trim();
+      return (
+        upAp === rawPlan ||
+        upAp === cleanPlan ||
+        (upAp === "BUSINESS" && (cleanPlan === "PRO_BUSINESS" || cleanPlan === "BUSINESS")) ||
+        (upAp === "PRO_BUSINESS" && (cleanPlan === "BUSINESS" || cleanPlan === "PRO_BUSINESS")) ||
+        (upAp === "PRO" && (cleanPlan === "PRO" || cleanPlan === "ENTERPRISE" || cleanPlan === "PRO-VIP-TAHUNAN"))
+      );
+    });
+
+    if (!isMatched) {
       return {
         valid: false,
         discountAmount: 0,
