@@ -17,7 +17,12 @@ const appUrlHost = process.env.NEXT_PUBLIC_APP_URL
 
 const nextConfig: NextConfig = {
   devIndicators: false,
+  compress: true,
+  images: {
+    formats: ["image/avif", "image/webp"],
+  },
   experimental: {
+    optimizePackageImports: ["lucide-react", "prismjs"],
     serverActions: {
       bodySizeLimit: "10mb",
     },

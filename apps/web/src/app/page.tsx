@@ -18,7 +18,7 @@ import { LandingChatMockup } from "@/components/landing-chat-mockup";
 import { LandingUseCases } from "@/components/landing-use-cases";
 import { LandingPaymentTrust } from "@/components/landing-payment-trust";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export default function LandingPage() {
   const allPlans = getAllPlans();

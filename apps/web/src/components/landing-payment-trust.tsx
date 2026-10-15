@@ -89,6 +89,8 @@ export function LandingPaymentTrust() {
                   <img
                     src="/icons/payments/midtrans.svg"
                     alt="Midtrans"
+                    width={80}
+                    height={16}
                     className="h-4 w-auto object-contain"
                   />
                 </div>
@@ -124,8 +126,11 @@ export function LandingPaymentTrust() {
                   <img
                     src={item.src}
                     alt={item.name}
+                    width={110}
+                    height={28}
                     className="max-h-7 max-w-[110px] w-auto h-auto object-contain transition-transform duration-200 hover:scale-105"
                     loading="lazy"
+                    decoding="async"
                   />
                 </div>
               ))}

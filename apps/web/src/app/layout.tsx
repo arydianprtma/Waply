@@ -127,9 +127,17 @@ const jsonLd = {
   ],
 };
 
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { DialogProvider } from "@/components/confirm-dialog";
 import { ThemeProvider, themeInitScript } from "@/components/theme-provider";
 import NextTopLoader from "nextjs-toploader";
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+  display: "swap",
+  variable: "--font-plus-jakarta-sans",
+});
 
 export default function RootLayout({
   children,
@@ -137,7 +145,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" data-theme="waplyLight" suppressHydrationWarning>
+    <html lang="id" className={plusJakartaSans.variable} data-theme="waplyLight" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <script
@@ -147,11 +155,9 @@ export default function RootLayout({
         <link rel="icon" type="image/png" href="/waply-icon.png?v=6" />
         <link rel="shortcut icon" href="/waply-icon.png?v=6" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=6" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body
-        className="font-sans antialiased"
+        className={`${plusJakartaSans.className} font-sans antialiased`}
         suppressHydrationWarning
         data-gramm="false"
         data-gramm_editor="false"
