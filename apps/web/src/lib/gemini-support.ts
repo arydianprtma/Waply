@@ -72,6 +72,86 @@ function getDynamicPlansKnowledge(): string {
   }
 }
 
+function getDynamicVouchersKnowledge(): string {
+  try {
+    const { getAllVouchers } = require("./vouchers");
+    const vouchers = getAllVouchers();
+    const now = new Date();
+
+    const activeVouchers = vouchers.filter((v: any) => {
+      if (!v.isActive) return false;
+      if (v.validUntil && new Date(v.validUntil) < now) return false;
+      if (typeof v.usageLimit === "number" && v.usageLimit > 0 && (v.usedCount || 0) >= v.usageLimit) return false;
+      return true;
+    });
+
+    if (activeVouchers.length === 0) {
+      return "Saat ini tidak ada kode promo / voucher diskon yang aktif di database.";
+    }
+
+    const lines = activeVouchers.map((v: any) => {
+      const discStr =
+        v.discountType === "PERCENTAGE"
+          ? `${v.discountValue}% OFF`
+          : `Potongan Rp ${v.discountValue.toLocaleString("id-ID")}`;
+
+      const targetPlanStr =
+        v.applicablePlans && v.applicablePlans.length > 0 && !v.applicablePlans.includes("ALL")
+          ? `Khusus paket: ${v.applicablePlans.join(", ")}`
+          : "Berlaku untuk semua paket";
+
+      const minOrderStr = v.minOrderAmount
+        ? ` (Min. pembelian Rp ${v.minOrderAmount.toLocaleString("id-ID")})`
+        : " (Tanpa minimum pembelian)";
+
+      const sisaKuota =
+        typeof v.usageLimit === "number" && v.usageLimit > 0
+          ? ` [Sisa kuota: ${v.usageLimit - (v.usedCount || 0)}x pemakaian]`
+          : " [Tanpa batas kuota pemakaian]";
+
+      const validStr = v.validUntil
+        ? ` [Berlaku hingga: ${new Date(v.validUntil).toLocaleDateString("id-ID", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          })}]`
+        : "";
+
+      return `- **Kode Voucher: \`${v.code}\`** (${discStr}):
+  • Sasaran: ${targetPlanStr}${minOrderStr}
+  • Keterangan: ${v.description || "Promo diskon potongan harga"}${sisaKuota}${validStr}`;
+    });
+
+    return lines.join("\n\n");
+  } catch (err) {
+    console.error("[Gemini Support] Error generating dynamic vouchers:", err);
+    return "Saat ini tidak ada kode voucher promo yang aktif.";
+  }
+}
+
+function getDynamicAnnouncementsKnowledge(): string {
+  try {
+    const { getAllAnnouncements } = require("./announcements");
+    const announcements = getAllAnnouncements();
+
+    const activeAnnouncements = announcements.filter((a: any) => a.isActive !== false);
+    if (activeAnnouncements.length === 0) {
+      return "Tidak ada pengumuman promo khusus yang sedang tayang.";
+    }
+
+    const lines = activeAnnouncements.slice(0, 5).map((a: any) => {
+      const cleanMsg = (a.message || "").replace(/\n+/g, " ").trim();
+      return `- **[${a.type || "INFO"}] ${a.title}**:
+  "${cleanMsg}"`;
+    });
+
+    return lines.join("\n\n");
+  } catch (err) {
+    console.error("[Gemini Support] Error generating dynamic announcements:", err);
+    return "Tidak ada pengumuman khusus yang sedang tayang.";
+  }
+}
+
 const WAPLY_STATIC_KNOWLEDGE = `
 Anda adalah "Waply AI Assistant", asisten AI resmi dari platform Waply (WhatsApp Gateway & Customer Engagement Platform).
 Tugas Anda adalah memberikan jawaban yang cerdas, ramah, solutif, percaya diri, dan sangat akurat secara teknis kepada pengguna.
@@ -112,10 +192,12 @@ Tugas Anda adalah memberikan jawaban yang cerdas, ramah, solutif, percaya diri, 
    - Gunakan **huruf tebal (bold)** dengan format \`**kata**\` pada nama paket, harga, nama menu, limit angka, dan poin-poin penting agar pesan terstruktur rapi dan enak dibaca.
    - JANGAN PERNAH mengulang sapaan nama seperti "Halo Kak [Nama]" di setiap balasan lanjutan! Langsung jawab pertanyaan ke intinya secara mengalir layaknya obrolan WhatsApp yang luwes.
 
-2. PENJELASAN PAKET LANGGANAN (BERDASARKAN DATA REAL-TIME DATABASE):
+2. PENJELASAN PAKET LANGGANAN & KODE PROMO / VOUCHER DISKON (BERDASARKAN DATA REAL-TIME DATABASE):
+   - Jika pengguna menanyakan tentang kode promo, diskon, kupon hemat, atau voucher: CEK DATA REAL-TIME DI BAGIAN "KODE VOUCHER & PROMO DISKON AKTIF REAL-TIME" DI BAWAH!
+   - JIKA ADA KODE VOUCHER YANG AKTIF: SEBUTKAN KODE-KODENYA DENGAN JELAS DAN LENGKAP (misal: STARTER50, WAPLY30, ENTERPRISE40), sebutkan berapa persen/rupiah diskonnya, untuk paket apa, dan jelaskan cara memasukkannya di menu Dashboard > Billing saat checkout!
+   - JANGAN PERNAH mengatakan "saat ini kami belum memiliki kode promo" jika pada daftar voucher database di bawah tercantum kode yang aktif!
+   - Sebaliknya, jika daftar voucher aktif memang kosong (tidak ada voucher aktif), barulah jelaskan secara sopan bahwa saat ini belum ada kode promo tambahan dan arahkan ke paket yang sesuai atau Free Trial.
    - Jika pengguna menanyakan tentang paket, harga, atau fitur apa saja yang tersedia, jelaskan SECARA LENGKAP DAN DETAIL HANYA paket yang sedang aktif di database (terlampir di bawah).
-   - Jangan menyebutkan paket yang tidak terdaftar di database!
-   - JANGAN PERNAH menawarkan atau menyebutkan diskon/promo yang sudah kadaluarsa (expired). Cek status promo dari data harga real-time di bawah. Jika tidak ada keterangan "(Sedang Promo Diskon...)", gunakan harga normal resmi yang tertera.
    - Jangan menyuruh pengguna cek sendiri di menu billing; berikan perbandingan jelas dengan harga, kuota, dan fitur-fiturnya.
 
 3. JANGAN GAMPANG MELEMPARKAN KE CS MANUSIA (TETAP TANGANI SENDIRI):
@@ -244,8 +326,10 @@ export async function generateAiTicketResponse(
       })
       .join("\n");
 
-    // Fetch dynamic plans directly from database / storage
+    // Fetch dynamic plans, active vouchers, and announcements directly from database / storage
     const dynamicPlansKnowledge = getDynamicPlansKnowledge();
+    const dynamicVouchersKnowledge = getDynamicVouchersKnowledge();
+    const dynamicAnnouncementsKnowledge = getDynamicAnnouncementsKnowledge();
 
     // Fetch relevant knowledge from AI Knowledge Base & Admin SOPs
     const relevantKnowledge = getRelevantKnowledgeForPrompt(
@@ -258,6 +342,12 @@ ${WAPLY_STATIC_KNOWLEDGE}
 
 === DAFTAR PAKET LANGGANAN REAL-TIME DARI DATABASE WAPLY ===
 ${dynamicPlansKnowledge}
+
+=== KODE VOUCHER & PROMO DISKON AKTIF REAL-TIME DARI DATABASE ===
+${dynamicVouchersKnowledge}
+
+=== PENGUMUMAN & PROMO RESMI TERBARU YANG SEDANG TAYANG ===
+${dynamicAnnouncementsKnowledge}
 ${relevantKnowledge ? `\n=== BASIS PENGETAHUAN & SOLUSI TERUJI DARI ADMIN (KNOWLEDGE BASE) ===\n${relevantKnowledge}\n` : ""}
 === INFORMASI TIKET SAAT INI ===
 ID Tiket: ${ticket.id}
