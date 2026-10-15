@@ -1,12 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
-
-const plusJakartaSans = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  variable: "--font-plus-jakarta-sans",
-  display: "swap",
-});
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -45,9 +38,11 @@ export default function RootLayout({
         <link rel="icon" type="image/png" href="/waply-icon.png?v=6" />
         <link rel="shortcut icon" href="/waply-icon.png?v=6" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=6" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body
-        className={`${plusJakartaSans.className} antialiased`}
+        className="font-sans antialiased"
         suppressHydrationWarning
         data-gramm="false"
         data-gramm_editor="false"
